@@ -91,7 +91,7 @@ export const vagas = [
     empresa: "Alvo Digital",
     empresaId: "alvo",
     filial: "São Paulo",
-    status: "ativa" as StatusKey,
+    status: "concluida" as StatusKey,
     etapa: "Briefing",
     sla: 25,
     diasAbertos: 5,
