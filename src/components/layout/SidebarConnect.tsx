@@ -91,7 +91,15 @@ const clienteGroups = [
 export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+  const papelLabel =
+    user?.papel === "admin"
+      ? "Administrador"
+      : user?.papel === "consultor"
+      ? "Consultor"
+      : user?.papel === "cliente"
+      ? "Cliente"
+      : "";
   const handleLogout = () => {
     logout();
     navigate("/login");
@@ -122,7 +130,7 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
                 Azumi Connect
               </div>
               <div className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
-                {variant === "admin" ? "Admin · Consultor" : "Cliente"}
+                {papelLabel}
               </div>
             </div>
           </div>
@@ -233,23 +241,25 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
         </div>
       </nav>
 
-      {/* Consultor card */}
+      {/* Footer card */}
       <div className="p-3 border-t border-sidebar-border/60">
         {!collapsed ? (
           <div className="bg-card/60 backdrop-blur rounded-xl p-3 border border-border/60">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="h-9 w-9 rounded-full bg-gradient-brand flex items-center justify-center text-xs font-semibold text-white">
-                  AB
+            {user?.papel === "cliente" && (
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <div className="h-9 w-9 rounded-full bg-gradient-brand flex items-center justify-center text-xs font-semibold text-white">
+                    AB
+                  </div>
+                  <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-success ring-2 ring-card animate-soft-pulse" />
                 </div>
-                <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-success ring-2 ring-card animate-soft-pulse" />
+                <div className="min-w-0">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Seu consultor</div>
+                  <div className="text-sm font-medium truncate">Ana Beatriz</div>
+                </div>
               </div>
-              <div className="min-w-0">
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Seu consultor</div>
-                <div className="text-sm font-medium truncate">Ana Beatriz</div>
-              </div>
-            </div>
-            <div className="mt-3 flex items-center gap-2">
+            )}
+            <div className={cn("flex items-center gap-2", user?.papel === "cliente" && "mt-3")}>
               <NavLink to="/app/configuracoes" className="flex-1 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 px-2 py-1.5 rounded-md hover:bg-secondary">
                 <Settings className="h-3.5 w-3.5" /> Config.
               </NavLink>
@@ -264,10 +274,12 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
           </div>
         ) : (
           <div className="flex flex-col items-center gap-2">
-            <div className="relative">
-              <div className="h-8 w-8 rounded-full bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white">AB</div>
-              <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-success ring-2 ring-sidebar" />
-            </div>
+            {user?.papel === "cliente" && (
+              <div className="relative">
+                <div className="h-8 w-8 rounded-full bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white">AB</div>
+                <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-success ring-2 ring-sidebar" />
+              </div>
+            )}
             <button
               type="button"
               onClick={handleLogout}

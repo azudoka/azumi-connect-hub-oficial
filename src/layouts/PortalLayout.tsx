@@ -14,7 +14,7 @@ const navItems = [
 
 export default function PortalLayout() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const handleSair = () => {
     logout();
@@ -52,7 +52,7 @@ export default function PortalLayout() {
                   AB
                 </AvatarFallback>
               </Avatar>
-              <span className="hidden text-sm font-medium sm:block">Ana Beatriz</span>
+              <span className="hidden text-sm font-medium sm:block">{user?.nome ?? "Convidado"}</span>
             </div>
             <Button variant="ghost" size="sm" onClick={handleSair} className="gap-2">
               <LogOut className="h-4 w-4" />

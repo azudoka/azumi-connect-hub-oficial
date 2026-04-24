@@ -19,12 +19,17 @@ export default function Login() {
   }, [user, navigate]);
 
   const entrarComoAdmin = () => {
-    login({ nome: "Ana Beatriz", papel: "admin" });
+    login({ nome: "Patricia Lima", papel: "admin" });
+    navigate("/app/dashboard", { replace: true });
+  };
+
+  const entrarComoConsultor = () => {
+    login({ nome: "Ana Beatriz", papel: "consultor" });
     navigate("/app/dashboard", { replace: true });
   };
 
   const entrarComoCliente = () => {
-    login({ nome: "Ana Beatriz", papel: "cliente" });
+    login({ nome: "Kentaki Foods", papel: "cliente" });
     navigate("/portal", { replace: true });
   };
 
@@ -44,6 +49,15 @@ export default function Login() {
           <div className="space-y-3">
             <Button onClick={entrarComoAdmin} className="w-full" size="lg">
               Entrar como Administrador
+            </Button>
+
+            <Button
+              onClick={entrarComoConsultor}
+              variant="secondary"
+              className="w-full"
+              size="lg"
+            >
+              Entrar como Consultor — Ana Beatriz
             </Button>
 
             <Button
