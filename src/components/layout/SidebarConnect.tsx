@@ -242,7 +242,7 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
             {!collapsed && <span className="truncate">Configurações</span>}
           </NavLink>
 
-          {variant === "admin" && (
+          {pode("portal_cliente.acessar") && (
             <>
               <div className="my-2 h-px bg-sidebar-border/60" />
               <button
