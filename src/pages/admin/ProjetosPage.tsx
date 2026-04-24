@@ -47,6 +47,8 @@ interface Projeto {
   consultorId: string;
   consultorNome: string;
   consultorIniciais: string;
+  /** ID do consultor atribuído (regra de visibilidade — perfil consultor só vê seus). */
+  assignedConsultorId: string;
   frente: FrenteAtuacao;
   status: ProjetoStatus;
   conclusao: number;
@@ -59,7 +61,9 @@ interface CronogramaPendente {
   codigo: string;
   empresaNome: string;
   consultorNome: string;
-  status: "aguardando_aprovacao_interna" | "aguardando_aprovacao_cliente";
+  /** B03: "rascunho" passa a existir e é o estado para o qual qualquer
+      edição de cronograma já aprovado é forçada antes de reenviar. */
+  status: "rascunho" | "aguardando_aprovacao_interna" | "aguardando_aprovacao_cliente";
   criadoEm: string;
 }
 
