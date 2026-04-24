@@ -9,10 +9,18 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { usePermissao, type Permissao } from "@/config/permissoes";
 
 interface SidebarConnectProps {
   variant?: "admin" | "cliente";
 }
+
+// Mapa de permissões exigidas por rota. Itens sem entrada aqui ficam sempre visíveis.
+const PERMISSAO_POR_ROTA: Record<string, Permissao> = {
+  "/app/financeiro": "financeiro.ver_valores",
+  "/app/gestao-de-conta": "gestao_conta.relatorio",
+  "/cliente/gestao-conta": "gestao_conta.relatorio",
+};
 
 const adminGroups = [
   {
@@ -92,6 +100,7 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const { logout, user } = useAuth();
+  const { pode } = usePermissao();
   const papelLabel =
     user?.papel === "admin"
       ? "Administrador"
@@ -104,7 +113,17 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
     logout();
     navigate("/login");
   };
-  const groups = variant === "admin" ? adminGroups : clienteGroups;
+  const groupsBase = variant === "admin" ? adminGroups : clienteGroups;
+  // Filtra itens cuja rota exige permissão que o usuário não possui.
+  const groups = groupsBase
+    .map((g) => ({
+      ...g,
+      items: g.items.filter((it) => {
+        const req = PERMISSAO_POR_ROTA[it.to];
+        return req ? pode(req) : true;
+      }),
+    }))
+    .filter((g) => g.items.length > 0);
 
   return (
     <aside
