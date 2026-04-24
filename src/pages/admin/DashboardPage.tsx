@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -152,6 +152,7 @@ const ENTREGAVEIS: EntregavelProx[] = [
 // =====================================================================
 
 export default function DashboardPage() {
+  const navigate = useNavigate();
   const now = useMemo(() => new Date(), []);
   const saudacao = getSaudacao(now.getHours());
   const dataFormatada = useMemo(
@@ -229,12 +230,13 @@ export default function DashboardPage() {
                 Movimentações recentes da operação
               </p>
             </div>
-            <Link
-              to="/app/auditoria"
+            <button
+              type="button"
+              onClick={() => navigate("/app/horas")}
               className="text-xs text-primary hover:underline font-medium"
             >
               Ver tudo
-            </Link>
+            </button>
           </div>
 
           {ATIVIDADES.length === 0 ? (
