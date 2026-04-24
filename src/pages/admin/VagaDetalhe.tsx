@@ -8,10 +8,11 @@ import { useParams, Link } from "react-router-dom";
 import { vagas, candidatos, etapasVaga, comentariosVaga } from "@/data/mock";
 import {
   ArrowLeft, Building2, MapPin, Send, MessageSquare, CheckCircle2, Clock,
-  Users, FileQuestion, History, Filter
+  Users, FileQuestion, History, Filter, Loader2, AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { toast } from "sonner";
 
 const tabs = [
   { key: "candidatos", label: "Candidatos", icon: Users },
@@ -25,6 +26,10 @@ export default function VagaDetalheAdmin() {
   const { id } = useParams();
   const vaga = vagas.find((v) => v.id === id) ?? vagas[0];
   const [tab, setTab] = useState<typeof tabs[number]["key"]>("candidatos");
+
+  // B09: estado do Dialog "Enviar para o cliente"
+  const [enviarOpen, setEnviarOpen] = useState(false);
+  const [enviando, setEnviando] = useState(false);
 
   const funil = [
     { etapa: "Currículos", n: vaga.candidatosTotal },
