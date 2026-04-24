@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   Clock, Timer as TimerIcon, PenSquare, Download, Play,
   CalendarIcon, ChevronDown, ChevronRight, AlertTriangle, Filter,
+  Briefcase,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -28,6 +30,9 @@ import {
 } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 import { empresas, consultores } from "@/data/mock";
