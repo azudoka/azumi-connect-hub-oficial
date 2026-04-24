@@ -35,6 +35,7 @@ import ClientesPage from "./pages/admin/ClientesPage";
 import ConfiguracoesPage from "./pages/admin/ConfiguracoesPage";
 import SolicitacoesPage from "./pages/admin/SolicitacoesPage";
 import VagasClientePage from "./pages/VagasClientePage";
+import PerfilPage from "./pages/PerfilPage";
 
 import ClienteDashboard from "./pages/cliente/ClienteDashboard";
 import ClienteSolicitacoes from "./pages/cliente/ClienteSolicitacoes";
@@ -108,6 +109,7 @@ const AppRoutes = () => (
       <Route path="/app/documentos" element={<Stub title="Documentos" subtitle="Biblioteca de documentos" />} />
       <Route path="/app/auditoria" element={<Stub title="Auditoria" subtitle="Log completo de ações" />} />
       <Route path="/app/configuracoes" element={<ConfiguracoesPage />} />
+      <Route path="/app/perfil" element={<PerfilPage />} />
     </Route>
 
     {/* Cliente ADM (mantido) */}
