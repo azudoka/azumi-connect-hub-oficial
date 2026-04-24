@@ -20,6 +20,10 @@ const PERMISSAO_POR_ROTA: Record<string, Permissao> = {
   "/app/financeiro": "financeiro.ver_valores",
   "/app/gestao-de-conta": "gestao_conta.relatorio",
   "/cliente/gestao-conta": "gestao_conta.relatorio",
+  "/app/empresas": "empresas.ver",
+  "/app/usuarios": "usuarios.gerenciar",
+  "/app/clientes": "clientes.gerenciar",
+  "/app/auditoria": "auditoria.ver",
 };
 
 const adminGroups = [
