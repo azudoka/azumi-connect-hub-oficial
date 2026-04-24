@@ -23,6 +23,7 @@ import ProjetosPage from "./pages/admin/ProjetosPage";
 import ProjetoDetalhe from "./pages/admin/ProjetoDetalhe";
 import FinanceiroPage from "./pages/admin/FinanceiroPage";
 import ClientesPage from "./pages/admin/ClientesPage";
+import ConfiguracoesPage from "./pages/admin/ConfiguracoesPage";
 
 import ClienteDashboard from "./pages/cliente/ClienteDashboard";
 import VagaDetalheCliente from "./pages/cliente/VagaDetalheCliente";
@@ -67,7 +68,7 @@ const App = () => (
             <Route path="/app/calendario" element={<Stub title="Calendário" />} />
             <Route path="/app/documentos" element={<Stub title="Documentos" subtitle="Biblioteca de documentos" />} />
             <Route path="/app/auditoria" element={<Stub title="Auditoria" subtitle="Log completo de ações" />} />
-            <Route path="/app/configuracoes" element={<Stub title="Configurações" />} />
+            <Route path="/app/configuracoes" element={<ConfiguracoesPage />} />
           </Route>
 
           {/* Cliente ADM */}
