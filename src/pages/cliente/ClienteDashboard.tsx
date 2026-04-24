@@ -33,7 +33,10 @@ export default function ClienteDashboard() {
       <SectionDivider>Suas vagas</SectionDivider>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {vagas.slice(0, 4).map(v => (
+        {/* B07: filtra apenas as vagas da empresa do cliente logado (Kentaki).
+            Cenário A — filtro por empresaId. O filtro completo por branch_id
+            virá na ETAPA 3, quando os mocks forem expandidos. */}
+        {vagas.filter(v => v.empresaId === "kentaki").slice(0, 4).map(v => (
           <Link key={v.id} to={`/cliente/atracao/${v.id}`} className="bg-card border border-border rounded-xl p-5 card-hover">
             <div className="flex items-start justify-between">
               <div>
