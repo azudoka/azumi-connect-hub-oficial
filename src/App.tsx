@@ -12,7 +12,7 @@ import SelecaoPerfil from "./pages/auth/SelecaoPerfil";
 import NotFound from "./pages/NotFound";
 import Stub from "./pages/Stub";
 
-import AdminDashboard from "./pages/admin/Dashboard";
+import AdminDashboard from "./pages/admin/DashboardPage";
 import Empresas from "./pages/admin/Empresas";
 import AtracaoLista from "./pages/admin/AtracaoLista";
 import VagaDetalheAdmin from "./pages/admin/VagaDetalhe";
