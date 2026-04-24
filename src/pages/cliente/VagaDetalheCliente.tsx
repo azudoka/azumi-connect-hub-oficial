@@ -11,10 +11,40 @@ import {
 import {
   ArrowLeft, Lock, Send, AlertTriangle, CheckCircle2,
   PauseCircle, XCircle, FileText, Info, Star, Loader2, Gift, ShieldCheck,
+  FileSignature,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+
+// B01: chave do localStorage para persistir ciência assinada por vaga
+const CIENCIAS_KEY = "azumi_ciencias";
+type CienciaRecord = { assinado: true; data: string };
+type CienciasMap = Record<string, CienciaRecord>;
+
+function lerCiencias(): CienciasMap {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(CIENCIAS_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? (parsed as CienciasMap) : {};
+  } catch {
+    return {};
+  }
+}
+
+function salvarCiencia(vagaId: string): CienciaRecord {
+  const atual = lerCiencias();
+  const registro: CienciaRecord = { assinado: true, data: new Date().toISOString() };
+  const novo: CienciasMap = { ...atual, [vagaId]: registro };
+  try {
+    window.localStorage.setItem(CIENCIAS_KEY, JSON.stringify(novo));
+  } catch {
+    // silencia falhas de storage (modo privado, quota, etc.)
+  }
+  return registro;
+}
 
 type DecisaoTipo = "aprovar" | "standby" | "reprovar";
 type CandidatoStatus = "novo" | "em_analise" | "aprovado" | "standby" | "reprovado" | "contratado";
