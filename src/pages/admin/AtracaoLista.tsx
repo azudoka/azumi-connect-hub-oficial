@@ -11,10 +11,10 @@ import VagasClientePage from "@/pages/VagasClientePage";
 
 export default function AtracaoLista() {
   const { user } = useAuth();
-  if (user?.papel === "cliente") return <VagasClientePage />;
-
   const [view, setView] = useState<"kanban" | "list">("kanban");
   const colunas = ["Briefing", "Triagem", "Entrevista", "Perfis enviados", "Decisão"];
+
+  if (user?.papel === "cliente") return <VagasClientePage />;
 
   return (
     <div>
