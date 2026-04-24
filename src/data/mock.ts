@@ -195,6 +195,7 @@ export const candidatos = [
     perfilDom: "D",
     parecer: "Perfil executivo, forte em tomada de decisão. Recomendado para entrevista final.",
     enviado: true,
+    status: "contratado" as "novo" | "em_analise" | "aprovado" | "standby" | "reprovado" | "contratado",
   },
   {
     id: "c2",
@@ -301,4 +302,25 @@ export const humorHistorico = [
   { dia: "01", v: 4 }, { dia: "05", v: 5 }, { dia: "08", v: 3 },
   { dia: "12", v: 4 }, { dia: "15", v: 4 }, { dia: "18", v: 5 },
   { dia: "22", v: 3 }, { dia: "25", v: 4 }, { dia: "28", v: 5 },
+];
+
+// Notificações de consumo de horas (B08): cada uma referencia empresa+empresaId
+// para que o componente possa montar um link direto para /app/empresas/:id ou
+// /cliente/gestao-conta conforme o contexto.
+export type ConsumoNotificacao = {
+  id: string;
+  empresa: string;
+  empresaId: string;
+  consumido: number;       // horas consumidas
+  contratadas: number;     // horas contratadas no mês
+  percent: number;         // 0-100
+  severidade: "info" | "warning" | "critical";
+  quando: string;
+};
+
+export const consumoNotificacoes: ConsumoNotificacao[] = [
+  { id: "cn1", empresa: "Grupo Maverick",  empresaId: "maverick",   consumido: 92,  contratadas: 100, percent: 92, severidade: "critical", quando: "há 12 min" },
+  { id: "cn2", empresa: "Tech Plural",     empresaId: "techplural", consumido: 68,  contratadas: 80,  percent: 85, severidade: "warning",  quando: "há 1h" },
+  { id: "cn3", empresa: "Kentaki Foods",   empresaId: "kentaki",    consumido: 61,  contratadas: 80,  percent: 76, severidade: "info",     quando: "há 3h" },
+  { id: "cn4", empresa: "Studio Mira",     empresaId: "mira",       consumido: 49,  contratadas: 80,  percent: 61, severidade: "info",     quando: "ontem" },
 ];
