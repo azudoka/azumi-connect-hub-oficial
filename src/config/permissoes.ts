@@ -23,6 +23,11 @@ export type Permissao =
   | "comunicados.ver" | "comunicados.criar"
   | "guia.ver" | "guia.criar" | "guia.editar"
   | "perfil.editar_proprio"
+  | "empresas.ver"
+  | "usuarios.gerenciar"
+  | "clientes.gerenciar"
+  | "auditoria.ver"
+  | "portal_cliente.acessar"
   | "admin.tudo";
 
 const PERMISSOES_POR_PAPEL: Record<Papel, Permissao[]> = {
