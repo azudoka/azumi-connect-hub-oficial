@@ -67,14 +67,8 @@ export default function PortalFinanceiro() {
         subtitle="Faturas emitidas para a Kentaki Foods"
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <KpiCard
-          label="Total faturado"
-          value={formatBRL(totalFaturado)}
-          icon={FileText}
-        />
-        <KpiCard label="A pagar" value={formatBRL(aPagar)} icon={Wallet} />
-        <KpiCard label="Pago" value={formatBRL(pago)} icon={CheckCircle2} />
+      <div className="grid grid-cols-1 gap-4 sm:max-w-sm">
+        <KpiCard label="Em aberto no mês" value={formatBRL(aPagar)} icon={Wallet} />
       </div>
 
       <section className="mt-8">

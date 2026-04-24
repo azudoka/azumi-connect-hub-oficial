@@ -17,6 +17,7 @@ import {
 
 import { PageHeader } from "@/components/PageHeader";
 import { KpiCard } from "@/components/KpiCard";
+import { usePermissao } from "@/config/permissoes";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SlaBar } from "@/components/SlaBar";
 import { EmptyState } from "@/components/EmptyState";
