@@ -6,6 +6,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { AppLayout } from "@/components/layout/AppLayout";
 import { HubLayout } from "@/components/layout/HubLayout";
+import PortalLayout from "@/layouts/PortalLayout";
+
+import PortalDashboard from "./pages/portal/PortalDashboard";
+import PortalProjetos from "./pages/portal/PortalProjetos";
+import PortalProjetoDetalhe from "./pages/portal/PortalProjetoDetalhe";
+import PortalFinanceiro from "./pages/portal/PortalFinanceiro";
 
 import Login from "./pages/auth/Login";
 import SelecaoPerfil from "./pages/auth/SelecaoPerfil";
@@ -122,6 +128,14 @@ const App = () => (
             <Route path="/hub/ceo/financeiro" element={<Stub title="Financeiro de RH" subtitle="Folha, benefícios, ROI, budget" />} />
             <Route path="/hub/ceo/avaliacoes" element={<Stub title="Avaliação de desempenho" />} />
             <Route path="/hub/ceo/turnover" element={<Stub title="Turnover e retenção" />} />
+          </Route>
+
+          {/* Portal do Cliente */}
+          <Route element={<PortalLayout />}>
+            <Route path="/portal" element={<PortalDashboard />} />
+            <Route path="/portal/projetos" element={<PortalProjetos />} />
+            <Route path="/portal/projetos/:id" element={<PortalProjetoDetalhe />} />
+            <Route path="/portal/financeiro" element={<PortalFinanceiro />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />
