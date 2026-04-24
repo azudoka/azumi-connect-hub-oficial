@@ -1,0 +1,228 @@
+import { PageHeader } from "@/components/PageHeader";
+import { StatusBadge } from "@/components/StatusBadge";
+import { SectionDivider } from "@/components/SectionDivider";
+import { SlaBar } from "@/components/SlaBar";
+import { DiscBars } from "@/components/DiscBars";
+import { Timer } from "@/components/Timer";
+import { useParams, Link } from "react-router-dom";
+import { vagas, candidatos, etapasVaga, comentariosVaga } from "@/data/mock";
+import {
+  ArrowLeft, Building2, MapPin, Send, MessageSquare, CheckCircle2, Clock,
+  Users, FileQuestion, History, Filter
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useState } from "react";
+
+const tabs = [
+  { key: "candidatos", label: "Candidatos", icon: Users },
+  { key: "perfis", label: "Perfis enviados", icon: Send },
+  { key: "questionarios", label: "Questionários", icon: FileQuestion },
+  { key: "historico", label: "Histórico", icon: History },
+  { key: "chat", label: "Mini-chat", icon: MessageSquare },
+] as const;
+
+export default function VagaDetalheAdmin() {
+  const { id } = useParams();
+  const vaga = vagas.find((v) => v.id === id) ?? vagas[0];
+  const [tab, setTab] = useState<typeof tabs[number]["key"]>("candidatos");
+
+  const funil = [
+    { etapa: "Currículos", n: vaga.candidatosTotal },
+    { etapa: "Triagem", n: vaga.candidatosTriagem },
+    { etapa: "Entrevista", n: vaga.candidatosEntrevista },
+    { etapa: "Enviados", n: vaga.candidatosEnviados },
+    { etapa: "Contratados", n: vaga.candidatosContratados },
+  ];
+  const max = Math.max(...funil.map((f) => f.n), 1);
+
+  const candidatosVaga = candidatos.filter((c) => c.vagaId === vaga.id);
+  const colunas = ["Triagem", "Quest.", "Entrevista", "Enviados", "Decisão"];
+
+  return (
+    <div>
+      <Link to="/app/atracao" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-3">
+        <ArrowLeft className="h-3.5 w-3.5" /> Voltar para vagas
+      </Link>
+
+      <PageHeader
+        title={vaga.titulo}
+        subtitle={
+          <span className="flex items-center gap-3">
+            <span className="inline-flex items-center gap-1"><Building2 className="h-3.5 w-3.5" /> {vaga.empresa}</span>
+            <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> {vaga.filial}</span>
+          </span> as any
+        }
+        actions={
+          <>
+            <StatusBadge status={vaga.status} />
+            <Timer compact />
+          </>
+        }
+      />
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
+        {/* Timeline */}
+        <div className="lg:col-span-3 bg-card border border-border rounded-xl p-5 card-hover">
+          <h3 className="font-display font-semibold mb-4">Timeline da vaga</h3>
+          <ol className="relative grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            {etapasVaga.map((e, idx) => {
+              const done = e.status === "concluida";
+              const active = e.status === "andamento";
+              return (
+                <li key={idx} className="relative">
+                  <div className={cn(
+                    "h-8 w-8 rounded-full flex items-center justify-center font-data text-xs",
+                    done && "bg-success text-success-foreground",
+                    active && "bg-primary text-primary-foreground animate-soft-pulse",
+                    !done && !active && "bg-muted text-muted-foreground"
+                  )}>
+                    {done ? <CheckCircle2 className="h-4 w-4" /> : idx + 1}
+                  </div>
+                  <div className="mt-2">
+                    <div className="text-sm font-medium leading-tight">{e.nome}</div>
+                    <div className="text-[11px] text-muted-foreground font-data mt-0.5">
+                      {e.inicio} → {e.fim}
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+          <div className="mt-5">
+            <SlaBar percent={vaga.sla} label={`SLA da vaga · ${vaga.diasAbertos}/${vaga.diasPrevistos} dias`} />
+          </div>
+        </div>
+
+        {/* Funil */}
+        <div className="bg-card border border-border rounded-xl p-5 card-hover">
+          <h3 className="font-display font-semibold mb-4">Funil</h3>
+          <ul className="space-y-3">
+            {funil.map((f, i) => {
+              const w = (f.n / max) * 100;
+              const intensity = 1 - i * 0.15;
+              return (
+                <li key={f.etapa}>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-muted-foreground">{f.etapa}</span>
+                    <span className="font-data tabular-nums">{f.n}</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all"
+                      style={{ width: `${w}%`, opacity: intensity }}
+                    />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </div>
+
+      <SectionDivider />
+
+      {/* Tabs */}
+      <div className="flex items-center gap-1 border-b border-border mb-5 overflow-x-auto">
+        {tabs.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={cn(
+              "px-4 py-2.5 text-sm font-medium flex items-center gap-2 border-b-2 -mb-px transition-colors whitespace-nowrap",
+              tab === t.key
+                ? "border-primary text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <t.icon className="h-4 w-4" />
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "candidatos" && (
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <button className="h-8 px-3 rounded-lg border border-border text-xs flex items-center gap-1.5 hover:bg-secondary">
+              <Filter className="h-3.5 w-3.5" /> Filtrar
+            </button>
+            <span className="text-xs text-muted-foreground ml-auto">Arraste candidatos entre etapas</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            {colunas.map((col, idx) => (
+              <div key={col} className="bg-card border border-border rounded-xl p-3 min-h-[280px]">
+                <div className="flex items-center justify-between mb-3 px-1">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{col}</span>
+                  <span className="font-data text-xs text-muted-foreground">{idx === 0 ? candidatosVaga.length : 0}</span>
+                </div>
+                {idx === 0 && candidatosVaga.length > 0 ? (
+                  <ul className="space-y-2">
+                    {candidatosVaga.map((c) => (
+                      <li key={c.id} className="bg-background/60 border border-border rounded-lg p-3 hover:border-primary/40 cursor-grab transition-colors">
+                        <div className="flex items-center gap-2">
+                          <div className="h-8 w-8 rounded-full bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white">
+                            {c.nome.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                          </div>
+                          <div className="min-w-0">
+                            <Link to={`/app/candidatos/${c.id}`} className="text-sm font-medium hover:text-primary truncate block">{c.nome}</Link>
+                            <div className="text-[10px] text-muted-foreground">DISC: {c.perfilDom} dominante</div>
+                          </div>
+                        </div>
+                        <div className="mt-2">
+                          <DiscBars values={c.disc} compact />
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="flex items-center justify-center h-32 text-xs text-muted-foreground">—</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {tab === "chat" && (
+        <div className="bg-card border border-border rounded-xl p-5 max-w-3xl">
+          <h3 className="font-display font-semibold mb-4">Mini-chat — Triagem</h3>
+          <ul className="space-y-3 mb-4">
+            {comentariosVaga.map((c) => (
+              <li key={c.id} className={cn("flex gap-3", c.azumi ? "" : "flex-row-reverse")}>
+                <div className={cn(
+                  "h-8 w-8 rounded-full flex items-center justify-center text-[10px] font-semibold shrink-0",
+                  c.azumi ? "bg-gradient-brand text-white" : "bg-secondary text-foreground"
+                )}>
+                  {c.azumi ? "A" : c.autor.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                </div>
+                <div className={cn("max-w-md", c.azumi ? "" : "text-right")}>
+                  <div className="text-xs text-muted-foreground mb-1">{c.autor} · {c.role} · <span className="font-data">{c.quando}</span></div>
+                  <div className={cn(
+                    "rounded-xl px-3 py-2 text-sm border",
+                    c.azumi ? "bg-primary/10 border-primary/20" : "bg-secondary border-border"
+                  )}>{c.texto}</div>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              placeholder="Comente nesta etapa…"
+              className="flex-1 h-10 px-3 rounded-lg bg-secondary border border-input focus:border-primary outline-none text-sm"
+            />
+            <button className="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center gap-1.5">
+              <Send className="h-4 w-4" /> Enviar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {(tab === "perfis" || tab === "questionarios" || tab === "historico") && (
+        <div className="bg-card border border-border rounded-xl p-8 text-center text-sm text-muted-foreground">
+          Conteúdo da aba <strong className="text-foreground">{tabs.find(t => t.key === tab)?.label}</strong> em construção.
+        </div>
+      )}
+    </div>
+  );
+}
