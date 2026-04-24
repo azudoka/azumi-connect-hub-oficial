@@ -367,6 +367,18 @@ export default function ProjetosPage() {
         }
       />
 
+      {PERFIL_DEMO === "consultor" && (
+        <div className="mb-5 rounded-xl border border-info/30 bg-info/10 px-4 py-3 flex items-start gap-3">
+          <Briefcase className="h-4 w-4 text-info shrink-0 mt-0.5" />
+          <div>
+            <div className="text-sm font-medium text-info">Visão de consultor</div>
+            <div className="text-xs text-info/80 mt-0.5">
+              Você está vendo apenas os projetos atribuídos a você.
+            </div>
+          </div>
+        </div>
+      )}
+
       <Tabs defaultValue="vigentes" className="w-full">
         <TabsList className="mb-5">
           <TabsTrigger value="vigentes">Projetos Vigentes</TabsTrigger>
