@@ -35,6 +35,7 @@ import ClientesPage from "./pages/admin/ClientesPage";
 import ConfiguracoesPage from "./pages/admin/ConfiguracoesPage";
 
 import ClienteDashboard from "./pages/cliente/ClienteDashboard";
+import ClienteSolicitacoes from "./pages/cliente/ClienteSolicitacoes";
 import VagaDetalheCliente from "./pages/cliente/VagaDetalheCliente";
 
 import LiderPainel from "./pages/hub/LiderPainel";
@@ -119,7 +120,7 @@ const AppRoutes = () => (
       <Route path="/cliente/projetos" element={<Stub title="Projetos da empresa" />} />
       <Route path="/cliente/projetos/:id" element={<Stub title="Detalhe do projeto" subtitle="Entregáveis + timer consultor + NPS" />} />
       <Route path="/cliente/horas" element={<Stub title="Horas consumidas" />} />
-      <Route path="/cliente/solicitacoes" element={<Stub title="Minhas solicitações" />} />
+      <Route path="/cliente/solicitacoes" element={<ClienteSolicitacoes />} />
       <Route path="/cliente/atracao" element={<Stub title="Minhas vagas" subtitle="Solicite ou acompanhe vagas em andamento" />} />
       <Route path="/cliente/atracao/:id" element={<VagaDetalheCliente />} />
       <Route path="/cliente/gestao-conta" element={<Stub title="Gestão de conta" subtitle="Boletos, contratos, relatórios" />} />
