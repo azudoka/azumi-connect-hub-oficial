@@ -6,10 +6,15 @@ import { Plus, LayoutGrid, List, Filter } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
+import VagasClientePage from "@/pages/VagasClientePage";
 
 export default function AtracaoLista() {
+  const { user } = useAuth();
   const [view, setView] = useState<"kanban" | "list">("kanban");
   const colunas = ["Briefing", "Triagem", "Entrevista", "Perfis enviados", "Decisão"];
+
+  if (user?.papel === "cliente") return <VagasClientePage />;
 
   return (
     <div>
