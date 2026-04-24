@@ -8,6 +8,7 @@ import {
   ExternalLink
 } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 
 interface SidebarConnectProps {
   variant?: "admin" | "cliente";
@@ -90,6 +91,11 @@ const clienteGroups = [
 export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
+  const { logout } = useAuth();
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
   const groups = variant === "admin" ? adminGroups : clienteGroups;
 
   return (
@@ -247,9 +253,13 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
               <NavLink to="/app/configuracoes" className="flex-1 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 px-2 py-1.5 rounded-md hover:bg-secondary">
                 <Settings className="h-3.5 w-3.5" /> Config.
               </NavLink>
-              <NavLink to="/login" className="text-xs text-muted-foreground hover:text-destructive flex items-center gap-1.5 px-2 py-1.5 rounded-md hover:bg-secondary">
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="text-xs text-muted-foreground hover:text-destructive flex items-center gap-1.5 px-2 py-1.5 rounded-md hover:bg-secondary"
+              >
                 <LogOut className="h-3.5 w-3.5" /> Sair
-              </NavLink>
+              </button>
             </div>
           </div>
         ) : (
