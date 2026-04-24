@@ -66,6 +66,32 @@ export default function VagaDetalheCliente() {
   });
   const [justificativa, setJustificativa] = useState("");
 
+  // B01: estado de ciência do relatório final (persistido em localStorage)
+  const [ciencia, setCiencia] = useState<CienciaRecord | null>(null);
+  const [cienciaOpen, setCienciaOpen] = useState(false);
+  const [assinandoCiencia, setAssinandoCiencia] = useState(false);
+
+  useEffect(() => {
+    const todas = lerCiencias();
+    setCiencia(todas[vaga.id] ?? null);
+  }, [vaga.id]);
+
+  // Apenas vagas concluídas exibem o botão de ciência do relatório final
+  const podeAssinarCiencia = vaga.status === "concluida";
+
+  async function handleAssinarCiencia() {
+    setAssinandoCiencia(true);
+    // simula latência da chamada à API
+    await new Promise((r) => setTimeout(r, 500));
+    const registro = salvarCiencia(vaga.id);
+    setCiencia(registro);
+    setAssinandoCiencia(false);
+    setCienciaOpen(false);
+    toast.success("Ciência assinada com sucesso.", {
+      description: "O registro ficará disponível para consulta a qualquer momento.",
+    });
+  }
+
   const funilResumido = [
     { etapa: "Triagem", n: vaga.candidatosTriagem },
     { etapa: "Entrevista", n: vaga.candidatosEntrevista },
