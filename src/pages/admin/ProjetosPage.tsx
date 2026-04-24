@@ -607,7 +607,9 @@ export default function ProjetosPage() {
                         <td className="px-4 py-3 font-medium">{cr.empresaNome}</td>
                         <td className="px-4 py-3">{cr.consultorNome}</td>
                         <td className="px-4 py-3">
-                          {cr.status === "aguardando_aprovacao_interna" ? (
+                          {cr.status === "rascunho" ? (
+                            <StatusBadge status="bloqueada">Rascunho</StatusBadge>
+                          ) : cr.status === "aguardando_aprovacao_interna" ? (
                             <StatusBadge status="analise">Aguardando aprovação interna</StatusBadge>
                           ) : (
                             <StatusBadge status="aguardando">Aguardando aprovação cliente</StatusBadge>
