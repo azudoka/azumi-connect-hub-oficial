@@ -52,6 +52,7 @@ const PERMISSOES_POR_PAPEL: Record<Papel, Permissao[]> = {
     "comunicados.ver", "comunicados.criar",
     "guia.ver", "guia.criar", "guia.editar",
     "perfil.editar_proprio",
+    "empresas.ver",
   ],
   cliente: [
     "dashboard.ver",
