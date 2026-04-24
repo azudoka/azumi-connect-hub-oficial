@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   Clock, Timer as TimerIcon, PenSquare, Download, Play,
   CalendarIcon, ChevronDown, ChevronRight, AlertTriangle, Filter,
+  Briefcase,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -28,6 +30,9 @@ import {
 } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 import { empresas, consultores } from "@/data/mock";
@@ -121,6 +126,49 @@ const lancamentosIniciais: Lancamento[] = [
   },
 ];
 
+// Lista plana de tarefas para os Selects e para deep-link via ?task_id=
+type Tarefa = {
+  id: string;            // ex: "kentaki::Mapeamento de Cargos::Diagnóstico inicial"
+  empresaId: string;
+  empresaNome: string;
+  projeto: string;
+  entregavel: string;
+  label: string;         // texto exibido no select
+};
+
+const tarefasFlat: Tarefa[] = (() => {
+  const arr: Tarefa[] = [];
+  for (const [empresaId, projetos] of Object.entries(projetosPorEmpresa)) {
+    const empresaNome = empresas.find((e) => e.id === empresaId)?.nome ?? empresaId;
+    for (const p of projetos) {
+      for (const ent of p.entregaveis) {
+        arr.push({
+          id: `${empresaId}::${p.projeto}::${ent}`,
+          empresaId,
+          empresaNome,
+          projeto: p.projeto,
+          entregavel: ent,
+          label: `${p.projeto} — ${ent}`,
+        });
+      }
+    }
+  }
+  return arr;
+})();
+
+// Regra: timer só pode ser iniciado entre 08h e 18h, segunda a sábado.
+function isHorarioPermitido(now: Date = new Date()): {
+  permitido: boolean;
+  motivo?: string;
+} {
+  const dia = now.getDay(); // 0=dom, 6=sáb
+  const hora = now.getHours();
+  if (dia === 0) return { permitido: false, motivo: "Timer indisponível aos domingos." };
+  if (hora < 8) return { permitido: false, motivo: "Timer disponível a partir das 08h." };
+  if (hora >= 18) return { permitido: false, motivo: "Horário encerrado — disponível das 08h às 18h." };
+  return { permitido: true };
+}
+
 // ────────────────────────────────────────────────────────────────────
 // Componente principal
 // ────────────────────────────────────────────────────────────────────
@@ -134,6 +182,37 @@ export default function HorasPage() {
   const [timerKey, setTimerKey] = useState(0);
   const [timerAtivo, setTimerAtivo] = useState(false);
   const [confirmStartOpen, setConfirmStartOpen] = useState(false);
+
+  // Tarefa selecionada para o timer (empresa → projeto/entregável)
+  const [tEmpresa, setTEmpresa] = useState<string>("");
+  const [tTarefaId, setTTarefaId] = useState<string>("");
+  const tarefasDaEmpresa = useMemo(
+    () => tarefasFlat.filter((t) => t.empresaId === tEmpresa),
+    [tEmpresa]
+  );
+  const tarefaAtiva = useMemo(
+    () => tarefasFlat.find((t) => t.id === tTarefaId) ?? null,
+    [tTarefaId]
+  );
+
+  // Deep-link: /app/horas?task_id=XXX → pré-seleciona empresa + tarefa
+  const [searchParams] = useSearchParams();
+  useEffect(() => {
+    const taskId = searchParams.get("task_id");
+    if (!taskId) return;
+    const tarefa = tarefasFlat.find((t) => t.id === taskId);
+    if (tarefa) {
+      setTEmpresa(tarefa.empresaId);
+      setTTarefaId(tarefa.id);
+    }
+  }, [searchParams]);
+
+  // Recalcula permissão de horário a cada minuto (botão Play habilita/desabilita sozinho)
+  const [horarioCheck, setHorarioCheck] = useState(() => isHorarioPermitido());
+  useEffect(() => {
+    const i = window.setInterval(() => setHorarioCheck(isHorarioPermitido()), 60_000);
+    return () => window.clearInterval(i);
+  }, []);
 
   // Encerramento automático às 18h
   useEffect(() => {
@@ -151,10 +230,20 @@ export default function HorasPage() {
   function encerrarAutomaticamente() {
     setTimerAtivo(false);
     setTimerKey((k) => k + 1);
-    toast.warning("Timer encerrado automaticamente às 18h. Verifique seu extrato.");
+    toast.warning("Seu timer foi encerrado automaticamente às 18h.", {
+      description: "Deseja ajustar as horas manualmente?",
+    });
   }
 
   function handleIniciarTimer() {
+    if (!horarioCheck.permitido) {
+      toast.error(horarioCheck.motivo ?? "Fora do horário permitido.");
+      return;
+    }
+    if (!tarefaAtiva) {
+      toast.error("Selecione uma tarefa antes de iniciar o timer.");
+      return;
+    }
     if (timerAtivo) {
       // Regra: 1 timer ativo por consultor → confirmar encerramento do anterior
       setConfirmStartOpen(true);
@@ -172,7 +261,23 @@ export default function HorasPage() {
 
   function handleTimerStop(seconds: number) {
     setTimerAtivo(false);
-    if (seconds > 0) {
+    if (seconds > 0 && tarefaAtiva) {
+      const horasReg = Number((seconds / 3600).toFixed(2));
+      const novo: Lancamento = {
+        id: `h${Date.now()}`,
+        data: format(new Date(), "yyyy-MM-dd"),
+        empresaId: tarefaAtiva.empresaId,
+        empresaNome: tarefaAtiva.empresaNome,
+        projeto: tarefaAtiva.projeto,
+        entregavel: tarefaAtiva.entregavel,
+        horas: horasReg,
+        tipo: "timer",
+        consultorId: "ab",
+        consultorNome: "Ana Beatriz",
+      };
+      setLancamentos((prev) => [novo, ...prev]);
+      toast.success(`Timer encerrado: ${horasReg.toFixed(2)}h registradas.`);
+    } else if (seconds > 0) {
       toast.success(`Timer encerrado: ${(seconds / 3600).toFixed(2)}h registradas.`);
     }
   }
@@ -181,7 +286,8 @@ export default function HorasPage() {
   const [mData, setMData] = useState<Date | undefined>(undefined);
   const [mEmpresa, setMEmpresa] = useState<string>("");
   const [mProjeto, setMProjeto] = useState<string>("");
-  const [mHoras, setMHoras] = useState<string>("");
+  const [mInicio, setMInicio] = useState<string>("");   // "HH:mm"
+  const [mFim, setMFim] = useState<string>("");          // "HH:mm"
   const [mJustificativa, setMJustificativa] = useState<string>("");
 
   const projetosDisponiveis = useMemo(
@@ -189,15 +295,27 @@ export default function HorasPage() {
     [mEmpresa]
   );
 
+  // Calcula duração em horas (decimal) a partir de "HH:mm" → "HH:mm".
+  // Retorna null se inválido. Não cruza meia-noite (não permitido nesta versão).
+  function calcularDuracao(inicio: string, fim: string): number | null {
+    const [hi, mi] = inicio.split(":").map(Number);
+    const [hf, mf] = fim.split(":").map(Number);
+    if ([hi, mi, hf, mf].some((n) => !Number.isFinite(n))) return null;
+    const minInicio = hi * 60 + mi;
+    const minFim = hf * 60 + mf;
+    if (minFim <= minInicio) return null;
+    return Number(((minFim - minInicio) / 60).toFixed(2));
+  }
+
   function handleSalvarManual(e: React.FormEvent) {
     e.preventDefault();
-    if (!mData || !mEmpresa || !mProjeto || !mHoras || !mJustificativa.trim()) {
+    if (!mData || !mEmpresa || !mProjeto || !mInicio || !mFim || !mJustificativa.trim()) {
       toast.error("Preencha todos os campos obrigatórios.");
       return;
     }
-    const horasNum = Number(mHoras.replace(",", "."));
-    if (!Number.isFinite(horasNum) || horasNum <= 0) {
-      toast.error("Informe um número de horas válido (ex: 1.5).");
+    const horasNum = calcularDuracao(mInicio, mFim);
+    if (horasNum === null) {
+      toast.error("A hora de fim deve ser maior que a hora de início.");
       return;
     }
     const empresa = empresas.find((e) => e.id === mEmpresa);
@@ -214,14 +332,16 @@ export default function HorasPage() {
       consultorId: "ab",
       consultorNome: "Ana Beatriz",
       justificativa: mJustificativa.trim(),
+      observacao: `Início ${mInicio} · Fim ${mFim}`,
     };
     setLancamentos((prev) => [novo, ...prev]);
-    toast.success("Lançamento manual registrado com sucesso.");
+    toast.success(`Lançamento manual registrado (${horasNum.toFixed(2)}h).`);
     // reset
     setMData(undefined);
     setMEmpresa("");
     setMProjeto("");
-    setMHoras("");
+    setMInicio("");
+    setMFim("");
     setMJustificativa("");
   }
 
@@ -271,7 +391,7 @@ export default function HorasPage() {
             <div>
               <h3 className="font-display font-semibold text-sm">Timer global</h3>
               <p className="text-[11px] text-muted-foreground">
-                Apenas 1 timer ativo por consultor · encerra automaticamente às 18h
+                Apenas 1 timer ativo por consultor · disponível 08h–18h, seg-sáb
               </p>
             </div>
           </div>
@@ -283,24 +403,102 @@ export default function HorasPage() {
           )}
         </div>
 
+        {/* Seleção de tarefa para o timer (empresa → tarefa) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Empresa</Label>
+            <Select
+              value={tEmpresa}
+              onValueChange={(v) => { setTEmpresa(v); setTTarefaId(""); }}
+              disabled={timerAtivo}
+            >
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Selecione a empresa" />
+              </SelectTrigger>
+              <SelectContent>
+                {empresas
+                  .filter((e) => projetosPorEmpresa[e.id])
+                  .map((e) => (
+                    <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Projeto / Entregável</Label>
+            <Select
+              value={tTarefaId}
+              onValueChange={setTTarefaId}
+              disabled={!tEmpresa || timerAtivo}
+            >
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder={tEmpresa ? "Selecione a tarefa" : "Escolha a empresa primeiro"} />
+              </SelectTrigger>
+              <SelectContent>
+                {tarefasDaEmpresa.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
         {timerAtivo ? (
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="rounded-lg border border-border bg-background/40 p-4 flex items-center gap-4 flex-wrap">
             <Timer key={timerKey} onStop={handleTimerStop} />
+            <div className="flex-1 min-w-[200px]">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Tarefa ativa</div>
+              {tarefaAtiva ? (
+                <div className="text-sm font-medium flex items-center gap-1.5">
+                  <Briefcase className="h-3.5 w-3.5 text-primary" />
+                  <span className="truncate">{tarefaAtiva.empresaNome} · {tarefaAtiva.label}</span>
+                </div>
+              ) : (
+                <div className="text-sm text-muted-foreground italic">Sem tarefa selecionada</div>
+              )}
+            </div>
             <span className="text-xs text-muted-foreground">
               Consultor: <span className="text-foreground font-medium">Ana Beatriz</span>
             </span>
           </div>
         ) : (
-          <EmptyState
-            icon={Clock}
-            title="Nenhum timer ativo no momento"
-            description="Inicie uma nova entrada para começar a registrar horas em tempo real."
-            action={
-              <Button onClick={handleIniciarTimer} className="gap-1.5">
-                <Play className="h-4 w-4" /> Iniciar nova entrada
-              </Button>
-            }
-          />
+          <div className="rounded-lg border border-dashed border-border bg-background/30 p-5 flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-muted text-muted-foreground flex items-center justify-center">
+                <Clock className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="text-sm font-medium">Nenhum timer ativo</div>
+                <div className="text-[11px] text-muted-foreground">
+                  {tarefaAtiva
+                    ? `Pronto para registrar: ${tarefaAtiva.label}`
+                    : "Selecione uma empresa e uma tarefa para iniciar."}
+                </div>
+              </div>
+            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span tabIndex={0}>
+                    <Button
+                      onClick={handleIniciarTimer}
+                      disabled={!horarioCheck.permitido || !tarefaAtiva}
+                      className="gap-1.5"
+                    >
+                      <Play className="h-4 w-4" /> Iniciar
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {(!horarioCheck.permitido || !tarefaAtiva) && (
+                  <TooltipContent>
+                    {!horarioCheck.permitido
+                      ? horarioCheck.motivo
+                      : "Selecione uma tarefa antes de iniciar o timer."}
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         )}
       </section>
 
@@ -385,20 +583,34 @@ export default function HorasPage() {
                   </Select>
                 </div>
 
-                {/* Horas */}
+                {/* Hora início / Hora fim — cálculo automático da duração */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="m-horas">Horas <span className="text-destructive">*</span></Label>
+                  <Label htmlFor="m-inicio">Hora início <span className="text-destructive">*</span></Label>
                   <Input
-                    id="m-horas"
-                    type="number"
-                    inputMode="decimal"
-                    step="0.25"
-                    min="0.25"
-                    placeholder="1.5"
-                    value={mHoras}
-                    onChange={(e) => setMHoras(e.target.value)}
+                    id="m-inicio"
+                    type="time"
+                    value={mInicio}
+                    onChange={(e) => setMInicio(e.target.value)}
                   />
-                  <p className="text-[10px] text-muted-foreground">Aceita decimais — ex: 1.5 = 1h30</p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="m-fim">Hora fim <span className="text-destructive">*</span></Label>
+                  <Input
+                    id="m-fim"
+                    type="time"
+                    value={mFim}
+                    onChange={(e) => setMFim(e.target.value)}
+                  />
+                  {mInicio && mFim && (
+                    (() => {
+                      const dur = calcularDuracao(mInicio, mFim);
+                      return dur === null ? (
+                        <p className="text-[10px] text-destructive">A hora de fim deve ser maior que a de início.</p>
+                      ) : (
+                        <p className="text-[10px] text-muted-foreground">Duração calculada: <span className="text-foreground font-data">{dur.toFixed(2)}h</span></p>
+                      );
+                    })()
+                  )}
                 </div>
 
                 {/* Justificativa (oculta do cliente) */}
