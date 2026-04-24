@@ -17,6 +17,7 @@ import {
 
 import { PageHeader } from "@/components/PageHeader";
 import { KpiCard } from "@/components/KpiCard";
+import { usePermissao } from "@/config/permissoes";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SlaBar } from "@/components/SlaBar";
 import { EmptyState } from "@/components/EmptyState";
@@ -153,6 +154,7 @@ const ENTREGAVEIS: EntregavelProx[] = [
 
 export default function DashboardPage() {
   const navigate = useNavigate();
+  const { pode } = usePermissao();
   const now = useMemo(() => new Date(), []);
   const saudacao = getSaudacao(now.getHours());
   const dataFormatada = useMemo(
@@ -203,13 +205,15 @@ export default function DashboardPage() {
           hint="vs 98h mês anterior"
           trend={{ value: "+17%", positive: true }}
         />
-        <KpiCard
-          label="Faturamento do mês"
-          value={formatBRL(fin.faturado)}
-          icon={CircleDollarSign}
-          hint={`Meta: ${formatBRL(fin.metaFaturamento)}`}
-          trend={{ value: `${pctFaturamento}% da meta`, positive: pctFaturamento >= 80 }}
-        />
+        {pode("financeiro.ver_valores") && (
+          <KpiCard
+            label="Faturamento do mês"
+            value={formatBRL(fin.faturado)}
+            icon={CircleDollarSign}
+            hint={`Meta: ${formatBRL(fin.metaFaturamento)}`}
+            trend={{ value: `${pctFaturamento}% da meta`, positive: pctFaturamento >= 80 }}
+          />
+        )}
         <KpiCard
           label="Entregáveis em atraso"
           value={String(atrasados)}

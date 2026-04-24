@@ -1,5 +1,5 @@
 import { toast } from "sonner";
-import { CheckCircle2, Download, FileText, Wallet } from "lucide-react";
+import { Download, Wallet } from "lucide-react";
 
 import { PageHeader } from "@/components/PageHeader";
 import { KpiCard } from "@/components/KpiCard";
@@ -50,12 +50,8 @@ const statusMap: Record<Fatura["status"], { key: StatusKey; label: string }> = {
 };
 
 export default function PortalFinanceiro() {
-  const totalFaturado = faturas.reduce((s, f) => s + f.valor, 0);
   const aPagar = faturas
     .filter((f) => f.status === "atrasado")
-    .reduce((s, f) => s + f.valor, 0);
-  const pago = faturas
-    .filter((f) => f.status === "pago")
     .reduce((s, f) => s + f.valor, 0);
 
   const handleBaixar = () => toast.info("Em breve");
@@ -67,14 +63,8 @@ export default function PortalFinanceiro() {
         subtitle="Faturas emitidas para a Kentaki Foods"
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <KpiCard
-          label="Total faturado"
-          value={formatBRL(totalFaturado)}
-          icon={FileText}
-        />
-        <KpiCard label="A pagar" value={formatBRL(aPagar)} icon={Wallet} />
-        <KpiCard label="Pago" value={formatBRL(pago)} icon={CheckCircle2} />
+      <div className="grid grid-cols-1 gap-4 sm:max-w-sm">
+        <KpiCard label="Em aberto no mês" value={formatBRL(aPagar)} icon={Wallet} />
       </div>
 
       <section className="mt-8">
