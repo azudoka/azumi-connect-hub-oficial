@@ -8,11 +8,16 @@ export default {
     container: {
       center: true,
       padding: "2rem",
-      screens: {
-        "2xl": "1400px",
-      },
+      screens: { "2xl": "1400px" },
     },
     extend: {
+      fontFamily: {
+        sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+        ui: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ["Sora", "Inter", "sans-serif"],
+        data: ["JetBrains Mono", "ui-monospace", "monospace"],
+        logo: ["Poppins", "Inter", "sans-serif"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -22,6 +27,7 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          glow: "hsl(var(--primary-glow))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -30,6 +36,30 @@ export default {
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
+        },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+        },
+        info: {
+          DEFAULT: "hsl(var(--info))",
+          foreground: "hsl(var(--info-foreground))",
+        },
+        highlight: {
+          DEFAULT: "hsl(var(--highlight))",
+          foreground: "hsl(var(--highlight-foreground))",
+        },
+        violet: "hsl(var(--violet))",
+        teal: "hsl(var(--teal))",
+        amber: "hsl(var(--amber))",
+        navy: {
+          DEFAULT: "hsl(var(--navy))",
+          light: "hsl(var(--navy-light))",
+          dark: "hsl(var(--navy-dark))",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
@@ -58,6 +88,17 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
       },
+      backgroundImage: {
+        "gradient-brand": "var(--gradient-brand)",
+        "gradient-sidebar": "var(--gradient-sidebar)",
+        "gradient-card-hover": "var(--gradient-card-hover)",
+        "gradient-divider": "var(--gradient-divider)",
+      },
+      boxShadow: {
+        violet: "var(--shadow-violet)",
+        card: "var(--shadow-card)",
+        elevated: "var(--shadow-elevated)",
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
@@ -65,25 +106,42 @@ export default {
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0", opacity: "0" },
+          to: { height: "var(--radix-accordion-content-height)", opacity: "1" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)", opacity: "1" },
+          to: { height: "0", opacity: "0" },
+        },
+        "fade-in": {
+          "0%": { opacity: "0", transform: "translateY(8px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "slide-in-left": {
+          "0%": { opacity: "0", transform: "translateX(-12px)" },
+          "100%": { opacity: "1", transform: "translateX(0)" },
+        },
+        "slide-in-right": {
+          "0%": { opacity: "0", transform: "translateX(12px)" },
+          "100%": { opacity: "1", transform: "translateX(0)" },
+        },
+        "scale-in": {
+          "0%": { opacity: "0", transform: "scale(0.96)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
+        "soft-pulse": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.55" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "fade-in": "fade-in 0.4s ease-out both",
+        "slide-in-left": "slide-in-left 0.35s ease-out both",
+        "slide-in-right": "slide-in-right 0.35s ease-out both",
+        "scale-in": "scale-in 0.25s ease-out both",
+        "soft-pulse": "soft-pulse 2s ease-in-out infinite",
       },
     },
   },
