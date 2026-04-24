@@ -8,10 +8,11 @@ import { useParams, Link } from "react-router-dom";
 import { vagas, candidatos, etapasVaga, comentariosVaga } from "@/data/mock";
 import {
   ArrowLeft, Building2, MapPin, Send, MessageSquare, CheckCircle2, Clock,
-  Users, FileQuestion, History, Filter
+  Users, FileQuestion, History, Filter, Loader2, AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { toast } from "sonner";
 
 const tabs = [
   { key: "candidatos", label: "Candidatos", icon: Users },
@@ -25,6 +26,10 @@ export default function VagaDetalheAdmin() {
   const { id } = useParams();
   const vaga = vagas.find((v) => v.id === id) ?? vagas[0];
   const [tab, setTab] = useState<typeof tabs[number]["key"]>("candidatos");
+
+  // B09: estado do Dialog "Enviar para o cliente"
+  const [enviarOpen, setEnviarOpen] = useState(false);
+  const [enviando, setEnviando] = useState(false);
 
   const funil = [
     { etapa: "Currículos", n: vaga.candidatosTotal },
@@ -218,9 +223,122 @@ export default function VagaDetalheAdmin() {
         </div>
       )}
 
-      {(tab === "perfis" || tab === "questionarios" || tab === "historico") && (
+      {tab === "perfis" && (
+        <div className="bg-card border border-border rounded-xl p-5">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+            <div>
+              <h3 className="font-display font-semibold">Perfis selecionados para envio</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {candidatosVaga.filter(c => c.enviado).length} candidato(s) prontos para apresentação ao cliente
+              </p>
+            </div>
+            {/* B09: Botão dispara Dialog de confirmação antes do envio */}
+            <button
+              onClick={() => setEnviarOpen(true)}
+              disabled={candidatosVaga.filter(c => c.enviado).length === 0}
+              className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center gap-1.5 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Send className="h-4 w-4" /> Enviar para o cliente
+            </button>
+          </div>
+
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {candidatosVaga.filter(c => c.enviado).map((c) => (
+              <li key={c.id} className="border border-border rounded-lg p-3 bg-background/40">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-full bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white">
+                    {c.nome.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium truncate">{c.nome}</div>
+                    <div className="text-[11px] text-muted-foreground">DISC: {c.perfilDom} dominante</div>
+                  </div>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-success/15 text-success border border-success/30">
+                    Pronto
+                  </span>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground line-clamp-2">{c.parecer}</p>
+              </li>
+            ))}
+            {candidatosVaga.filter(c => c.enviado).length === 0 && (
+              <li className="col-span-full text-center text-xs text-muted-foreground py-8">
+                Nenhum candidato marcado para envio ainda.
+              </li>
+            )}
+          </ul>
+        </div>
+      )}
+
+      {(tab === "questionarios" || tab === "historico") && (
         <div className="bg-card border border-border rounded-xl p-8 text-center text-sm text-muted-foreground">
           Conteúdo da aba <strong className="text-foreground">{tabs.find(t => t.key === tab)?.label}</strong> em construção.
+        </div>
+      )}
+
+      {/* B09: Dialog de confirmação para envio ao cliente */}
+      {enviarOpen && (
+        <div className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-card border border-border rounded-2xl shadow-elevated w-full max-w-md p-6 animate-scale-in">
+            <div className="flex items-start gap-3">
+              <div className="h-10 w-10 rounded-full bg-warning/15 text-warning flex items-center justify-center shrink-0">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-display text-lg font-semibold">Confirmar envio ao cliente?</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Você está prestes a enviar{" "}
+                  <strong className="text-foreground">{candidatosVaga.filter(c => c.enviado).length} perfil(is)</strong>{" "}
+                  para <strong className="text-foreground">{vaga.empresa}</strong>. Esta ação dispara
+                  notificação ao cliente e inicia a contagem de SLA do parecer.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-lg border border-border bg-background/40 p-3 space-y-1.5">
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Vaga</span>
+                <span className="font-medium">{vaga.titulo}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Empresa</span>
+                <span className="font-medium">{vaga.empresa}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Filial</span>
+                <span className="font-medium">{vaga.filial}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">SLA do parecer</span>
+                <span className="font-medium font-data">48h após envio</span>
+              </div>
+            </div>
+
+            <div className="mt-5 flex items-center justify-end gap-2">
+              <button
+                onClick={() => setEnviarOpen(false)}
+                disabled={enviando}
+                className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={async () => {
+                  setEnviando(true);
+                  await new Promise((r) => setTimeout(r, 800));
+                  setEnviando(false);
+                  setEnviarOpen(false);
+                  toast.success(`${candidatosVaga.filter(c => c.enviado).length} perfil(is) enviado(s) para ${vaga.empresa}.`, {
+                    description: "O cliente foi notificado e tem 48h para emitir parecer.",
+                  });
+                }}
+                disabled={enviando}
+                className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium inline-flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {enviando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                {enviando ? "Enviando…" : "Confirmar envio"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

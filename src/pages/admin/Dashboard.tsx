@@ -3,6 +3,7 @@ import { KpiCard } from "@/components/KpiCard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SectionDivider } from "@/components/SectionDivider";
 import { Timer } from "@/components/Timer";
+import { ConsumoAlertCard } from "@/components/ConsumoAlertCard";
 import { Briefcase, Target, Clock, MessagesSquare, Star, Plus, Calendar } from "lucide-react";
 import { atividades, eventos, horasSemana, vagas, projetos } from "@/data/mock";
 import {
@@ -88,6 +89,10 @@ export default function AdminDashboard() {
           </ul>
         </div>
       </div>
+
+      <SectionDivider>Alertas operacionais</SectionDivider>
+
+      <ConsumoAlertCard context="admin" />
 
       <SectionDivider>Últimas atividades</SectionDivider>
 

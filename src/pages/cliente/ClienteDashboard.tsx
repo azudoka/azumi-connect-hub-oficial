@@ -3,6 +3,7 @@ import { KpiCard } from "@/components/KpiCard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SectionDivider } from "@/components/SectionDivider";
 import { vagas, projetos, solicitacoes } from "@/data/mock";
+import { ConsumoAlertCard } from "@/components/ConsumoAlertCard";
 import { Briefcase, Target, Clock, MessagesSquare, Plus, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -25,6 +26,9 @@ export default function ClienteDashboard() {
         <KpiCard label="Horas no mês" value="61h" icon={Clock} hint="de 80h contratadas" trend={{ value: "76%", positive: true }} />
         <KpiCard label="Solicitações" value={solicitacoes.filter(s => s.empresa === "Kentaki Foods").length + 1} icon={MessagesSquare} />
       </div>
+
+      <SectionDivider>Consumo do mês</SectionDivider>
+      <ConsumoAlertCard context="cliente" empresaId="kentaki" limit={1} />
 
       <SectionDivider>Suas vagas</SectionDivider>
 

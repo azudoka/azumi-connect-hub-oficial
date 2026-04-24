@@ -43,6 +43,7 @@ export const vagas = [
     candidatosContratados: 0,
     consultor: "Ana Beatriz",
     modalidade: "Híbrido",
+    beneficios: ["vale_transporte", "vale_refeicao", "plano_saude", "plano_odontologico", "gympass"],
   },
   {
     id: "v2",
@@ -62,6 +63,7 @@ export const vagas = [
     candidatosContratados: 0,
     consultor: "Rafael Moura",
     modalidade: "Presencial",
+    beneficios: ["vale_transporte", "vale_refeicao", "plano_saude", "seguro_vida"],
   },
   {
     id: "v3",
@@ -81,6 +83,7 @@ export const vagas = [
     candidatosContratados: 0,
     consultor: "Ana Beatriz",
     modalidade: "Remoto",
+    beneficios: ["vale_refeicao", "plano_saude", "home_office", "auxilio_creche", "gympass", "stock_options"],
   },
   {
     id: "v4",
@@ -100,8 +103,48 @@ export const vagas = [
     candidatosContratados: 0,
     consultor: "Camila Torres",
     modalidade: "Híbrido",
+    beneficios: ["vale_transporte", "vale_refeicao", "plano_saude", "auxilio_educacao"],
   },
 ];
+
+// Mapa de labels legíveis em PT-BR para benefícios (B06)
+export const beneficiosLabels: Record<string, string> = {
+  vale_transporte: "Vale-transporte",
+  vale_refeicao: "Vale-refeição",
+  vale_alimentacao: "Vale-alimentação",
+  plano_saude: "Plano de saúde",
+  plano_odontologico: "Plano odontológico",
+  seguro_vida: "Seguro de vida",
+  gympass: "Gympass",
+  home_office: "Home office",
+  auxilio_creche: "Auxílio-creche",
+  auxilio_educacao: "Auxílio-educação",
+  stock_options: "Stock options",
+  ppr: "PPR",
+};
+
+// Mapa defensivo de cores por status de etapa (B04)
+export type EtapaStyle = { color: string; bg: string; ring: string; label: string };
+export const etapaStyles: Record<string, EtapaStyle> = {
+  concluida:  { color: "text-success",      bg: "bg-success",      ring: "ring-success/30",      label: "Concluída" },
+  andamento:  { color: "text-primary",      bg: "bg-primary",      ring: "ring-primary/30",      label: "Em andamento" },
+  aguardando: { color: "text-muted-foreground", bg: "bg-muted",    ring: "ring-border",          label: "Aguardando" },
+  bloqueada:  { color: "text-destructive",  bg: "bg-destructive",  ring: "ring-destructive/30",  label: "Bloqueada" },
+  atrasada:   { color: "text-destructive",  bg: "bg-destructive",  ring: "ring-destructive/30",  label: "Atrasada" },
+  cancelada:  { color: "text-muted-foreground", bg: "bg-muted",    ring: "ring-border",          label: "Cancelada" },
+  analise:    { color: "text-info",         bg: "bg-info",         ring: "ring-info/30",         label: "Em análise" },
+  ativa:      { color: "text-success",      bg: "bg-success",      ring: "ring-success/30",      label: "Ativa" },
+};
+export const etapaStyleFallback: EtapaStyle = {
+  color: "text-muted-foreground",
+  bg: "bg-muted",
+  ring: "ring-border",
+  label: "—",
+};
+export function getEtapaStyle(status?: string): EtapaStyle {
+  if (!status) return etapaStyleFallback;
+  return etapaStyles[status] ?? etapaStyleFallback;
+}
 
 export const projetos = [
   {
@@ -152,6 +195,7 @@ export const candidatos = [
     perfilDom: "D",
     parecer: "Perfil executivo, forte em tomada de decisão. Recomendado para entrevista final.",
     enviado: true,
+    status: "contratado" as "novo" | "em_analise" | "aprovado" | "standby" | "reprovado" | "contratado",
   },
   {
     id: "c2",
@@ -162,6 +206,7 @@ export const candidatos = [
     perfilDom: "I",
     parecer: "Comunicação excepcional, criativa. Forte fit cultural com Maverick.",
     enviado: true,
+    status: "em_analise" as const,
   },
   {
     id: "c3",
@@ -172,6 +217,7 @@ export const candidatos = [
     perfilDom: "C",
     parecer: "Técnico exemplar, atento a detalhes. Excelente em arquitetura.",
     enviado: true,
+    status: "em_analise" as const,
   },
   {
     id: "c4",
@@ -182,6 +228,7 @@ export const candidatos = [
     perfilDom: "S",
     parecer: "Liderança colaborativa, ótima para times em estruturação.",
     enviado: false,
+    status: "novo" as const,
   },
 ];
 
@@ -258,4 +305,25 @@ export const humorHistorico = [
   { dia: "01", v: 4 }, { dia: "05", v: 5 }, { dia: "08", v: 3 },
   { dia: "12", v: 4 }, { dia: "15", v: 4 }, { dia: "18", v: 5 },
   { dia: "22", v: 3 }, { dia: "25", v: 4 }, { dia: "28", v: 5 },
+];
+
+// Notificações de consumo de horas (B08): cada uma referencia empresa+empresaId
+// para que o componente possa montar um link direto para /app/empresas/:id ou
+// /cliente/gestao-conta conforme o contexto.
+export type ConsumoNotificacao = {
+  id: string;
+  empresa: string;
+  empresaId: string;
+  consumido: number;       // horas consumidas
+  contratadas: number;     // horas contratadas no mês
+  percent: number;         // 0-100
+  severidade: "info" | "warning" | "critical";
+  quando: string;
+};
+
+export const consumoNotificacoes: ConsumoNotificacao[] = [
+  { id: "cn1", empresa: "Grupo Maverick",  empresaId: "maverick",   consumido: 92,  contratadas: 100, percent: 92, severidade: "critical", quando: "há 12 min" },
+  { id: "cn2", empresa: "Tech Plural",     empresaId: "techplural", consumido: 68,  contratadas: 80,  percent: 85, severidade: "warning",  quando: "há 1h" },
+  { id: "cn3", empresa: "Kentaki Foods",   empresaId: "kentaki",    consumido: 61,  contratadas: 80,  percent: 76, severidade: "info",     quando: "há 3h" },
+  { id: "cn4", empresa: "Studio Mira",     empresaId: "mira",       consumido: 49,  contratadas: 80,  percent: 61, severidade: "info",     quando: "ontem" },
 ];

@@ -4,19 +4,36 @@ import { SectionDivider } from "@/components/SectionDivider";
 import { SlaBar } from "@/components/SlaBar";
 import { DiscBars } from "@/components/DiscBars";
 import { Link, useParams } from "react-router-dom";
-import { vagas, candidatos, etapasVaga, comentariosVaga } from "@/data/mock";
 import {
-  ArrowLeft, Building2, MapPin, Lock, Send, AlertTriangle, CheckCircle2,
-  PauseCircle, XCircle, FileText, Info, Star
+  vagas, candidatos, etapasVaga, comentariosVaga,
+  beneficiosLabels, getEtapaStyle,
+} from "@/data/mock";
+import {
+  ArrowLeft, Lock, Send, AlertTriangle, CheckCircle2,
+  PauseCircle, XCircle, FileText, Info, Star, Loader2, Gift, ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { toast } from "sonner";
+
+type DecisaoTipo = "aprovar" | "standby" | "reprovar";
+type CandidatoStatus = "novo" | "em_analise" | "aprovado" | "standby" | "reprovado" | "contratado";
 
 export default function VagaDetalheCliente() {
   const { id } = useParams();
   const vaga = vagas.find((v) => v.id === id) ?? vagas[0];
   const candidatosEnviados = candidatos.filter((c) => c.vagaId === vaga.id && c.enviado);
-  const [decisao, setDecisao] = useState<{ open: boolean; tipo: "aprovar" | "standby" | "reprovar" | null }>({ open: false, tipo: null });
+
+  // B05: estado local de status por candidato (carrega o status inicial do mock)
+  const [candidatoStatus, setCandidatoStatus] = useState<Record<string, CandidatoStatus>>(
+    () => Object.fromEntries(
+      candidatosEnviados.map((c) => [c.id, ((c as any).status as CandidatoStatus) ?? "em_analise"])
+    )
+  );
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [decisao, setDecisao] = useState<{ open: boolean; tipo: DecisaoTipo | null; candidatoId: string | null }>({
+    open: false, tipo: null, candidatoId: null,
+  });
   const [justificativa, setJustificativa] = useState("");
 
   const funilResumido = [
@@ -26,6 +43,56 @@ export default function VagaDetalheCliente() {
   ];
   const max = Math.max(...funilResumido.map(f => f.n), 1);
   const atrasado = vaga.sla > 90;
+
+  // B06: benefícios da vaga (com fallback se não houver no mock)
+  const beneficios: string[] = (vaga as any).beneficios ?? [];
+
+  function abrirDecisao(candidatoId: string, tipo: DecisaoTipo) {
+    // B05: bloqueia reprovação de candidato já contratado
+    const statusAtual = candidatoStatus[candidatoId];
+    if (tipo === "reprovar" && statusAtual === "contratado") {
+      toast.error("Não é possível reprovar um candidato já contratado.", {
+        description: "Para reverter uma contratação, fale com seu consultor Azumi.",
+      });
+      return;
+    }
+    setDecisao({ open: true, tipo, candidatoId });
+  }
+
+  async function confirmarDecisao() {
+    if (!decisao.candidatoId || !decisao.tipo) return;
+    const candidatoId = decisao.candidatoId;
+    const tipo = decisao.tipo;
+    const candidato = candidatosEnviados.find(c => c.id === candidatoId);
+
+    setLoadingId(candidatoId);
+    // simula chamada à API
+    await new Promise((r) => setTimeout(r, 700));
+
+    const novoStatus: CandidatoStatus =
+      tipo === "aprovar" ? "aprovado" :
+      tipo === "standby" ? "standby" : "reprovado";
+
+    setCandidatoStatus((prev) => ({ ...prev, [candidatoId]: novoStatus }));
+    setLoadingId(null);
+    setDecisao({ open: false, tipo: null, candidatoId: null });
+    setJustificativa("");
+
+    const labelTipo = tipo === "aprovar" ? "aprovado" : tipo === "standby" ? "colocado em standby" : "reprovado";
+    if (tipo === "aprovar") {
+      toast.success(`${candidato?.nome ?? "Candidato"} foi ${labelTipo}.`, {
+        description: "Seu consultor foi notificado e dará sequência ao processo.",
+      });
+    } else if (tipo === "reprovar") {
+      toast.error(`${candidato?.nome ?? "Candidato"} foi ${labelTipo}.`, {
+        description: "Justificativa registrada. Novos perfis serão enviados em breve.",
+      });
+    } else {
+      toast.warning(`${candidato?.nome ?? "Candidato"} foi ${labelTipo}.`, {
+        description: "O candidato permanece no pipeline aguardando definição.",
+      });
+    }
+  }
 
   return (
     <div>
@@ -57,21 +124,23 @@ export default function VagaDetalheCliente() {
           <h3 className="font-display font-semibold mb-4">Etapas da vaga</h3>
           <ol className="space-y-3">
             {etapasVaga.map((e, idx) => {
+              // B04: usa getEtapaStyle com fallback seguro — nunca quebra
+              const etapaStyle = getEtapaStyle(e.status);
+              const { color: etapaColor, bg: etapaBg } = etapaStyle;
               const done = e.status === "concluida";
               const active = e.status === "andamento";
               return (
                 <li key={idx} className="flex items-start gap-3 p-3 rounded-lg border border-border bg-background/40">
                   <div className={cn(
-                    "h-8 w-8 rounded-full flex items-center justify-center font-data text-xs shrink-0",
-                    done && "bg-success text-success-foreground",
-                    active && "bg-primary text-primary-foreground animate-soft-pulse",
-                    !done && !active && "bg-muted text-muted-foreground"
+                    "h-8 w-8 rounded-full flex items-center justify-center font-data text-xs shrink-0 text-white",
+                    etapaBg,
+                    active && "animate-soft-pulse",
                   )}>
                     {done ? <CheckCircle2 className="h-4 w-4" /> : idx + 1}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-medium">{e.nome}</span>
+                      <span className={cn("text-sm font-medium", etapaColor)}>{e.nome}</span>
                       <StatusBadge status={e.status} />
                     </div>
                     <div className="text-[11px] text-muted-foreground font-data mt-0.5">
@@ -128,6 +197,34 @@ export default function VagaDetalheCliente() {
         </div>
       </div>
 
+      {/* B06: Benefícios da vaga renderizados como badges com labels PT-BR */}
+      {beneficios.length > 0 && (
+        <>
+          <SectionDivider>Benefícios oferecidos</SectionDivider>
+          <div className="bg-card border border-border rounded-xl p-5">
+            <div className="flex items-start gap-3">
+              <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <Gift className="h-4 w-4" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-display font-semibold text-sm mb-3">Pacote de benefícios</h4>
+                <ul className="flex flex-wrap gap-2">
+                  {beneficios.map((b) => (
+                    <li
+                      key={b}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium"
+                    >
+                      <ShieldCheck className="h-3.5 w-3.5" />
+                      {beneficiosLabels[b] ?? b.replace(/_/g, " ")}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
       <SectionDivider>Perfis apresentados</SectionDivider>
 
       {candidatosEnviados.length === 0 ? (
@@ -136,51 +233,99 @@ export default function VagaDetalheCliente() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {candidatosEnviados.map((c) => (
-            <div key={c.id} className="bg-card border border-border rounded-xl p-5 card-hover">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-gradient-brand flex items-center justify-center text-xs font-semibold text-white">
-                  {c.nome.split(" ").map(n => n[0]).join("").slice(0, 2)}
+          {candidatosEnviados.map((c) => {
+            const status = candidatoStatus[c.id] ?? "em_analise";
+            const isLoading = loadingId === c.id;
+            const isContratado = status === "contratado";
+            const isAprovado = status === "aprovado";
+            const isStandby = status === "standby";
+            const isReprovado = status === "reprovado";
+            return (
+              <div key={c.id} className="bg-card border border-border rounded-xl p-5 card-hover">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-gradient-brand flex items-center justify-center text-xs font-semibold text-white">
+                    {c.nome.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium truncate">{c.nome}</div>
+                    <div className="text-[11px] text-muted-foreground">DISC: {c.perfilDom} dominante</div>
+                  </div>
+                  <Lock className="h-3.5 w-3.5 text-muted-foreground" aria-label="Contato bloqueado" />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium truncate">{c.nome}</div>
-                  <div className="text-[11px] text-muted-foreground">DISC: {c.perfilDom} dominante</div>
+
+                {/* Badge do status atual da decisão */}
+                {(isContratado || isAprovado || isStandby || isReprovado) && (
+                  <div className="mt-3">
+                    <span className={cn(
+                      "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border",
+                      isContratado && "bg-success/15 text-success border-success/30",
+                      isAprovado && "bg-success/15 text-success border-success/30",
+                      isStandby && "bg-warning/15 text-warning border-warning/30",
+                      isReprovado && "bg-destructive/15 text-destructive border-destructive/30",
+                    )}>
+                      {isContratado && <><CheckCircle2 className="h-3 w-3" /> Contratado</>}
+                      {isAprovado && <><CheckCircle2 className="h-3 w-3" /> Aprovado</>}
+                      {isStandby && <><PauseCircle className="h-3 w-3" /> Em standby</>}
+                      {isReprovado && <><XCircle className="h-3 w-3" /> Reprovado</>}
+                    </span>
+                  </div>
+                )}
+
+                <div className="mt-3">
+                  <DiscBars values={c.disc} compact />
                 </div>
-                <Lock className="h-3.5 w-3.5 text-muted-foreground" aria-label="Contato bloqueado" />
-              </div>
 
-              <div className="mt-3">
-                <DiscBars values={c.disc} compact />
-              </div>
+                <p className="mt-3 text-xs text-muted-foreground line-clamp-2">{c.parecer}</p>
 
-              <p className="mt-3 text-xs text-muted-foreground line-clamp-2">{c.parecer}</p>
-
-              <button className="mt-3 w-full h-8 rounded-lg border border-border hover:bg-secondary text-xs font-medium flex items-center justify-center gap-1.5">
-                <FileText className="h-3.5 w-3.5" /> Ver relatório completo
-              </button>
-
-              <div className="mt-3 grid grid-cols-3 gap-2">
-                <button onClick={() => setDecisao({ open: true, tipo: "aprovar" })} className="h-8 rounded-lg bg-success/15 hover:bg-success/25 text-success text-xs font-medium flex items-center justify-center gap-1">
-                  <CheckCircle2 className="h-3.5 w-3.5" /> Aprovar
+                <button className="mt-3 w-full h-8 rounded-lg border border-border hover:bg-secondary text-xs font-medium flex items-center justify-center gap-1.5">
+                  <FileText className="h-3.5 w-3.5" /> Ver relatório completo
                 </button>
-                <button onClick={() => setDecisao({ open: true, tipo: "standby" })} className="h-8 rounded-lg bg-warning/15 hover:bg-warning/25 text-warning text-xs font-medium flex items-center justify-center gap-1">
-                  <PauseCircle className="h-3.5 w-3.5" /> Standby
-                </button>
-                <button onClick={() => setDecisao({ open: true, tipo: "reprovar" })} className="h-8 rounded-lg bg-destructive/15 hover:bg-destructive/25 text-destructive text-xs font-medium flex items-center justify-center gap-1">
-                  <XCircle className="h-3.5 w-3.5" /> Reprovar
-                </button>
-              </div>
 
-              <div className="mt-3 pt-3 border-t border-border">
-                <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Parecer do gestor</div>
-                <div className="flex items-center gap-1">
-                  {[1,2,3,4,5].map((n) => (
-                    <Star key={n} className="h-4 w-4 text-muted-foreground hover:text-warning hover:fill-warning cursor-pointer" />
-                  ))}
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  <button
+                    onClick={() => abrirDecisao(c.id, "aprovar")}
+                    disabled={isLoading || isContratado}
+                    className="h-8 rounded-lg bg-success/15 hover:bg-success/25 text-success text-xs font-medium flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                    Aprovar
+                  </button>
+                  <button
+                    onClick={() => abrirDecisao(c.id, "standby")}
+                    disabled={isLoading || isContratado}
+                    className="h-8 rounded-lg bg-warning/15 hover:bg-warning/25 text-warning text-xs font-medium flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <PauseCircle className="h-3.5 w-3.5" />}
+                    Standby
+                  </button>
+                  <button
+                    onClick={() => abrirDecisao(c.id, "reprovar")}
+                    disabled={isLoading || isContratado}
+                    title={isContratado ? "Candidato já contratado — não pode ser reprovado" : undefined}
+                    className="h-8 rounded-lg bg-destructive/15 hover:bg-destructive/25 text-destructive text-xs font-medium flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <XCircle className="h-3.5 w-3.5" />}
+                    Reprovar
+                  </button>
+                </div>
+
+                {isContratado && (
+                  <p className="mt-2 text-[10px] text-muted-foreground italic">
+                    Candidato contratado — ações de decisão bloqueadas.
+                  </p>
+                )}
+
+                <div className="mt-3 pt-3 border-t border-border">
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Parecer do gestor</div>
+                  <div className="flex items-center gap-1">
+                    {[1,2,3,4,5].map((n) => (
+                      <Star key={n} className="h-4 w-4 text-muted-foreground hover:text-warning hover:fill-warning cursor-pointer" />
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -232,13 +377,20 @@ export default function VagaDetalheCliente() {
               className="mt-3 w-full h-28 p-3 rounded-lg bg-secondary border border-input focus:border-primary outline-none text-sm resize-none"
             />
             <div className="mt-4 flex items-center justify-end gap-2">
-              <button onClick={() => setDecisao({ open: false, tipo: null })} className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm">Cancelar</button>
               <button
-                disabled={!justificativa.trim()}
-                onClick={() => { setDecisao({ open: false, tipo: null }); setJustificativa(""); }}
-                className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50"
+                onClick={() => { setDecisao({ open: false, tipo: null, candidatoId: null }); setJustificativa(""); }}
+                disabled={loadingId !== null}
+                className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm disabled:opacity-50"
               >
-                Confirmar
+                Cancelar
+              </button>
+              <button
+                disabled={!justificativa.trim() || loadingId !== null}
+                onClick={confirmarDecisao}
+                className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50 inline-flex items-center gap-1.5"
+              >
+                {loadingId !== null && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                {loadingId !== null ? "Registrando…" : "Confirmar"}
               </button>
             </div>
           </div>
