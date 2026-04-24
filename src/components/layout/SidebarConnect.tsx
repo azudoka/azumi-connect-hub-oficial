@@ -1,9 +1,11 @@
 import { NavLink } from "@/components/NavLink";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Building2, Users, Briefcase, Clock, MessagesSquare, Target,
   BarChart3, Wallet, FileText, ShieldCheck, Calendar, Megaphone, BookOpen,
-  Settings, Settings2, LogOut, ChevronLeft, Sparkles, UserCog, Heart, Wrench
+  Settings, Settings2, LogOut, ChevronLeft, Sparkles, UserCog, Heart, Wrench,
+  ExternalLink
 } from "lucide-react";
 import { useState } from "react";
 
@@ -87,6 +89,7 @@ const clienteGroups = [
 
 export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const navigate = useNavigate();
   const groups = variant === "admin" ? adminGroups : clienteGroups;
 
   return (
@@ -201,6 +204,26 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
             <Settings2 className="h-4 w-4 shrink-0" />
             {!collapsed && <span className="truncate">Configurações</span>}
           </NavLink>
+
+          {variant === "admin" && (
+            <>
+              <div className="my-2 h-px bg-sidebar-border/60" />
+              <button
+                type="button"
+                onClick={() => navigate("/portal")}
+                className={cn(
+                  "group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors",
+                  collapsed ? "justify-center px-0" : "text-xs text-muted-foreground"
+                )}
+                aria-label="Acessar Portal do Cliente"
+              >
+                <ExternalLink className="h-4 w-4 shrink-0" />
+                {!collapsed && (
+                  <span className="truncate">Acessar Portal do Cliente</span>
+                )}
+              </button>
+            </>
+          )}
         </div>
       </nav>
 

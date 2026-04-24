@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { LogOut } from "lucide-react";
+import { ArrowLeft, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -23,6 +23,15 @@ export default function PortalLayout() {
     <div className="flex min-h-full w-full flex-col bg-background text-foreground">
       <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
         <div className="mx-auto flex h-16 max-w-[1400px] items-center gap-4 px-6">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/app/dashboard")}
+            className="gap-1.5 h-8"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span className="text-xs">Painel admin</span>
+          </Button>
           <div className="flex items-center gap-3">
             <span className="font-display text-lg font-semibold text-gradient-brand">
               Azumi RH
