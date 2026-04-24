@@ -100,6 +100,7 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const { logout, user } = useAuth();
+  const { pode } = usePermissao();
   const papelLabel =
     user?.papel === "admin"
       ? "Administrador"
@@ -112,7 +113,17 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
     logout();
     navigate("/login");
   };
-  const groups = variant === "admin" ? adminGroups : clienteGroups;
+  const groupsBase = variant === "admin" ? adminGroups : clienteGroups;
+  // Filtra itens cuja rota exige permissão que o usuário não possui.
+  const groups = groupsBase
+    .map((g) => ({
+      ...g,
+      items: g.items.filter((it) => {
+        const req = PERMISSAO_POR_ROTA[it.to];
+        return req ? pode(req) : true;
+      }),
+    }))
+    .filter((g) => g.items.length > 0);
 
   return (
     <aside
