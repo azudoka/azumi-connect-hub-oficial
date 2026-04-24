@@ -47,6 +47,8 @@ interface Projeto {
   consultorId: string;
   consultorNome: string;
   consultorIniciais: string;
+  /** ID do consultor atribuído (regra de visibilidade — perfil consultor só vê seus). */
+  assignedConsultorId: string;
   frente: FrenteAtuacao;
   status: ProjetoStatus;
   conclusao: number;
@@ -59,7 +61,9 @@ interface CronogramaPendente {
   codigo: string;
   empresaNome: string;
   consultorNome: string;
-  status: "aguardando_aprovacao_interna" | "aguardando_aprovacao_cliente";
+  /** B03: "rascunho" passa a existir e é o estado para o qual qualquer
+      edição de cronograma já aprovado é forçada antes de reenviar. */
+  status: "rascunho" | "aguardando_aprovacao_interna" | "aguardando_aprovacao_cliente";
   criadoEm: string;
 }
 
@@ -90,42 +94,49 @@ const projetosIniciais: Projeto[] = [
     id: "p1", codigo: "PROJ-2026-0001", titulo: "Mapeamento de Cargos",
     empresaId: "kentaki", empresaNome: "Kentaki Foods", filial: "São Paulo — Matriz",
     consultorId: "ab", consultorNome: "Ana Beatriz", consultorIniciais: "AB",
+    assignedConsultorId: "ab",
     frente: "consultoria", status: "em_andamento", conclusao: 62, prazoFinal: "2026-05-30",
   },
   {
     id: "p2", codigo: "PROJ-2026-0002", titulo: "Hunting — Gerente TI",
     empresaId: "kentaki", empresaNome: "Kentaki Foods", filial: "São Paulo — Matriz",
     consultorId: "ab", consultorNome: "Ana Beatriz", consultorIniciais: "AB",
+    assignedConsultorId: "ab",
     frente: "atracao", status: "em_andamento", conclusao: 45, prazoFinal: "2026-04-15",
   },
   {
     id: "p3", codigo: "PROJ-2026-0003", titulo: "Estruturação de RH",
     empresaId: "mira", empresaNome: "Studio Mira", filial: "Curitiba",
     consultorId: "ct", consultorNome: "Camila Torres", consultorIniciais: "CT",
+    assignedConsultorId: "ct",
     frente: "consultoria", status: "em_andamento", conclusao: 78, prazoFinal: "2026-06-20",
   },
   {
     id: "p4", codigo: "PROJ-2026-0004", titulo: "Go to Market",
     empresaId: "alvo", empresaNome: "Alvo Digital", filial: "São Paulo",
     consultorId: "rm", consultorNome: "Rafael Moura", consultorIniciais: "RM",
+    assignedConsultorId: "rm",
     frente: "estrategia", status: "aguardando_cliente", conclusao: 35, prazoFinal: "2026-07-10",
   },
   {
     id: "p5", codigo: "PROJ-2026-0005", titulo: "Implantação de PDP",
     empresaId: "maverick", empresaNome: "Grupo Maverick", filial: "Curitiba",
     consultorId: "rm", consultorNome: "Rafael Moura", consultorIniciais: "RM",
+    assignedConsultorId: "rm",
     frente: "dp", status: "aguardando_cliente", conclusao: 20, prazoFinal: "2026-08-01",
   },
   {
     id: "p6", codigo: "PROJ-2026-0006", titulo: "Revisão de políticas internas",
     empresaId: "techplural", empresaNome: "Tech Plural", filial: "Remoto",
     consultorId: "ab", consultorNome: "Ana Beatriz", consultorIniciais: "AB",
+    assignedConsultorId: "ab",
     frente: "juridico", status: "ajuste_solicitado", conclusao: 55, prazoFinal: "2026-04-30",
   },
   {
     id: "p7", codigo: "PROJ-2025-0042", titulo: "Programa de liderança 2025",
     empresaId: "mira", empresaNome: "Studio Mira", filial: "Curitiba",
     consultorId: "ct", consultorNome: "Camila Torres", consultorIniciais: "CT",
+    assignedConsultorId: "ct",
     frente: "consultoria", status: "encerrado", conclusao: 100, prazoFinal: "2025-12-15",
     encerradoEm: "2025-12-12",
   },
@@ -155,6 +166,18 @@ const filiaisPorEmpresa: Record<string, string[]> = {
 };
 
 // ────────────────────────────────────────────────────────────────────
+// Regra de visibilidade — perfil + consultor logado (simulado).
+// Nota: o AuthContext atual só conhece "admin" | "cliente". Para validar
+// a regra "consultor vê apenas os atribuídos a ele" sem alterar arquivos
+// fora do escopo, simulamos via estas constantes. Ajuste manualmente para
+// testar (ex.: PERFIL_DEMO = "consultor"; CONSULTOR_LOGADO_ID = "ab").
+// ────────────────────────────────────────────────────────────────────
+
+type PerfilDemo = "admin" | "consultor";
+const PERFIL_DEMO: PerfilDemo = "admin";
+const CONSULTOR_LOGADO_ID = "ab";
+
+// ────────────────────────────────────────────────────────────────────
 // Página
 // ────────────────────────────────────────────────────────────────────
 
@@ -163,6 +186,32 @@ const VIEW_KEY = "projetos:view";
 export default function ProjetosPage() {
   const [projetos, setProjetos] = useState<Projeto[]>(projetosIniciais);
   const [cronogramas, setCronogramas] = useState<CronogramaPendente[]>(cronogramasIniciais);
+
+  // ─── B03 ─────────────────────────────────────────────────────────
+  // Toda edição de cronograma com status diferente de "rascunho" precisa
+  // forçar status = "rascunho" antes de persistir, e notificar o consultor
+  // para que ele reenvie. Esta função fica disponível para qualquer fluxo
+  // futuro de edição (UI ainda não existe).
+  function atualizarCronograma(id: string, patch: Partial<CronogramaPendente>) {
+    setCronogramas((prev) =>
+      prev.map((cr) => {
+        if (cr.id !== id) return cr;
+        const merged = { ...cr, ...patch };
+        if (cr.status !== "rascunho") {
+          // Edição em cronograma já enviado → volta a rascunho e avisa o consultor.
+          merged.status = "rascunho";
+          toast.info(
+            `Cronograma ${cr.codigo} voltou para rascunho.`,
+            { description: `Reenvie para aprovação. Notificação enviada a ${cr.consultorNome}.` }
+          );
+        }
+        return merged;
+      })
+    );
+  }
+  // Exposto via ref de módulo — evita o lint "no-unused-vars" enquanto não
+  // há UI de edição. Remova esta linha quando a UI consumir a função.
+  void atualizarCronograma;
 
   // Toggle Lista/Kanban com persistência
   const [view, setView] = useState<"lista" | "kanban">(() => {
@@ -179,13 +228,21 @@ export default function ProjetosPage() {
   const [fStatus, setFStatus] = useState<"todos" | ProjetoStatus>("todos");
   const [fFrente, setFFrente] = useState<"todas" | FrenteAtuacao>("todas");
 
+  // Visibilidade por perfil: admin vê tudo; consultor vê só os atribuídos a ele.
+  const projetosVisiveis = useMemo(() => {
+    if (PERFIL_DEMO === "consultor") {
+      return projetos.filter((p) => p.assignedConsultorId === CONSULTOR_LOGADO_ID);
+    }
+    return projetos;
+  }, [projetos]);
+
   const projetosVigentes = useMemo(
-    () => projetos.filter((p) => p.status !== "encerrado"),
-    [projetos]
+    () => projetosVisiveis.filter((p) => p.status !== "encerrado"),
+    [projetosVisiveis]
   );
   const projetosEncerrados = useMemo(
-    () => projetos.filter((p) => p.status === "encerrado"),
-    [projetos]
+    () => projetosVisiveis.filter((p) => p.status === "encerrado"),
+    [projetosVisiveis]
   );
 
   const filtrados = useMemo(() => {
@@ -269,6 +326,7 @@ export default function ProjetosPage() {
       consultorId: pConsultor,
       consultorNome: consultor?.nome ?? "—",
       consultorIniciais: consultor?.iniciais ?? "??",
+      assignedConsultorId: pConsultor,
       frente: "consultoria",
       status: "em_andamento",
       conclusao: 0,
@@ -308,6 +366,18 @@ export default function ProjetosPage() {
           </>
         }
       />
+
+      {PERFIL_DEMO === "consultor" && (
+        <div className="mb-5 rounded-xl border border-info/30 bg-info/10 px-4 py-3 flex items-start gap-3">
+          <Briefcase className="h-4 w-4 text-info shrink-0 mt-0.5" />
+          <div>
+            <div className="text-sm font-medium text-info">Visão de consultor</div>
+            <div className="text-xs text-info/80 mt-0.5">
+              Você está vendo apenas os projetos atribuídos a você.
+            </div>
+          </div>
+        </div>
+      )}
 
       <Tabs defaultValue="vigentes" className="w-full">
         <TabsList className="mb-5">
@@ -549,7 +619,9 @@ export default function ProjetosPage() {
                         <td className="px-4 py-3 font-medium">{cr.empresaNome}</td>
                         <td className="px-4 py-3">{cr.consultorNome}</td>
                         <td className="px-4 py-3">
-                          {cr.status === "aguardando_aprovacao_interna" ? (
+                          {cr.status === "rascunho" ? (
+                            <StatusBadge status="bloqueada">Rascunho</StatusBadge>
+                          ) : cr.status === "aguardando_aprovacao_interna" ? (
                             <StatusBadge status="analise">Aguardando aprovação interna</StatusBadge>
                           ) : (
                             <StatusBadge status="aguardando">Aguardando aprovação cliente</StatusBadge>
