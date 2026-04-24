@@ -3,7 +3,7 @@ import {
   ShieldCheck, UserCog, Building2, Crown, Users, UserCircle2, BriefcaseBusiness, ArrowRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAuth, type Papel } from "@/context/AuthContext";
+import { useAuth, type AuthUser } from "@/context/AuthContext";
 
 type PerfilItem = {
   key: string;
@@ -12,7 +12,7 @@ type PerfilItem = {
   icon: typeof ShieldCheck;
   to: string;
   color: string;
-  auth?: { nome: string; papel: Papel };
+  auth?: AuthUser;
 };
 
 const perfis: PerfilItem[] = [
@@ -23,7 +23,7 @@ const perfis: PerfilItem[] = [
     icon: ShieldCheck,
     to: "/app/dashboard",
     color: "text-primary",
-    auth: { nome: "Patricia Lima", papel: "admin" },
+    auth: { id: "admin-01", nome: "Patricia Lima", papel: "admin", empresaId: null },
   },
   {
     key: "consultor",
@@ -32,7 +32,7 @@ const perfis: PerfilItem[] = [
     icon: UserCog,
     to: "/app/dashboard",
     color: "text-primary",
-    auth: { nome: "Ana Beatriz", papel: "consultor" },
+    auth: { id: "consultor-01", nome: "Ana Beatriz", papel: "consultor", empresaId: null },
   },
   {
     key: "cliente",
@@ -41,7 +41,7 @@ const perfis: PerfilItem[] = [
     icon: Building2,
     to: "/portal",
     color: "text-highlight",
-    auth: { nome: "Kentaki Foods", papel: "cliente" },
+    auth: { id: "cliente-01", nome: "Kentaki Foods", papel: "cliente", empresaId: "kentaki" },
   },
   {
     key: "cliente-avulso",
@@ -50,7 +50,7 @@ const perfis: PerfilItem[] = [
     icon: Building2,
     to: "/portal",
     color: "text-highlight",
-    auth: { nome: "Cliente Avulso", papel: "cliente" },
+    auth: { id: "cliente-02", nome: "Cliente Avulso", papel: "cliente", empresaId: "maverick" },
   },
   { key: "ceo", label: "CEO", desc: "Indicadores estratégicos", icon: Crown, to: "/hub/ceo/dashboard", color: "text-warning" },
   { key: "lider", label: "Líder", desc: "Gestão do time e feedback", icon: BriefcaseBusiness, to: "/hub/lider/painel", color: "text-info" },

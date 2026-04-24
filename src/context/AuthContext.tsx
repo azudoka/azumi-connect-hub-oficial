@@ -3,8 +3,10 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 export type Papel = "admin" | "consultor" | "cliente";
 
 export interface AuthUser {
+  id: string;
   nome: string;
   papel: Papel;
+  empresaId: string | null;
 }
 
 interface AuthContextValue {
@@ -25,8 +27,11 @@ function readStoredUser(): AuthUser | null {
     const parsed = JSON.parse(raw) as AuthUser;
     if (
       parsed &&
+      typeof parsed.id === "string" &&
+      parsed.id.length > 0 &&
       typeof parsed.nome === "string" &&
-      (parsed.papel === "admin" || parsed.papel === "consultor" || parsed.papel === "cliente")
+      (parsed.papel === "admin" || parsed.papel === "consultor" || parsed.papel === "cliente") &&
+      (parsed.empresaId === null || typeof parsed.empresaId === "string")
     ) {
       return parsed;
     }
