@@ -59,12 +59,11 @@ function PrivateRoute({
 function RootRedirect() {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
-  return (
-    <Navigate
-      to={user.papel === "admin" ? "/app/dashboard" : "/portal"}
-      replace
-    />
-  );
+  const destino =
+    user.papel === "admin" || user.papel === "consultor"
+      ? "/app/dashboard"
+      : "/portal";
+  return <Navigate to={destino} replace />;
 }
 
 const AppRoutes = () => (
@@ -76,7 +75,7 @@ const AppRoutes = () => (
     {/* Admin / Consultor */}
     <Route
       element={
-        <PrivateRoute allowed={["admin"]}>
+        <PrivateRoute allowed={["admin", "consultor"]}>
           <AppLayout variant="admin" />
         </PrivateRoute>
       }
