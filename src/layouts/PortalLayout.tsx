@@ -4,6 +4,7 @@ import { ArrowLeft, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useAuth } from "@/context/AuthContext";
 
 const navItems = [
   { to: "/portal", label: "Visão geral", end: true },
@@ -13,10 +14,12 @@ const navItems = [
 
 export default function PortalLayout() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const handleSair = () => {
+    logout();
     toast.info("Sessão encerrada");
-    setTimeout(() => navigate("/login"), 600);
+    navigate("/login");
   };
 
   return (
