@@ -183,6 +183,37 @@ export default function HorasPage() {
   const [timerAtivo, setTimerAtivo] = useState(false);
   const [confirmStartOpen, setConfirmStartOpen] = useState(false);
 
+  // Tarefa selecionada para o timer (empresa → projeto/entregável)
+  const [tEmpresa, setTEmpresa] = useState<string>("");
+  const [tTarefaId, setTTarefaId] = useState<string>("");
+  const tarefasDaEmpresa = useMemo(
+    () => tarefasFlat.filter((t) => t.empresaId === tEmpresa),
+    [tEmpresa]
+  );
+  const tarefaAtiva = useMemo(
+    () => tarefasFlat.find((t) => t.id === tTarefaId) ?? null,
+    [tTarefaId]
+  );
+
+  // Deep-link: /app/horas?task_id=XXX → pré-seleciona empresa + tarefa
+  const [searchParams] = useSearchParams();
+  useEffect(() => {
+    const taskId = searchParams.get("task_id");
+    if (!taskId) return;
+    const tarefa = tarefasFlat.find((t) => t.id === taskId);
+    if (tarefa) {
+      setTEmpresa(tarefa.empresaId);
+      setTTarefaId(tarefa.id);
+    }
+  }, [searchParams]);
+
+  // Recalcula permissão de horário a cada minuto (botão Play habilita/desabilita sozinho)
+  const [horarioCheck, setHorarioCheck] = useState(() => isHorarioPermitido());
+  useEffect(() => {
+    const i = window.setInterval(() => setHorarioCheck(isHorarioPermitido()), 60_000);
+    return () => window.clearInterval(i);
+  }, []);
+
   // Encerramento automático às 18h
   useEffect(() => {
     if (!timerAtivo) return;
@@ -199,10 +230,20 @@ export default function HorasPage() {
   function encerrarAutomaticamente() {
     setTimerAtivo(false);
     setTimerKey((k) => k + 1);
-    toast.warning("Timer encerrado automaticamente às 18h. Verifique seu extrato.");
+    toast.warning("Seu timer foi encerrado automaticamente às 18h.", {
+      description: "Deseja ajustar as horas manualmente?",
+    });
   }
 
   function handleIniciarTimer() {
+    if (!horarioCheck.permitido) {
+      toast.error(horarioCheck.motivo ?? "Fora do horário permitido.");
+      return;
+    }
+    if (!tarefaAtiva) {
+      toast.error("Selecione uma tarefa antes de iniciar o timer.");
+      return;
+    }
     if (timerAtivo) {
       // Regra: 1 timer ativo por consultor → confirmar encerramento do anterior
       setConfirmStartOpen(true);
@@ -220,7 +261,23 @@ export default function HorasPage() {
 
   function handleTimerStop(seconds: number) {
     setTimerAtivo(false);
-    if (seconds > 0) {
+    if (seconds > 0 && tarefaAtiva) {
+      const horasReg = Number((seconds / 3600).toFixed(2));
+      const novo: Lancamento = {
+        id: `h${Date.now()}`,
+        data: format(new Date(), "yyyy-MM-dd"),
+        empresaId: tarefaAtiva.empresaId,
+        empresaNome: tarefaAtiva.empresaNome,
+        projeto: tarefaAtiva.projeto,
+        entregavel: tarefaAtiva.entregavel,
+        horas: horasReg,
+        tipo: "timer",
+        consultorId: "ab",
+        consultorNome: "Ana Beatriz",
+      };
+      setLancamentos((prev) => [novo, ...prev]);
+      toast.success(`Timer encerrado: ${horasReg.toFixed(2)}h registradas.`);
+    } else if (seconds > 0) {
       toast.success(`Timer encerrado: ${(seconds / 3600).toFixed(2)}h registradas.`);
     }
   }
