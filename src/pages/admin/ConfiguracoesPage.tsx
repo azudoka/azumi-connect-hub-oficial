@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Camera,
   Download,
@@ -560,18 +560,16 @@ function ConsultorDialog({
   const [taxa, setTaxa]   = useState<string>(initial?.taxa?.toString() ?? "");
   const [status, setStatus] = useState<ConsultorStatus>(initial?.status ?? "ativo");
 
-  // Sync quando muda o `initial` (edição abre com dados diferentes)
-  // Usamos open como gatilho para resetar
-  const syncKey = `${open}-${initial?.id ?? "new"}`;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useState(() => {
-    setNome(initial?.nome ?? "");
-    setEmail(initial?.email ?? "");
-    setCargo(initial?.cargo ?? "");
-    setTaxa(initial?.taxa?.toString() ?? "");
-    setStatus(initial?.status ?? "ativo");
-    return syncKey;
-  });
+  // Sincroniza campos quando o dialog abre em modo edição
+  useEffect(() => {
+    if (open) {
+      setNome(initial?.nome ?? "");
+      setEmail(initial?.email ?? "");
+      setCargo(initial?.cargo ?? "");
+      setTaxa(initial?.taxa?.toString() ?? "");
+      setStatus(initial?.status ?? "ativo");
+    }
+  }, [open, initial]);
 
   const reset = () => {
     setNome(""); setEmail(""); setCargo(""); setTaxa(""); setStatus("ativo");
