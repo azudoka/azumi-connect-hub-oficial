@@ -206,6 +206,7 @@ export const candidatos = [
     perfilDom: "I",
     parecer: "Comunicação excepcional, criativa. Forte fit cultural com Maverick.",
     enviado: true,
+    status: "em_analise" as const,
   },
   {
     id: "c3",
@@ -216,6 +217,7 @@ export const candidatos = [
     perfilDom: "C",
     parecer: "Técnico exemplar, atento a detalhes. Excelente em arquitetura.",
     enviado: true,
+    status: "em_analise" as const,
   },
   {
     id: "c4",
@@ -226,6 +228,7 @@ export const candidatos = [
     perfilDom: "S",
     parecer: "Liderança colaborativa, ótima para times em estruturação.",
     enviado: false,
+    status: "novo" as const,
   },
 ];
 
