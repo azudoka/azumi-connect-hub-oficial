@@ -19,17 +19,17 @@ export default function Login() {
   }, [user, navigate]);
 
   const entrarComoAdmin = () => {
-    login({ nome: "Patricia Lima", papel: "admin" });
+    login({ id: "admin-01", nome: "Patricia Lima", papel: "admin", empresaId: null });
     navigate("/app/dashboard", { replace: true });
   };
 
   const entrarComoConsultor = () => {
-    login({ nome: "Ana Beatriz", papel: "consultor" });
+    login({ id: "consultor-01", nome: "Ana Beatriz", papel: "consultor", empresaId: null });
     navigate("/app/dashboard", { replace: true });
   };
 
   const entrarComoCliente = () => {
-    login({ nome: "Kentaki Foods", papel: "cliente" });
+    login({ id: "cliente-01", nome: "Kentaki Foods", papel: "cliente", empresaId: "kentaki" });
     navigate("/portal", { replace: true });
   };
 
