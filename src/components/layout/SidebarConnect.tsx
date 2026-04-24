@@ -9,10 +9,18 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { usePermissao, type Permissao } from "@/config/permissoes";
 
 interface SidebarConnectProps {
   variant?: "admin" | "cliente";
 }
+
+// Mapa de permissões exigidas por rota. Itens sem entrada aqui ficam sempre visíveis.
+const PERMISSAO_POR_ROTA: Record<string, Permissao> = {
+  "/app/financeiro": "financeiro.ver_valores",
+  "/app/gestao-de-conta": "gestao_conta.relatorio",
+  "/cliente/gestao-conta": "gestao_conta.relatorio",
+};
 
 const adminGroups = [
   {
