@@ -105,7 +105,13 @@ const AppRoutes = () => (
     </Route>
 
     {/* Cliente ADM (mantido) */}
-    <Route element={<AppLayout variant="cliente" />}>
+    <Route
+      element={
+        <PrivateRoute allowed={["cliente"]}>
+          <AppLayout />
+        </PrivateRoute>
+      }
+    >
       <Route path="/cliente/dashboard" element={<ClienteDashboard />} />
       <Route path="/cliente/projetos" element={<Stub title="Projetos da empresa" />} />
       <Route path="/cliente/projetos/:id" element={<Stub title="Detalhe do projeto" subtitle="Entregáveis + timer consultor + NPS" />} />
