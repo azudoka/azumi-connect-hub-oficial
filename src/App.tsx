@@ -22,6 +22,7 @@ import HorasPage from "./pages/admin/HorasPage";
 import ProjetosPage from "./pages/admin/ProjetosPage";
 import ProjetoDetalhe from "./pages/admin/ProjetoDetalhe";
 import FinanceiroPage from "./pages/admin/FinanceiroPage";
+import ClientesPage from "./pages/admin/ClientesPage";
 
 import ClienteDashboard from "./pages/cliente/ClienteDashboard";
 import VagaDetalheCliente from "./pages/cliente/VagaDetalheCliente";
@@ -51,6 +52,8 @@ const App = () => (
             <Route path="/app/usuarios" element={<Stub title="Usuários" subtitle="Gestão de usuários internos e externos" />} />
             <Route path="/app/projetos" element={<ProjetosPage />} />
             <Route path="/app/projetos/:id" element={<ProjetoDetalhe />} />
+            <Route path="/app/clientes" element={<ClientesPage />} />
+            <Route path="/app/clientes/:id" element={<Stub title="Detalhe do cliente" subtitle="Visão consolidada da empresa" />} />
             <Route path="/app/horas" element={<HorasPage />} />
             <Route path="/app/financeiro" element={<FinanceiroPage />} />
             <Route path="/app/solicitacoes" element={<Stub title="Solicitações" subtitle="Central de solicitações" />} />
