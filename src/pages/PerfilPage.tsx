@@ -45,9 +45,9 @@ function papelLabel(papel?: string) {
 }
 
 function papelClasses(papel?: string) {
-  if (papel === "cliente") return "bg-violet-50 text-violet-700 border-violet-200";
-  if (papel === "consultor") return "bg-green-50 text-green-700 border-green-200";
-  if (papel === "admin") return "bg-blue-50 text-blue-700 border-blue-200";
+  if (papel === "cliente") return "bg-primary/10 text-primary border-primary/30";
+  if (papel === "consultor") return "bg-success/15 text-success border-success/30";
+  if (papel === "admin") return "bg-info/15 text-info border-info/30";
   return "bg-muted text-muted-foreground border-border";
 }
 
@@ -231,7 +231,7 @@ export default function PerfilPage() {
           </div>
 
           <div className="flex items-center gap-4 mb-5">
-            <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-xl font-bold shrink-0">
+            <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground text-xl font-bold shrink-0">
               {EMPRESA_MOCK.logoInicial}
             </div>
             <div className="flex-1 min-w-0">
