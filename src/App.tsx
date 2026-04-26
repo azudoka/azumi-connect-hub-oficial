@@ -36,9 +36,12 @@ import ConfiguracoesPage from "./pages/admin/ConfiguracoesPage";
 import SolicitacoesPage from "./pages/admin/SolicitacoesPage";
 import VagasClientePage from "./pages/VagasClientePage";
 import PerfilPage from "./pages/PerfilPage";
+import SolicitacoesClientePage from "./pages/SolicitacoesClientePage";
+import ClienteProjetosPage from "./pages/cliente/ClienteProjetosPage";
+import ClienteProjetoDetalhe from "./pages/cliente/ClienteProjetoDetalhe";
+import ClienteHorasPage from "./pages/cliente/ClienteHorasPage";
 
 import ClienteDashboard from "./pages/cliente/ClienteDashboard";
-import ClienteSolicitacoes from "./pages/cliente/ClienteSolicitacoes";
 import VagaDetalheCliente from "./pages/cliente/VagaDetalheCliente";
 
 import LiderPainel from "./pages/hub/LiderPainel";
@@ -127,10 +130,11 @@ const AppRoutes = () => (
       }
     >
       <Route path="/cliente/dashboard" element={<ClienteDashboard />} />
-      <Route path="/cliente/projetos" element={<Stub title="Projetos da empresa" />} />
-      <Route path="/cliente/projetos/:id" element={<Stub title="Detalhe do projeto" subtitle="Entregáveis + timer consultor + NPS" />} />
-      <Route path="/cliente/horas" element={<Stub title="Horas consumidas" />} />
-      <Route path="/cliente/solicitacoes" element={<ClienteSolicitacoes />} />
+      <Route path="/cliente/projetos" element={<ClienteProjetosPage />} />
+      <Route path="/cliente/projetos/:id" element={<ClienteProjetoDetalhe />} />
+      <Route path="/cliente/horas" element={<ClienteHorasPage />} />
+      <Route path="/cliente/solicitacoes" element={<SolicitacoesClientePage />} />
+      <Route path="/cliente/solicitacoes/:id" element={<Stub title="Detalhe da solicitação" subtitle="Conversa completa com a consultora" />} />
       <Route path="/cliente/atracao" element={<VagasClientePage />} />
       <Route path="/cliente/atracao/:id" element={<VagaDetalheCliente />} />
       <Route path="/cliente/gestao-conta" element={<Stub title="Gestão de conta" subtitle="Boletos, contratos, relatórios" />} />
