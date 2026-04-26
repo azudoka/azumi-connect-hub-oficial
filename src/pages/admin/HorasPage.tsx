@@ -195,15 +195,22 @@ export default function HorasPage() {
     [tTarefaId]
   );
 
-  // Deep-link: /app/horas?task_id=XXX → pré-seleciona empresa + tarefa
+  // Deep-link: /app/horas?task_id=XXX ou ?taskId=XXX → pré-seleciona empresa + tarefa.
+  // Aceita também o código do entregável (ENT-YYYY-XXXX) como fallback.
   const [searchParams] = useSearchParams();
   useEffect(() => {
-    const taskId = searchParams.get("task_id");
+    const taskId = searchParams.get("task_id") ?? searchParams.get("taskId");
     if (!taskId) return;
-    const tarefa = tarefasFlat.find((t) => t.id === taskId);
+    const tarefa =
+      tarefasFlat.find((t) => t.id === taskId) ??
+      tarefasFlat.find((t) => t.entregavel === taskId) ??
+      tarefasFlat.find((t) => t.id.endsWith(`::${taskId}`));
     if (tarefa) {
       setTEmpresa(tarefa.empresaId);
       setTTarefaId(tarefa.id);
+      toast.info(`Tarefa pré-selecionada: ${tarefa.label}`);
+    } else {
+      toast.error("Tarefa não encontrada para este link.");
     }
   }, [searchParams]);
 
@@ -809,22 +816,25 @@ export default function HorasPage() {
         )}
       </section>
 
-      {/* Dialog: confirmar encerramento de timer anterior */}
+      {/* Dialog: bloqueio de segundo timer simultâneo */}
       <Dialog open={confirmStartOpen} onOpenChange={setConfirmStartOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Encerrar timer anterior?</DialogTitle>
+            <DialogTitle>Não é possível iniciar dois timers ao mesmo tempo</DialogTitle>
             <DialogDescription>
-              Já existe um timer ativo. Apenas um registro pode estar em andamento por consultor.
-              Deseja encerrar o anterior e iniciar uma nova entrada?
+              Já existe um timer ativo para outra tarefa. A regra da Azumi permite apenas
+              um timer ativo por consultor para garantir o registro correto das horas.
+              <br />
+              <br />
+              Para iniciar este novo registro, é necessário encerrar o timer atual primeiro.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmStartOpen(false)}>
-              Cancelar
+              Manter timer atual
             </Button>
             <Button onClick={confirmarEncerrarEReiniciar}>
-              Encerrar e iniciar nova
+              Encerrar atual e iniciar novo
             </Button>
           </DialogFooter>
         </DialogContent>
