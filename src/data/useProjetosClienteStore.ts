@@ -34,13 +34,17 @@ function setState(updater: (s: State) => State) {
   notify();
 }
 
-export function useProjetosClienteStore<T>(selector: (s: State) => T): T {
-  const subscribe = (cb: () => void) => {
-    listeners.add(cb);
-    return () => listeners.delete(cb);
+const subscribe = (cb: () => void) => {
+  listeners.add(cb);
+  return () => {
+    listeners.delete(cb);
   };
-  const getSnapshot = () => selector(state);
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+};
+const getState = () => state;
+
+export function useProjetosClienteStore<T>(selector: (s: State) => T): T {
+  const snap = useSyncExternalStore(subscribe, getState, getState);
+  return selector(snap);
 }
 
 // Reseta dados quando troca de empresa (em sessão real seria refetch).
