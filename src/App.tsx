@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router-dom";
 import type { ReactElement } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -75,7 +75,6 @@ function RootRedirect() {
 
 // Redireciona /portal/projetos/:id → /cliente/projetos/:id preservando o id
 function PortalProjetoRedirect() {
-  const { useParams } = require("react-router-dom") as typeof import("react-router-dom");
   const { id } = useParams<{ id: string }>();
   return <Navigate to={`/cliente/projetos/${id ?? ""}`} replace />;
 }
