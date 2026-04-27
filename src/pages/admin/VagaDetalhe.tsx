@@ -6,9 +6,26 @@ import { DiscBars } from "@/components/DiscBars";
 import { Timer } from "@/components/Timer";
 import { useParams, Link } from "react-router-dom";
 import { vagas, candidatos, etapasVaga, comentariosVaga } from "@/data/mock";
+
+const BENEFICIO_LABEL: Record<string, string> = {
+  vale_transporte: "Vale-transporte",
+  vale_alimentacao: "Vale-alimentação",
+  vale_refeicao: "Vale-refeição",
+  plano_saude: "Plano de saúde",
+  plano_odontologico: "Plano odontológico",
+  gympass: "Gympass",
+  home_office: "Home office",
+  bonus: "Bônus",
+  participacao_lucros: "PLR",
+  seguro_vida: "Seguro de vida",
+  auxilio_creche: "Auxílio-creche",
+  auxilio_educacao: "Auxílio-educação",
+  stock_options: "Stock options",
+  ppr: "PPR",
+};
 import {
   ArrowLeft, Building2, MapPin, Send, MessageSquare, CheckCircle2, Clock,
-  Users, FileQuestion, History, Filter, Loader2, AlertTriangle,
+  Users, FileQuestion, History, Filter, Loader2, AlertTriangle, Bot, User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -96,6 +113,20 @@ export default function VagaDetalheAdmin() {
           </>
         }
       />
+
+      {vaga.beneficios && vaga.beneficios.length > 0 && (
+        <div className="mb-5 flex flex-wrap items-center gap-2">
+          <span className="text-xs uppercase tracking-wider text-muted-foreground mr-1">Benefícios</span>
+          {vaga.beneficios.map((b) => (
+            <span
+              key={b}
+              className="inline-flex items-center rounded-full border border-border bg-secondary px-2.5 py-0.5 text-xs font-medium text-foreground"
+            >
+              {BENEFICIO_LABEL[b] ?? b}
+            </span>
+          ))}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
         {/* Timeline */}
@@ -340,9 +371,61 @@ export default function VagaDetalheAdmin() {
         </div>
       )}
 
-      {(tab === "questionarios" || tab === "historico") && (
+      {tab === "historico" && (
+        <div className="bg-card border border-border rounded-xl p-5 max-w-3xl">
+          <h3 className="font-display font-semibold mb-4">Histórico da vaga</h3>
+          <ol className="relative space-y-4 before:absolute before:left-4 before:top-2 before:bottom-2 before:w-px before:bg-border">
+            {comentariosVaga.map((c) => {
+              const isSistema = !c.autor || /sistema|automátic/i.test(c.role);
+              const dataFmt = c.quando;
+              return (
+                <li key={c.id} className="relative flex gap-3 pl-0">
+                  <div
+                    className={cn(
+                      "h-8 w-8 rounded-full flex items-center justify-center text-[10px] font-semibold shrink-0 z-10 border",
+                      isSistema
+                        ? "bg-muted text-muted-foreground border-border"
+                        : c.azumi
+                          ? "bg-gradient-brand text-white border-transparent"
+                          : "bg-secondary text-foreground border-border"
+                    )}
+                  >
+                    {isSistema ? (
+                      <Bot className="h-4 w-4" />
+                    ) : (
+                      c.autor.split(" ").map((n) => n[0]).join("").slice(0, 2)
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                      {isSistema ? <Bot className="h-3 w-3" /> : <User className="h-3 w-3" />}
+                      <span className="font-medium text-foreground">{c.autor}</span>
+                      <span>· {c.role} ·</span>
+                      <span className="font-data">{dataFmt}</span>
+                    </div>
+                    <div
+                      className={cn(
+                        "rounded-xl px-3 py-2 text-sm border",
+                        isSistema
+                          ? "bg-muted/50 border-border italic"
+                          : c.azumi
+                            ? "bg-primary/10 border-primary/20"
+                            : "bg-secondary border-border"
+                      )}
+                    >
+                      {c.texto}
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      )}
+
+      {tab === "questionarios" && (
         <div className="bg-card border border-border rounded-xl p-8 text-center text-sm text-muted-foreground">
-          Conteúdo da aba <strong className="text-foreground">{tabs.find(t => t.key === tab)?.label}</strong> em construção.
+          Conteúdo da aba <strong className="text-foreground">Questionários</strong> em construção.
         </div>
       )}
 
