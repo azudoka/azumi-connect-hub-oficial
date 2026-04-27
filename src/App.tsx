@@ -45,6 +45,10 @@ import ClienteDashboard from "./pages/cliente/ClienteDashboard";
 import VagaDetalheCliente from "./pages/cliente/VagaDetalheCliente";
 
 import LiderPainel from "./pages/hub/LiderPainel";
+import LiderMeuTime from "./pages/hub/LiderMeuTime";
+import LiderOnboarding from "./pages/hub/LiderOnboarding";
+import LiderFeedback from "./pages/hub/LiderFeedback";
+import LiderSolicitacoes from "./pages/hub/LiderSolicitacoes";
 import ColaboradorInicio from "./pages/hub/ColaboradorInicio";
 import CeoDashboard from "./pages/hub/CeoDashboard";
 
@@ -147,12 +151,12 @@ const AppRoutes = () => (
     {/* Hub Líder */}
     <Route element={<HubLayout profile="lider" />}>
       <Route path="/hub/lider/painel" element={<LiderPainel />} />
-      <Route path="/hub/lider/meu-time" element={<Stub title="Meu time" />} />
+      <Route path="/hub/lider/meu-time" element={<LiderMeuTime />} />
       <Route path="/hub/lider/meu-time/:id" element={<Stub title="Perfil do colaborador" />} />
-      <Route path="/hub/lider/onboarding" element={<Stub title="Onboarding" />} />
-      <Route path="/hub/lider/feedback" element={<Stub title="Feedback" />} />
+      <Route path="/hub/lider/onboarding" element={<LiderOnboarding />} />
+      <Route path="/hub/lider/feedback" element={<LiderFeedback />} />
       <Route path="/hub/lider/avaliacoes" element={<Stub title="Avaliação de desempenho" />} />
-      <Route path="/hub/lider/solicitacoes" element={<Stub title="Solicitações do time" />} />
+      <Route path="/hub/lider/solicitacoes" element={<LiderSolicitacoes />} />
       <Route path="/hub/lider/politicas" element={<Stub title="Políticas internas" />} />
       <Route path="/hub/lider/treinamentos" element={<Stub title="Treinamentos" />} />
       <Route path="/hub/lider/calendario" element={<Stub title="Calendário da equipe" />} />
