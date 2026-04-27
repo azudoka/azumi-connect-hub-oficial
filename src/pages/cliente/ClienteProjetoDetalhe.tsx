@@ -80,6 +80,10 @@ export default function ClienteProjetoDetalhe() {
     return null;
   }
 
+  const entregaveisVisiveis = projeto.entregaveis.filter(
+    (e) => e.status === "aprovacao_cliente" || e.status === "aprovado_cliente"
+  );
+
   return (
     <>
       <div className="mb-5">
@@ -111,9 +115,19 @@ export default function ClienteProjetoDetalhe() {
       </div>
 
       <div className="space-y-3">
-        {projeto.entregaveis.map((e) => (
-          <EntregavelCard key={e.id} projetoId={projeto.id} entregavel={e} />
-        ))}
+        {entregaveisVisiveis.length === 0 ? (
+          <Card className="glass">
+            <CardContent className="p-8 text-center">
+              <p className="text-sm text-muted-foreground">
+                Nenhum entregável disponível para avaliação no momento. Você será notificado quando houver itens aguardando seu parecer.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          entregaveisVisiveis.map((e) => (
+            <EntregavelCard key={e.id} projetoId={projeto.id} entregavel={e} />
+          ))
+        )}
       </div>
     </>
   );
