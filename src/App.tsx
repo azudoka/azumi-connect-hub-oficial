@@ -16,7 +16,7 @@ import PortalDashboard from "./pages/portal/PortalDashboard";
 // como rotas — os arquivos permanecem no disco. As rotas /portal/* equivalentes
 // agora redirecionam para /cliente/* (caminho canônico do cliente).
 
-import Login from "./pages/Login";
+import Login from "./pages/auth/Login";
 import SelecaoPerfil from "./pages/auth/SelecaoPerfil";
 import NotFound from "./pages/NotFound";
 import Stub from "./pages/Stub";
@@ -80,13 +80,22 @@ function PrivateRoute({
 }
 
 function RootRedirect() {
-  const { user } = useAuth();
-  if (!user) return <Navigate to="/login" replace />;
-  const destino =
-    user.papel === "admin" || user.papel === "consultor"
-      ? "/app/dashboard"
-      : "/portal";
-  return <Navigate to={destino} replace />;
+  const { usuario } = useAuth();
+  if (!usuario) return <Navigate to="/login" replace />;
+  const mapa: Record<string, string> = {
+    admin:         "/app/dashboard",
+    consultor:     "/app/dashboard",
+    rh:            "/app/dashboard",
+    rh_operacional:"/app/dashboard",
+    cliente:       "/portal",
+    colaborador:   "/hub/colaborador/inicio",
+    lider:         "/hub/lider/painel",
+    ceo:           "/hub/ceo/dashboard",
+    dp:            "/hub/dp/inicio",
+    contador:      "/hub/contabilidade/inicio",
+    juridico:      "/hub/juridico/inicio",
+  };
+  return <Navigate to={mapa[usuario.role] ?? "/login"} replace />;
 }
 
 // Redireciona /portal/projetos/:id → /cliente/projetos/:id preservando o id
