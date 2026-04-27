@@ -1,8 +1,9 @@
 import { PageHeader } from "@/components/PageHeader";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { humorHistorico } from "@/data/mock";
-import { Heart, BookOpen, Megaphone, GraduationCap, MessagesSquare, X } from "lucide-react";
+import { Heart, BookOpen, Megaphone, GraduationCap, MessagesSquare, X, Wallet } from "lucide-react";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 
 const moods = [
@@ -99,9 +100,10 @@ export default function ColaboradorInicio() {
 
         <div className="space-y-3">
           <QuickCard icon={Megaphone} title="Comunicados" desc="3 novos comunicados" />
+          <QuickCard icon={Wallet} title="Holerites" desc="Março 2026 disponível" to="/hub/colaborador/holerites" />
           <QuickCard icon={BookOpen} title="Políticas" desc="1 política aguarda ciência" />
           <QuickCard icon={GraduationCap} title="Treinamentos" desc="2 cursos em andamento" />
-          <QuickCard icon={MessagesSquare} title="Solicitações" desc="1 solicitação aberta" />
+          <QuickCard icon={MessagesSquare} title="Solicitações" desc="1 solicitação aberta" to="/hub/colaborador/solicitacoes" />
         </div>
       </div>
 
