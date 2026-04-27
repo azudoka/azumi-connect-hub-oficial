@@ -25,7 +25,7 @@ const BENEFICIO_LABEL: Record<string, string> = {
 };
 import {
   ArrowLeft, Building2, MapPin, Send, MessageSquare, CheckCircle2, Clock,
-  Users, FileQuestion, History, Filter, Loader2, AlertTriangle,
+  Users, FileQuestion, History, Filter, Loader2, AlertTriangle, Bot, User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
