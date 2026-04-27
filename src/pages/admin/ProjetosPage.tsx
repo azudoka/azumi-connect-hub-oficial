@@ -878,6 +878,26 @@ export default function ProjetosPage() {
           </form>
         </DialogContent>
       </Dialog>
+      {/* ─────────── Dialog: NPS disparado ─────────── */}
+      <Dialog open={npsOpen} onOpenChange={setNpsOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-success/15 text-success flex items-center justify-center shrink-0">
+                <CheckCircle2 className="h-5 w-5" />
+              </div>
+              <DialogTitle>NPS disparado</DialogTitle>
+            </div>
+            <DialogDescription className="pt-2">
+              O cliente <strong className="text-foreground">{npsEmpresaNome}</strong> foi notificado para
+              avaliar a entrega. A resposta ficará disponível em Analytics.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setNpsOpen(false)}>Ok, entendido</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
