@@ -533,6 +533,18 @@ export default function ProjetosPage() {
                         Ver projeto <ArrowRight className="h-3 w-3" />
                       </Link>
                     </div>
+
+                    <div className="mt-3 pt-3 border-t border-border flex justify-end">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1.5"
+                        onClick={() => aprovarEntregavel(p)}
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+                        Aprovar entregável
+                      </Button>
+                    </div>
                   </div>
                 );
               })}
