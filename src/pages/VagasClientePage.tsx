@@ -51,6 +51,14 @@ const STATUS_ORDEM: StatusVaga[] = [
   "aberta",
 ];
 
+const STATUS_ORDER: Record<string, number> = {
+  em_andamento: 0,
+  aguardando_cliente: 1,
+  aberta: 2,
+  finalizada: 3,
+  cancelada: 4,
+};
+
 const MOCK: VagaMock[] = [
   {
     id: "v-01",
@@ -117,9 +125,13 @@ export default function VagasClientePage() {
 
   const lista = useMemo(() => {
     const base = filtro === "todas" ? vagas : vagas.filter((v) => v.status === filtro);
-    return [...base].sort(
-      (a, b) => new Date(b.criadaEm).getTime() - new Date(a.criadaEm).getTime()
-    );
+    return [...base].sort((a, b) => {
+      const ordemA = STATUS_ORDER[a.status] ?? 99;
+      const ordemB = STATUS_ORDER[b.status] ?? 99;
+      if (ordemA !== ordemB) return ordemA - ordemB;
+      // desempate por data de criação (mais recente primeiro)
+      return new Date(b.criadaEm).getTime() - new Date(a.criadaEm).getTime();
+    });
   }, [vagas, filtro]);
 
   const vagaSelecionada = useMemo(
