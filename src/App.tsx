@@ -206,6 +206,37 @@ const AppRoutes = () => (
       <Route path="/hub/ceo/turnover" element={<CeoTurnover />} />
     </Route>
 
+    {/* Hub — Módulos terceiros */}
+    <Route element={
+      <PrivateRoute allowed={["dp", "rh_operacional", "rh", "admin"]}>
+        <HubLayout profile="colaborador" />
+      </PrivateRoute>
+    }>
+      <Route path="/hub/dp/inicio" element={<Stub title="Departamento Pessoal" subtitle="Holerites, férias, afastamentos e CCT" />} />
+      <Route path="/hub/dp/holerites" element={<Stub title="Holerites" />} />
+      <Route path="/hub/dp/ferias" element={<Stub title="Férias e Afastamentos" />} />
+      <Route path="/hub/dp/sindicato-cct" element={<Stub title="Sindicato e CCT" />} />
+    </Route>
+
+    <Route element={
+      <PrivateRoute allowed={["contador", "rh", "ceo", "admin"]}>
+        <HubLayout profile="colaborador" />
+      </PrivateRoute>
+    }>
+      <Route path="/hub/contabilidade/inicio" element={<Stub title="Contabilidade" subtitle="Folha, FGTS, DARF, prazos e relatórios" />} />
+      <Route path="/hub/contabilidade/folha" element={<Stub title="Folha de Pagamento" />} />
+      <Route path="/hub/contabilidade/arquivos" element={<Stub title="Arquivos do Mês" />} />
+    </Route>
+
+    <Route element={
+      <PrivateRoute allowed={["juridico", "rh", "ceo", "admin"]}>
+        <HubLayout profile="colaborador" />
+      </PrivateRoute>
+    }>
+      <Route path="/hub/juridico/inicio" element={<Stub title="Jurídico" subtitle="Processos trabalhistas e compliance" />} />
+      <Route path="/hub/juridico/processos" element={<Stub title="Processos Trabalhistas" />} />
+    </Route>
+
     {/* Portal do Cliente */}
     <Route
       element={
