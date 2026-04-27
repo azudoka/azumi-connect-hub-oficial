@@ -158,7 +158,11 @@ const AppRoutes = () => (
     </Route>
 
     {/* Hub Líder */}
-    <Route element={<HubLayout profile="lider" />}>
+    <Route element={
+      <PrivateRoute allowed={["lider", "rh", "admin"]}>
+        <HubLayout profile="lider" />
+      </PrivateRoute>
+    }>
       <Route path="/hub/lider/painel" element={<LiderPainel />} />
       <Route path="/hub/lider/meu-time" element={<LiderMeuTime />} />
       <Route path="/hub/lider/meu-time/:id" element={<Stub title="Perfil do colaborador" />} />
