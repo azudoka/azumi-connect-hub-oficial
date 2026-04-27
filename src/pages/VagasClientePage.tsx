@@ -8,13 +8,93 @@ import {
   ChevronLeft,
   Inbox,
   Users,
+  ThumbsUp,
+  AlertCircle,
+  ThumbsDown,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { useAuth } from "@/context/AuthContext";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+
+// ---------- Candidatos enviados (mock por vaga) ----------
+type FeedbackAcao = "aprovado" | "ajuste" | "reprovado";
+
+interface CandidatoEnviado {
+  id: string;
+  vagaId: string;
+  nome: string;
+  parecer: string;
+  enviado: boolean;
+}
+
+const CANDIDATOS_MOCK: CandidatoEnviado[] = [
+  {
+    id: "ca-01",
+    vagaId: "v-01",
+    nome: "Marina Souza",
+    parecer: "Forte experiência em RH estratégico, perfil analítico e bom fit cultural.",
+    enviado: true,
+  },
+  {
+    id: "ca-02",
+    vagaId: "v-01",
+    nome: "Rafael Tavares",
+    parecer: "Background sólido em recrutamento técnico, comunicação excelente.",
+    enviado: true,
+  },
+  {
+    id: "ca-03",
+    vagaId: "v-01",
+    nome: "Juliana Pires",
+    parecer: "Perfil generalista de RH com experiência em multinacionais.",
+    enviado: true,
+  },
+  {
+    id: "ca-04",
+    vagaId: "v-02",
+    nome: "Carlos Mendes",
+    parecer: "Coordenador financeiro com experiência em FP&A e fechamento contábil.",
+    enviado: true,
+  },
+  {
+    id: "ca-05",
+    vagaId: "v-02",
+    nome: "Patrícia Lima",
+    parecer: "Forte em controladoria e gestão de equipes financeiras.",
+    enviado: true,
+  },
+  {
+    id: "ca-06",
+    vagaId: "v-03",
+    nome: "Diego Almeida",
+    parecer: "Full Stack sênior, React/Node, contratado pelo cliente.",
+    enviado: true,
+  },
+];
+
+const FEEDBACK_LABEL: Record<FeedbackAcao, string> = {
+  aprovado: "Aprovado",
+  ajuste: "Ajuste",
+  reprovado: "Reprovado",
+};
+
+const FEEDBACK_BADGE: Record<FeedbackAcao, string> = {
+  aprovado: "bg-success/15 text-success border-success/30",
+  ajuste: "bg-warning/15 text-warning border-warning/30",
+  reprovado: "bg-destructive/15 text-destructive border-destructive/30",
+};
 
 // ---------- Types ----------
 type StatusVaga =
