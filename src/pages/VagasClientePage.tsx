@@ -386,7 +386,12 @@ export default function VagasClientePage() {
         {/* Dialog de confirmação de feedback */}
         <Dialog
           open={!!confirmacao}
-          onOpenChange={(open) => !open && setConfirmacao(null)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setConfirmacao(null);
+              setMotivoTexto("");
+            }
+          }}
         >
           <DialogContent>
             <DialogHeader>
@@ -396,16 +401,59 @@ export default function VagasClientePage() {
                   `Confirmar feedback '${FEEDBACK_LABEL[confirmacao.acao]}' para ${confirmacao.nome}?`}
               </DialogDescription>
             </DialogHeader>
+
+            {confirmacao?.acao === "reprovado" && (
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="motivo-reprovado">
+                  Motivo do reprovado <span className="text-destructive">*</span>
+                </Label>
+                <Textarea
+                  id="motivo-reprovado"
+                  value={motivoTexto}
+                  onChange={(e) => setMotivoTexto(e.target.value)}
+                  placeholder="Descreva o motivo da reprovação…"
+                  rows={3}
+                />
+              </div>
+            )}
+
+            {confirmacao?.acao === "ajuste" && (
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="ajuste-sugerido">
+                  Qual ajuste você sugere?{" "}
+                  <span className="text-muted-foreground text-xs">(opcional)</span>
+                </Label>
+                <Textarea
+                  id="ajuste-sugerido"
+                  value={motivoTexto}
+                  onChange={(e) => setMotivoTexto(e.target.value)}
+                  placeholder="Sugestão de ajuste…"
+                  rows={3}
+                />
+              </div>
+            )}
+
             <DialogFooter>
               <Button
                 variant="outline"
-                onClick={() => setConfirmacao(null)}
+                onClick={() => {
+                  setConfirmacao(null);
+                  setMotivoTexto("");
+                }}
               >
                 Cancelar
               </Button>
               <Button
+                disabled={
+                  confirmacao?.acao === "reprovado" && !motivoTexto.trim()
+                }
                 onClick={() => {
                   if (!confirmacao) return;
+                  if (
+                    confirmacao.acao === "reprovado" &&
+                    !motivoTexto.trim()
+                  )
+                    return;
                   setFeedbacks((prev) => ({
                     ...prev,
                     [confirmacao.candidatoId]: confirmacao.acao,
@@ -413,7 +461,9 @@ export default function VagasClientePage() {
                   toast.success(
                     `Feedback '${FEEDBACK_LABEL[confirmacao.acao]}' registrado para ${confirmacao.nome}.`
                   );
+                  toast.info("A consultora Azumi foi notificada do seu feedback.");
                   setConfirmacao(null);
+                  setMotivoTexto("");
                 }}
               >
                 Confirmar
