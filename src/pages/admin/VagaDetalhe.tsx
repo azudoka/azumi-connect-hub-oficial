@@ -4,7 +4,7 @@ import { SectionDivider } from "@/components/SectionDivider";
 import { SlaBar } from "@/components/SlaBar";
 import { DiscBars } from "@/components/DiscBars";
 import { Timer } from "@/components/Timer";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { vagas, candidatos, etapasVaga, comentariosVaga } from "@/data/mock";
 
 const BENEFICIO_LABEL: Record<string, string> = {
@@ -26,9 +26,10 @@ const BENEFICIO_LABEL: Record<string, string> = {
 import {
   ArrowLeft, Building2, MapPin, Send, MessageSquare, CheckCircle2, Clock,
   Users, FileQuestion, History, Filter, Loader2, AlertTriangle, Bot, User,
+  MoreVertical, Eye, StickyNote, ChevronRight, UserX, Play,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 const tabs = [
@@ -69,6 +70,65 @@ export default function VagaDetalheAdmin() {
   );
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<Coluna | null>(null);
+
+  const navigate = useNavigate();
+
+  // Menu "···" por card
+  const [menuAbertoId, setMenuAbertoId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!menuAbertoId) return;
+    function onDocClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuAbertoId(null);
+      }
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [menuAbertoId]);
+
+  // Observação rápida inline por card
+  const [obsAbertaId, setObsAbertaId] = useState<string | null>(null);
+  const [obsTexto, setObsTexto] = useState<Record<string, string>>({});
+
+  // Candidatos desclassificados (somem do Kanban)
+  const [desclassificados, setDesclassificados] = useState<Set<string>>(new Set());
+
+  // Confirmação de desclassificação
+  const [confirmarDesclId, setConfirmarDesclId] = useState<string | null>(null);
+
+  function avancarEtapa(candId: string) {
+    const cand = candidatosVaga.find((c) => c.id === candId);
+    if (!cand) return;
+    const atual = colunasEstado[candId];
+    const idx = colunas.indexOf(atual);
+    if (idx < 0 || idx >= colunas.length - 1) {
+      toast.info(`${cand.nome} já está na última etapa.`);
+      return;
+    }
+    const proxima = colunas[idx + 1];
+    setColunasEstado((prev) => ({ ...prev, [candId]: proxima }));
+    toast.info(`${cand.nome} avançado para ${proxima}.`);
+  }
+
+  function salvarObservacao(candId: string) {
+    const cand = candidatosVaga.find((c) => c.id === candId);
+    const txt = (obsTexto[candId] ?? "").trim();
+    if (!cand || !txt) {
+      toast.error("Digite uma observação antes de salvar.");
+      return;
+    }
+    setObsAbertaId(null);
+    toast.success(`Observação salva para ${cand.nome}.`);
+  }
+
+  function confirmarDesclassificacao() {
+    if (!confirmarDesclId) return;
+    const cand = candidatosVaga.find((c) => c.id === confirmarDesclId);
+    setDesclassificados((prev) => new Set(prev).add(confirmarDesclId));
+    setConfirmarDesclId(null);
+    if (cand) toast.warning(`${cand.nome} desclassificado.`);
+  }
 
   function handleDrop(coluna: Coluna) {
     if (!draggingId) return;
@@ -219,7 +279,7 @@ export default function VagaDetalheAdmin() {
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
             {colunas.map((col) => {
               const candidatosNaColuna = candidatosVaga.filter(
-                (c) => colunasEstado[c.id] === col
+                (c) => colunasEstado[c.id] === col && !desclassificados.has(c.id)
               );
               const isOver = dragOverCol === col;
               return (
@@ -247,7 +307,10 @@ export default function VagaDetalheAdmin() {
                   </div>
                   {candidatosNaColuna.length > 0 ? (
                     <ul className="space-y-2">
-                      {candidatosNaColuna.map((c) => (
+                      {candidatosNaColuna.map((c) => {
+                        const menuAberto = menuAbertoId === c.id;
+                        const obsAberta = obsAbertaId === c.id;
+                        return (
                         <li
                           key={c.id}
                           draggable
@@ -261,7 +324,7 @@ export default function VagaDetalheAdmin() {
                             setDragOverCol(null);
                           }}
                           className={cn(
-                            "bg-background/60 border border-border rounded-lg p-3 hover:border-primary/40 cursor-grab active:cursor-grabbing transition-colors",
+                            "relative bg-background/60 border border-border rounded-lg p-3 hover:border-primary/40 cursor-grab active:cursor-grabbing transition-colors",
                             draggingId === c.id && "opacity-50"
                           )}
                         >
@@ -269,16 +332,109 @@ export default function VagaDetalheAdmin() {
                             <div className="h-8 w-8 rounded-full bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white">
                               {c.nome.split(" ").map(n => n[0]).join("").slice(0, 2)}
                             </div>
-                            <div className="min-w-0">
+                            <div className="min-w-0 flex-1">
                               <Link to={`/app/candidatos/${c.id}`} className="text-sm font-medium hover:text-primary truncate block">{c.nome}</Link>
                               <div className="text-[10px] text-muted-foreground">DISC: {c.perfilDom} dominante</div>
                             </div>
+                            <button
+                              type="button"
+                              aria-label="Mais ações"
+                              onMouseDown={(e) => e.stopPropagation()}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setMenuAbertoId(menuAberto ? null : c.id);
+                              }}
+                              className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-secondary hover:text-foreground shrink-0"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </button>
                           </div>
                           <div className="mt-2">
                             <DiscBars values={c.disc} compact />
                           </div>
+
+                          {obsAberta && (
+                            <div
+                              className="mt-2 space-y-2"
+                              onMouseDown={(e) => e.stopPropagation()}
+                              draggable={false}
+                              onDragStart={(e) => e.preventDefault()}
+                            >
+                              <textarea
+                                value={obsTexto[c.id] ?? ""}
+                                onChange={(e) =>
+                                  setObsTexto((prev) => ({ ...prev, [c.id]: e.target.value }))
+                                }
+                                placeholder="Observação rápida sobre o candidato…"
+                                className="w-full h-20 p-2 rounded-md bg-secondary border border-input focus:border-primary outline-none text-xs resize-none"
+                              />
+                              <div className="flex items-center justify-end gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => setObsAbertaId(null)}
+                                  className="h-7 px-2.5 rounded-md border border-border text-[11px] hover:bg-secondary"
+                                >
+                                  Cancelar
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => salvarObservacao(c.id)}
+                                  className="h-7 px-2.5 rounded-md bg-primary text-primary-foreground text-[11px] font-medium"
+                                >
+                                  Salvar
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {menuAberto && (
+                            <div
+                              ref={menuRef}
+                              className="absolute right-2 top-10 z-30 w-48 max-w-[calc(100vw-1rem)] rounded-lg border border-border bg-popover shadow-elevated py-1 text-sm"
+                              onMouseDown={(e) => e.stopPropagation()}
+                            >
+                              <Link
+                                to={`/app/candidatos/${c.id}`}
+                                onClick={() => setMenuAbertoId(null)}
+                                className="flex items-center gap-2 px-3 py-2 hover:bg-secondary"
+                              >
+                                <Eye className="h-3.5 w-3.5 text-muted-foreground" /> Ver perfil
+                              </Link>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setMenuAbertoId(null);
+                                  setObsAbertaId(c.id);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-secondary text-left"
+                              >
+                                <StickyNote className="h-3.5 w-3.5 text-muted-foreground" /> Observação rápida
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setMenuAbertoId(null);
+                                  avancarEtapa(c.id);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-secondary text-left"
+                              >
+                                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" /> Mover para próxima etapa
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setMenuAbertoId(null);
+                                  setConfirmarDesclId(c.id);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-secondary text-left text-destructive"
+                              >
+                                <UserX className="h-3.5 w-3.5" /> Desclassificar
+                              </button>
+                            </div>
+                          )}
                         </li>
-                      ))}
+                        );
+                      })}
                     </ul>
                   ) : (
                     <div className="flex items-center justify-center h-32 text-xs text-muted-foreground">—</div>
@@ -358,6 +514,15 @@ export default function VagaDetalheAdmin() {
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-success/15 text-success border border-success/30">
                     Pronto
                   </span>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/app/horas?task_id=${c.id}&vaga=${vaga.id}`)}
+                    className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-border text-[11px] font-medium hover:bg-secondary hover:border-primary/40 transition-colors"
+                    aria-label={`Iniciar timer para ${c.nome}`}
+                    title="Iniciar timer para este candidato"
+                  >
+                    <Play className="h-3 w-3" /> Play
+                  </button>
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground line-clamp-2">{c.parecer}</p>
               </li>
@@ -539,6 +704,41 @@ export default function VagaDetalheAdmin() {
           </div>
         </div>
       )}
+
+      {confirmarDesclId && (() => {
+        const cand = candidatosVaga.find((c) => c.id === confirmarDesclId);
+        return (
+          <div className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+            <div className="bg-card border border-border rounded-2xl shadow-elevated w-full max-w-md p-6 animate-scale-in">
+              <div className="flex items-start gap-3">
+                <div className="h-10 w-10 rounded-full bg-destructive/15 text-destructive flex items-center justify-center shrink-0">
+                  <UserX className="h-5 w-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-display text-lg font-semibold">Desclassificar candidato?</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Tem certeza? <strong className="text-foreground">{cand?.nome}</strong> será marcado como desclassificado.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-5 flex items-center justify-end gap-2">
+                <button
+                  onClick={() => setConfirmarDesclId(null)}
+                  className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmarDesclassificacao}
+                  className="h-9 px-4 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium inline-flex items-center gap-1.5"
+                >
+                  <UserX className="h-3.5 w-3.5" /> Desclassificar
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
