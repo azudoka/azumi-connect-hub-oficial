@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 
 export default function Login() {
   const navigate = useNavigate();
-  const { user, login } = useAuth();
+  const { user, loginLegacy: login } = useAuth();
 
   useEffect(() => {
     if (user) {

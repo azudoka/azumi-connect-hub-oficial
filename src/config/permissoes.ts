@@ -70,11 +70,20 @@ const PERMISSOES_POR_PAPEL: Record<Papel, Permissao[]> = {
     "guia.ver",
     "perfil.editar_proprio",
   ],
+  // Novos papéis Hub — sem mapeamento detalhado de permissões legadas
+  rh: ["dashboard.ver", "auditoria.ver", "perfil.editar_proprio"],
+  rh_operacional: ["dashboard.ver", "perfil.editar_proprio"],
+  ceo: ["dashboard.ver", "auditoria.ver", "analytics.ver_basico", "analytics.ver_financeiro", "perfil.editar_proprio"],
+  colaborador: ["dashboard.ver", "perfil.editar_proprio"],
+  lider: ["dashboard.ver", "perfil.editar_proprio"],
+  dp: ["dashboard.ver", "perfil.editar_proprio"],
+  contador: ["dashboard.ver", "perfil.editar_proprio"],
+  juridico: ["dashboard.ver", "perfil.editar_proprio"],
 };
 
 export function temPermissao(papel: Papel, permissao: Permissao): boolean {
   if (papel === "admin") return true;
-  return PERMISSOES_POR_PAPEL[papel].includes(permissao);
+  return (PERMISSOES_POR_PAPEL[papel] ?? []).includes(permissao);
 }
 
 export function usePermissao() {

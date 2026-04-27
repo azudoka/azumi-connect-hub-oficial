@@ -60,7 +60,7 @@ const perfis: PerfilItem[] = [
 
 export default function SelecaoPerfil() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { loginLegacy: login } = useAuth();
 
   const handleSelecionar = (p: PerfilItem) => {
     if (p.auth) {

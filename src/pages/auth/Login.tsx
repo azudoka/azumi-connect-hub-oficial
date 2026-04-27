@@ -1,11 +1,32 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Mail, Lock, Sparkles } from "lucide-react";
+import { ArrowRight, Mail, Lock, Sparkles, Loader2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("voce@azumi.com");
-  const [pass, setPass] = useState("••••••••");
+  const { login } = useAuth();
+  const [email, setEmail] = useState("");
+  const [pass, setPass] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const [shake, setShake] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (loading) return;
+    setErro(null);
+    setLoading(true);
+    const res = await login(email, pass);
+    setLoading(false);
+    if (res === "ok") {
+      navigate("/app/dashboard");
+    } else {
+      setErro("E-mail ou senha incorretos");
+      setShake(true);
+      window.setTimeout(() => setShake(false), 500);
+    }
+  }
 
   return (
     <div className="min-h-full w-full relative bg-background overflow-hidden flex items-center justify-center p-6">
@@ -16,22 +37,25 @@ export default function Login() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,hsl(var(--primary)/0.08),transparent_60%)]" />
       </div>
 
-      <div className="relative z-10 w-full max-w-md animate-scale-in">
+      <div className="relative z-10 w-full max-w-xl animate-scale-in">
         <div className="text-center mb-8">
           <div className="inline-flex h-12 w-12 rounded-xl bg-gradient-brand items-center justify-center font-logo font-bold text-white text-xl shadow-violet">
             A
           </div>
-          <h1 className="mt-4 font-logo text-3xl font-bold">
-            Azumi <span className="text-gradient-brand">Connect</span>
+          <h1 className="mt-4 font-logo text-2xl md:text-3xl font-bold leading-tight">
+            A plataforma que centraliza toda a gestão de RH da sua empresa.
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Plataforma de RH as a Service da Azumi Consultoria
+          <p className="mt-3 text-sm text-muted-foreground max-w-md mx-auto">
+            Entregáveis, solicitações, documentos, indicadores e módulos integrados em um só ambiente. Para o time Azumi e para o cliente, tudo visível em tempo real.
           </p>
         </div>
 
         <form
-          onSubmit={(e) => { e.preventDefault(); navigate("/selecao-perfil"); }}
-          className="bg-card/80 backdrop-blur border border-border rounded-2xl p-6 shadow-elevated space-y-4"
+          onSubmit={handleSubmit}
+          className={`bg-card/80 backdrop-blur border border-border rounded-2xl p-6 shadow-elevated space-y-4 transition-transform ${
+            shake ? "animate-[shake_0.4s_ease-in-out]" : ""
+          }`}
+          style={shake ? { animation: "shake 0.4s ease-in-out" } : undefined}
         >
           <div>
             <label className="text-xs font-medium text-muted-foreground">E-mail corporativo</label>
@@ -41,7 +65,10 @@ export default function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 type="email"
-                className="w-full h-10 pl-9 pr-3 rounded-lg bg-secondary border border-input focus:border-primary outline-none text-sm"
+                disabled={loading}
+                required
+                placeholder="voce@empresa.com"
+                className="w-full h-10 pl-9 pr-3 rounded-lg bg-secondary border border-input focus:border-primary outline-none text-sm disabled:opacity-60"
               />
             </div>
           </div>
@@ -57,17 +84,32 @@ export default function Login() {
                 value={pass}
                 onChange={(e) => setPass(e.target.value)}
                 type="password"
-                className="w-full h-10 pl-9 pr-3 rounded-lg bg-secondary border border-input focus:border-primary outline-none text-sm font-data"
+                disabled={loading}
+                required
+                className="w-full h-10 pl-9 pr-3 rounded-lg bg-secondary border border-input focus:border-primary outline-none text-sm font-data disabled:opacity-60"
               />
             </div>
           </div>
 
+          {erro && (
+            <div className="text-xs text-destructive bg-destructive/10 border border-destructive/30 rounded-md px-3 py-2">
+              {erro}
+            </div>
+          )}
+
           <button
             type="submit"
-            className="w-full h-11 rounded-lg bg-gradient-brand text-white font-medium font-ui flex items-center justify-center gap-2 hover:opacity-95 transition-opacity shadow-violet"
+            disabled={loading}
+            className="w-full h-11 rounded-lg bg-gradient-brand text-white font-medium font-ui flex items-center justify-center gap-2 hover:opacity-95 transition-opacity shadow-violet disabled:opacity-70"
           >
-            Entrar
-            <ArrowRight className="h-4 w-4" />
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                Entrar
+                <ArrowRight className="h-4 w-4" />
+              </>
+            )}
           </button>
 
           <div className="text-center">
@@ -82,6 +124,16 @@ export default function Login() {
           Ao continuar você concorda com os <a className="text-primary hover:underline">termos</a> e a <a className="text-primary hover:underline">política de privacidade</a>.
         </p>
       </div>
+
+      <style>{`
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          20% { transform: translateX(-8px); }
+          40% { transform: translateX(8px); }
+          60% { transform: translateX(-6px); }
+          80% { transform: translateX(6px); }
+        }
+      `}</style>
     </div>
   );
 }
