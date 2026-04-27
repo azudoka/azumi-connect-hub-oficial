@@ -208,6 +208,7 @@ export default function VagasClientePage() {
     nome: string;
     acao: FeedbackAcao;
   } | null>(null);
+  const [motivoTexto, setMotivoTexto] = useState("");
 
   const lista = useMemo(() => {
     const base = filtro === "todas" ? vagas : vagas.filter((v) => v.status === filtro);
