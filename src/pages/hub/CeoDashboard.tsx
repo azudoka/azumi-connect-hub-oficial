@@ -2,6 +2,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { KpiCard } from "@/components/KpiCard";
 import { SectionDivider } from "@/components/SectionDivider";
 import { headcountDept } from "@/data/mock";
+import { Link } from "react-router-dom";
 import { Users, TrendingDown, UserPlus, UserMinus, Heart, AlertTriangle, Wallet } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -93,18 +94,43 @@ export default function CeoDashboard() {
       <SectionDivider>Alertas executivos</SectionDivider>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[
-          { t: "Feedbacks de ajuste pendentes", d: "3 colaboradores aguardam há mais de 30 dias", c: "warning" },
-          { t: "Budget de TI ultrapassado", d: "Departamento excedeu em 4% o previsto", c: "destructive" },
-          { t: "Turnover acima da média em Vendas", d: "9.8% nos últimos 90 dias", c: "destructive" },
-        ].map((a, i) => (
-          <div key={i} className={`rounded-xl border bg-card p-4 border-${a.c}/30`}>
-            <div className={`flex items-center gap-2 text-${a.c} text-sm font-medium`}>
-              <AlertTriangle className="h-4 w-4" /> {a.t}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1.5">{a.d}</p>
-          </div>
-        ))}
+        {([
+          {
+            t: "Feedbacks de ajuste pendentes",
+            d: "3 colaboradores aguardam há mais de 30 dias",
+            tone: "warning" as const,
+            to: "/hub/ceo/avaliacoes",
+          },
+          {
+            t: "Budget de TI ultrapassado",
+            d: "Departamento excedeu em 4% o previsto",
+            tone: "destructive" as const,
+            to: "/hub/ceo/financeiro",
+          },
+          {
+            t: "Turnover acima da média em Vendas",
+            d: "9.8% nos últimos 90 dias",
+            tone: "destructive" as const,
+            to: "/hub/ceo/turnover",
+          },
+        ]).map((a, i) => {
+          const tone =
+            a.tone === "warning"
+              ? "border-warning/30 text-warning hover:border-warning/60"
+              : "border-destructive/30 text-destructive hover:border-destructive/60";
+          return (
+            <Link
+              key={i}
+              to={a.to}
+              className={`rounded-xl border bg-card p-4 card-hover transition-colors ${tone}`}
+            >
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <AlertTriangle className="h-4 w-4" /> {a.t}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1.5">{a.d}</p>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
