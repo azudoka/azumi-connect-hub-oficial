@@ -30,6 +30,8 @@ export default function VagaDetalheAdmin() {
   // B09: estado do Dialog "Enviar para o cliente"
   const [enviarOpen, setEnviarOpen] = useState(false);
   const [enviando, setEnviando] = useState(false);
+  const [justificativaExcesso, setJustificativaExcesso] = useState("");
+  const [excedeuOpen, setExcedeuOpen] = useState(false);
 
   const funil = [
     { etapa: "Currículos", n: vaga.candidatosTotal },
@@ -42,6 +44,15 @@ export default function VagaDetalheAdmin() {
 
   const candidatosVaga = candidatos.filter((c) => c.vagaId === vaga.id);
   const colunas = ["Triagem", "Quest.", "Entrevista", "Enviados", "Decisão"];
+
+  function handleCliqueEnviar() {
+    const total = candidatosVaga.filter(c => c.enviado).length;
+    if (total > 3) {
+      setExcedeuOpen(true);
+    } else {
+      setEnviarOpen(true);
+    }
+  }
 
   return (
     <div>
@@ -234,7 +245,7 @@ export default function VagaDetalheAdmin() {
             </div>
             {/* B09: Botão dispara Dialog de confirmação antes do envio */}
             <button
-              onClick={() => setEnviarOpen(true)}
+              onClick={handleCliqueEnviar}
               disabled={candidatosVaga.filter(c => c.enviado).length === 0}
               className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center gap-1.5 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -336,6 +347,50 @@ export default function VagaDetalheAdmin() {
               >
                 {enviando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                 {enviando ? "Enviando…" : "Confirmar envio"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {excedeuOpen && (
+        <div className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-card border border-border rounded-2xl shadow-elevated w-full max-w-md p-6 animate-scale-in">
+            <div className="flex items-start gap-3">
+              <div className="h-10 w-10 rounded-full bg-destructive/15 text-destructive flex items-center justify-center shrink-0">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-display text-lg font-semibold">Limite de perfis excedido</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  O contrato permite o envio de no máximo 3 perfis por rodada. Você selecionou{" "}
+                  <strong>{candidatosVaga.filter(c => c.enviado).length} perfis</strong>.
+                  Para prosseguir, justifique o motivo abaixo.
+                </p>
+              </div>
+            </div>
+            <textarea
+              value={justificativaExcesso}
+              onChange={(e) => setJustificativaExcesso(e.target.value)}
+              placeholder="Justificativa obrigatória para envio acima do limite contratual…"
+              className="mt-4 w-full h-24 p-3 rounded-lg bg-secondary border border-input focus:border-primary outline-none text-sm resize-none"
+            />
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                onClick={() => { setExcedeuOpen(false); setJustificativaExcesso(""); }}
+                className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm"
+              >
+                Cancelar
+              </button>
+              <button
+                disabled={!justificativaExcesso.trim()}
+                onClick={() => {
+                  setExcedeuOpen(false);
+                  setEnviarOpen(true);
+                }}
+                className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50"
+              >
+                Prosseguir com envio
               </button>
             </div>
           </div>
