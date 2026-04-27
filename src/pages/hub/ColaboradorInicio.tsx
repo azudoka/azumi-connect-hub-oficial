@@ -1,8 +1,9 @@
 import { PageHeader } from "@/components/PageHeader";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { humorHistorico } from "@/data/mock";
-import { Heart, BookOpen, Megaphone, GraduationCap, MessagesSquare, X } from "lucide-react";
+import { Heart, BookOpen, Megaphone, GraduationCap, MessagesSquare, X, Wallet } from "lucide-react";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 
 const moods = [
@@ -99,9 +100,10 @@ export default function ColaboradorInicio() {
 
         <div className="space-y-3">
           <QuickCard icon={Megaphone} title="Comunicados" desc="3 novos comunicados" />
+          <QuickCard icon={Wallet} title="Holerites" desc="Março 2026 disponível" to="/hub/colaborador/holerites" />
           <QuickCard icon={BookOpen} title="Políticas" desc="1 política aguarda ciência" />
           <QuickCard icon={GraduationCap} title="Treinamentos" desc="2 cursos em andamento" />
-          <QuickCard icon={MessagesSquare} title="Solicitações" desc="1 solicitação aberta" />
+          <QuickCard icon={MessagesSquare} title="Solicitações" desc="1 solicitação aberta" to="/hub/colaborador/solicitacoes" />
         </div>
       </div>
 
@@ -144,9 +146,9 @@ export default function ColaboradorInicio() {
   );
 }
 
-function QuickCard({ icon: Icon, title, desc }: { icon: any; title: string; desc: string }) {
-  return (
-    <div className="bg-card border border-border rounded-xl p-4 card-hover flex items-center gap-3">
+function QuickCard({ icon: Icon, title, desc, to }: { icon: any; title: string; desc: string; to?: string }) {
+  const inner = (
+    <>
       <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
         <Icon className="h-5 w-5" />
       </div>
@@ -154,6 +156,15 @@ function QuickCard({ icon: Icon, title, desc }: { icon: any; title: string; desc
         <div className="text-sm font-medium">{title}</div>
         <div className="text-xs text-muted-foreground truncate">{desc}</div>
       </div>
-    </div>
+    </>
   );
+  const cls = "bg-card border border-border rounded-xl p-4 card-hover flex items-center gap-3";
+  if (to) {
+    return (
+      <Link to={to} className={cn(cls, "hover:border-primary/40 transition-colors")}>
+        {inner}
+      </Link>
+    );
+  }
+  return <div className={cls}>{inner}</div>;
 }

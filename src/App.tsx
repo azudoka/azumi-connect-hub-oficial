@@ -50,6 +50,11 @@ import LiderOnboarding from "./pages/hub/LiderOnboarding";
 import LiderFeedback from "./pages/hub/LiderFeedback";
 import LiderSolicitacoes from "./pages/hub/LiderSolicitacoes";
 import ColaboradorInicio from "./pages/hub/ColaboradorInicio";
+import ColaboradorSobreVoce from "./pages/hub/ColaboradorSobreVoce";
+import ColaboradorHolerites from "./pages/hub/ColaboradorHolerites";
+import ColaboradorFerias from "./pages/hub/ColaboradorFerias";
+import ColaboradorBeneficios from "./pages/hub/ColaboradorBeneficios";
+import ColaboradorSolicitacoes from "./pages/hub/ColaboradorSolicitacoes";
 import CeoDashboard from "./pages/hub/CeoDashboard";
 
 const queryClient = new QueryClient();
@@ -166,11 +171,11 @@ const AppRoutes = () => (
     {/* Hub Colaborador */}
     <Route element={<HubLayout profile="colaborador" />}>
       <Route path="/hub/colaborador/inicio" element={<ColaboradorInicio />} />
-      <Route path="/hub/colaborador/sobre-voce" element={<Stub title="Sobre você" subtitle="Perfil, histórico, PDI, avaliações" />} />
-      <Route path="/hub/colaborador/solicitacoes" element={<Stub title="Minhas solicitações" />} />
-      <Route path="/hub/colaborador/holerites" element={<Stub title="Holerites" />} />
-      <Route path="/hub/colaborador/ferias" element={<Stub title="Férias" />} />
-      <Route path="/hub/colaborador/beneficios" element={<Stub title="Benefícios" />} />
+      <Route path="/hub/colaborador/sobre-voce" element={<ColaboradorSobreVoce />} />
+      <Route path="/hub/colaborador/solicitacoes" element={<ColaboradorSolicitacoes />} />
+      <Route path="/hub/colaborador/holerites" element={<ColaboradorHolerites />} />
+      <Route path="/hub/colaborador/ferias" element={<ColaboradorFerias />} />
+      <Route path="/hub/colaborador/beneficios" element={<ColaboradorBeneficios />} />
       <Route path="/hub/colaborador/politicas" element={<Stub title="Políticas internas" />} />
       <Route path="/hub/colaborador/treinamentos" element={<Stub title="Treinamentos" />} />
       <Route path="/hub/colaborador/ajuda" element={<Stub title="Ajuda / Denúncia" subtitle="Canal seguro de apoio" />} />
