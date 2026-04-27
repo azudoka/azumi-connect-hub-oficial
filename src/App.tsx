@@ -177,7 +177,11 @@ const AppRoutes = () => (
     </Route>
 
     {/* Hub Colaborador */}
-    <Route element={<HubLayout profile="colaborador" />}>
+    <Route element={
+      <PrivateRoute allowed={["colaborador", "lider", "rh", "admin"]}>
+        <HubLayout profile="colaborador" />
+      </PrivateRoute>
+    }>
       <Route path="/hub/colaborador/inicio" element={<ColaboradorInicio />} />
       <Route path="/hub/colaborador/sobre-voce" element={<ColaboradorSobreVoce />} />
       <Route path="/hub/colaborador/solicitacoes" element={<ColaboradorSolicitacoes />} />
