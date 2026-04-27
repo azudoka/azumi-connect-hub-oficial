@@ -23,7 +23,7 @@ import Stub from "./pages/Stub";
 
 import AdminDashboard from "./pages/admin/DashboardPage";
 import Empresas from "./pages/admin/Empresas";
-import AtracaoLista from "./pages/admin/AtracaoLista";
+import AtracaoRouter from "./pages/AtracaoRouter";
 import VagaDetalheAdmin from "./pages/admin/VagaDetalhe";
 import Analytics from "./pages/admin/Analytics";
 import GestaoConta from "./pages/admin/GestaoConta";
@@ -108,7 +108,7 @@ const AppRoutes = () => (
       <Route path="/app/financeiro" element={<FinanceiroPage />} />
       <Route path="/app/solicitacoes" element={<SolicitacoesPage />} />
       <Route path="/app/solicitacoes/:id" element={<Stub title="Detalhe da solicitação" />} />
-      <Route path="/app/atracao" element={<AtracaoLista />} />
+      <Route path="/app/atracao" element={<AtracaoRouter />} />
       <Route path="/app/atracao/:id" element={<VagaDetalheAdmin />} />
       <Route path="/app/candidatos/:id" element={<Stub title="Perfil do candidato" subtitle="DISC, questionários, pareceres" />} />
       <Route path="/app/analytics" element={<Analytics />} />
