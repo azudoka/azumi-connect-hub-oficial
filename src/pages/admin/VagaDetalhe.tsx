@@ -4,7 +4,7 @@ import { SectionDivider } from "@/components/SectionDivider";
 import { SlaBar } from "@/components/SlaBar";
 import { DiscBars } from "@/components/DiscBars";
 import { Timer } from "@/components/Timer";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { vagas, candidatos, etapasVaga, comentariosVaga } from "@/data/mock";
 
 const BENEFICIO_LABEL: Record<string, string> = {
@@ -26,9 +26,10 @@ const BENEFICIO_LABEL: Record<string, string> = {
 import {
   ArrowLeft, Building2, MapPin, Send, MessageSquare, CheckCircle2, Clock,
   Users, FileQuestion, History, Filter, Loader2, AlertTriangle, Bot, User,
+  MoreVertical, Eye, StickyNote, ChevronRight, UserX, Play,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 const tabs = [
