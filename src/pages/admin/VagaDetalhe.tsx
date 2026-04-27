@@ -704,6 +704,41 @@ export default function VagaDetalheAdmin() {
           </div>
         </div>
       )}
+
+      {confirmarDesclId && (() => {
+        const cand = candidatosVaga.find((c) => c.id === confirmarDesclId);
+        return (
+          <div className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+            <div className="bg-card border border-border rounded-2xl shadow-elevated w-full max-w-md p-6 animate-scale-in">
+              <div className="flex items-start gap-3">
+                <div className="h-10 w-10 rounded-full bg-destructive/15 text-destructive flex items-center justify-center shrink-0">
+                  <UserX className="h-5 w-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-display text-lg font-semibold">Desclassificar candidato?</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Tem certeza? <strong className="text-foreground">{cand?.nome}</strong> será marcado como desclassificado.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-5 flex items-center justify-end gap-2">
+                <button
+                  onClick={() => setConfirmarDesclId(null)}
+                  className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmarDesclassificacao}
+                  className="h-9 px-4 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium inline-flex items-center gap-1.5"
+                >
+                  <UserX className="h-3.5 w-3.5" /> Desclassificar
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
