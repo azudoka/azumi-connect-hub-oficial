@@ -338,6 +338,16 @@ export default function ProjetosPage() {
     setProjOpen(false);
   }
 
+  // ─── Aprovação de entregável + NPS ──────────────────────────────
+  const [npsOpen, setNpsOpen] = useState(false);
+  const [npsEmpresaNome, setNpsEmpresaNome] = useState<string>("");
+
+  function aprovarEntregavel(projeto: Projeto) {
+    toast.success("Entregável aprovado! NPS enviado ao cliente.");
+    setNpsEmpresaNome(projeto.empresaNome);
+    setNpsOpen(true);
+  }
+
   // ─── Helpers ────────────────────────────────────────────────────
   const hoje = new Date();
   function isAtrasado(p: Projeto) {
