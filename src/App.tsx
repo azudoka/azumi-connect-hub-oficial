@@ -194,7 +194,11 @@ const AppRoutes = () => (
     </Route>
 
     {/* Hub CEO */}
-    <Route element={<HubLayout profile="ceo" />}>
+    <Route element={
+      <PrivateRoute allowed={["ceo", "admin"]}>
+        <HubLayout profile="ceo" />
+      </PrivateRoute>
+    }>
       <Route path="/hub/ceo/dashboard" element={<CeoDashboard />} />
       <Route path="/hub/ceo/headcount" element={<CeoHeadcount />} />
       <Route path="/hub/ceo/financeiro" element={<CeoFinanceiro />} />
