@@ -71,6 +71,65 @@ export default function VagaDetalheAdmin() {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<Coluna | null>(null);
 
+  const navigate = useNavigate();
+
+  // Menu "···" por card
+  const [menuAbertoId, setMenuAbertoId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!menuAbertoId) return;
+    function onDocClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuAbertoId(null);
+      }
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [menuAbertoId]);
+
+  // Observação rápida inline por card
+  const [obsAbertaId, setObsAbertaId] = useState<string | null>(null);
+  const [obsTexto, setObsTexto] = useState<Record<string, string>>({});
+
+  // Candidatos desclassificados (somem do Kanban)
+  const [desclassificados, setDesclassificados] = useState<Set<string>>(new Set());
+
+  // Confirmação de desclassificação
+  const [confirmarDesclId, setConfirmarDesclId] = useState<string | null>(null);
+
+  function avancarEtapa(candId: string) {
+    const cand = candidatosVaga.find((c) => c.id === candId);
+    if (!cand) return;
+    const atual = colunasEstado[candId];
+    const idx = colunas.indexOf(atual);
+    if (idx < 0 || idx >= colunas.length - 1) {
+      toast.info(`${cand.nome} já está na última etapa.`);
+      return;
+    }
+    const proxima = colunas[idx + 1];
+    setColunasEstado((prev) => ({ ...prev, [candId]: proxima }));
+    toast.info(`${cand.nome} avançado para ${proxima}.`);
+  }
+
+  function salvarObservacao(candId: string) {
+    const cand = candidatosVaga.find((c) => c.id === candId);
+    const txt = (obsTexto[candId] ?? "").trim();
+    if (!cand || !txt) {
+      toast.error("Digite uma observação antes de salvar.");
+      return;
+    }
+    setObsAbertaId(null);
+    toast.success(`Observação salva para ${cand.nome}.`);
+  }
+
+  function confirmarDesclassificacao() {
+    if (!confirmarDesclId) return;
+    const cand = candidatosVaga.find((c) => c.id === confirmarDesclId);
+    setDesclassificados((prev) => new Set(prev).add(confirmarDesclId));
+    setConfirmarDesclId(null);
+    if (cand) toast.warning(`${cand.nome} desclassificado.`);
+  }
+
   function handleDrop(coluna: Coluna) {
     if (!draggingId) return;
     const cand = candidatosVaga.find((c) => c.id === draggingId);
