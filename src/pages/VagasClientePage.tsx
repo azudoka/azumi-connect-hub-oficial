@@ -8,13 +8,93 @@ import {
   ChevronLeft,
   Inbox,
   Users,
+  ThumbsUp,
+  AlertCircle,
+  ThumbsDown,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { useAuth } from "@/context/AuthContext";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+
+// ---------- Candidatos enviados (mock por vaga) ----------
+type FeedbackAcao = "aprovado" | "ajuste" | "reprovado";
+
+interface CandidatoEnviado {
+  id: string;
+  vagaId: string;
+  nome: string;
+  parecer: string;
+  enviado: boolean;
+}
+
+const CANDIDATOS_MOCK: CandidatoEnviado[] = [
+  {
+    id: "ca-01",
+    vagaId: "v-01",
+    nome: "Marina Souza",
+    parecer: "Forte experiência em RH estratégico, perfil analítico e bom fit cultural.",
+    enviado: true,
+  },
+  {
+    id: "ca-02",
+    vagaId: "v-01",
+    nome: "Rafael Tavares",
+    parecer: "Background sólido em recrutamento técnico, comunicação excelente.",
+    enviado: true,
+  },
+  {
+    id: "ca-03",
+    vagaId: "v-01",
+    nome: "Juliana Pires",
+    parecer: "Perfil generalista de RH com experiência em multinacionais.",
+    enviado: true,
+  },
+  {
+    id: "ca-04",
+    vagaId: "v-02",
+    nome: "Carlos Mendes",
+    parecer: "Coordenador financeiro com experiência em FP&A e fechamento contábil.",
+    enviado: true,
+  },
+  {
+    id: "ca-05",
+    vagaId: "v-02",
+    nome: "Patrícia Lima",
+    parecer: "Forte em controladoria e gestão de equipes financeiras.",
+    enviado: true,
+  },
+  {
+    id: "ca-06",
+    vagaId: "v-03",
+    nome: "Diego Almeida",
+    parecer: "Full Stack sênior, React/Node, contratado pelo cliente.",
+    enviado: true,
+  },
+];
+
+const FEEDBACK_LABEL: Record<FeedbackAcao, string> = {
+  aprovado: "Aprovado",
+  ajuste: "Ajuste",
+  reprovado: "Reprovado",
+};
+
+const FEEDBACK_BADGE: Record<FeedbackAcao, string> = {
+  aprovado: "bg-success/15 text-success border-success/30",
+  ajuste: "bg-warning/15 text-warning border-warning/30",
+  reprovado: "bg-destructive/15 text-destructive border-destructive/30",
+};
 
 // ---------- Types ----------
 type StatusVaga =
@@ -122,6 +202,12 @@ export default function VagasClientePage() {
   );
   const [filtro, setFiltro] = useState<StatusVaga | "todas">("todas");
   const [vagaSelecionadaId, setVagaSelecionadaId] = useState<string | null>(null);
+  const [feedbacks, setFeedbacks] = useState<Record<string, FeedbackAcao>>({});
+  const [confirmacao, setConfirmacao] = useState<{
+    candidatoId: string;
+    nome: string;
+    acao: FeedbackAcao;
+  } | null>(null);
 
   const lista = useMemo(() => {
     const base = filtro === "todas" ? vagas : vagas.filter((v) => v.status === filtro);
@@ -190,6 +276,101 @@ export default function VagasClientePage() {
           </div>
         </div>
 
+        {/* Perfis enviados pela Azumi */}
+        {(() => {
+          const candidatosVaga = CANDIDATOS_MOCK.filter(
+            (c) => c.vagaId === v.id && c.enviado
+          );
+          if (candidatosVaga.length === 0) return null;
+
+          return (
+            <div className="bg-card/80 backdrop-blur border rounded-2xl p-5">
+              <h3 className="font-display font-semibold mb-1">
+                Perfis enviados pela Azumi
+              </h3>
+              <p className="text-xs text-muted-foreground mb-4">
+                Avalie cada candidato apresentado para esta vaga.
+              </p>
+
+              <ul className="flex flex-col gap-3">
+                {candidatosVaga.map((c) => {
+                  const fb = feedbacks[c.id];
+                  return (
+                    <li
+                      key={c.id}
+                      className="border rounded-xl p-4 bg-background/40 flex flex-col gap-3"
+                    >
+                      <div className="flex items-start justify-between gap-3 flex-wrap">
+                        <div className="min-w-0">
+                          <div className="font-medium text-sm">{c.nome}</div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {c.parecer}
+                          </p>
+                        </div>
+                        {fb && (
+                          <span
+                            className={cn(PILL_BASE, FEEDBACK_BADGE[fb])}
+                          >
+                            {FEEDBACK_LABEL[fb]}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={!!fb}
+                          className="rounded-full gap-1.5 border-success/40 text-success hover:bg-success/10 hover:text-success disabled:opacity-50"
+                          onClick={() =>
+                            setConfirmacao({
+                              candidatoId: c.id,
+                              nome: c.nome,
+                              acao: "aprovado",
+                            })
+                          }
+                        >
+                          <ThumbsUp size={14} /> Aprovado
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={!!fb}
+                          className="rounded-full gap-1.5 border-warning/40 text-warning hover:bg-warning/10 hover:text-warning disabled:opacity-50"
+                          onClick={() =>
+                            setConfirmacao({
+                              candidatoId: c.id,
+                              nome: c.nome,
+                              acao: "ajuste",
+                            })
+                          }
+                        >
+                          <AlertCircle size={14} /> Ajuste
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={!!fb}
+                          className="rounded-full gap-1.5 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+                          onClick={() =>
+                            setConfirmacao({
+                              candidatoId: c.id,
+                              nome: c.nome,
+                              acao: "reprovado",
+                            })
+                          }
+                        >
+                          <ThumbsDown size={14} /> Reprovado
+                        </Button>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          );
+        })()}
+
         <div className="bg-card/80 backdrop-blur border rounded-2xl p-5">
           <h3 className="font-display font-semibold mb-2">Sobre o processo</h3>
           <p className="text-sm text-muted-foreground">
@@ -198,6 +379,45 @@ export default function VagasClientePage() {
             entre em contato pelo canal de Solicitações para qualquer ajuste.
           </p>
         </div>
+
+        {/* Dialog de confirmação de feedback */}
+        <Dialog
+          open={!!confirmacao}
+          onOpenChange={(open) => !open && setConfirmacao(null)}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirmar feedback</DialogTitle>
+              <DialogDescription>
+                {confirmacao &&
+                  `Confirmar feedback '${FEEDBACK_LABEL[confirmacao.acao]}' para ${confirmacao.nome}?`}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setConfirmacao(null)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={() => {
+                  if (!confirmacao) return;
+                  setFeedbacks((prev) => ({
+                    ...prev,
+                    [confirmacao.candidatoId]: confirmacao.acao,
+                  }));
+                  toast.success(
+                    `Feedback '${FEEDBACK_LABEL[confirmacao.acao]}' registrado para ${confirmacao.nome}.`
+                  );
+                  setConfirmacao(null);
+                }}
+              >
+                Confirmar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }

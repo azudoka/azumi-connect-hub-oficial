@@ -43,7 +43,28 @@ export default function VagaDetalheAdmin() {
   const max = Math.max(...funil.map((f) => f.n), 1);
 
   const candidatosVaga = candidatos.filter((c) => c.vagaId === vaga.id);
-  const colunas = ["Triagem", "Quest.", "Entrevista", "Enviados", "Decisão"];
+  const colunas = ["Triagem", "Quest.", "Entrevista", "Enviados", "Decisão"] as const;
+  type Coluna = typeof colunas[number];
+
+  // Estado do Kanban: candidato -> coluna (todos começam em "Triagem")
+  const [colunasEstado, setColunasEstado] = useState<Record<string, Coluna>>(
+    () => Object.fromEntries(candidatosVaga.map((c) => [c.id, "Triagem" as Coluna]))
+  );
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dragOverCol, setDragOverCol] = useState<Coluna | null>(null);
+
+  function handleDrop(coluna: Coluna) {
+    if (!draggingId) return;
+    const cand = candidatosVaga.find((c) => c.id === draggingId);
+    setColunasEstado((prev) =>
+      prev[draggingId] === coluna ? prev : { ...prev, [draggingId]: coluna }
+    );
+    if (cand && colunasEstado[draggingId] !== coluna) {
+      toast.info(`${cand.nome} movido para ${coluna}`);
+    }
+    setDraggingId(null);
+    setDragOverCol(null);
+  }
 
   function handleCliqueEnviar() {
     const total = candidatosVaga.filter(c => c.enviado).length;
@@ -165,36 +186,75 @@ export default function VagaDetalheAdmin() {
             <span className="text-xs text-muted-foreground ml-auto">Arraste candidatos entre etapas</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
-            {colunas.map((col, idx) => (
-              <div key={col} className="bg-card border border-border rounded-xl p-3 min-h-[280px]">
-                <div className="flex items-center justify-between mb-3 px-1">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{col}</span>
-                  <span className="font-data text-xs text-muted-foreground">{idx === 0 ? candidatosVaga.length : 0}</span>
+            {colunas.map((col) => {
+              const candidatosNaColuna = candidatosVaga.filter(
+                (c) => colunasEstado[c.id] === col
+              );
+              const isOver = dragOverCol === col;
+              return (
+                <div
+                  key={col}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    if (dragOverCol !== col) setDragOverCol(col);
+                  }}
+                  onDragLeave={() => {
+                    if (dragOverCol === col) setDragOverCol(null);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    handleDrop(col);
+                  }}
+                  className={cn(
+                    "bg-card border rounded-xl p-3 min-h-[280px] transition-colors",
+                    isOver ? "border-primary bg-primary/5" : "border-border"
+                  )}
+                >
+                  <div className="flex items-center justify-between mb-3 px-1">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{col}</span>
+                    <span className="font-data text-xs text-muted-foreground">{candidatosNaColuna.length}</span>
+                  </div>
+                  {candidatosNaColuna.length > 0 ? (
+                    <ul className="space-y-2">
+                      {candidatosNaColuna.map((c) => (
+                        <li
+                          key={c.id}
+                          draggable
+                          onDragStart={(e) => {
+                            setDraggingId(c.id);
+                            e.dataTransfer.effectAllowed = "move";
+                            e.dataTransfer.setData("text/plain", c.id);
+                          }}
+                          onDragEnd={() => {
+                            setDraggingId(null);
+                            setDragOverCol(null);
+                          }}
+                          className={cn(
+                            "bg-background/60 border border-border rounded-lg p-3 hover:border-primary/40 cursor-grab active:cursor-grabbing transition-colors",
+                            draggingId === c.id && "opacity-50"
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className="h-8 w-8 rounded-full bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white">
+                              {c.nome.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                            </div>
+                            <div className="min-w-0">
+                              <Link to={`/app/candidatos/${c.id}`} className="text-sm font-medium hover:text-primary truncate block">{c.nome}</Link>
+                              <div className="text-[10px] text-muted-foreground">DISC: {c.perfilDom} dominante</div>
+                            </div>
+                          </div>
+                          <div className="mt-2">
+                            <DiscBars values={c.disc} compact />
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className="flex items-center justify-center h-32 text-xs text-muted-foreground">—</div>
+                  )}
                 </div>
-                {idx === 0 && candidatosVaga.length > 0 ? (
-                  <ul className="space-y-2">
-                    {candidatosVaga.map((c) => (
-                      <li key={c.id} className="bg-background/60 border border-border rounded-lg p-3 hover:border-primary/40 cursor-grab transition-colors">
-                        <div className="flex items-center gap-2">
-                          <div className="h-8 w-8 rounded-full bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white">
-                            {c.nome.split(" ").map(n => n[0]).join("").slice(0, 2)}
-                          </div>
-                          <div className="min-w-0">
-                            <Link to={`/app/candidatos/${c.id}`} className="text-sm font-medium hover:text-primary truncate block">{c.nome}</Link>
-                            <div className="text-[10px] text-muted-foreground">DISC: {c.perfilDom} dominante</div>
-                          </div>
-                        </div>
-                        <div className="mt-2">
-                          <DiscBars values={c.disc} compact />
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <div className="flex items-center justify-center h-32 text-xs text-muted-foreground">—</div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
