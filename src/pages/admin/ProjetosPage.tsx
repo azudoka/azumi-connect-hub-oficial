@@ -338,6 +338,16 @@ export default function ProjetosPage() {
     setProjOpen(false);
   }
 
+  // ─── Aprovação de entregável + NPS ──────────────────────────────
+  const [npsOpen, setNpsOpen] = useState(false);
+  const [npsEmpresaNome, setNpsEmpresaNome] = useState<string>("");
+
+  function aprovarEntregavel(projeto: Projeto) {
+    toast.success("Entregável aprovado! NPS enviado ao cliente.");
+    setNpsEmpresaNome(projeto.empresaNome);
+    setNpsOpen(true);
+  }
+
   // ─── Helpers ────────────────────────────────────────────────────
   const hoje = new Date();
   function isAtrasado(p: Projeto) {
@@ -522,6 +532,18 @@ export default function ProjetosPage() {
                       >
                         Ver projeto <ArrowRight className="h-3 w-3" />
                       </Link>
+                    </div>
+
+                    <div className="mt-3 pt-3 border-t border-border flex justify-end">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1.5"
+                        onClick={() => aprovarEntregavel(p)}
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+                        Aprovar entregável
+                      </Button>
                     </div>
                   </div>
                 );
@@ -854,6 +876,26 @@ export default function ProjetosPage() {
               <Button type="submit">Criar projeto</Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+      {/* ─────────── Dialog: NPS disparado ─────────── */}
+      <Dialog open={npsOpen} onOpenChange={setNpsOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-success/15 text-success flex items-center justify-center shrink-0">
+                <CheckCircle2 className="h-5 w-5" />
+              </div>
+              <DialogTitle>NPS disparado</DialogTitle>
+            </div>
+            <DialogDescription className="pt-2">
+              O cliente <strong className="text-foreground">{npsEmpresaNome}</strong> foi notificado para
+              avaliar a entrega. A resposta ficará disponível em Analytics.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setNpsOpen(false)}>Ok, entendido</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
