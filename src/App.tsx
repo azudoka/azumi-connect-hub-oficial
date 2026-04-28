@@ -59,7 +59,10 @@ import ColaboradorInicio from "./pages/hub/ColaboradorInicio";
 import SobreVocePage from "./pages/hub/colaborador/SobreVocePage";
 import HoleritesPage from "./pages/hub/colaborador/HoleritesPage";
 import FeriasPage from "./pages/hub/colaborador/FeriasPage";
-import ColaboradorBeneficios from "./pages/hub/ColaboradorBeneficios";
+import BeneficiosPage from "./pages/hub/colaborador/BeneficiosPage";
+import PoliticasColabPage from "./pages/hub/colaborador/PoliticasColabPage";
+import TreinamentosColabPage from "./pages/hub/colaborador/TreinamentosColabPage";
+import AjudaPage from "./pages/hub/colaborador/AjudaPage";
 import SolicitacoesColabPage from "./pages/hub/colaborador/SolicitacoesColabPage";
 import CeoDashboard from "./pages/hub/CeoDashboard";
 import CeoHeadcount from "./pages/hub/CeoHeadcount";
@@ -202,10 +205,10 @@ const AppRoutes = () => (
       <Route path="/hub/colaborador/solicitacoes" element={<SolicitacoesColabPage />} />
       <Route path="/hub/colaborador/holerites" element={<HoleritesPage />} />
       <Route path="/hub/colaborador/ferias" element={<FeriasPage />} />
-      <Route path="/hub/colaborador/beneficios" element={<ColaboradorBeneficios />} />
-      <Route path="/hub/colaborador/politicas" element={<Stub title="Políticas internas" />} />
-      <Route path="/hub/colaborador/treinamentos" element={<Stub title="Treinamentos" />} />
-      <Route path="/hub/colaborador/ajuda" element={<Stub title="Ajuda / Denúncia" subtitle="Canal seguro de apoio" />} />
+      <Route path="/hub/colaborador/beneficios" element={<BeneficiosPage />} />
+      <Route path="/hub/colaborador/politicas" element={<PoliticasColabPage />} />
+      <Route path="/hub/colaborador/treinamentos" element={<TreinamentosColabPage />} />
+      <Route path="/hub/colaborador/ajuda" element={<AjudaPage />} />
     </Route>
 
     {/* Hub CEO */}
