@@ -143,13 +143,7 @@ export default function EmpresaDetalhePage() {
 
       <PageHeader
         title={empresa.nome}
-        subtitle={
-          <span className="inline-flex items-center gap-2 group">
-            <span className="font-mono text-xs">{empresa.id}</span>
-            <CopyBtn value={empresa.id} />
-            <span className="text-muted-foreground">· CNPJ {empresa.cnpj}</span>
-          </span> as unknown as string
-        }
+        subtitle={`${empresa.id} · CNPJ ${empresa.cnpj}`}
         actions={
           <div className="flex items-center gap-2">
             <PlanoBadge p={empresa.plano} />
