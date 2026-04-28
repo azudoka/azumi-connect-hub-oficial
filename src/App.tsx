@@ -56,11 +56,11 @@ import LiderOnboarding from "./pages/hub/LiderOnboarding";
 import LiderFeedback from "./pages/hub/LiderFeedback";
 import LiderSolicitacoes from "./pages/hub/LiderSolicitacoes";
 import ColaboradorInicio from "./pages/hub/ColaboradorInicio";
-import ColaboradorSobreVoce from "./pages/hub/ColaboradorSobreVoce";
-import ColaboradorHolerites from "./pages/hub/ColaboradorHolerites";
-import ColaboradorFerias from "./pages/hub/ColaboradorFerias";
+import SobreVocePage from "./pages/hub/colaborador/SobreVocePage";
+import HoleritesPage from "./pages/hub/colaborador/HoleritesPage";
+import FeriasPage from "./pages/hub/colaborador/FeriasPage";
 import ColaboradorBeneficios from "./pages/hub/ColaboradorBeneficios";
-import ColaboradorSolicitacoes from "./pages/hub/ColaboradorSolicitacoes";
+import SolicitacoesColabPage from "./pages/hub/colaborador/SolicitacoesColabPage";
 import CeoDashboard from "./pages/hub/CeoDashboard";
 import CeoHeadcount from "./pages/hub/CeoHeadcount";
 import CeoFinanceiro from "./pages/hub/CeoFinanceiro";
@@ -198,10 +198,10 @@ const AppRoutes = () => (
       </PrivateRoute>
     }>
       <Route path="/hub/colaborador/inicio" element={<ColaboradorInicio />} />
-      <Route path="/hub/colaborador/sobre-voce" element={<ColaboradorSobreVoce />} />
-      <Route path="/hub/colaborador/solicitacoes" element={<ColaboradorSolicitacoes />} />
-      <Route path="/hub/colaborador/holerites" element={<ColaboradorHolerites />} />
-      <Route path="/hub/colaborador/ferias" element={<ColaboradorFerias />} />
+      <Route path="/hub/colaborador/sobre-voce" element={<SobreVocePage />} />
+      <Route path="/hub/colaborador/solicitacoes" element={<SolicitacoesColabPage />} />
+      <Route path="/hub/colaborador/holerites" element={<HoleritesPage />} />
+      <Route path="/hub/colaborador/ferias" element={<FeriasPage />} />
       <Route path="/hub/colaborador/beneficios" element={<ColaboradorBeneficios />} />
       <Route path="/hub/colaborador/politicas" element={<Stub title="Políticas internas" />} />
       <Route path="/hub/colaborador/treinamentos" element={<Stub title="Treinamentos" />} />
