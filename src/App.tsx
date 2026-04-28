@@ -34,6 +34,8 @@ import FinanceiroPage from "./pages/admin/FinanceiroPage";
 import ClientesPage from "./pages/admin/ClientesPage";
 import ConfiguracoesPage from "./pages/admin/ConfiguracoesPage";
 import SolicitacoesPage from "./pages/admin/SolicitacoesPage";
+import UsuariosPage from "./pages/admin/UsuariosPage";
+import DocumentosPage from "./pages/admin/DocumentosPage";
 import VagasClientePage from "./pages/VagasClientePage";
 import PerfilPage from "./pages/PerfilPage";
 import SolicitacoesClientePage from "./pages/SolicitacoesClientePage";
@@ -121,7 +123,7 @@ const AppRoutes = () => (
       <Route path="/app/dashboard" element={<AdminDashboard />} />
       <Route path="/app/empresas" element={<Empresas />} />
       <Route path="/app/empresas/:id" element={<Stub title="Detalhe da empresa" subtitle="Visão geral, vagas, projetos, horas, boletos, contratos, usuários" />} />
-      <Route path="/app/usuarios" element={<Stub title="Usuários" subtitle="Gestão de usuários internos e externos" />} />
+      <Route path="/app/usuarios" element={<UsuariosPage />} />
       <Route path="/app/projetos" element={<ProjetosPage />} />
       <Route path="/app/projetos/:id" element={<ProjetoDetalhe />} />
       <Route path="/app/clientes" element={<ClientesPage />} />
@@ -137,7 +139,7 @@ const AppRoutes = () => (
       <Route path="/app/gestao-de-conta" element={<GestaoConta />} />
       <Route path="/app/comunicados" element={<Stub title="Comunicados" subtitle="Criar, segmentar e rastrear leitura" />} />
       <Route path="/app/calendario" element={<Stub title="Calendário" />} />
-      <Route path="/app/documentos" element={<Stub title="Documentos" subtitle="Biblioteca de documentos" />} />
+      <Route path="/app/documentos" element={<DocumentosPage />} />
       <Route path="/app/auditoria" element={<Stub title="Auditoria" subtitle="Log completo de ações" />} />
       <Route path="/app/configuracoes" element={<ConfiguracoesPage />} />
       <Route path="/app/perfil" element={<PerfilPage />} />
