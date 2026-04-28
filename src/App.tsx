@@ -36,6 +36,10 @@ import ConfiguracoesPage from "./pages/admin/ConfiguracoesPage";
 import SolicitacoesPage from "./pages/admin/SolicitacoesPage";
 import UsuariosPage from "./pages/admin/UsuariosPage";
 import DocumentosPage from "./pages/admin/DocumentosPage";
+import EmpresaDetalhePage from "./pages/admin/EmpresaDetalhePage";
+import AuditoriaPage from "./pages/admin/AuditoriaPage";
+import CalendarioPage from "./pages/admin/CalendarioPage";
+import ComunicadosPage from "./pages/admin/ComunicadosPage";
 import VagasClientePage from "./pages/VagasClientePage";
 import PerfilPage from "./pages/PerfilPage";
 import SolicitacoesClientePage from "./pages/SolicitacoesClientePage";
@@ -122,7 +126,7 @@ const AppRoutes = () => (
     >
       <Route path="/app/dashboard" element={<AdminDashboard />} />
       <Route path="/app/empresas" element={<Empresas />} />
-      <Route path="/app/empresas/:id" element={<Stub title="Detalhe da empresa" subtitle="Visão geral, vagas, projetos, horas, boletos, contratos, usuários" />} />
+      <Route path="/app/empresas/:id" element={<EmpresaDetalhePage />} />
       <Route path="/app/usuarios" element={<UsuariosPage />} />
       <Route path="/app/projetos" element={<ProjetosPage />} />
       <Route path="/app/projetos/:id" element={<ProjetoDetalhe />} />
@@ -137,10 +141,10 @@ const AppRoutes = () => (
       <Route path="/app/candidatos/:id" element={<Stub title="Perfil do candidato" subtitle="DISC, questionários, pareceres" />} />
       <Route path="/app/analytics" element={<Analytics />} />
       <Route path="/app/gestao-de-conta" element={<GestaoConta />} />
-      <Route path="/app/comunicados" element={<Stub title="Comunicados" subtitle="Criar, segmentar e rastrear leitura" />} />
-      <Route path="/app/calendario" element={<Stub title="Calendário" />} />
+      <Route path="/app/comunicados" element={<ComunicadosPage />} />
+      <Route path="/app/calendario" element={<CalendarioPage />} />
       <Route path="/app/documentos" element={<DocumentosPage />} />
-      <Route path="/app/auditoria" element={<Stub title="Auditoria" subtitle="Log completo de ações" />} />
+      <Route path="/app/auditoria" element={<AuditoriaPage />} />
       <Route path="/app/configuracoes" element={<ConfiguracoesPage />} />
       <Route path="/app/perfil" element={<PerfilPage />} />
     </Route>
