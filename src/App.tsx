@@ -50,11 +50,13 @@ import ClienteHorasPage from "./pages/cliente/ClienteHorasPage";
 import ClienteDashboard from "./pages/cliente/ClienteDashboard";
 import VagaDetalheCliente from "./pages/cliente/VagaDetalheCliente";
 
-import LiderPainel from "./pages/hub/LiderPainel";
-import LiderMeuTime from "./pages/hub/LiderMeuTime";
-import LiderOnboarding from "./pages/hub/LiderOnboarding";
-import LiderFeedback from "./pages/hub/LiderFeedback";
-import LiderSolicitacoes from "./pages/hub/LiderSolicitacoes";
+import LiderPainelPage from "./pages/hub/lider/LiderPainelPage";
+import MeuTimePage from "./pages/hub/lider/MeuTimePage";
+import ColaboradorPerfilPage from "./pages/hub/lider/ColaboradorPerfilPage";
+import OnboardingPage from "./pages/hub/lider/OnboardingPage";
+import FeedbackPage from "./pages/hub/lider/FeedbackPage";
+import AvaliacoesLiderPage from "./pages/hub/lider/AvaliacoesLiderPage";
+import SolicitacoesLiderPage from "./pages/hub/lider/SolicitacoesLiderPage";
 import ColaboradorInicio from "./pages/hub/ColaboradorInicio";
 import SobreVocePage from "./pages/hub/colaborador/SobreVocePage";
 import HoleritesPage from "./pages/hub/colaborador/HoleritesPage";
@@ -181,13 +183,13 @@ const AppRoutes = () => (
         <HubLayout profile="lider" />
       </PrivateRoute>
     }>
-      <Route path="/hub/lider/painel" element={<LiderPainel />} />
-      <Route path="/hub/lider/meu-time" element={<LiderMeuTime />} />
-      <Route path="/hub/lider/meu-time/:id" element={<Stub title="Perfil do colaborador" />} />
-      <Route path="/hub/lider/onboarding" element={<LiderOnboarding />} />
-      <Route path="/hub/lider/feedback" element={<LiderFeedback />} />
-      <Route path="/hub/lider/avaliacoes" element={<Stub title="Avaliação de desempenho" />} />
-      <Route path="/hub/lider/solicitacoes" element={<LiderSolicitacoes />} />
+      <Route path="/hub/lider/painel" element={<LiderPainelPage />} />
+      <Route path="/hub/lider/meu-time" element={<MeuTimePage />} />
+      <Route path="/hub/lider/meu-time/:id" element={<ColaboradorPerfilPage />} />
+      <Route path="/hub/lider/onboarding" element={<OnboardingPage />} />
+      <Route path="/hub/lider/feedback" element={<FeedbackPage />} />
+      <Route path="/hub/lider/avaliacoes" element={<AvaliacoesLiderPage />} />
+      <Route path="/hub/lider/solicitacoes" element={<SolicitacoesLiderPage />} />
       <Route path="/hub/lider/politicas" element={<Stub title="Políticas internas" />} />
       <Route path="/hub/lider/treinamentos" element={<Stub title="Treinamentos" />} />
       <Route path="/hub/lider/calendario" element={<Stub title="Calendário da equipe" />} />
