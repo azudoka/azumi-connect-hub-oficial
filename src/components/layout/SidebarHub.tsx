@@ -215,7 +215,7 @@ export function SidebarHub({ profile }: { profile: HubProfile }) {
       </div>
 
       <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-5">
-        {[...TOPO, ...visiveis].map((g) => (
+        {[...TOPO, ...FIXOS_POR_PERFIL[profile], ...visiveis].map((g) => (
           <div key={g.label}>
             {!collapsed && (
               <div className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">{g.label}</div>
