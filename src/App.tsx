@@ -67,10 +67,10 @@ import TreinamentosColabPage from "./pages/hub/colaborador/TreinamentosColabPage
 import AjudaPage from "./pages/hub/colaborador/AjudaPage";
 import SolicitacoesColabPage from "./pages/hub/colaborador/SolicitacoesColabPage";
 import CeoDashboard from "./pages/hub/CeoDashboard";
-import CeoHeadcount from "./pages/hub/CeoHeadcount";
-import CeoFinanceiro from "./pages/hub/CeoFinanceiro";
-import CeoAvaliacoes from "./pages/hub/CeoAvaliacoes";
-import CeoTurnover from "./pages/hub/CeoTurnover";
+import HeadcountPage from "./pages/hub/ceo/HeadcountPage";
+import FinanceiroRHPage from "./pages/hub/ceo/FinanceiroRHPage";
+import AvaliacoesCeoPage from "./pages/hub/ceo/AvaliacoesCeoPage";
+import TurnoverPage from "./pages/hub/ceo/TurnoverPage";
 
 const queryClient = new QueryClient();
 
@@ -220,10 +220,10 @@ const AppRoutes = () => (
       </PrivateRoute>
     }>
       <Route path="/hub/ceo/dashboard" element={<CeoDashboard />} />
-      <Route path="/hub/ceo/headcount" element={<CeoHeadcount />} />
-      <Route path="/hub/ceo/financeiro" element={<CeoFinanceiro />} />
-      <Route path="/hub/ceo/avaliacoes" element={<CeoAvaliacoes />} />
-      <Route path="/hub/ceo/turnover" element={<CeoTurnover />} />
+      <Route path="/hub/ceo/headcount" element={<HeadcountPage />} />
+      <Route path="/hub/ceo/financeiro" element={<FinanceiroRHPage />} />
+      <Route path="/hub/ceo/avaliacoes" element={<AvaliacoesCeoPage />} />
+      <Route path="/hub/ceo/turnover" element={<TurnoverPage />} />
     </Route>
 
     {/* Hub — Módulos terceiros */}
