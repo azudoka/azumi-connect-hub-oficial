@@ -220,10 +220,10 @@ const AppRoutes = () => (
       </PrivateRoute>
     }>
       <Route path="/hub/ceo/dashboard" element={<CeoDashboard />} />
-      <Route path="/hub/ceo/headcount" element={<CeoHeadcount />} />
-      <Route path="/hub/ceo/financeiro" element={<CeoFinanceiro />} />
-      <Route path="/hub/ceo/avaliacoes" element={<CeoAvaliacoes />} />
-      <Route path="/hub/ceo/turnover" element={<CeoTurnover />} />
+      <Route path="/hub/ceo/headcount" element={<HeadcountPage />} />
+      <Route path="/hub/ceo/financeiro" element={<FinanceiroRHPage />} />
+      <Route path="/hub/ceo/avaliacoes" element={<AvaliacoesCeoPage />} />
+      <Route path="/hub/ceo/turnover" element={<TurnoverPage />} />
     </Route>
 
     {/* Hub — Módulos terceiros */}
