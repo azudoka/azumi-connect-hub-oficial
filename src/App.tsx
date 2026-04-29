@@ -66,6 +66,9 @@ import PoliticasColabPage from "./pages/hub/colaborador/PoliticasColabPage";
 import TreinamentosColabPage from "./pages/hub/colaborador/TreinamentosColabPage";
 import AjudaPage from "./pages/hub/colaborador/AjudaPage";
 import SolicitacoesColabPage from "./pages/hub/colaborador/SolicitacoesColabPage";
+import TermometroPage from "./pages/hub/colaborador/TermometroPage";
+import MuralPage from "./pages/hub/colaborador/MuralPage";
+import OnboardingColabPage from "./pages/hub/colaborador/OnboardingPage";
 import CeoDashboard from "./pages/hub/CeoDashboard";
 import HeadcountPage from "./pages/hub/ceo/HeadcountPage";
 import FinanceiroRHPage from "./pages/hub/ceo/FinanceiroRHPage";
@@ -211,6 +214,9 @@ const AppRoutes = () => (
       <Route path="/hub/colaborador/politicas" element={<PoliticasColabPage />} />
       <Route path="/hub/colaborador/treinamentos" element={<TreinamentosColabPage />} />
       <Route path="/hub/colaborador/ajuda" element={<AjudaPage />} />
+      <Route path="/hub/colaborador/termometro" element={<TermometroPage />} />
+      <Route path="/hub/colaborador/mural" element={<MuralPage />} />
+      <Route path="/hub/colaborador/onboarding" element={<OnboardingColabPage />} />
     </Route>
 
     {/* Hub CEO */}
