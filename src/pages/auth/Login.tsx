@@ -5,7 +5,22 @@ import { useAuth } from "@/context/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, usuario } = useAuth();
+
+  const roleRedirect: Record<string, string> = {
+    admin:          "/app/dashboard",
+    consultor:      "/app/dashboard",
+    cliente:        "/cliente/dashboard",
+    rh:             "/hub/colaborador/inicio",
+    rh_operacional: "/hub/colaborador/inicio",
+    rhoperacional:  "/hub/colaborador/inicio",
+    colaborador:    "/hub/colaborador/inicio",
+    lider:          "/hub/lider/painel",
+    ceo:            "/hub/ceo/dashboard",
+    dp:             "/hub/colaborador/inicio",
+    contador:       "/hub/colaborador/inicio",
+    juridico:       "/hub/colaborador/inicio",
+  };
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [loading, setLoading] = useState(false);
