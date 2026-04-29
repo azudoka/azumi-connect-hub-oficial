@@ -4,12 +4,13 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Building2, Users, Briefcase, Clock, MessagesSquare, Target,
   BarChart3, Wallet, FileText, ShieldCheck, Calendar, Megaphone, BookOpen,
-  Settings, Settings2, LogOut, ChevronLeft, Sparkles, UserCog, Heart, Wrench,
-  ExternalLink
+  Settings, LogOut, ChevronLeft, Sparkles, UserCog, Heart,
+  ExternalLink, Mail, Phone
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { usePermissao, type Permissao } from "@/config/permissoes";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 interface SidebarConnectProps {
   variant?: "admin" | "cliente";
