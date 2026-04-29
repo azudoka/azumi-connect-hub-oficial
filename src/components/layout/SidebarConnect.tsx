@@ -331,6 +331,27 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
           </div>
         )}
       </div>
+
+      <Dialog open={consultorOpen} onOpenChange={setConsultorOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Sua consultora Azumi</DialogTitle>
+            <DialogDescription>Fale diretamente com quem cuida da sua conta.</DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center gap-3 mt-2">
+            <div className="h-12 w-12 rounded-full bg-gradient-brand flex items-center justify-center text-sm font-semibold text-white">AB</div>
+            <div>
+              <div className="text-base font-semibold">Ana Beatriz</div>
+              <div className="text-xs text-muted-foreground">Consultora sênior — Azumi</div>
+            </div>
+          </div>
+          <div className="space-y-2 text-sm mt-2">
+            <div className="flex items-center gap-2"><Mail className="h-4 w-4 text-muted-foreground" /> ana.beatriz@azumi.com.br</div>
+            <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-muted-foreground" /> (11) 98888-1234</div>
+            <div className="flex items-center gap-2"><Clock className="h-4 w-4 text-muted-foreground" /> Seg–Sex, 9h às 18h</div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </aside>
   );
 }
