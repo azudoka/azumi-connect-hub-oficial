@@ -26,6 +26,15 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [shake, setShake] = useState(false);
+  const [pendingRedirect, setPendingRedirect] = useState(false);
+
+  useEffect(() => {
+    if (pendingRedirect && usuario) {
+      const papel = usuario.role ?? "admin";
+      navigate(roleRedirect[papel] ?? "/app/dashboard");
+      setPendingRedirect(false);
+    }
+  }, [pendingRedirect, usuario, navigate]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -35,7 +44,7 @@ export default function Login() {
     const res = await login(email, pass);
     setLoading(false);
     if (res === "ok") {
-      navigate("/app/dashboard");
+      setPendingRedirect(true);
     } else {
       setErro("E-mail ou senha incorretos");
       setShake(true);
