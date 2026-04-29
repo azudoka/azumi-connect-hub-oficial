@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
 import { consumoNotificacoes } from "@/data/mock";
+import { useAuth } from "@/context/AuthContext";
 
 interface HeaderProps {
   showSwitcher?: boolean;
@@ -12,12 +13,29 @@ interface HeaderProps {
 
 export function Header({ showSwitcher = true, context = "connect" }: HeaderProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [openNotif, setOpenNotif] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
 
   function switchContext() {
-    if (context === "connect") navigate("/hub/colaborador/inicio");
-    else navigate("/app/dashboard");
+    if (context === "connect") {
+      // Cliente ADM: por enquanto, não tem Hub liberado (mock).
+      if (user?.papel === "cliente") {
+        navigate("/cliente/hub-indisponivel");
+        return;
+      }
+      // Roteamento por papel para perfis com Hub.
+      const hubHomeByRole: Record<string, string> = {
+        ceo: "/hub/ceo/dashboard",
+        lider: "/hub/lider/painel",
+        colaborador: "/hub/colaborador/inicio",
+        rh: "/hub/ceo/dashboard",
+        admin: "/hub/ceo/dashboard",
+      };
+      navigate(hubHomeByRole[user?.papel ?? ""] ?? "/hub/colaborador/inicio");
+    } else {
+      navigate("/app/dashboard");
+    }
   }
 
   // fecha ao clicar fora
