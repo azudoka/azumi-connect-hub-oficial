@@ -118,6 +118,7 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
     logout();
     navigate("/login");
   };
+  const [consultorOpen, setConsultorOpen] = useState(false);
   const groupsBase = variant === "admin" ? adminGroups : clienteGroups;
   // Filtra itens cuja rota exige permissão que o usuário não possui.
   const groups = groupsBase
