@@ -114,9 +114,6 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
       : user?.papel === "cliente"
       ? "Cliente"
       : "";
-  const [consultorOpen, setConsultorOpen] = useState(false);
-  const _papelLabel2 = "
-      : "";
   const handleLogout = () => {
     logout();
     navigate("/login");
