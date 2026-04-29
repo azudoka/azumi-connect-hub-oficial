@@ -4,12 +4,13 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Building2, Users, Briefcase, Clock, MessagesSquare, Target,
   BarChart3, Wallet, FileText, ShieldCheck, Calendar, Megaphone, BookOpen,
-  Settings, Settings2, LogOut, ChevronLeft, Sparkles, UserCog, Heart, Wrench,
-  ExternalLink
+  Settings, LogOut, ChevronLeft, Sparkles, UserCog, Heart,
+  ExternalLink, Mail, Phone
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { usePermissao, type Permissao } from "@/config/permissoes";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 interface SidebarConnectProps {
   variant?: "admin" | "cliente";
@@ -117,6 +118,7 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
     logout();
     navigate("/login");
   };
+  const [consultorOpen, setConsultorOpen] = useState(false);
   const groupsBase = variant === "admin" ? adminGroups : clienteGroups;
   // Filtra itens cuja rota exige permissão que o usuário não possui.
   const groups = groupsBase
@@ -230,17 +232,22 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
 
         {/* Configurações — sempre no final */}
         <div className="pt-2 mt-2 border-t border-sidebar-border/60">
-          <NavLink
-            to="/app/configuracoes"
-            className={cn(
-              "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors",
-              collapsed && "justify-center px-0"
-            )}
-            activeClassName="!bg-primary/15 !text-foreground"
-          >
-            <Settings2 className="h-4 w-4 shrink-0" />
-            {!collapsed && <span className="truncate">Configurações</span>}
-          </NavLink>
+          {(() => {
+            const configHref = variant === "cliente" ? "/cliente/gestao-conta" : "/app/configuracoes";
+            return (
+              <NavLink
+                to={configHref}
+                className={cn(
+                  "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors",
+                  collapsed && "justify-center px-0"
+                )}
+                activeClassName="!bg-primary/15 !text-foreground"
+              >
+                <Settings className="h-4 w-4 shrink-0" />
+                {!collapsed && <span className="truncate">Configurações</span>}
+              </NavLink>
+            );
+          })()}
 
           {pode("portal_cliente.acessar") && (
             <>
@@ -277,15 +284,25 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
                   <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-success ring-2 ring-card animate-soft-pulse" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Seu consultor</div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Seu consultor Azumi</div>
                   <div className="text-sm font-medium truncate">Ana Beatriz</div>
                 </div>
               </div>
             )}
             <div className={cn("flex items-center gap-2", user?.papel === "cliente" && "mt-3")}>
-              <NavLink to="/app/configuracoes" className="flex-1 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 px-2 py-1.5 rounded-md hover:bg-secondary">
-                <Settings className="h-3.5 w-3.5" /> Config.
-              </NavLink>
+              {user?.papel === "cliente" ? (
+                <button
+                  type="button"
+                  onClick={() => setConsultorOpen(true)}
+                  className="flex-1 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 px-2 py-1.5 rounded-md hover:bg-secondary"
+                >
+                  <Mail className="h-3.5 w-3.5" /> Falar com consultor
+                </button>
+              ) : (
+                <NavLink to="/app/configuracoes" className="flex-1 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 px-2 py-1.5 rounded-md hover:bg-secondary">
+                  <Settings className="h-3.5 w-3.5" /> Config.
+                </NavLink>
+              )}
               <button
                 type="button"
                 onClick={handleLogout}
@@ -314,6 +331,27 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
           </div>
         )}
       </div>
+
+      <Dialog open={consultorOpen} onOpenChange={setConsultorOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Sua consultora Azumi</DialogTitle>
+            <DialogDescription>Fale diretamente com quem cuida da sua conta.</DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center gap-3 mt-2">
+            <div className="h-12 w-12 rounded-full bg-gradient-brand flex items-center justify-center text-sm font-semibold text-white">AB</div>
+            <div>
+              <div className="text-base font-semibold">Ana Beatriz</div>
+              <div className="text-xs text-muted-foreground">Consultora sênior — Azumi</div>
+            </div>
+          </div>
+          <div className="space-y-2 text-sm mt-2">
+            <div className="flex items-center gap-2"><Mail className="h-4 w-4 text-muted-foreground" /> ana.beatriz@azumi.com.br</div>
+            <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-muted-foreground" /> (11) 98888-1234</div>
+            <div className="flex items-center gap-2"><Clock className="h-4 w-4 text-muted-foreground" /> Seg–Sex, 9h às 18h</div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </aside>
   );
 }

@@ -77,7 +77,7 @@ const FIXOS_POR_PERFIL: Record<HubProfile, NavGroup[]> = {
         { to: "/hub/ceo/clima", icon: ThermometerSun, label: "Clima" },
         { to: "/hub/ceo/headcount", icon: Users, label: "Headcount" },
         { to: "/hub/ceo/politicas", icon: BookOpen, label: "Políticas" },
-        { to: "/hub/ceo/mini-empresa", icon: Building2, label: "Mini empresa" },
+        { to: "/hub/ceo/minha-empresa", icon: Building2, label: "Minha empresa" },
         { to: "/hub/ceo/beneficios", icon: Gift, label: "Benefícios" },
         { to: "/hub/ceo/historico", icon: History, label: "Histórico" },
         { to: "/hub/ceo/solicitacoes", icon: ClipboardList, label: "Solicitações" },
