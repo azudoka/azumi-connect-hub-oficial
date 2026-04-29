@@ -29,11 +29,10 @@ export default function ClienteDashboard() {
         <KpiCard label="Faturas em aberto" value={1} icon={Clock} hint="R$ 4.800,00" />
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         <KpiCard label="Vagas em aberto" value={vagas.filter(v => v.empresaId === "kentaki").length + 2} icon={Target} />
-        <KpiCard label="Projetos ativos" value={projetos.filter(p => p.empresaId === "kentaki" && p.status === "andamento").length + 1} icon={Briefcase} />
         <KpiCard label="Horas no mês" value="61h" icon={Clock} hint="de 80h contratadas" trend={{ value: "76%", positive: true }} />
-        <KpiCard label="Solicitações" value={solicitacoes.filter(s => s.empresa === "Kentaki Foods").length + 1} icon={MessagesSquare} />
+        <KpiCard label="Solicitações abertas" value={solicitacoes.filter(s => s.empresa === "Kentaki Foods").length + 1} icon={MessagesSquare} />
       </div>
 
       <SectionDivider>Consumo do mês</SectionDivider>
