@@ -74,6 +74,16 @@ import HeadcountPage from "./pages/hub/ceo/HeadcountPage";
 import FinanceiroRHPage from "./pages/hub/ceo/FinanceiroRHPage";
 import AvaliacoesCeoPage from "./pages/hub/ceo/AvaliacoesCeoPage";
 import TurnoverPage from "./pages/hub/ceo/TurnoverPage";
+import ClimaCeoPage from "./pages/hub/ceo/ClimaPage";
+import PoliticasCeoPage from "./pages/hub/ceo/PoliticasPage";
+import MiniEmpresaCeoPage from "./pages/hub/ceo/MiniEmpresaPage";
+import BeneficiosCeoPage from "./pages/hub/ceo/BeneficiosPage";
+import HistoricoCeoPage from "./pages/hub/ceo/HistoricoPage";
+import SolicitacoesCeoPage from "./pages/hub/ceo/SolicitacoesPage";
+import AjudaCeoPage from "./pages/hub/ceo/AjudaPage";
+import LiderSobreVocePage from "./pages/hub/lider/SobreVocePage";
+import LiderTermometroPage from "./pages/hub/lider/TermometroPage";
+import LiderMuralPage from "./pages/hub/lider/MuralPage";
 
 const queryClient = new QueryClient();
 
@@ -193,6 +203,9 @@ const AppRoutes = () => (
       <Route path="/hub/lider/feedback" element={<FeedbackPage />} />
       <Route path="/hub/lider/avaliacoes" element={<AvaliacoesLiderPage />} />
       <Route path="/hub/lider/solicitacoes" element={<SolicitacoesLiderPage />} />
+      <Route path="/hub/lider/sobre-voce" element={<LiderSobreVocePage />} />
+      <Route path="/hub/lider/termometro" element={<LiderTermometroPage />} />
+      <Route path="/hub/lider/mural" element={<LiderMuralPage />} />
       <Route path="/hub/lider/politicas" element={<Stub title="Políticas internas" />} />
       <Route path="/hub/lider/treinamentos" element={<Stub title="Treinamentos" />} />
       <Route path="/hub/lider/calendario" element={<Stub title="Calendário da equipe" />} />
@@ -230,6 +243,13 @@ const AppRoutes = () => (
       <Route path="/hub/ceo/financeiro" element={<FinanceiroRHPage />} />
       <Route path="/hub/ceo/avaliacoes" element={<AvaliacoesCeoPage />} />
       <Route path="/hub/ceo/turnover" element={<TurnoverPage />} />
+      <Route path="/hub/ceo/clima" element={<ClimaCeoPage />} />
+      <Route path="/hub/ceo/politicas" element={<PoliticasCeoPage />} />
+      <Route path="/hub/ceo/mini-empresa" element={<MiniEmpresaCeoPage />} />
+      <Route path="/hub/ceo/beneficios" element={<BeneficiosCeoPage />} />
+      <Route path="/hub/ceo/historico" element={<HistoricoCeoPage />} />
+      <Route path="/hub/ceo/solicitacoes" element={<SolicitacoesCeoPage />} />
+      <Route path="/hub/ceo/ajuda" element={<AjudaCeoPage />} />
     </Route>
 
     {/* Hub — Módulos terceiros */}
