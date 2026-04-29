@@ -7,6 +7,7 @@ import {
   ChevronLeft, UserCircle2, Award, Grid3x3, Activity, ShieldAlert,
   Scale, ClipboardList, FileSignature, Route, Building2, Sparkles,
   Star, Receipt, Sun, Stethoscope, Gavel, Shield, KeyRound,
+  ThermometerSun, History,
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth, type ModuloSlug } from "@/context/AuthContext";
