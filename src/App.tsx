@@ -48,6 +48,8 @@ import ClienteProjetoDetalhe from "./pages/cliente/ClienteProjetoDetalhe";
 import ClienteHorasPage from "./pages/cliente/ClienteHorasPage";
 
 import ClienteDashboard from "./pages/cliente/ClienteDashboard";
+import ClienteGestaoContaPage from "./pages/cliente/ClienteGestaoContaPage";
+import ClienteHubIndisponivelPage from "./pages/cliente/ClienteHubIndisponivelPage";
 import VagaDetalheCliente from "./pages/cliente/VagaDetalheCliente";
 
 import LiderPainelPage from "./pages/hub/lider/LiderPainelPage";
@@ -76,7 +78,7 @@ import AvaliacoesCeoPage from "./pages/hub/ceo/AvaliacoesCeoPage";
 import TurnoverPage from "./pages/hub/ceo/TurnoverPage";
 import ClimaCeoPage from "./pages/hub/ceo/ClimaPage";
 import PoliticasCeoPage from "./pages/hub/ceo/PoliticasPage";
-import MiniEmpresaCeoPage from "./pages/hub/ceo/MiniEmpresaPage";
+import MinhaEmpresaCeoPage from "./pages/hub/ceo/MinhaEmpresaPage";
 import BeneficiosCeoPage from "./pages/hub/ceo/BeneficiosPage";
 import HistoricoCeoPage from "./pages/hub/ceo/HistoricoPage";
 import SolicitacoesCeoPage from "./pages/hub/ceo/SolicitacoesPage";
@@ -183,7 +185,8 @@ const AppRoutes = () => (
       <Route path="/cliente/solicitacoes/:id" element={<Stub title="Detalhe da solicitação" subtitle="Conversa completa com a consultora" />} />
       <Route path="/cliente/atracao" element={<VagasClientePage />} />
       <Route path="/cliente/atracao/:id" element={<VagaDetalheCliente />} />
-      <Route path="/cliente/gestao-conta" element={<Stub title="Gestão de conta" subtitle="Boletos, contratos, relatórios" />} />
+      <Route path="/cliente/gestao-conta" element={<ClienteGestaoContaPage />} />
+      <Route path="/cliente/hub-indisponivel" element={<ClienteHubIndisponivelPage />} />
       <Route path="/cliente/comunicados" element={<Stub title="Comunicados recebidos" />} />
       <Route path="/cliente/calendario" element={<Stub title="Calendário" />} />
       <Route path="/cliente/documentos" element={<Stub title="Documentos da empresa" />} />
@@ -245,7 +248,8 @@ const AppRoutes = () => (
       <Route path="/hub/ceo/turnover" element={<TurnoverPage />} />
       <Route path="/hub/ceo/clima" element={<ClimaCeoPage />} />
       <Route path="/hub/ceo/politicas" element={<PoliticasCeoPage />} />
-      <Route path="/hub/ceo/mini-empresa" element={<MiniEmpresaCeoPage />} />
+      <Route path="/hub/ceo/minha-empresa" element={<MinhaEmpresaCeoPage />} />
+      <Route path="/hub/ceo/mini-empresa" element={<Navigate to="/hub/ceo/minha-empresa" replace />} />
       <Route path="/hub/ceo/beneficios" element={<BeneficiosCeoPage />} />
       <Route path="/hub/ceo/historico" element={<HistoricoCeoPage />} />
       <Route path="/hub/ceo/solicitacoes" element={<SolicitacoesCeoPage />} />
