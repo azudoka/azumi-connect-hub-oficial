@@ -1,16 +1,40 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Mail, Lock, Sparkles, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, usuario } = useAuth();
+
+  const roleRedirect: Record<string, string> = {
+    admin:          "/app/dashboard",
+    consultor:      "/app/dashboard",
+    cliente:        "/cliente/dashboard",
+    rh:             "/hub/colaborador/inicio",
+    rh_operacional: "/hub/colaborador/inicio",
+    rhoperacional:  "/hub/colaborador/inicio",
+    colaborador:    "/hub/colaborador/inicio",
+    lider:          "/hub/lider/painel",
+    ceo:            "/hub/ceo/dashboard",
+    dp:             "/hub/colaborador/inicio",
+    contador:       "/hub/colaborador/inicio",
+    juridico:       "/hub/colaborador/inicio",
+  };
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [shake, setShake] = useState(false);
+  const [pendingRedirect, setPendingRedirect] = useState(false);
+
+  useEffect(() => {
+    if (pendingRedirect && usuario) {
+      const papel = usuario.role ?? "admin";
+      navigate(roleRedirect[papel] ?? "/app/dashboard");
+      setPendingRedirect(false);
+    }
+  }, [pendingRedirect, usuario, navigate]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -20,7 +44,7 @@ export default function Login() {
     const res = await login(email, pass);
     setLoading(false);
     if (res === "ok") {
-      navigate("/app/dashboard");
+      setPendingRedirect(true);
     } else {
       setErro("E-mail ou senha incorretos");
       setShake(true);
