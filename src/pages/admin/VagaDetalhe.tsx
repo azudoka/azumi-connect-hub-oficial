@@ -1629,55 +1629,94 @@ function ChatVagaPanel({
 }) {
   const [canal, setCanal] = useState<"interno" | "cliente">("interno");
   const [texto, setTexto] = useState("");
+  const [anexoNome, setAnexoNome] = useState<string | null>(null);
+  const [mencaoOpen, setMencaoOpen] = useState(false);
+  const [mencaoQuery, setMencaoQuery] = useState("");
+  const taRef = useRef<HTMLTextAreaElement>(null);
 
   const filtradas = mensagens.filter((m) => m.canal === canal);
 
+  const sugestoesMencao = useMemo(
+    () =>
+      PESSOAS_MENCAO_VAGA.filter((p) =>
+        p.toLowerCase().includes(mencaoQuery.toLowerCase()),
+      ).slice(0, 5),
+    [mencaoQuery],
+  );
+
+  function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    const val = e.target.value;
+    setTexto(val);
+    const cursor = e.target.selectionStart ?? val.length;
+    const trecho = val.slice(0, cursor);
+    const m = trecho.match(/@([\wÀ-ÿ ]*)$/);
+    if (m) {
+      setMencaoQuery(m[1]);
+      setMencaoOpen(true);
+    } else {
+      setMencaoOpen(false);
+    }
+  }
+
+  function inserirMencao(nome: string) {
+    setTexto((prev) => prev.replace(/@([\wÀ-ÿ ]*)$/, `@${nome} `));
+    setMencaoOpen(false);
+    taRef.current?.focus();
+  }
+
   function enviar() {
     const t = texto.trim();
-    if (!t) return;
+    if (!t && !anexoNome) return;
     onSend({
       id: `mv-${Date.now()}`,
       autor: "Você",
       iniciais: "VC",
       quando: new Date().toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }),
-      texto: t,
+      texto: t || (anexoNome ? `📎 ${anexoNome}` : ""),
       canal,
+      anexo: anexoNome ?? undefined,
     });
     setTexto("");
+    setAnexoNome(null);
+    setMencaoOpen(false);
   }
 
   return (
     <div className="bg-card border border-border rounded-xl p-5 max-w-3xl">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <h3 className="font-display font-semibold">Conversas sobre esta vaga</h3>
         <div className="inline-flex rounded-md border border-border overflow-hidden text-xs">
           <button
             onClick={() => setCanal("interno")}
-            className={cn("px-3 h-7", canal === "interno" ? "bg-primary text-primary-foreground" : "bg-card")}
+            className={cn("px-3 h-7", canal === "interno" ? "bg-primary text-primary-foreground" : "bg-card hover:bg-secondary")}
           >
-            Interno
+            Interno (Azumi)
           </button>
           <button
             onClick={() => setCanal("cliente")}
-            className={cn("px-3 h-7", canal === "cliente" ? "bg-primary text-primary-foreground" : "bg-card")}
+            className={cn("px-3 h-7", canal === "cliente" ? "bg-primary text-primary-foreground" : "bg-card hover:bg-secondary")}
           >
             Com cliente
           </button>
         </div>
       </div>
+
       <div
         className={cn(
-          "text-xs rounded-md px-3 py-2 mb-3 border",
+          "text-xs rounded-md px-3 py-2 mb-3 border inline-flex items-center gap-1.5",
           canal === "interno"
             ? "bg-muted/40 border-border text-muted-foreground"
-            : "bg-warning/10 border-warning/30 text-warning-foreground",
+            : "bg-warning/10 border-warning/30 text-warning",
         )}
       >
-        {canal === "interno"
-          ? "Visível apenas para o time Azumi."
-          : "Visível para o cliente. Evite informações internas."}
+        {canal === "interno" ? (
+          <><Eye className="h-3 w-3" /> Não visível para o cliente</>
+        ) : (
+          <><AlertTriangle className="h-3 w-3" /> Mensagens aqui aparecem para o cliente</>
+        )}
       </div>
-      <div className="space-y-3 max-h-80 overflow-y-auto mb-3">
+
+      <div className="space-y-3 max-h-80 overflow-y-auto mb-3 pr-1">
         {filtradas.length === 0 ? (
           <div className="text-center text-sm text-muted-foreground py-6">Sem mensagens ainda.</div>
         ) : (
@@ -1691,33 +1730,115 @@ function ChatVagaPanel({
                   <span className="text-sm font-medium">{m.autor}</span>
                   <span className="text-xs text-muted-foreground">{m.quando}</span>
                 </div>
-                <p className="text-sm text-foreground whitespace-pre-wrap break-words">{m.texto}</p>
+                <p className="text-sm text-foreground whitespace-pre-wrap break-words">
+                  {renderMensagemFormatada(m.texto)}
+                </p>
+                {m.anexo && (
+                  <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2 py-1 text-xs">
+                    <Paperclip className="h-3 w-3" />
+                    <span className="truncate max-w-[220px]">{m.anexo}</span>
+                  </div>
+                )}
               </div>
             </div>
           ))
         )}
       </div>
-      <div className="flex gap-2">
-        <input
+
+      {anexoNome && (
+        <div className="mb-2 inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2 py-1 text-xs">
+          <Paperclip className="h-3 w-3" />
+          <span className="truncate max-w-[220px]">{anexoNome}</span>
+          <button onClick={() => setAnexoNome(null)} className="ml-1 hover:text-destructive">
+            <XIcon className="h-3 w-3" />
+          </button>
+        </div>
+      )}
+
+      <div className="relative">
+        <textarea
+          ref={taRef}
           value={texto}
-          onChange={(e) => setTexto(e.target.value)}
+          onChange={handleChange}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
+            if (e.key === "Enter" && !e.shiftKey && !mencaoOpen) {
               e.preventDefault();
               enviar();
             }
+            if (e.key === "Escape") setMencaoOpen(false);
           }}
-          placeholder={canal === "interno" ? "Mensagem interna…" : "Mensagem para o cliente…"}
-          className="flex-1 h-9 px-3 rounded-md border border-border bg-background text-sm"
+          rows={2}
+          placeholder={
+            canal === "interno"
+              ? "Mensagem interna… use @ para mencionar"
+              : "Mensagem para o cliente… use @ para mencionar"
+          }
+          className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm resize-none"
         />
-        <button
-          onClick={enviar}
-          className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-xs font-medium inline-flex items-center gap-1.5"
-        >
-          <Send className="h-3.5 w-3.5" /> Enviar
-        </button>
+        {mencaoOpen && sugestoesMencao.length > 0 && (
+          <div className="absolute bottom-full left-0 mb-1 w-64 bg-popover border border-border rounded-md shadow-elevated z-10 overflow-hidden">
+            {sugestoesMencao.map((p) => (
+              <button
+                key={p}
+                onMouseDown={(e) => { e.preventDefault(); inserirMencao(p); }}
+                className="w-full text-left px-3 py-1.5 text-xs hover:bg-secondary"
+              >
+                @{p}
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="flex items-center justify-between mt-2 gap-2">
+          <button
+            onClick={() => {
+              const nomes = ["briefing.pdf", "curriculo.pdf", "parecer.docx", "anotacoes.txt"];
+              setAnexoNome(nomes[Math.floor(Math.random() * nomes.length)]);
+              toast.info("Anexo selecionado (mock).");
+            }}
+            className="h-8 px-3 rounded-md border border-border hover:bg-secondary text-xs inline-flex items-center gap-1.5"
+          >
+            <Paperclip className="h-3.5 w-3.5" /> Anexar
+          </button>
+          <button
+            onClick={enviar}
+            className="h-8 px-3 rounded-md bg-primary text-primary-foreground text-xs font-medium inline-flex items-center gap-1.5"
+          >
+            <Send className="h-3.5 w-3.5" /> Enviar
+          </button>
+        </div>
       </div>
     </div>
   );
+}
+
+// Renderiza texto com links http(s) clicáveis e @menções destacadas
+function renderMensagemFormatada(texto: string) {
+  const partes = texto.split(/(\s+)/);
+  return partes.map((parte, i) => {
+    if (/^https?:\/\/\S+$/i.test(parte)) {
+      return (
+        <a
+          key={i}
+          href={parte}
+          target="_blank"
+          rel="noreferrer"
+          className="text-primary underline underline-offset-2 break-all"
+        >
+          {parte}
+        </a>
+      );
+    }
+    const mencao = parte.match(/^@([\wÀ-ÿ]+(?: [\wÀ-ÿ]+)?)/);
+    if (mencao) {
+      const resto = parte.slice(mencao[0].length);
+      return (
+        <span key={i}>
+          <span className="rounded bg-primary/10 text-primary px-1 font-medium">@{mencao[1]}</span>
+          {resto}
+        </span>
+      );
+    }
+    return <span key={i}>{parte}</span>;
+  });
 }
 
