@@ -28,7 +28,7 @@ import {
   Users, FileQuestion, History, Filter, Loader2, AlertTriangle, Bot, User,
   MoreVertical, Eye, StickyNote, ChevronRight, UserX, Play, UserPlus, Link2,
   Copy, FileText, MessageCircle, Download, ListChecks, ThumbsDown, CalendarPlus,
-  CalendarDays, Globe, Paperclip, X as XIcon,
+  CalendarDays, Globe, Paperclip, X as XIcon, Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "react";
