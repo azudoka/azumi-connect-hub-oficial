@@ -2646,6 +2646,8 @@ function CandidatoDetailSheet({
   onAgendar,
   onAbrirRelatorio,
   relatorioStatus,
+  onEnviarWhatsQuestionario,
+  onSalvarAvaliacao,
 }: {
   open: boolean;
   candidato: CandidatoBase | null;
@@ -2664,6 +2666,8 @@ function CandidatoDetailSheet({
   onAgendar: (id: string) => void;
   onAbrirRelatorio: (id: string) => void;
   relatorioStatus?: "rascunho" | "enviado";
+  onEnviarWhatsQuestionario?: (candidatoId: string, questionarioId: string) => void;
+  onSalvarAvaliacao?: (questionarioId: string, candidatoId: string, questoes: Record<string, AvaliacaoQuestao>, salvoComo: "rascunho" | "definitivo") => void;
 }) {
   useScrollLock(open);
   if (!open) return null;
