@@ -59,12 +59,51 @@ interface CandidatoExtra {
   declinio?: { motivo: string; quem: "candidato" | "azumi" };
 }
 
+type TipoPergunta = "texto_livre" | "multipla_escolha" | "escala_1_5";
+
+interface PerguntaQuestionario {
+  id: string;
+  ordem: number;
+  texto: string;
+  tipo: TipoPergunta;
+  obrigatoria: boolean;
+  opcoes?: string[]; // múltipla escolha
+}
+
+interface AvaliacaoQuestao {
+  nota: 1 | 2 | 3 | 4 | 5;
+  justificativa?: string;
+}
+
+interface RespostaCandidatoQuestionario {
+  status: "pendente" | "respondido";
+  enviadoEm?: string;       // dd/mm/aaaa
+  respondidoEm?: string;    // dd/mm/aaaa
+  link?: string;
+  /** Respostas do candidato (preenchidas via mock no momento da resposta). */
+  respostas?: Record<string, string>;
+  /** Avaliação feita pelo consultor. */
+  avaliacao?: {
+    questoes: Record<string, AvaliacaoQuestao>;
+    media: number;
+    salvoComo: "rascunho" | "definitivo";
+  };
+  notaMedia?: number;
+}
+
 interface QuestionarioVaga {
   id: string;
   nome: string;
-  tipo: "Comportamental" | "Técnico" | "Cultural";
-  questoes: number;
-  candidatosRespostas: Record<string, "pendente" | "respondido">;
+  descricao?: string;
+  /** Compatibilidade legacy — deprecated, derive de `perguntas.length`. */
+  tipo?: "Comportamental" | "Técnico" | "Cultural";
+  perguntas: PerguntaQuestionario[];
+  criadoPor: string;
+  criadoEm: string;          // dd/mm/aaaa
+  respostasPorCandidato: Record<string, RespostaCandidatoQuestionario>;
+  /** Compat: deprecated; mantido para não quebrar leituras antigas. */
+  questoes?: number;
+  candidatosRespostas?: Record<string, "pendente" | "respondido">;
 }
 
 interface EventoEntrevista {
