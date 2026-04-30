@@ -6,6 +6,7 @@ import { DiscBars } from "@/components/DiscBars";
 import { Timer } from "@/components/Timer";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { vagas, candidatos, etapasVaga, comentariosVaga } from "@/data/mock";
+import { getParecerCliente, getFeedback1aLeva } from "@/data/atracaoClienteStore";
 
 const BENEFICIO_LABEL: Record<string, string> = {
   vale_transporte: "Vale-transporte",
