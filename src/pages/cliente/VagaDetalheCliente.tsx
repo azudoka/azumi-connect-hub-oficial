@@ -13,6 +13,10 @@ import {
   ThumbsUp,
   ThumbsDown,
   PauseCircle,
+  CalendarClock,
+  Star,
+  MapPin,
+  Video,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -21,7 +25,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { SectionDivider } from "@/components/SectionDivider";
 import { DiscBars } from "@/components/DiscBars";
 import { cn } from "@/lib/utils";
-import { vagas, candidatos } from "@/data/mock";
+import { vagas, candidatos, getGestorDaVaga } from "@/data/mock";
 import {
   getRelatorioEnviado,
   candidatosComRelatorioPorVaga,
@@ -33,6 +37,21 @@ import {
   reprovadosNaPrimeiraLeva,
   type ParecerCliente,
 } from "@/data/atracaoClienteStore";
+import {
+  listarAgendamentosDaVaga,
+  getAgendamentoDoCandidato,
+  gestorAprovarSugestao,
+  gestorSugerirOutro,
+  formatarSugestao,
+  statusAgendamentoLabel,
+  subscribeEntrevistaGestor,
+  getParecerGestor,
+  salvarParecerGestor,
+  reprovadosNaPrimeiraLevaGestor,
+  type AgendamentoEntrevistaGestor,
+  type SugestaoHorario,
+  type ParecerGestor,
+} from "@/data/entrevistaGestorStore";
 
 type DecisaoCliente = "avancar" | "standby" | "reprovar";
 
