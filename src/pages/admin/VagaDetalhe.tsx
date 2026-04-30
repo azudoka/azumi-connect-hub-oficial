@@ -973,7 +973,7 @@ export default function VagaDetalheAdmin() {
                           {/* Bloco inferior: agendamento (separado, com fundo diferente) */}
                           {(() => {
                             const ev = eventos.find((e) => e.candidatoId === c.id);
-                            const podeAgendar = colunasEstado[c.id] === "Entrevista";
+                            const podeAgendar = colunasEstado[c.id] === "Entrevista Azumi" || colunasEstado[c.id] === "Entrevista gestor";
                             if (!ev && !podeAgendar) return null;
                             return (
                               <div className="border-t border-border bg-muted/40 px-3 py-2 flex items-center gap-2 text-[11px]">
