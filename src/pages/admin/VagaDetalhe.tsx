@@ -1091,9 +1091,9 @@ export default function VagaDetalheAdmin() {
       {tab === "questionarios" && (
         <div className="bg-card border border-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-display font-semibold">Questionários da vaga</h3>
+            <h3 className="font-display font-semibold">Gestão de questionários</h3>
             <button
-              onClick={() => setNovoQuestOpen(true)}
+              onClick={() => setEditorQuestId("novo")}
               className="h-8 px-3 rounded-md bg-primary text-primary-foreground text-xs font-medium inline-flex items-center gap-1.5"
             >
               <Plus className="h-3.5 w-3.5" /> Novo questionário
@@ -1104,25 +1104,71 @@ export default function VagaDetalheAdmin() {
               Nenhum questionário criado.
             </div>
           ) : (
-            <ul className="space-y-2">
-              {questionariosVaga.map((q) => {
-                const respondidos = Object.values(q.candidatosRespostas).filter((s) => s === "respondido").length;
-                const total = Object.keys(q.candidatosRespostas).length;
-                return (
-                  <li key={q.id} className="border border-border rounded-lg px-3 py-2 flex items-center gap-3 bg-background/40">
-                    <div className="h-9 w-9 rounded-md bg-secondary flex items-center justify-center">
-                      <FileQuestion className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium">{q.nome}</div>
-                      <div className="text-[11px] text-muted-foreground">
-                        {q.tipo} · {q.questoes} questões · {respondidos}/{total} respondido(s)
-                      </div>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+            <div className="overflow-x-auto rounded-lg border border-border">
+              <table className="w-full text-sm">
+                <thead className="bg-secondary/40 text-[11px] uppercase tracking-wider text-muted-foreground">
+                  <tr>
+                    <th className="text-left px-3 py-2 font-semibold">Título</th>
+                    <th className="text-left px-3 py-2 font-semibold">Perguntas</th>
+                    <th className="text-left px-3 py-2 font-semibold">Respostas</th>
+                    <th className="text-left px-3 py-2 font-semibold">Criado por</th>
+                    <th className="text-left px-3 py-2 font-semibold">Data</th>
+                    <th className="text-right px-3 py-2 font-semibold">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {questionariosVaga.map((q) => {
+                    const respondidos = Object.values(q.respostasPorCandidato).filter((r) => r.status === "respondido").length;
+                    const total = Object.keys(q.respostasPorCandidato).length;
+                    return (
+                      <tr
+                        key={q.id}
+                        className="border-t border-border hover:bg-secondary/20 cursor-pointer"
+                        onClick={() => setEditorQuestId(q.id)}
+                      >
+                        <td className="px-3 py-2.5">
+                          <div className="flex items-center gap-2">
+                            <FileQuestion className="h-4 w-4 text-muted-foreground" />
+                            <div>
+                              <div className="font-medium">{q.nome}</div>
+                              {q.descricao && (
+                                <div className="text-[11px] text-muted-foreground line-clamp-1">{q.descricao}</div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-3 py-2.5 font-data">{q.perguntas.length}</td>
+                        <td className="px-3 py-2.5 font-data">{respondidos}/{total || 0}</td>
+                        <td className="px-3 py-2.5">{q.criadoPor}</td>
+                        <td className="px-3 py-2.5 font-data text-muted-foreground">{q.criadoEm}</td>
+                        <td className="px-3 py-2.5">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); setEditorQuestId(q.id); }}
+                              className="h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-secondary text-muted-foreground"
+                              aria-label="Editar"
+                              title="Editar"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); setExcluirQuestId(q.id); }}
+                              className="h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-destructive/10 text-destructive"
+                              aria-label="Excluir"
+                              title="Excluir"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       )}
