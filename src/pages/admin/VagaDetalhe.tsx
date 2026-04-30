@@ -682,13 +682,13 @@ export default function VagaDetalheAdmin() {
                               className="absolute right-2 top-10 z-30 w-48 max-w-[calc(100vw-1rem)] rounded-lg border border-border bg-popover shadow-elevated py-1 text-sm"
                               onMouseDown={(e) => e.stopPropagation()}
                             >
-                              <Link
-                                to={`/app/candidatos/${c.id}`}
-                                onClick={() => setMenuAbertoId(null)}
-                                className="flex items-center gap-2 px-3 py-2 hover:bg-secondary"
+                              <button
+                                type="button"
+                                onClick={() => { setMenuAbertoId(null); setFichaCandidatoId(c.id); }}
+                                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-secondary text-left"
                               >
-                                <Eye className="h-3.5 w-3.5 text-muted-foreground" /> Ver perfil
-                              </Link>
+                                <Eye className="h-3.5 w-3.5 text-muted-foreground" /> Ver ficha
+                              </button>
                               <button
                                 type="button"
                                 onClick={() => {
