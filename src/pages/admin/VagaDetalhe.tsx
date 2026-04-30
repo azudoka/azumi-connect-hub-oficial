@@ -1726,6 +1726,28 @@ export default function VagaDetalheAdmin() {
         );
       })()}
 
+      {/* ── Modal: Agendar Entrevista com Gestor (Etapa 5 — Doc Mestre) ── */}
+      {agendarGestorOpen && (() => {
+        const c = candidatosVaga.find((x) => x.id === agendarGestorOpen);
+        const gestor = getGestorDaVaga(vaga.id);
+        if (!c || !gestor) return null;
+        return (
+          <AgendarEntrevistaGestorModal
+            vagaId={vaga.id}
+            empresaNome={vaga.empresa}
+            candidatoId={c.id}
+            candidatoNome={c.nome}
+            candidatoEmail={`${c.nome.toLowerCase().replace(/\s+/g, ".")}@email.com`}
+            gestor={gestor}
+            onClose={() => setAgendarGestorOpen(null)}
+            onSaved={() => {
+              setAgendarGestorOpen(null);
+              toast.success(`Sugestões enviadas ao gestor ${gestor.nome}.`);
+            }}
+          />
+        );
+      })()}
+
       {/* ── Ficha completa do candidato (painel lateral) ─────────── */}
       <CandidatoDetailSheet
         open={!!fichaCandidatoId}
