@@ -166,16 +166,12 @@ const filiaisPorEmpresa: Record<string, string[]> = {
 };
 
 // ────────────────────────────────────────────────────────────────────
-// Regra de visibilidade — perfil + consultor logado (simulado).
-// Nota: o AuthContext atual só conhece "admin" | "cliente". Para validar
-// a regra "consultor vê apenas os atribuídos a ele" sem alterar arquivos
-// fora do escopo, simulamos via estas constantes. Ajuste manualmente para
-// testar (ex.: PERFIL_DEMO = "consultor"; CONSULTOR_LOGADO_ID = "ab").
+// Regra de visibilidade — perfil + consultor logado (via AuthContext).
+// Admin vê tudo; consultor vê apenas projetos onde assignedConsultorId
+// === usuario.id (mock atual usa "ab" | "ct" | "rm").
 // ────────────────────────────────────────────────────────────────────
 
-type PerfilDemo = "admin" | "consultor";
-const PERFIL_DEMO: PerfilDemo = "admin";
-const CONSULTOR_LOGADO_ID = "ab";
+import { useAuth } from "@/context/AuthContext";
 
 // ────────────────────────────────────────────────────────────────────
 // Página
