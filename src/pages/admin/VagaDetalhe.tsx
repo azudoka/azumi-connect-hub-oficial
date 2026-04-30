@@ -34,6 +34,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 
 const tabs = [
   { key: "candidatos", label: "Candidatos", icon: Users },
