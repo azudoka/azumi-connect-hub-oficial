@@ -152,14 +152,20 @@
     font-feature-settings: "ss01", "cv11";
   }
 
-  ::-webkit-scrollbar { width: 8px; height: 8px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb {
-    background: hsl(var(--border));
-    border-radius: 8px;
+  /* Esconder a barra de rolagem em toda a aplicação, mantendo o scroll funcional. */
+  * {
+    scrollbar-width: none;        /* Firefox */
+    -ms-overflow-style: none;     /* IE/Edge legacy */
   }
-  ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--primary) / 0.5);
+  *::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;                /* Chrome / Safari / Edge */
+  }
+
+  /* Quando um modal grande estiver aberto, travar scroll da página de fundo. */
+  body.modal-open {
+    overflow: hidden;
   }
 }
 
