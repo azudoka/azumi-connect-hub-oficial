@@ -53,6 +53,14 @@ import {
   type SugestaoHorario,
   type ParecerGestor,
 } from "@/data/entrevistaGestorStore";
+import {
+  contratadosNaVaga,
+  getNpsDoCandidato,
+  registrarNps,
+  subscribePropostas,
+  type NotaNps,
+} from "@/data/propostaStore";
+import { StarRating } from "@/components/ui/StarRating";
 
 type DecisaoCliente = "avancar" | "standby" | "reprovar";
 
@@ -74,6 +82,22 @@ export default function VagaDetalheCliente() {
   useEffect(() => {
     return subscribeEntrevistaGestor(() => bump());
   }, []);
+
+  // Sincroniza com o store de propostas (NPS / contratações).
+  useEffect(() => {
+    const off = subscribePropostas(() => bump());
+    return () => { off(); };
+  }, []);
+
+  // ── NPS do cliente: abre modal automaticamente para cada candidato
+  // contratado que ainda não tem NPS registrado (1 por candidato).
+  const [npsParaCandidato, setNpsParaCandidato] = useState<string | null>(null);
+  useEffect(() => {
+    const ids = contratadosNaVaga(vaga.id);
+    const pendente = ids.find((cid) => !getNpsDoCandidato(cid));
+    if (pendente && pendente !== npsParaCandidato) setNpsParaCandidato(pendente);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vaga.id, versao]);
 
   // Apenas candidatos com relatório enviado para esta vaga aparecem ao cliente.
   const candidatosVisiveis = useMemo(() => {
