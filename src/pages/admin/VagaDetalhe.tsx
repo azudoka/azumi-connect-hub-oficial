@@ -1986,6 +1986,8 @@ function CandidatoDetailSheet({
   onAssociarQuestionario,
   onDeclinar,
   onAgendar,
+  onAbrirRelatorio,
+  relatorioStatus,
 }: {
   open: boolean;
   candidato: CandidatoBase | null;
@@ -2002,6 +2004,8 @@ function CandidatoDetailSheet({
   onAssociarQuestionario: (id: string) => void;
   onDeclinar: (id: string) => void;
   onAgendar: (id: string) => void;
+  onAbrirRelatorio: (id: string) => void;
+  relatorioStatus?: "rascunho" | "enviado";
 }) {
   if (!open) return null;
 
