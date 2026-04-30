@@ -5,8 +5,11 @@ import { ptBR } from "date-fns/locale";
 import {
   ArrowLeft, Plus, LayoutGrid, List as ListIcon, Play, MoreHorizontal,
   CalendarIcon, Clock, History, Pencil, GitBranch, UserPlus, XCircle,
-  CheckCircle2, AlertTriangle, Star, Lock,
+  CheckCircle2, AlertTriangle, Star, Lock, Paperclip, Send, MessageSquare,
+  Trash2, FileText,
 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/PageHeader";
@@ -53,6 +56,28 @@ type EntregavelStatus =
 type Frente = "consultoria" | "estrategia" | "juridico" | "atracao" | "dp";
 type Complexidade = "C1" | "C2" | "C3";
 
+interface Subtarefa {
+  id: string;
+  nome: string;
+  estimativaH: number;
+  feita: boolean;
+}
+
+interface Anexo {
+  id: string;
+  nome: string;
+}
+
+interface Mensagem {
+  id: string;
+  autor: string;
+  iniciais: string;
+  quando: string;
+  texto: string;
+  canal: "interno" | "cliente";
+  anexo?: string;
+}
+
 interface Entregavel {
   id: string;
   codigo: string;
@@ -66,6 +91,12 @@ interface Entregavel {
   prazo: string; // yyyy-MM-dd
   /** Timestamp em ms quando entrou em aprovacao_cliente — para mostrar "72h" */
   aprovacaoClienteIniciadaEm?: number;
+  /** Horas já consumidas (mock) — relevante quando o entregável é cancelado */
+  horasGastas?: number;
+  subtarefas?: Subtarefa[];
+  mensagens?: Mensagem[];
+  anexos?: Anexo[];
+  motivoCancelamento?: string;
 }
 
 interface HistoricoEvento {
@@ -121,13 +152,24 @@ const SLA_APROVACAO_MS = 72 * 60 * 60 * 1000;
 const setentaEDuasHorasAtras = Date.now() - SLA_APROVACAO_MS + 4 * 60 * 60 * 1000; // ~68h ativo p/ exibir
 
 const entregaveisIniciais: Entregavel[] = [
-  { id: "1", codigo: "ENT-001", nome: "Diagnóstico inicial",     frente: "consultoria", complexidade: "C1", status: "aprovado_cliente",  responsavelId: "ab", responsavelNome: "Ana Beatriz",   responsavelIniciais: "AB", prazo: "2026-04-10" },
-  { id: "2", codigo: "ENT-002", nome: "Workshop de validação",   frente: "consultoria", complexidade: "C2", status: "aprovacao_cliente", responsavelId: "ab", responsavelNome: "Ana Beatriz",   responsavelIniciais: "AB", prazo: "2026-04-28", aprovacaoClienteIniciadaEm: setentaEDuasHorasAtras },
-  { id: "3", codigo: "ENT-003", nome: "Política de cargos",      frente: "consultoria", complexidade: "C2", status: "aprovacao_interna", responsavelId: "ct", responsavelNome: "Camila Torres", responsavelIniciais: "CT", prazo: "2026-05-10" },
-  { id: "4", codigo: "ENT-004", nome: "Treinamento de líderes",  frente: "consultoria", complexidade: "C3", status: "em_andamento",      responsavelId: "rm", responsavelNome: "Rafael Moura",  responsavelIniciais: "RM", prazo: "2026-05-20" },
-  { id: "5", codigo: "ENT-005", nome: "Relatório executivo",     frente: "estrategia",  complexidade: "C3", status: "nao_iniciado",      responsavelId: "ab", responsavelNome: "Ana Beatriz",   responsavelIniciais: "AB", prazo: "2026-06-01" },
-  { id: "6", codigo: "ENT-006", nome: "Revisão jurídica",        frente: "juridico",    complexidade: "C1", status: "ajuste_solicitado", responsavelId: "ct", responsavelNome: "Camila Torres", responsavelIniciais: "CT", prazo: "2026-04-22" },
-  { id: "7", codigo: "ENT-007", nome: "Entrega final",           frente: "consultoria", complexidade: "C3", status: "nao_iniciado",      responsavelId: "ab", responsavelNome: "Ana Beatriz",   responsavelIniciais: "AB", prazo: "2026-06-15" },
+  { id: "1", codigo: "ENT-001", nome: "Diagnóstico inicial",     frente: "consultoria", complexidade: "C1", status: "aprovado_cliente",  responsavelId: "ab", responsavelNome: "Ana Beatriz",   responsavelIniciais: "AB", prazo: "2026-04-10", horasGastas: 18 },
+  { id: "2", codigo: "ENT-002", nome: "Workshop de validação",   frente: "consultoria", complexidade: "C2", status: "aprovacao_cliente", responsavelId: "ab", responsavelNome: "Ana Beatriz",   responsavelIniciais: "AB", prazo: "2026-04-28", aprovacaoClienteIniciadaEm: setentaEDuasHorasAtras, horasGastas: 12,
+    subtarefas: [
+      { id: "s1", nome: "Material de apoio", estimativaH: 4, feita: true },
+      { id: "s2", nome: "Roteiro do workshop", estimativaH: 6, feita: false },
+    ],
+    mensagens: [
+      { id: "m1", autor: "Ana Beatriz", iniciais: "AB", quando: "26/04 10:14", texto: "Subi a v2 do roteiro — pronto para revisão interna.", canal: "interno" },
+      { id: "m2", autor: "Camila Torres", iniciais: "CT", quando: "26/04 11:02", texto: "Revisei, ok do meu lado @Ana Beatriz", canal: "interno" },
+      { id: "m3", autor: "Ana Beatriz", iniciais: "AB", quando: "27/04 09:00", texto: "Olá! Material em anexo para sua aprovação. https://docs.azumi.com/ws-2026", canal: "cliente", anexo: "workshop_v2.pdf" },
+    ],
+    anexos: [{ id: "a1", nome: "workshop_v2.pdf" }],
+  },
+  { id: "3", codigo: "ENT-003", nome: "Política de cargos",      frente: "consultoria", complexidade: "C2", status: "aprovacao_interna", responsavelId: "ct", responsavelNome: "Camila Torres", responsavelIniciais: "CT", prazo: "2026-05-10", horasGastas: 9 },
+  { id: "4", codigo: "ENT-004", nome: "Treinamento de líderes",  frente: "consultoria", complexidade: "C3", status: "em_andamento",      responsavelId: "rm", responsavelNome: "Rafael Moura",  responsavelIniciais: "RM", prazo: "2026-05-20", horasGastas: 4 },
+  { id: "5", codigo: "ENT-005", nome: "Relatório executivo",     frente: "estrategia",  complexidade: "C3", status: "nao_iniciado",      responsavelId: "ab", responsavelNome: "Ana Beatriz",   responsavelIniciais: "AB", prazo: "2026-06-01", horasGastas: 0 },
+  { id: "6", codigo: "ENT-006", nome: "Revisão jurídica",        frente: "juridico",    complexidade: "C1", status: "ajuste_solicitado", responsavelId: "ct", responsavelNome: "Camila Torres", responsavelIniciais: "CT", prazo: "2026-04-22", horasGastas: 6 },
+  { id: "7", codigo: "ENT-007", nome: "Entrega final",           frente: "consultoria", complexidade: "C3", status: "nao_iniciado",      responsavelId: "ab", responsavelNome: "Ana Beatriz",   responsavelIniciais: "AB", prazo: "2026-06-15", horasGastas: 0 },
 ];
 
 const historicoMock: HistoricoEvento[] = [
@@ -174,6 +216,8 @@ export default function ProjetoDetalhe() {
   const [editOpen, setEditOpen] = useState<{ open: boolean; entId: string | null }>({ open: false, entId: null });
   const [historicoOpen, setHistoricoOpen] = useState<{ open: boolean; entId: string | null }>({ open: false, entId: null });
   const [cancelarOpen, setCancelarOpen] = useState<{ open: boolean; entId: string | null }>({ open: false, entId: null });
+  const [panelOpen, setPanelOpen] = useState<{ open: boolean; entId: string | null }>({ open: false, entId: null });
+  const [dragOverCol, setDragOverCol] = useState<EntregavelStatus | null>(null);
   const [confirmAvancarOpen, setConfirmAvancarOpen] = useState<{
     open: boolean; entId: string | null; targetStatus: EntregavelStatus | null;
   }>({ open: false, entId: null, targetStatus: null });
@@ -212,6 +256,47 @@ export default function ProjetoDetalhe() {
     }));
   }
 
+  // Atualiza qualquer campo de um entregável (subtarefas, mensagens, consultor…)
+  function patchEntregavel(entId: string, patch: Partial<Entregavel>) {
+    setEntregaveis((prev) => prev.map((e) => (e.id === entId ? { ...e, ...patch } : e)));
+  }
+
+  // ── Drag & Drop entre colunas do Kanban ─────────────────────────
+  function onDropColuna(targetStatus: EntregavelStatus, entId: string) {
+    setDragOverCol(null);
+    const ent = entregaveis.find((x) => x.id === entId);
+    if (!ent) return;
+    if (ent.status === targetStatus) return;
+
+    // Bloqueio: aprovado_cliente nunca pode voltar
+    if (ent.status === "aprovado_cliente") {
+      toast.error("Entregável aprovado pelo cliente — edição e mudança de status bloqueadas.");
+      return;
+    }
+    // Não permite voltar manualmente para nao_iniciado quando já em andamento
+    if (targetStatus === "nao_iniciado" && ent.status !== "nao_iniciado") {
+      toast.error("Não é possível voltar um entregável já iniciado para 'Não iniciado'.");
+      return;
+    }
+    // Avanços que exigem confirmação reaproveitam o dialog
+    if (targetStatus === "aprovacao_cliente" || targetStatus === "aprovado_cliente") {
+      setConfirmAvancarOpen({ open: true, entId, targetStatus });
+      return;
+    }
+    if (targetStatus === "cancelado") {
+      setCancelarOpen({ open: true, entId });
+      return;
+    }
+    aplicarMudancaStatus(entId, targetStatus);
+    toast.success(`Status alterado para "${statusLabels[targetStatus]}".`);
+  }
+
+  // Alerta no header: entregáveis cancelados com horas registradas
+  const canceladosComHoras = useMemo(
+    () => entregaveis.filter((e) => e.status === "cancelado" && (e.horasGastas ?? 0) > 0),
+    [entregaveis],
+  );
+
   // ── Handlers de mudança de status ───────────────────────────────
   function pedirMudancaStatus(entId: string, novoStatus: EntregavelStatus, justificativa?: string) {
     if (novoStatus === "aprovacao_cliente" || novoStatus === "aprovado_cliente") {
@@ -239,6 +324,8 @@ export default function ProjetoDetalhe() {
       toast.success("Entregável aprovado pelo cliente.");
       // dispara NPS automaticamente
       setNpsOpen({ open: true, entId });
+    } else if (targetStatus === "aprovacao_cliente") {
+      toast.success("Enviado para aprovação do cliente — prazo de 72h para resposta.");
     } else {
       toast.success(`Status alterado para "${statusLabels[targetStatus]}".`);
     }
@@ -255,7 +342,13 @@ export default function ProjetoDetalhe() {
         <div className="flex items-start gap-3 flex-wrap">
           <div className="min-w-0 flex-1">
             <div className="text-[10px] font-data text-muted-foreground uppercase tracking-wider">{e.codigo}</div>
-            <h4 className="font-display font-semibold mt-0.5">{e.nome}</h4>
+            <button
+              type="button"
+              onClick={() => setPanelOpen({ open: true, entId: e.id })}
+              className="font-display font-semibold mt-0.5 text-left hover:text-primary transition-colors"
+            >
+              {e.nome}
+            </button>
 
             <div className="mt-2 flex items-center gap-2 flex-wrap">
               <span className="badge-pill bg-secondary text-secondary-foreground border-border">
@@ -313,16 +406,19 @@ export default function ProjetoDetalhe() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuItem onClick={() => setPanelOpen({ open: true, entId: e.id })}>
+                          <MessageSquare className="mr-2 h-4 w-4" /> Abrir painel (subtarefas / chat)
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setStatusOpen({ open: true, entId: e.id })}>
                           <CheckCircle2 className="mr-2 h-4 w-4" /> Alterar status
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setEditOpen({ open: true, entId: e.id })}>
                           <Pencil className="mr-2 h-4 w-4" /> Editar
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => toast.info("Em breve")}>
-                          <GitBranch className="mr-2 h-4 w-4" /> Criar subtarefa
+                        <DropdownMenuItem onClick={() => setPanelOpen({ open: true, entId: e.id })}>
+                          <GitBranch className="mr-2 h-4 w-4" /> Subtarefas
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => toast.info("Em breve")}>
+                        <DropdownMenuItem onClick={() => setPanelOpen({ open: true, entId: e.id })}>
                           <UserPlus className="mr-2 h-4 w-4" /> Marcar consultor
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setHistoricoOpen({ open: true, entId: e.id })}>
@@ -372,9 +468,31 @@ export default function ProjetoDetalhe() {
   // ── Card compacto (kanban) ──────────────────────────────────────
   function renderCardKanban(e: Entregavel) {
     const atrasado = new Date(e.prazo) < new Date() && e.status !== "aprovado_cliente" && e.status !== "cancelado";
+    const bloqueado = e.status === "aprovado_cliente";
+    const subCount = e.subtarefas?.length ?? 0;
     return (
-      <div key={e.id} className="bg-background/60 border border-border rounded-lg p-3 hover:border-primary/40 transition-colors">
-        <div className="text-[10px] font-data text-muted-foreground uppercase">{e.codigo}</div>
+      <div
+        key={e.id}
+        draggable={!bloqueado}
+        onDragStart={(ev) => {
+          if (bloqueado) {
+            ev.preventDefault();
+            toast.error("Entregável aprovado pelo cliente — edição e mudança de status bloqueadas.");
+            return;
+          }
+          ev.dataTransfer.setData("text/plain", e.id);
+          ev.dataTransfer.effectAllowed = "move";
+        }}
+        onClick={() => setPanelOpen({ open: true, entId: e.id })}
+        className={cn(
+          "bg-background/60 border border-border rounded-lg p-3 transition-colors cursor-pointer hover:border-primary/40",
+          bloqueado && "opacity-90"
+        )}
+      >
+        <div className="flex items-center justify-between">
+          <div className="text-[10px] font-data text-muted-foreground uppercase">{e.codigo}</div>
+          {bloqueado && <Lock className="h-3 w-3 text-muted-foreground" aria-label="Bloqueado" />}
+        </div>
         <div className="text-sm font-medium leading-tight mt-0.5 line-clamp-2">{e.nome}</div>
 
         <div className="mt-2 flex items-center gap-2 flex-wrap">
@@ -387,6 +505,11 @@ export default function ProjetoDetalhe() {
           )}>
             {format(new Date(e.prazo), "dd/MM", { locale: ptBR })}
           </span>
+          {subCount > 0 && (
+            <span className="text-[10px] text-muted-foreground inline-flex items-center gap-1">
+              <GitBranch className="h-3 w-3" /> {subCount}
+            </span>
+          )}
         </div>
 
         <div className="mt-2 flex items-center gap-1.5">
@@ -455,7 +578,21 @@ export default function ProjetoDetalhe() {
         </div>
       </div>
 
-      {/* KPIs */}
+      {/* Alerta: entregáveis cancelados com horas registradas */}
+      {canceladosComHoras.length > 0 && (
+        <div className="mb-6 rounded-xl border border-warning/30 bg-warning/10 px-4 py-3 flex items-start gap-3">
+          <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+          <div className="text-xs">
+            <div className="font-semibold text-warning">
+              Há entregáveis cancelados com horas consumidas.
+            </div>
+            <div className="text-muted-foreground mt-0.5">
+              {canceladosComHoras.map((e) => `${e.codigo} (${e.horasGastas}h)`).join(" · ")}.
+              Revise com o cliente em <Link to="/app/clientes" className="underline hover:text-foreground">Gestão de conta</Link>.
+            </div>
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <KpiCard label="Entregáveis" value={kpis.total} icon={Briefcase} />
         <KpiCard label="Aprovados" value={kpis.aprovados} icon={CheckCircle2} />
@@ -511,8 +648,22 @@ export default function ProjetoDetalhe() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
           {colunasKanban.map((col) => {
             const itens = entregaveis.filter((e) => e.status === col.status);
+            const isOver = dragOverCol === col.status;
             return (
-              <div key={col.status} className="bg-card border border-border rounded-xl p-3 min-h-[200px]">
+              <div
+                key={col.status}
+                onDragOver={(ev) => { ev.preventDefault(); ev.dataTransfer.dropEffect = "move"; setDragOverCol(col.status); }}
+                onDragLeave={() => setDragOverCol((cur) => (cur === col.status ? null : cur))}
+                onDrop={(ev) => {
+                  ev.preventDefault();
+                  const entId = ev.dataTransfer.getData("text/plain");
+                  if (entId) onDropColuna(col.status, entId);
+                }}
+                className={cn(
+                  "bg-card border rounded-xl p-3 min-h-[200px] transition-colors",
+                  isOver ? "border-primary ring-2 ring-primary/20" : "border-border"
+                )}
+              >
                 <div className="flex items-center justify-between px-1 mb-3">
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
                     {col.label}
@@ -520,7 +671,9 @@ export default function ProjetoDetalhe() {
                   <span className="font-data text-xs text-muted-foreground">{itens.length}</span>
                 </div>
                 {itens.length === 0 ? (
-                  <div className="flex items-center justify-center h-24 text-xs text-muted-foreground">—</div>
+                  <div className="flex items-center justify-center h-24 text-xs text-muted-foreground border border-dashed border-border/60 rounded-md">
+                    {isOver ? "Soltar aqui" : "—"}
+                  </div>
                 ) : (
                   <ul className="space-y-2">{itens.map(renderCardKanban)}</ul>
                 )}
@@ -598,9 +751,17 @@ export default function ProjetoDetalhe() {
         onConfirm={(justificativa) => {
           const entId = cancelarOpen.entId;
           if (!entId) return;
+          const ent = entregaveis.find((e) => e.id === entId);
           aplicarMudancaStatus(entId, "cancelado");
+          patchEntregavel(entId, { motivoCancelamento: justificativa });
           setCancelarOpen({ open: false, entId: null });
-          toast.warning("Entregável cancelado.", { description: justificativa });
+          const horas = ent?.horasGastas ?? 0;
+          toast.warning("Entregável cancelado.", {
+            description:
+              horas > 0
+                ? `${horas}h registradas não serão devolvidas. Motivo: ${justificativa}`
+                : justificativa,
+          });
         }}
       />
 
@@ -658,6 +819,15 @@ export default function ProjetoDetalhe() {
             description: comentario ? `"${comentario}"` : undefined,
           });
         }}
+      />
+
+      {/* ─────────── Painel do entregável (subtarefas, consultor, chat) ─────────── */}
+      <EntregavelPanelSheet
+        open={panelOpen.open}
+        entregavel={entregaveis.find((e) => e.id === panelOpen.entId) ?? null}
+        onClose={() => setPanelOpen({ open: false, entId: null })}
+        onPatch={(patch) => panelOpen.entId && patchEntregavel(panelOpen.entId, patch)}
+        onAbrirHoras={(codigo) => navigate(`/app/horas?task_id=${codigo}`)}
       />
     </div>
   );
@@ -949,9 +1119,21 @@ function CancelarDialog({
           </DialogDescription>
         </DialogHeader>
 
+        <div className="rounded-lg border border-warning/30 bg-warning/10 p-3 text-xs text-warning flex items-start gap-2">
+          <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+          <div>
+            <div className="font-semibold">Atenção: as horas já gastas não serão devolvidas.</div>
+            <div className="text-muted-foreground mt-0.5">
+              {(entregavel?.horasGastas ?? 0) > 0
+                ? `Este entregável já consumiu ${entregavel?.horasGastas}h do saldo do cliente. Ao cancelar, essas horas continuam contabilizadas.`
+                : "Não há horas registradas até o momento, mas qualquer hora futura também não será devolvida."}
+            </div>
+          </div>
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="cancel-just">
-            Justificativa <span className="text-destructive">*</span>
+            Motivo do cancelamento <span className="text-destructive">*</span>
           </Label>
           <Textarea
             id="cancel-just"
@@ -1061,5 +1243,425 @@ function NpsDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Painel do entregável: subtarefas + consultor + chat (interno/cliente)
+// ────────────────────────────────────────────────────────────────────
+
+const PESSOAS_MENCAO = [
+  "Ana Beatriz",
+  "Rafael Moura",
+  "Camila Torres",
+  "RH Kentaki",
+  "Cliente — Mariana",
+];
+
+function renderTextoComLinks(texto: string) {
+  const partes = texto.split(/(https?:\/\/[^\s]+|@[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s]*?(?=\s|$|[.,!?]))/g);
+  return partes.map((p, i) => {
+    if (p?.startsWith("http")) {
+      return (
+        <a
+          key={i}
+          href={p}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary underline break-all"
+        >
+          {p}
+        </a>
+      );
+    }
+    if (p?.startsWith("@")) {
+      return (
+        <span key={i} className="text-primary font-medium">
+          {p}
+        </span>
+      );
+    }
+    return <span key={i}>{p}</span>;
+  });
+}
+
+function EntregavelPanelSheet({
+  open, entregavel, onClose, onPatch, onAbrirHoras,
+}: {
+  open: boolean;
+  entregavel: Entregavel | null;
+  onClose: () => void;
+  onPatch: (patch: Partial<Entregavel>) => void;
+  onAbrirHoras: (codigo: string) => void;
+}) {
+  const [novaSubtarefa, setNovaSubtarefa] = useState("");
+  const [novaSubtarefaH, setNovaSubtarefaH] = useState<number | "">("");
+  const [canalAtivo, setCanalAtivo] = useState<"interno" | "cliente">("interno");
+  const [textoMsg, setTextoMsg] = useState("");
+  const [showMencoes, setShowMencoes] = useState(false);
+  const [anexoPendente, setAnexoPendente] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      setNovaSubtarefa("");
+      setNovaSubtarefaH("");
+      setTextoMsg("");
+      setAnexoPendente(null);
+      setCanalAtivo("interno");
+    }
+  }, [open]);
+
+  if (!entregavel) return null;
+
+  const bloqueado = entregavel.status === "aprovado_cliente";
+  const subtarefas = entregavel.subtarefas ?? [];
+  const mensagens = entregavel.mensagens ?? [];
+
+  function adicionarSubtarefa() {
+    if (!novaSubtarefa.trim()) {
+      toast.error("Informe um nome para a subtarefa.");
+      return;
+    }
+    const nova: Subtarefa = {
+      id: `s_${Date.now()}`,
+      nome: novaSubtarefa.trim(),
+      estimativaH: typeof novaSubtarefaH === "number" ? novaSubtarefaH : 0,
+      feita: false,
+    };
+    onPatch({ subtarefas: [...subtarefas, nova] });
+    setNovaSubtarefa("");
+    setNovaSubtarefaH("");
+  }
+
+  function toggleSubtarefa(sid: string) {
+    onPatch({
+      subtarefas: subtarefas.map((s) => (s.id === sid ? { ...s, feita: !s.feita } : s)),
+    });
+  }
+
+  function removerSubtarefa(sid: string) {
+    onPatch({ subtarefas: subtarefas.filter((s) => s.id !== sid) });
+  }
+
+  function trocarConsultor(novoId: string) {
+    if (bloqueado) return;
+    const r = responsaveisDisponiveis.find((x) => x.id === novoId);
+    if (!r) return;
+    onPatch({
+      responsavelId: r.id,
+      responsavelNome: r.nome,
+      responsavelIniciais: r.iniciais,
+    });
+    toast.success(`Consultor alterado para ${r.nome}.`);
+  }
+
+  function enviarMensagem() {
+    if (!textoMsg.trim() && !anexoPendente) {
+      toast.error("Escreva uma mensagem ou anexe um arquivo.");
+      return;
+    }
+    const nova: Mensagem = {
+      id: `m_${Date.now()}`,
+      autor: "Você",
+      iniciais: "VC",
+      quando: format(new Date(), "dd/MM HH:mm", { locale: ptBR }),
+      texto: textoMsg.trim() || "(arquivo enviado)",
+      canal: canalAtivo,
+      anexo: anexoPendente ?? undefined,
+    };
+    onPatch({ mensagens: [...mensagens, nova] });
+    setTextoMsg("");
+    setAnexoPendente(null);
+    setShowMencoes(false);
+    toast.success(canalAtivo === "interno" ? "Mensagem enviada (interno)." : "Mensagem enviada ao cliente.");
+  }
+
+  function handleTextoChange(v: string) {
+    setTextoMsg(v);
+    setShowMencoes(/@\w*$/.test(v));
+  }
+
+  function inserirMencao(nome: string) {
+    setTextoMsg((cur) => cur.replace(/@\w*$/, `@${nome} `));
+    setShowMencoes(false);
+  }
+
+  function simularUpload() {
+    const fake = `arquivo_${Date.now().toString().slice(-4)}.pdf`;
+    setAnexoPendente(fake);
+    toast.info(`Anexo pronto para envio: ${fake}`);
+  }
+
+  const msgsCanal = mensagens.filter((m) => m.canal === canalAtivo);
+
+  return (
+    <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
+      <SheetContent side="right" className="sm:max-w-xl w-full overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="flex items-center gap-2">
+            {entregavel.nome}
+            {bloqueado && <Lock className="h-4 w-4 text-muted-foreground" />}
+          </SheetTitle>
+          <SheetDescription>
+            {entregavel.codigo} · {statusLabels[entregavel.status]}
+          </SheetDescription>
+        </SheetHeader>
+
+        {/* Atalho timer/horas */}
+        <div className="mt-4 flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onAbrirHoras(entregavel.codigo)}
+            disabled={bloqueado}
+            className="gap-1.5"
+          >
+            <Play className="h-3.5 w-3.5" /> Iniciar timer
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => onAbrirHoras(entregavel.codigo)}
+            className="gap-1.5"
+          >
+            <Clock className="h-3.5 w-3.5" /> Ver horas
+          </Button>
+          {(entregavel.horasGastas ?? 0) > 0 && (
+            <span className="text-xs text-muted-foreground font-data ml-auto">
+              {entregavel.horasGastas}h registradas
+            </span>
+          )}
+        </div>
+
+        {/* Consultor responsável */}
+        <div className="mt-6">
+          <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+            Consultor responsável
+          </Label>
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span tabIndex={0} className="block mt-1.5">
+                  <Select
+                    value={entregavel.responsavelId}
+                    onValueChange={trocarConsultor}
+                    disabled={bloqueado}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {responsaveisDisponiveis.map((r) => (
+                        <SelectItem key={r.id} value={r.id}>{r.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </span>
+              </TooltipTrigger>
+              {bloqueado && (
+                <TooltipContent>
+                  Entregável aprovado pelo cliente — responsável fixo
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+
+        {/* Subtarefas */}
+        <div className="mt-6">
+          <div className="flex items-center justify-between mb-2">
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+              Subtarefas
+            </Label>
+            <span className="text-xs text-muted-foreground font-data">
+              {subtarefas.filter((s) => s.feita).length}/{subtarefas.length}
+            </span>
+          </div>
+
+          {subtarefas.length === 0 ? (
+            <div className="text-xs text-muted-foreground border border-dashed border-border rounded-md p-3 text-center">
+              Nenhuma subtarefa criada ainda.
+            </div>
+          ) : (
+            <ul className="space-y-2">
+              {subtarefas.map((s) => (
+                <li
+                  key={s.id}
+                  className="flex items-center gap-2 bg-card border border-border rounded-md px-3 py-2"
+                >
+                  <Checkbox
+                    checked={s.feita}
+                    onCheckedChange={() => toggleSubtarefa(s.id)}
+                    disabled={bloqueado}
+                    aria-label={`Concluir ${s.nome}`}
+                  />
+                  <span className={cn("text-sm flex-1", s.feita && "line-through text-muted-foreground")}>
+                    {s.nome}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground font-data">
+                    {s.estimativaH}h
+                  </span>
+                  {!bloqueado && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => removerSubtarefa(s.id)}
+                      aria-label="Remover subtarefa"
+                      className="h-7 w-7"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {!bloqueado && (
+            <div className="mt-3 flex items-end gap-2">
+              <div className="flex-1 space-y-1">
+                <Label htmlFor="sub-nome" className="text-[11px]">Nova subtarefa</Label>
+                <Input
+                  id="sub-nome"
+                  value={novaSubtarefa}
+                  onChange={(e) => setNovaSubtarefa(e.target.value)}
+                  placeholder="Ex: Revisar layout"
+                />
+              </div>
+              <div className="w-20 space-y-1">
+                <Label htmlFor="sub-h" className="text-[11px]">Horas</Label>
+                <Input
+                  id="sub-h"
+                  type="number"
+                  min={0}
+                  value={novaSubtarefaH}
+                  onChange={(e) => setNovaSubtarefaH(e.target.value === "" ? "" : Number(e.target.value))}
+                  placeholder="0"
+                />
+              </div>
+              <Button onClick={adicionarSubtarefa} size="sm" className="gap-1.5">
+                <Plus className="h-3.5 w-3.5" /> Adicionar
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Chat */}
+        <div className="mt-8">
+          <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+            Conversas
+          </Label>
+          <Tabs value={canalAtivo} onValueChange={(v) => setCanalAtivo(v as "interno" | "cliente")} className="mt-2">
+            <TabsList className="grid grid-cols-2 w-full">
+              <TabsTrigger value="interno">Interno (Azumi)</TabsTrigger>
+              <TabsTrigger value="cliente">Com cliente</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="interno" className="mt-3">
+              <div className="rounded-md border border-warning/30 bg-warning/10 px-3 py-2 text-[11px] text-warning mb-3">
+                Esta conversa não é visível para o cliente.
+              </div>
+              <ChatLista mensagens={msgsCanal} />
+            </TabsContent>
+
+            <TabsContent value="cliente" className="mt-3">
+              <div className="rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-[11px] text-primary mb-3">
+                Mensagens aqui são compartilhadas com o cliente.
+              </div>
+              <ChatLista mensagens={msgsCanal} />
+            </TabsContent>
+          </Tabs>
+
+          {/* Input */}
+          <div className="mt-3 relative">
+            <Textarea
+              value={textoMsg}
+              onChange={(e) => handleTextoChange(e.target.value)}
+              rows={3}
+              placeholder={canalAtivo === "interno" ? "Mensagem para o time Azumi…" : "Mensagem para o cliente…"}
+            />
+            {showMencoes && (
+              <div className="absolute z-10 left-2 bottom-full mb-1 bg-popover border border-border rounded-md shadow-lg w-56 max-h-44 overflow-auto">
+                {PESSOAS_MENCAO.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => inserirMencao(p)}
+                    className="w-full text-left px-3 py-1.5 text-xs hover:bg-accent"
+                  >
+                    @{p}
+                  </button>
+                ))}
+              </div>
+            )}
+            {anexoPendente && (
+              <div className="mt-2 flex items-center gap-2 text-xs bg-secondary/40 border border-border rounded-md px-2 py-1.5">
+                <Paperclip className="h-3.5 w-3.5" />
+                <span className="font-data">{anexoPendente}</span>
+                <button
+                  type="button"
+                  onClick={() => setAnexoPendente(null)}
+                  className="ml-auto text-muted-foreground hover:text-destructive"
+                  aria-label="Remover anexo"
+                >
+                  <XCircle className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
+            <div className="mt-2 flex items-center gap-2">
+              <Button type="button" size="sm" variant="outline" onClick={simularUpload} className="gap-1.5">
+                <Paperclip className="h-3.5 w-3.5" /> Anexar
+              </Button>
+              <Button type="button" size="sm" onClick={enviarMensagem} className="gap-1.5 ml-auto">
+                <Send className="h-3.5 w-3.5" /> Enviar
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {entregavel.motivoCancelamento && (
+          <div className="mt-6 text-xs rounded-md border border-destructive/30 bg-destructive/10 p-3">
+            <div className="font-semibold text-destructive flex items-center gap-1.5">
+              <XCircle className="h-3.5 w-3.5" /> Cancelado
+            </div>
+            <div className="text-muted-foreground mt-1">{entregavel.motivoCancelamento}</div>
+          </div>
+        )}
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function ChatLista({ mensagens }: { mensagens: Mensagem[] }) {
+  if (mensagens.length === 0) {
+    return (
+      <div className="text-xs text-muted-foreground border border-dashed border-border rounded-md p-4 text-center">
+        Nenhuma mensagem ainda.
+      </div>
+    );
+  }
+  return (
+    <ul className="space-y-3 max-h-72 overflow-y-auto pr-1">
+      {mensagens.map((m) => (
+        <li key={m.id} className="flex gap-2.5">
+          <div className="h-7 w-7 rounded-full bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white shrink-0">
+            {m.iniciais}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-baseline gap-2">
+              <span className="text-xs font-semibold">{m.autor}</span>
+              <span className="text-[10px] text-muted-foreground font-data">{m.quando}</span>
+            </div>
+            <div className="text-sm mt-0.5 break-words">{renderTextoComLinks(m.texto)}</div>
+            {m.anexo && (
+              <div className="mt-1 inline-flex items-center gap-1.5 text-xs text-primary bg-primary/10 border border-primary/20 rounded px-2 py-0.5">
+                <FileText className="h-3 w-3" />
+                <span className="font-data">{m.anexo}</span>
+              </div>
+            )}
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 }

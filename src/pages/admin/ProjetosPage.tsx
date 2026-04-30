@@ -141,6 +141,14 @@ const projetosIniciais: Projeto[] = [
     frente: "consultoria", status: "encerrado", conclusao: 100, prazoFinal: "2025-12-15",
     encerradoEm: "2025-12-12",
   },
+  {
+    id: "p8", codigo: "PROJ-2025-0043", titulo: "Reestruturação comercial",
+    empresaId: "alvo", empresaNome: "Alvo Digital", filial: "São Paulo",
+    consultorId: "rm", consultorNome: "Rafael Moura", consultorIniciais: "RM",
+    assignedConsultorId: "rm",
+    frente: "estrategia", status: "encerrado", conclusao: 82, prazoFinal: "2025-11-30",
+    encerradoEm: "2025-12-05",
+  },
 ];
 
 const cronogramasIniciais: CronogramaPendente[] = [
@@ -647,18 +655,35 @@ export default function ProjetosPage() {
                           ) : cr.status === "aguardando_aprovacao_interna" ? (
                             <StatusBadge status="analise">Aguardando aprovação interna</StatusBadge>
                           ) : (
-                            <StatusBadge status="aguardando">Aguardando aprovação cliente</StatusBadge>
+                            <StatusBadge status="aguardando">Em aprovação pelo cliente</StatusBadge>
                           )}
                         </td>
                         <td className="px-4 py-3 text-xs font-data text-muted-foreground">
                           {format(new Date(cr.criadoEm), "dd/MM/yyyy", { locale: ptBR })}
                         </td>
                         <td className="px-4 py-3 text-right">
-                          <Button asChild size="sm" variant="outline">
-                            <Link to={`/app/projetos/${cr.id}`}>
-                              Revisar <ArrowRight className="ml-1 h-3 w-3" />
-                            </Link>
-                          </Button>
+                          <div className="inline-flex items-center gap-2 justify-end">
+                            {cr.status === "aguardando_aprovacao_interna" && (
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  setCronogramas((prev) =>
+                                    prev.map((c) =>
+                                      c.id === cr.id ? { ...c, status: "aguardando_aprovacao_cliente" } : c,
+                                    ),
+                                  );
+                                  toast.success("Cronograma enviado ao cliente para aprovação.");
+                                }}
+                              >
+                                Enviar para cliente
+                              </Button>
+                            )}
+                            <Button asChild size="sm" variant="outline">
+                              <Link to={`/app/projetos/${cr.id}`}>
+                                Revisar <ArrowRight className="ml-1 h-3 w-3" />
+                              </Link>
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -678,7 +703,22 @@ export default function ProjetosPage() {
               description="Projetos finalizados ficarão arquivados aqui."
             />
           ) : (
-            <ul className="space-y-2">
+            <>
+              {projetosEncerrados.some((p) => p.conclusao < 100) && (
+                <div className="mb-4 rounded-xl border border-warning/30 bg-warning/10 px-4 py-3 flex items-start gap-3">
+                  <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+                  <div className="text-xs">
+                    <div className="font-semibold text-warning">
+                      Cronograma encerrado com entregáveis em andamento.
+                    </div>
+                    <div className="text-muted-foreground mt-0.5">
+                      Os projetos abaixo estão marcados como encerrados, mas ainda há entregáveis
+                      em andamento. Revise o status dos entregáveis antes de arquivar definitivamente.
+                    </div>
+                  </div>
+                </div>
+              )}
+              <ul className="space-y-2">
               {projetosEncerrados.map((p) => (
                 <li
                   key={p.id}
@@ -712,6 +752,7 @@ export default function ProjetosPage() {
                 </li>
               ))}
             </ul>
+            </>
           )}
         </TabsContent>
       </Tabs>
