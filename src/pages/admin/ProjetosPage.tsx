@@ -703,7 +703,22 @@ export default function ProjetosPage() {
               description="Projetos finalizados ficarão arquivados aqui."
             />
           ) : (
-            <ul className="space-y-2">
+            <>
+              {projetosEncerrados.some((p) => p.conclusao < 100) && (
+                <div className="mb-4 rounded-xl border border-warning/30 bg-warning/10 px-4 py-3 flex items-start gap-3">
+                  <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+                  <div className="text-xs">
+                    <div className="font-semibold text-warning">
+                      Cronograma encerrado com entregáveis em andamento.
+                    </div>
+                    <div className="text-muted-foreground mt-0.5">
+                      Os projetos abaixo estão marcados como encerrados, mas ainda há entregáveis
+                      em andamento. Revise o status dos entregáveis antes de arquivar definitivamente.
+                    </div>
+                  </div>
+                </div>
+              )}
+              <ul className="space-y-2">
               {projetosEncerrados.map((p) => (
                 <li
                   key={p.id}
