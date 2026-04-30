@@ -69,22 +69,34 @@ export default function VagaDetalheCliente() {
     setVersao((v) => v + 1);
   }
 
+  // Sincroniza com store de entrevista do gestor (admin pode disparar)
+  useEffect(() => {
+    return subscribeEntrevistaGestor(() => bump());
+  }, []);
+
   // Apenas candidatos com relatório enviado para esta vaga aparecem ao cliente.
-  // O vínculo cand→vaga vem do store (relatório enviado), não do mock.
   const candidatosVisiveis = useMemo(() => {
     const idsComRelatorio = candidatosComRelatorioPorVaga(vaga.id);
     return idsComRelatorio
       .map((cid) => candidatos.find((c) => c.id === cid))
       .filter((c): c is (typeof candidatos)[number] => !!c);
-    // versao força recomputo após salvar parecer/feedback
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vaga.id, versao]);
+
+  // Agendamentos da vaga (entrevistas com gestor — Etapa 5)
+  const agendamentos = useMemo(
+    () => listarAgendamentosDaVaga(vaga.id),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [vaga.id, versao]
+  );
 
   // Estado de modais
   const [fichaCandId, setFichaCandId] = useState<string | null>(null);
   const [relatorioCandId, setRelatorioCandId] = useState<string | null>(null);
   const [parecerCandId, setParecerCandId] = useState<string | null>(null);
   const [feedback1aLevaOpen, setFeedback1aLevaOpen] = useState(false);
+  const [respostaGestorAgId, setRespostaGestorAgId] = useState<string | null>(null);
+  const [parecerGestorCandId, setParecerGestorCandId] = useState<string | null>(null);
 
   const fichaCand = candidatosVisiveis.find((c) => c.id === fichaCandId) ?? null;
 
@@ -92,8 +104,20 @@ export default function VagaDetalheCliente() {
   function aposSalvarParecer() {
     bump();
     const fb = getFeedback1aLeva(vaga.id);
-    if (fb) return; // já registrado nesta vaga
+    if (fb) return;
     const { totalLeva, reprovados } = reprovadosNaPrimeiraLeva(vaga.id);
+    if (totalLeva >= 3 && reprovados >= 3) {
+      setFeedback1aLevaOpen(true);
+    }
+  }
+
+  // Regra dos 3 reprovados via Parecer do Gestor (Etapa 5)
+  function aposSalvarParecerGestor() {
+    bump();
+    const fb = getFeedback1aLeva(vaga.id);
+    if (fb) return;
+    const primeiraLevaIds = candidatosVisiveis.slice(0, 3).map((c) => c.id);
+    const { totalLeva, reprovados } = reprovadosNaPrimeiraLevaGestor(vaga.id, primeiraLevaIds);
     if (totalLeva >= 3 && reprovados >= 3) {
       setFeedback1aLevaOpen(true);
     }
