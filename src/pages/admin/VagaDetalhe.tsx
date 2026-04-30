@@ -1528,26 +1528,62 @@ function DeclinarForm({
   onCancel: () => void;
   onSave: (quem: "candidato" | "azumi", motivo: string) => void;
 }) {
-  const [quem, setQuem] = useState<"candidato" | "azumi">("candidato");
+  const TIPOS = [
+    { value: "candidato_recusou", label: "Candidato recusou", quem: "candidato" as const },
+    { value: "cliente_recusou",   label: "Cliente recusou",   quem: "azumi"     as const },
+    { value: "nao_compareceu",    label: "Não compareceu",    quem: "candidato" as const },
+    { value: "reprovado_azumi",   label: "Reprovado pela Azumi", quem: "azumi"  as const },
+  ];
+  const [tipo, setTipo] = useState(TIPOS[0].value);
   const [motivo, setMotivo] = useState("");
+  const [verTemplate, setVerTemplate] = useState(false);
+
+  const tipoSel = TIPOS.find((t) => t.value === tipo)!;
+  const isCandidatoRecusou = tipo === "candidato_recusou";
+  const templateWhats = `Olá ${nome}, tudo bem? Recebemos sua decisão e respeitamos. Caso queira retomar a conversa no futuro, é só nos chamar por aqui. Desejamos sucesso! — Time Azumi`;
 
   return (
     <div className="space-y-3 text-sm">
       <p>Registrar declínio de <strong>{nome}</strong>.</p>
-      <Field label="Quem declinou">
-        <select value={quem} onChange={(e) => setQuem(e.target.value as "candidato" | "azumi")} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm">
-          <option value="candidato">Candidato</option>
-          <option value="azumi">Azumi (reprovado internamente)</option>
+      <Field label="Tipo de declínio">
+        <select value={tipo} onChange={(e) => setTipo(e.target.value)} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm">
+          {TIPOS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
         </select>
       </Field>
-      <Field label="Motivo">
+      <Field label="Motivo / observação">
         <textarea rows={3} value={motivo} onChange={(e) => setMotivo(e.target.value)} className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm" />
       </Field>
+
+      {isCandidatoRecusou && (
+        <div className="rounded-md border border-border bg-muted/30 p-3 text-xs">
+          <button
+            type="button"
+            onClick={() => setVerTemplate((v) => !v)}
+            className="text-primary font-medium inline-flex items-center gap-1.5"
+          >
+            <MessageCircle className="h-3.5 w-3.5" />
+            {verTemplate ? "Ocultar mensagem sugerida" : "Ver mensagem de WhatsApp sugerida"}
+          </button>
+          {verTemplate && (
+            <div className="mt-2 space-y-2">
+              <div className="rounded bg-background border border-border p-2 whitespace-pre-wrap">{templateWhats}</div>
+              <button
+                type="button"
+                onClick={() => { navigator.clipboard?.writeText(templateWhats); toast.success("Mensagem copiada."); }}
+                className="h-7 px-2 rounded border border-border hover:bg-secondary text-xs inline-flex items-center gap-1.5"
+              >
+                <Copy className="h-3 w-3" /> Copiar mensagem
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="flex justify-end gap-2 pt-2">
         <button onClick={onCancel} className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm">Cancelar</button>
         <button
           disabled={!motivo.trim()}
-          onClick={() => onSave(quem, motivo.trim())}
+          onClick={() => onSave(tipoSel.quem, `[${tipoSel.label}] ${motivo.trim()}`)}
           className="h-9 px-4 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium inline-flex items-center gap-1.5 disabled:opacity-50"
         >
           <ThumbsDown className="h-3.5 w-3.5" /> Registrar
@@ -1569,7 +1605,8 @@ function AgendarEntrevistaForm({
   const [tipo, setTipo] = useState<EventoEntrevista["tipo"]>("Interno Azumi");
   const [data, setData] = useState("");
   const [hora, setHora] = useState("");
-  const [local, setLocal] = useState("Google Meet");
+  const [canal, setCanal] = useState<"Google Meet" | "Microsoft Teams" | "Presencial">("Google Meet");
+  const [endereco, setEndereco] = useState("");
 
   return (
     <div className="space-y-3 text-sm">
@@ -1588,15 +1625,25 @@ function AgendarEntrevistaForm({
           <input type="time" value={hora} onChange={(e) => setHora(e.target.value)} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm" />
         </Field>
       </div>
-      <Field label="Local / link">
-        <input value={local} onChange={(e) => setLocal(e.target.value)} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm" />
+      <Field label="Canal">
+        <select value={canal} onChange={(e) => setCanal(e.target.value as typeof canal)} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm">
+          <option value="Google Meet">Google Meet</option>
+          <option value="Microsoft Teams">Microsoft Teams</option>
+          <option value="Presencial">Presencial</option>
+        </select>
       </Field>
+      {canal === "Presencial" && (
+        <Field label="Endereço">
+          <input value={endereco} onChange={(e) => setEndereco(e.target.value)} placeholder="Rua, nº, sala" className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm" />
+        </Field>
+      )}
       <div className="flex justify-end gap-2 pt-2">
         <button onClick={onCancel} className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm">Cancelar</button>
         <button
-          disabled={!data || !hora}
+          disabled={!data || !hora || (canal === "Presencial" && !endereco.trim())}
           onClick={() => {
             const [y, m, d] = data.split("-");
+            const local = canal === "Presencial" ? `Presencial — ${endereco}` : canal;
             onSave({ tipo, data: `${d}/${m}/${y}`, hora, local });
           }}
           className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium inline-flex items-center gap-1.5 disabled:opacity-50"
