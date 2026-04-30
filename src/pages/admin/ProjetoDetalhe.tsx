@@ -56,6 +56,28 @@ type EntregavelStatus =
 type Frente = "consultoria" | "estrategia" | "juridico" | "atracao" | "dp";
 type Complexidade = "C1" | "C2" | "C3";
 
+interface Subtarefa {
+  id: string;
+  nome: string;
+  estimativaH: number;
+  feita: boolean;
+}
+
+interface Anexo {
+  id: string;
+  nome: string;
+}
+
+interface Mensagem {
+  id: string;
+  autor: string;
+  iniciais: string;
+  quando: string;
+  texto: string;
+  canal: "interno" | "cliente";
+  anexo?: string;
+}
+
 interface Entregavel {
   id: string;
   codigo: string;
@@ -69,6 +91,12 @@ interface Entregavel {
   prazo: string; // yyyy-MM-dd
   /** Timestamp em ms quando entrou em aprovacao_cliente — para mostrar "72h" */
   aprovacaoClienteIniciadaEm?: number;
+  /** Horas já consumidas (mock) — relevante quando o entregável é cancelado */
+  horasGastas?: number;
+  subtarefas?: Subtarefa[];
+  mensagens?: Mensagem[];
+  anexos?: Anexo[];
+  motivoCancelamento?: string;
 }
 
 interface HistoricoEvento {
