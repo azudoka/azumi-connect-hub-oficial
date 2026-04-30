@@ -1426,7 +1426,7 @@ export default function VagaDetalheAdmin() {
 
       {/* B09: Dialog de confirmação para envio ao cliente */}
       {enviarOpen && (
-        <div className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 z-[60] bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onWheel={(e)=>e.stopPropagation()}><ScrollLock />
           <div className="bg-card border border-border rounded-2xl shadow-elevated w-full max-w-md p-6 animate-scale-in">
             <div className="flex items-start gap-3">
               <div className="h-10 w-10 rounded-full bg-warning/15 text-warning flex items-center justify-center shrink-0">
@@ -1492,7 +1492,7 @@ export default function VagaDetalheAdmin() {
       )}
 
       {excedeuOpen && (
-        <div className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 z-[60] bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onWheel={(e)=>e.stopPropagation()}><ScrollLock />
           <div className="bg-card border border-border rounded-2xl shadow-elevated w-full max-w-md p-6 animate-scale-in">
             <div className="flex items-start gap-3">
               <div className="h-10 w-10 rounded-full bg-destructive/15 text-destructive flex items-center justify-center shrink-0">
@@ -1538,7 +1538,7 @@ export default function VagaDetalheAdmin() {
       {confirmarDesclId && (() => {
         const cand = candidatosVaga.find((c) => c.id === confirmarDesclId);
         return (
-          <div className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+          <div className="fixed inset-0 z-[60] bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onWheel={(e)=>e.stopPropagation()}><ScrollLock />
             <div className="bg-card border border-border rounded-2xl shadow-elevated w-full max-w-md p-6 animate-scale-in">
               <div className="flex items-start gap-3">
                 <div className="h-10 w-10 rounded-full bg-destructive/15 text-destructive flex items-center justify-center shrink-0">
@@ -1574,7 +1574,7 @@ export default function VagaDetalheAdmin() {
       {confirmarEnviadosId && (() => {
         const cand = candidatosVaga.find((c) => c.id === confirmarEnviadosId);
         return (
-          <div className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+          <div className="fixed inset-0 z-[60] bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onWheel={(e)=>e.stopPropagation()}><ScrollLock />
             <div className="bg-card border border-border rounded-2xl shadow-elevated w-full max-w-md p-6 animate-scale-in">
               <div className="flex items-start gap-3">
                 <div className="h-10 w-10 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0">
@@ -1616,7 +1616,7 @@ export default function VagaDetalheAdmin() {
         const cand = candidatosVaga.find((c) => c.id === confirmarDecisaoId);
         const opcoes: OpcaoDecisao[] = ["Contratado", "Reprovado pelo cliente", "Em negociação"];
         return (
-          <div className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+          <div className="fixed inset-0 z-[60] bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onWheel={(e)=>e.stopPropagation()}><ScrollLock />
             <div className="bg-card border border-border rounded-2xl shadow-elevated w-full max-w-md p-6 animate-scale-in">
               <div className="flex items-start gap-3">
                 <div className="h-10 w-10 rounded-full bg-success/15 text-success flex items-center justify-center shrink-0">
@@ -2126,7 +2126,7 @@ function ModalShell({
   useScrollLock(true);
   const maxW = size === "xl" ? "max-w-3xl" : size === "lg" ? "max-w-xl" : "max-w-md";
   return (
-    <div className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+    <div className="fixed inset-0 z-[60] bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onWheel={(e)=>e.stopPropagation()}><ScrollLock />
       <div className={cn("bg-card border border-border rounded-2xl shadow-elevated w-full max-h-[92vh] flex flex-col animate-scale-in overflow-hidden", maxW)}>
         <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-border">
           <h3 className="font-display text-lg font-semibold">{title}</h3>
