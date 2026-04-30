@@ -70,6 +70,7 @@ import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
+import { ScrollLock } from "@/components/ScrollLock";
 
 const tabs = [
   { key: "candidatos", label: "Candidatos", icon: Users },
