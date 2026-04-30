@@ -1215,7 +1215,405 @@ export default function VagaDetalheAdmin() {
           </div>
         );
       })()}
+
+      {/* ── Modal: Novo candidato (manual) ───────────────────────── */}
+      {novoCandOpen && (
+        <ModalShell title="Adicionar candidato" onClose={() => setNovoCandOpen(false)}>
+          <NovoCandidatoForm
+            onCancel={() => setNovoCandOpen(false)}
+            onSave={(c) => {
+              setCandidatosExtras((prev) => [...prev, c]);
+              setNovoCandOpen(false);
+              toast.success(`${c.nome} adicionado à vaga.`);
+            }}
+          />
+        </ModalShell>
+      )}
+
+      {/* ── Modal: Convidar candidato por link ───────────────────── */}
+      {convidarOpen && (
+        <ModalShell title="Convidar candidato" onClose={() => setConvidarOpen(false)}>
+          <ConvidarLinkForm vagaId={vaga.id} onClose={() => setConvidarOpen(false)} />
+        </ModalShell>
+      )}
+
+      {/* ── Modal: Novo questionário ─────────────────────────────── */}
+      {novoQuestOpen && (
+        <ModalShell title="Novo questionário" onClose={() => setNovoQuestOpen(false)}>
+          <NovoQuestionarioForm
+            onCancel={() => setNovoQuestOpen(false)}
+            onSave={(q) => {
+              setQuestionariosVaga((prev) => [...prev, q]);
+              setNovoQuestOpen(false);
+              toast.success(`Questionário "${q.nome}" criado.`);
+            }}
+          />
+        </ModalShell>
+      )}
+
+      {/* ── Modal: Resumo para o cliente ─────────────────────────── */}
+      {resumoOpen && (() => {
+        const c = candidatosVaga.find((x) => x.id === resumoOpen);
+        return (
+          <ModalShell title="Resumo para o cliente" onClose={() => setResumoOpen(null)}>
+            <div className="text-sm text-foreground space-y-3">
+              <p><strong>{c?.nome ?? "Candidato"}</strong> — versão resumida sem dados sensíveis.</p>
+              <div className="bg-muted/40 border border-border rounded-md p-3 text-xs text-muted-foreground">
+                Pré-visualização do PDF que será enviado ao cliente. Inclui experiência,
+                fit cultural e DISC. Não inclui contato direto.
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  onClick={() => setResumoOpen(null)}
+                  className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm"
+                >
+                  Fechar
+                </button>
+                <button
+                  onClick={() => { toast.success("Resumo enviado ao cliente."); setResumoOpen(null); }}
+                  className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium inline-flex items-center gap-1.5"
+                >
+                  <Send className="h-3.5 w-3.5" /> Enviar ao cliente
+                </button>
+              </div>
+            </div>
+          </ModalShell>
+        );
+      })()}
+
+      {/* ── Modal: Solicitar DISC via WhatsApp ───────────────────── */}
+      {discWhatsOpen && (() => {
+        const c = candidatosVaga.find((x) => x.id === discWhatsOpen);
+        return (
+          <ModalShell title="Solicitar DISC via WhatsApp" onClose={() => setDiscWhatsOpen(null)}>
+            <div className="text-sm space-y-3">
+              <p>Enviar link do questionário DISC para <strong>{c?.nome}</strong>.</p>
+              <textarea
+                defaultValue={`Olá ${c?.nome ?? ""}, segue o link para o teste DISC: https://azumi.app/disc/${c?.id ?? ""}`}
+                rows={3}
+                className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm"
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setDiscWhatsOpen(null)}
+                  className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => { toast.success("Convite DISC enviado."); setDiscWhatsOpen(null); }}
+                  className="h-9 px-4 rounded-lg bg-success text-success-foreground text-sm font-medium inline-flex items-center gap-1.5"
+                >
+                  <MessageCircle className="h-3.5 w-3.5" /> Enviar WhatsApp
+                </button>
+              </div>
+            </div>
+          </ModalShell>
+        );
+      })()}
+
+      {/* ── Modal: Associar questionário a candidato ─────────────── */}
+      {associarQuestOpen && (() => {
+        const c = candidatosVaga.find((x) => x.id === associarQuestOpen);
+        return (
+          <ModalShell title="Associar questionário" onClose={() => setAssociarQuestOpen(null)}>
+            <div className="text-sm space-y-3">
+              <p>Selecione um questionário para <strong>{c?.nome}</strong>:</p>
+              <ul className="space-y-2">
+                {questionariosVaga.map((q) => (
+                  <li key={q.id}>
+                    <button
+                      onClick={() => {
+                        setQuestionariosVaga((prev) => prev.map((x) =>
+                          x.id === q.id
+                            ? { ...x, candidatosRespostas: { ...x.candidatosRespostas, [c?.id ?? ""]: "pendente" } }
+                            : x
+                        ));
+                        setAssociarQuestOpen(null);
+                        toast.success(`Questionário "${q.nome}" associado.`);
+                      }}
+                      className="w-full text-left px-3 py-2 rounded-md border border-border hover:bg-secondary text-sm"
+                    >
+                      <div className="font-medium">{q.nome}</div>
+                      <div className="text-xs text-muted-foreground">{q.tipo} · {q.questoes} questões</div>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </ModalShell>
+        );
+      })()}
+
+      {/* ── Modal: Registrar declínio ────────────────────────────── */}
+      {declinarOpen && (() => {
+        const c = candidatosVaga.find((x) => x.id === declinarOpen);
+        return (
+          <ModalShell title="Registrar declínio" onClose={() => setDeclinarOpen(null)}>
+            <DeclinarForm
+              nome={c?.nome ?? "Candidato"}
+              onCancel={() => setDeclinarOpen(null)}
+              onSave={(quem, motivo) => {
+                if (declinarOpen) {
+                  setDeclinios((prev) => ({ ...prev, [declinarOpen]: { quem, motivo } }));
+                  toast.success("Declínio registrado.");
+                }
+                setDeclinarOpen(null);
+              }}
+            />
+          </ModalShell>
+        );
+      })()}
+
+      {/* ── Modal: Agendar entrevista ────────────────────────────── */}
+      {agendarOpen && (() => {
+        const c = candidatosVaga.find((x) => x.id === agendarOpen);
+        return (
+          <ModalShell title="Agendar entrevista" onClose={() => setAgendarOpen(null)}>
+            <AgendarEntrevistaForm
+              candidatoNome={c?.nome ?? "Candidato"}
+              onCancel={() => setAgendarOpen(null)}
+              onSave={(ev) => {
+                if (agendarOpen && c) {
+                  setEventos((prev) => [...prev, { ...ev, id: `ev-${Date.now()}`, candidatoId: c.id, candidatoNome: c.nome }]);
+                  toast.success(`Entrevista agendada para ${ev.data} ${ev.hora}.`);
+                }
+                setAgendarOpen(null);
+              }}
+            />
+          </ModalShell>
+        );
+      })()}
     </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────
+// ModalShell — wrapper visual padrão
+// ────────────────────────────────────────────────────────────────────
+function ModalShell({
+  title,
+  children,
+  onClose,
+}: {
+  title: string;
+  children: React.ReactNode;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+      <div className="bg-card border border-border rounded-2xl shadow-elevated w-full max-w-md p-6 animate-scale-in">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-display text-lg font-semibold">{title}</h3>
+          <button onClick={onClose} className="h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-secondary">
+            <XIcon className="h-4 w-4" />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Formulários internos dos modais
+// ────────────────────────────────────────────────────────────────────
+function NovoCandidatoForm({
+  onCancel,
+  onSave,
+}: {
+  onCancel: () => void;
+  onSave: (c: CandidatoExtra) => void;
+}) {
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [cargo, setCargo] = useState("");
+
+  return (
+    <div className="space-y-3 text-sm">
+      <Field label="Nome">
+        <input value={nome} onChange={(e) => setNome(e.target.value)} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm" />
+      </Field>
+      <Field label="E-mail">
+        <input value={email} onChange={(e) => setEmail(e.target.value)} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm" />
+      </Field>
+      <Field label="Telefone">
+        <input value={telefone} onChange={(e) => setTelefone(e.target.value)} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm" />
+      </Field>
+      <Field label="Cargo / observação">
+        <input value={cargo} onChange={(e) => setCargo(e.target.value)} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm" />
+      </Field>
+      <div className="flex justify-end gap-2 pt-2">
+        <button onClick={onCancel} className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm">Cancelar</button>
+        <button
+          disabled={!nome.trim()}
+          onClick={() => onSave({ id: `cx-${Date.now()}`, nome: nome.trim(), email, telefone, cargo, origem: "manual" })}
+          className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium inline-flex items-center gap-1.5 disabled:opacity-50"
+        >
+          <UserPlus className="h-3.5 w-3.5" /> Adicionar
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ConvidarLinkForm({ vagaId, onClose }: { vagaId: string; onClose: () => void }) {
+  const link = `https://azumi.jobs/aplicar/${vagaId}?ref=convite`;
+  return (
+    <div className="space-y-3 text-sm">
+      <p>Compartilhe o link abaixo com o candidato para se inscrever diretamente na vaga.</p>
+      <div className="flex gap-2">
+        <input readOnly value={link} className="flex-1 h-9 px-3 rounded-md border border-border bg-background text-xs" />
+        <button
+          onClick={() => { navigator.clipboard?.writeText(link); toast.success("Link copiado."); }}
+          className="h-9 px-3 rounded-md border border-border hover:bg-secondary text-xs inline-flex items-center gap-1.5"
+        >
+          <Copy className="h-3.5 w-3.5" /> Copiar
+        </button>
+      </div>
+      <div className="flex justify-end pt-2">
+        <button onClick={onClose} className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium">Fechar</button>
+      </div>
+    </div>
+  );
+}
+
+function NovoQuestionarioForm({
+  onCancel,
+  onSave,
+}: {
+  onCancel: () => void;
+  onSave: (q: QuestionarioVaga) => void;
+}) {
+  const [nome, setNome] = useState("");
+  const [tipo, setTipo] = useState<QuestionarioVaga["tipo"]>("Comportamental");
+  const [questoes, setQuestoes] = useState(10);
+
+  return (
+    <div className="space-y-3 text-sm">
+      <Field label="Nome do questionário">
+        <input value={nome} onChange={(e) => setNome(e.target.value)} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm" />
+      </Field>
+      <Field label="Tipo">
+        <select value={tipo} onChange={(e) => setTipo(e.target.value as QuestionarioVaga["tipo"])} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm">
+          <option value="Comportamental">Comportamental</option>
+          <option value="Técnico">Técnico</option>
+          <option value="Cultural">Cultural</option>
+        </select>
+      </Field>
+      <Field label="Número de questões">
+        <input type="number" min={1} value={questoes} onChange={(e) => setQuestoes(Number(e.target.value))} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm" />
+      </Field>
+      <div className="flex justify-end gap-2 pt-2">
+        <button onClick={onCancel} className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm">Cancelar</button>
+        <button
+          disabled={!nome.trim()}
+          onClick={() => onSave({ id: `q-${Date.now()}`, nome: nome.trim(), tipo, questoes, candidatosRespostas: {} })}
+          className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium inline-flex items-center gap-1.5 disabled:opacity-50"
+        >
+          <Plus className="h-3.5 w-3.5" /> Criar
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function DeclinarForm({
+  nome,
+  onCancel,
+  onSave,
+}: {
+  nome: string;
+  onCancel: () => void;
+  onSave: (quem: "candidato" | "azumi", motivo: string) => void;
+}) {
+  const [quem, setQuem] = useState<"candidato" | "azumi">("candidato");
+  const [motivo, setMotivo] = useState("");
+
+  return (
+    <div className="space-y-3 text-sm">
+      <p>Registrar declínio de <strong>{nome}</strong>.</p>
+      <Field label="Quem declinou">
+        <select value={quem} onChange={(e) => setQuem(e.target.value as "candidato" | "azumi")} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm">
+          <option value="candidato">Candidato</option>
+          <option value="azumi">Azumi (reprovado internamente)</option>
+        </select>
+      </Field>
+      <Field label="Motivo">
+        <textarea rows={3} value={motivo} onChange={(e) => setMotivo(e.target.value)} className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm" />
+      </Field>
+      <div className="flex justify-end gap-2 pt-2">
+        <button onClick={onCancel} className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm">Cancelar</button>
+        <button
+          disabled={!motivo.trim()}
+          onClick={() => onSave(quem, motivo.trim())}
+          className="h-9 px-4 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium inline-flex items-center gap-1.5 disabled:opacity-50"
+        >
+          <ThumbsDown className="h-3.5 w-3.5" /> Registrar
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function AgendarEntrevistaForm({
+  candidatoNome,
+  onCancel,
+  onSave,
+}: {
+  candidatoNome: string;
+  onCancel: () => void;
+  onSave: (ev: Omit<EventoEntrevista, "id" | "candidatoId" | "candidatoNome">) => void;
+}) {
+  const [tipo, setTipo] = useState<EventoEntrevista["tipo"]>("Interno Azumi");
+  const [data, setData] = useState("");
+  const [hora, setHora] = useState("");
+  const [local, setLocal] = useState("Google Meet");
+
+  return (
+    <div className="space-y-3 text-sm">
+      <p>Entrevista com <strong>{candidatoNome}</strong>.</p>
+      <Field label="Tipo">
+        <select value={tipo} onChange={(e) => setTipo(e.target.value as EventoEntrevista["tipo"])} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm">
+          <option value="Interno Azumi">Interno Azumi</option>
+          <option value="Com gestor do cliente">Com gestor do cliente</option>
+        </select>
+      </Field>
+      <div className="grid grid-cols-2 gap-2">
+        <Field label="Data">
+          <input type="date" value={data} onChange={(e) => setData(e.target.value)} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm" />
+        </Field>
+        <Field label="Hora">
+          <input type="time" value={hora} onChange={(e) => setHora(e.target.value)} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm" />
+        </Field>
+      </div>
+      <Field label="Local / link">
+        <input value={local} onChange={(e) => setLocal(e.target.value)} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm" />
+      </Field>
+      <div className="flex justify-end gap-2 pt-2">
+        <button onClick={onCancel} className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm">Cancelar</button>
+        <button
+          disabled={!data || !hora}
+          onClick={() => {
+            const [y, m, d] = data.split("-");
+            onSave({ tipo, data: `${d}/${m}/${y}`, hora, local });
+          }}
+          className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium inline-flex items-center gap-1.5 disabled:opacity-50"
+        >
+          <CalendarPlus className="h-3.5 w-3.5" /> Agendar
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="text-xs text-muted-foreground mb-1 block">{label}</span>
+      {children}
+    </label>
   );
 }
 
