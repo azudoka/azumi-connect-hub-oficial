@@ -1452,19 +1452,107 @@ export default function VagaDetalheAdmin() {
         </ModalShell>
       )}
 
-      {/* ── Modal: Novo questionário ─────────────────────────────── */}
-      {novoQuestOpen && (
-        <ModalShell title="Novo questionário" onClose={() => setNovoQuestOpen(false)}>
-          <NovoQuestionarioForm
-            onCancel={() => setNovoQuestOpen(false)}
-            onSave={(q) => {
-              setQuestionariosVaga((prev) => [...prev, q]);
-              setNovoQuestOpen(false);
-              toast.success(`Questionário "${q.nome}" criado.`);
-            }}
-          />
-        </ModalShell>
+      {/* ── Modal: Editor de questionário (criar / editar) ───────── */}
+      {editorQuestId && (
+        <QuestionarioEditorModal
+          existing={editorQuestId !== "novo" ? questionariosVaga.find((q) => q.id === editorQuestId) ?? null : null}
+          onClose={() => setEditorQuestId(null)}
+          onSave={(q) => {
+            setQuestionariosVaga((prev) => {
+              const idx = prev.findIndex((x) => x.id === q.id);
+              if (idx >= 0) {
+                const copia = [...prev];
+                copia[idx] = { ...prev[idx], ...q, respostasPorCandidato: prev[idx].respostasPorCandidato };
+                return copia;
+              }
+              return [...prev, q];
+            });
+            setEditorQuestId(null);
+            toast.success(`Questionário "${q.nome}" salvo.`);
+          }}
+        />
       )}
+
+      {/* ── Confirmação: Excluir questionário ─────────────────────── */}
+      {excluirQuestId && (() => {
+        const q = questionariosVaga.find((x) => x.id === excluirQuestId);
+        return (
+          <ModalShell title="Excluir questionário" onClose={() => setExcluirQuestId(null)}>
+            <div className="space-y-3 text-sm">
+              <p>Tem certeza que deseja excluir <strong>{q?.nome}</strong>? Essa ação não pode ser desfeita.</p>
+              <div className="flex justify-end gap-2 pt-2">
+                <button onClick={() => setExcluirQuestId(null)} className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm">Cancelar</button>
+                <button
+                  onClick={() => {
+                    setQuestionariosVaga((prev) => prev.filter((x) => x.id !== excluirQuestId));
+                    setExcluirQuestId(null);
+                    toast.warning("Questionário excluído.");
+                  }}
+                  className="h-9 px-4 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium inline-flex items-center gap-1.5"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> Excluir
+                </button>
+              </div>
+            </div>
+          </ModalShell>
+        );
+      })()}
+
+      {/* ── Modal: Enviar questionário ao mover candidato p/ Quest. ── */}
+      {enviarQuestParaCand && (() => {
+        const c = candidatosVaga.find((x) => x.id === enviarQuestParaCand)
+          ?? (() => {
+            const ex = candidatosExtras.find((x) => x.id === enviarQuestParaCand);
+            return ex ? { id: ex.id, nome: ex.nome } : null;
+          })();
+        return (
+          <ModalShell title="Enviar questionário" onClose={() => setEnviarQuestParaCand(null)}>
+            <EnviarQuestionarioForm
+              candidatoNome={c?.nome ?? "Candidato"}
+              questionarios={questionariosVaga}
+              onCancel={() => setEnviarQuestParaCand(null)}
+              onConfirm={(qId) => {
+                if (!enviarQuestParaCand) return;
+                enviarQuestionarioParaCandidato(qId, enviarQuestParaCand);
+                setEnviarQuestParaCand(null);
+              }}
+            />
+          </ModalShell>
+        );
+      })()}
+
+      {/* ── Modal: Enviar via WhatsApp (templates) ───────────────── */}
+      {whatsTemplateOpen && (() => {
+        const cBase = candidatosVaga.find((x) => x.id === whatsTemplateOpen.candidatoId);
+        const cExtra = candidatosExtras.find((x) => x.id === whatsTemplateOpen.candidatoId);
+        const nome = cBase?.nome ?? cExtra?.nome ?? "Candidato";
+        const telefone = cExtra?.telefone ?? DADOS_EXTRA_MOCK[whatsTemplateOpen.candidatoId]?.telefone ?? "";
+        const quest = whatsTemplateOpen.questionarioId
+          ? questionariosVaga.find((q) => q.id === whatsTemplateOpen.questionarioId)
+          : undefined;
+        const linkQuest = quest
+          ? quest.respostasPorCandidato[whatsTemplateOpen.candidatoId]?.link
+            ?? gerarLinkQuestionario(quest.id, whatsTemplateOpen.candidatoId)
+          : undefined;
+        return (
+          <ModalShell title="Enviar via WhatsApp" onClose={() => setWhatsTemplateOpen(null)}>
+            <WhatsTemplateForm
+              candidatoNome={nome}
+              vagaTitulo={vaga.titulo}
+              telefone={telefone}
+              linkQuestionario={linkQuest}
+              onCancel={() => setWhatsTemplateOpen(null)}
+              onConfirm={(mensagem) => {
+                const numero = telefone.replace(/\D/g, "");
+                const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`;
+                window.open(url, "_blank", "noopener,noreferrer");
+                toast.success("WhatsApp Web aberto com mensagem (mock).");
+                setWhatsTemplateOpen(null);
+              }}
+            />
+          </ModalShell>
+        );
+      })()}
 
       {/* ── Modal: Resumo para o cliente ─────────────────────────── */}
       {resumoOpen && (() => {
