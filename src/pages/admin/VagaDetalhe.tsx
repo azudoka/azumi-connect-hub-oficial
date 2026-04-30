@@ -593,7 +593,14 @@ export default function VagaDetalheAdmin() {
                               {c.nome.split(" ").map(n => n[0]).join("").slice(0, 2)}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <Link to={`/app/candidatos/${c.id}`} className="text-sm font-medium hover:text-primary truncate block">{c.nome}</Link>
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); setFichaCandidatoId(c.id); }}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                className="text-sm font-medium hover:text-primary truncate block text-left w-full"
+                              >
+                                {c.nome}
+                              </button>
                               <div className="text-[10px] text-muted-foreground">DISC: {c.perfilDom} dominante</div>
                             </div>
                             {(() => {
