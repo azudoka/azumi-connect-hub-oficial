@@ -152,13 +152,24 @@ const SLA_APROVACAO_MS = 72 * 60 * 60 * 1000;
 const setentaEDuasHorasAtras = Date.now() - SLA_APROVACAO_MS + 4 * 60 * 60 * 1000; // ~68h ativo p/ exibir
 
 const entregaveisIniciais: Entregavel[] = [
-  { id: "1", codigo: "ENT-001", nome: "Diagnóstico inicial",     frente: "consultoria", complexidade: "C1", status: "aprovado_cliente",  responsavelId: "ab", responsavelNome: "Ana Beatriz",   responsavelIniciais: "AB", prazo: "2026-04-10" },
-  { id: "2", codigo: "ENT-002", nome: "Workshop de validação",   frente: "consultoria", complexidade: "C2", status: "aprovacao_cliente", responsavelId: "ab", responsavelNome: "Ana Beatriz",   responsavelIniciais: "AB", prazo: "2026-04-28", aprovacaoClienteIniciadaEm: setentaEDuasHorasAtras },
-  { id: "3", codigo: "ENT-003", nome: "Política de cargos",      frente: "consultoria", complexidade: "C2", status: "aprovacao_interna", responsavelId: "ct", responsavelNome: "Camila Torres", responsavelIniciais: "CT", prazo: "2026-05-10" },
-  { id: "4", codigo: "ENT-004", nome: "Treinamento de líderes",  frente: "consultoria", complexidade: "C3", status: "em_andamento",      responsavelId: "rm", responsavelNome: "Rafael Moura",  responsavelIniciais: "RM", prazo: "2026-05-20" },
-  { id: "5", codigo: "ENT-005", nome: "Relatório executivo",     frente: "estrategia",  complexidade: "C3", status: "nao_iniciado",      responsavelId: "ab", responsavelNome: "Ana Beatriz",   responsavelIniciais: "AB", prazo: "2026-06-01" },
-  { id: "6", codigo: "ENT-006", nome: "Revisão jurídica",        frente: "juridico",    complexidade: "C1", status: "ajuste_solicitado", responsavelId: "ct", responsavelNome: "Camila Torres", responsavelIniciais: "CT", prazo: "2026-04-22" },
-  { id: "7", codigo: "ENT-007", nome: "Entrega final",           frente: "consultoria", complexidade: "C3", status: "nao_iniciado",      responsavelId: "ab", responsavelNome: "Ana Beatriz",   responsavelIniciais: "AB", prazo: "2026-06-15" },
+  { id: "1", codigo: "ENT-001", nome: "Diagnóstico inicial",     frente: "consultoria", complexidade: "C1", status: "aprovado_cliente",  responsavelId: "ab", responsavelNome: "Ana Beatriz",   responsavelIniciais: "AB", prazo: "2026-04-10", horasGastas: 18 },
+  { id: "2", codigo: "ENT-002", nome: "Workshop de validação",   frente: "consultoria", complexidade: "C2", status: "aprovacao_cliente", responsavelId: "ab", responsavelNome: "Ana Beatriz",   responsavelIniciais: "AB", prazo: "2026-04-28", aprovacaoClienteIniciadaEm: setentaEDuasHorasAtras, horasGastas: 12,
+    subtarefas: [
+      { id: "s1", nome: "Material de apoio", estimativaH: 4, feita: true },
+      { id: "s2", nome: "Roteiro do workshop", estimativaH: 6, feita: false },
+    ],
+    mensagens: [
+      { id: "m1", autor: "Ana Beatriz", iniciais: "AB", quando: "26/04 10:14", texto: "Subi a v2 do roteiro — pronto para revisão interna.", canal: "interno" },
+      { id: "m2", autor: "Camila Torres", iniciais: "CT", quando: "26/04 11:02", texto: "Revisei, ok do meu lado @Ana Beatriz", canal: "interno" },
+      { id: "m3", autor: "Ana Beatriz", iniciais: "AB", quando: "27/04 09:00", texto: "Olá! Material em anexo para sua aprovação. https://docs.azumi.com/ws-2026", canal: "cliente", anexo: "workshop_v2.pdf" },
+    ],
+    anexos: [{ id: "a1", nome: "workshop_v2.pdf" }],
+  },
+  { id: "3", codigo: "ENT-003", nome: "Política de cargos",      frente: "consultoria", complexidade: "C2", status: "aprovacao_interna", responsavelId: "ct", responsavelNome: "Camila Torres", responsavelIniciais: "CT", prazo: "2026-05-10", horasGastas: 9 },
+  { id: "4", codigo: "ENT-004", nome: "Treinamento de líderes",  frente: "consultoria", complexidade: "C3", status: "em_andamento",      responsavelId: "rm", responsavelNome: "Rafael Moura",  responsavelIniciais: "RM", prazo: "2026-05-20", horasGastas: 4 },
+  { id: "5", codigo: "ENT-005", nome: "Relatório executivo",     frente: "estrategia",  complexidade: "C3", status: "nao_iniciado",      responsavelId: "ab", responsavelNome: "Ana Beatriz",   responsavelIniciais: "AB", prazo: "2026-06-01", horasGastas: 0 },
+  { id: "6", codigo: "ENT-006", nome: "Revisão jurídica",        frente: "juridico",    complexidade: "C1", status: "ajuste_solicitado", responsavelId: "ct", responsavelNome: "Camila Torres", responsavelIniciais: "CT", prazo: "2026-04-22", horasGastas: 6 },
+  { id: "7", codigo: "ENT-007", nome: "Entrega final",           frente: "consultoria", complexidade: "C3", status: "nao_iniciado",      responsavelId: "ab", responsavelNome: "Ana Beatriz",   responsavelIniciais: "AB", prazo: "2026-06-15", horasGastas: 0 },
 ];
 
 const historicoMock: HistoricoEvento[] = [
