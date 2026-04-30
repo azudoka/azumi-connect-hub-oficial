@@ -22,6 +22,24 @@ import {
   type ModoEntrevista,
   type AgendamentoEntrevistaGestor,
 } from "@/data/entrevistaGestorStore";
+import {
+  criarProposta,
+  getPropostaAtiva,
+  aceitarProposta,
+  recusarProposta,
+  expirarProposta,
+  contratadosNaVaga,
+  registrarFeedback,
+  jaTemFeedback,
+  subscribePropostas,
+  isExpiradaPorTempo,
+  msRestantes,
+  statusPropostaLabel,
+  type PropostaCandidato,
+  type TipoProposta,
+  type CanalProposta,
+  type FeedbackCanal,
+} from "@/data/propostaStore";
 
 const BENEFICIO_LABEL: Record<string, string> = {
   vale_transporte: "Vale-transporte",
@@ -224,8 +242,11 @@ export default function VagaDetalheAdmin() {
   const max = Math.max(...funil.map((f) => f.n), 1);
 
   const candidatosVaga = candidatos.filter((c) => c.vagaId === vaga.id);
-  const colunas = ["Triagem", "Quest.", "Entrevista", "Enviados", "Decisão"] as const;
+  const colunas = ["Triagem", "Quest.", "Entrevista", "Enviados", "Decisão", "Proposta", "Reprovados"] as const;
   type Coluna = typeof colunas[number];
+
+  // Posições da vaga (Doc Mestre — Etapa 6: bloquear contratações além do total).
+  const posicoesVaga: number = (vaga as unknown as { posicoes?: number }).posicoes ?? 1;
 
   // Estado do Kanban: candidato -> coluna (todos começam em "Triagem")
   const [colunasEstado, setColunasEstado] = useState<Record<string, Coluna>>(
@@ -321,6 +342,39 @@ export default function VagaDetalheAdmin() {
   const [relatorioOpenId, setRelatorioOpenId] = useState<string | null>(null);
   const [relatoriosPorCandidato, setRelatoriosPorCandidato] = useState<Record<string, RelatorioCandidato>>({});
 
+  // ── Etapa 6 — Proposta ─────────────────────────────────────────
+  /** Quando aberto: id do candidato p/ enviar proposta. */
+  const [enviarPropostaPara, setEnviarPropostaPara] = useState<string | null>(null);
+  /** Sub p/ rerender quando o store de propostas mudar. */
+  const [propostaTick, setPropostaTick] = useState(0);
+  useEffect(() => {
+    const off = subscribePropostas(() => setPropostaTick((v) => v + 1));
+    return () => { off(); };
+  }, []);
+  // Cron leve: a cada 30s, se houver proposta enviada com tempo expirado, marca como expirada.
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      candidatosVaga.forEach((c) => {
+        const p = getPropostaAtiva(c.id);
+        if (p && isExpiradaPorTempo(p)) expirarProposta(p.id);
+      });
+    }, 30000);
+    return () => window.clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vaga.id]);
+
+  // ── Etapa 7 — Feedback de reprovados ──────────────────────────
+  const [enviarFeedbackPara, setEnviarFeedbackPara] = useState<string | null>(null);
+
+  // Lista de contratados (proposta aceita) — para regra de bloqueio
+  const idsContratados = useMemo(
+    () => contratadosNaVaga(vaga.id),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [vaga.id, propostaTick]
+  );
+  const posicoesPreenchidas = idsContratados.length;
+  const vagaEncerrada = posicoesPreenchidas >= posicoesVaga;
+
   // Re-render quando o store de Entrevista com Gestor muda (cliente / rota pública).
   const [storeVersao, setStoreVersao] = useState(0);
   useEffect(() => subscribeEntrevistaGestor(() => setStoreVersao((v) => v + 1)), []);
@@ -368,6 +422,35 @@ export default function VagaDetalheAdmin() {
       if (!existente) {
         setAgendarGestorOpen(candId);
       }
+      return true;
+    }
+    if (coluna === "Proposta") {
+      // Etapa 6 — Doc Mestre: exige aprovação do gestor (parecer "prosseguir").
+      const parecer = getParecerGestor(candId);
+      if (!parecer || parecer.decisao !== "prosseguir") {
+        toast.error(
+          "Este candidato ainda não foi aprovado pelo gestor. Registre o parecer antes de enviar proposta.",
+        );
+        return true; // bloqueia o movimento
+      }
+      // Bloqueia se todas as posições da vaga já foram preenchidas.
+      if (vagaEncerrada && !idsContratados.includes(candId)) {
+        toast.error(
+          `Limite de posições preenchido (${posicoesPreenchidas}/${posicoesVaga}). Vaga encerrada para novas contratações.`,
+        );
+        return true;
+      }
+      // Move + abre modal de envio de proposta.
+      setColunasEstado((prev) => ({ ...prev, [candId]: coluna }));
+      const propostaExistente = getPropostaAtiva(candId);
+      if (!propostaExistente || propostaExistente.status === "expirada") {
+        setEnviarPropostaPara(candId);
+      }
+      return true;
+    }
+    if (coluna === "Reprovados") {
+      // Etapa 7 — Doc Mestre: simples movimento; botão "Enviar feedback" aparece no card.
+      setColunasEstado((prev) => ({ ...prev, [candId]: coluna }));
       return true;
     }
     return false;
@@ -694,7 +777,19 @@ export default function VagaDetalheAdmin() {
             >
               <FileQuestion className="h-3.5 w-3.5" /> Criar questionário
             </button>
-            <span className="text-xs text-muted-foreground ml-auto">Arraste candidatos entre etapas</span>
+            <span className="text-xs text-muted-foreground ml-auto inline-flex items-center gap-2">
+              <span className={cn(
+                "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border",
+                vagaEncerrada
+                  ? "bg-success/15 text-success border-success/30"
+                  : "bg-muted text-muted-foreground border-border"
+              )}>
+                <Briefcase className="h-3 w-3" />
+                Posições: {posicoesPreenchidas}/{posicoesVaga}
+                {vagaEncerrada && " — encerrada"}
+              </span>
+              <span>Arraste candidatos entre etapas</span>
+            </span>
           </div>
 
           {/* Candidatos adicionados manualmente / convidados (mock — não entram no kanban ainda) */}
@@ -724,7 +819,7 @@ export default function VagaDetalheAdmin() {
               </ul>
             </div>
           )}
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-3">
             {colunas.map((col) => {
               const candidatosNaColuna = candidatosVaga.filter(
                 (c) => colunasEstado[c.id] === col && !desclassificados.has(c.id)
@@ -829,6 +924,46 @@ export default function VagaDetalheAdmin() {
                           <div className="mt-2">
                             <DiscBars values={c.disc} compact />
                           </div>
+
+                          {/* Etapa 6 — badge de proposta no card */}
+                          {colunasEstado[c.id] === "Proposta" && (() => {
+                            const p = getPropostaAtiva(c.id);
+                            if (!p) return null;
+                            const cls = p.status === "aceita"
+                              ? "bg-success/15 text-success border-success/30"
+                              : p.status === "recusada"
+                              ? "bg-destructive/15 text-destructive border-destructive/30"
+                              : p.status === "expirada"
+                              ? "bg-muted text-muted-foreground border-border"
+                              : "bg-warning/15 text-warning border-warning/30";
+                            return (
+                              <div className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border max-w-full truncate" title={statusPropostaLabel(p.status)}>
+                                <span className={cn("inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border truncate", cls)}>
+                                  <Send className="h-2.5 w-2.5" /> {statusPropostaLabel(p.status)}
+                                </span>
+                              </div>
+                            );
+                          })()}
+
+                          {/* Etapa 7 — botão Enviar feedback no card de Reprovados */}
+                          {colunasEstado[c.id] === "Reprovados" && (
+                            <div className="mt-2 flex items-center gap-1.5">
+                              {jaTemFeedback(c.id) ? (
+                                <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+                                  <CheckCircle2 className="h-3 w-3 text-success" /> Feedback enviado
+                                </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); setEnviarFeedbackPara(c.id); }}
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                  className="inline-flex items-center gap-1 h-6 px-2 rounded-md border border-border hover:bg-secondary text-[10px] font-medium"
+                                >
+                                  <MessageCircle className="h-3 w-3" /> Enviar feedback
+                                </button>
+                              )}
+                            </div>
+                          )}
 
                           {obsAberta && (
                             <div
@@ -1811,6 +1946,64 @@ export default function VagaDetalheAdmin() {
           />
         );
       })()}
+
+      {/* ── Etapa 6 — Modal de envio de proposta ─────────────────── */}
+      {enviarPropostaPara && (() => {
+        const c = candidatosVaga.find((x) => x.id === enviarPropostaPara);
+        if (!c) return null;
+        return (
+          <ModalShell title="Enviar proposta" onClose={() => setEnviarPropostaPara(null)} size="lg">
+            <EnviarPropostaForm
+              candidatoNome={c.nome}
+              vagaTitulo={vaga.titulo}
+              empresaNome={vaga.empresa}
+              onCancel={() => setEnviarPropostaPara(null)}
+              onConfirm={(dados) => {
+                criarProposta({
+                  candidatoId: c.id,
+                  vagaId: vaga.id,
+                  ...dados,
+                });
+                setEnviarPropostaPara(null);
+                toast.success(`Proposta enviada a ${c.nome}. Prazo de 24h para resposta.`);
+              }}
+            />
+          </ModalShell>
+        );
+      })()}
+
+      {/* ── Etapa 7 — Modal de envio de feedback p/ reprovado ────── */}
+      {enviarFeedbackPara && (() => {
+        const c = candidatosVaga.find((x) => x.id === enviarFeedbackPara);
+        if (!c) return null;
+        const dadosExtra = DADOS_EXTRA_MOCK[c.id];
+        return (
+          <ModalShell title="Enviar feedback" onClose={() => setEnviarFeedbackPara(null)} size="lg">
+            <EnviarFeedbackForm
+              candidatoNome={c.nome}
+              vagaTitulo={vaga.titulo}
+              telefone={dadosExtra?.telefone ?? ""}
+              email={dadosExtra?.email ?? ""}
+              onCancel={() => setEnviarFeedbackPara(null)}
+              onConfirm={({ canal, templateKey, mensagem }) => {
+                registrarFeedback({
+                  candidatoId: c.id,
+                  vagaId: vaga.id,
+                  canal,
+                  templateKey,
+                  mensagem,
+                });
+                if (canal === "whatsapp" || canal === "ambos") {
+                  const tel = (dadosExtra?.telefone ?? "").replace(/\D/g, "");
+                  if (tel) window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(mensagem)}`, "_blank");
+                }
+                setEnviarFeedbackPara(null);
+                toast.success(`Feedback enviado a ${c.nome} via ${canal === "ambos" ? "e-mail e WhatsApp" : canal}.`);
+              }}
+            />
+          </ModalShell>
+        );
+      })()}
     </div>
   );
 }
@@ -2279,6 +2472,226 @@ function WhatsTemplateForm({
           className="h-9 px-4 rounded-lg bg-success text-success-foreground text-sm font-semibold inline-flex items-center gap-1.5 disabled:opacity-50"
         >
           <MessageCircle className="h-3.5 w-3.5" /> Abrir WhatsApp Web →
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Etapa 6 — Envio de proposta (Doc Mestre)
+// ────────────────────────────────────────────────────────────────────
+function EnviarPropostaForm({
+  candidatoNome,
+  vagaTitulo,
+  empresaNome,
+  onCancel,
+  onConfirm,
+}: {
+  candidatoNome: string;
+  vagaTitulo: string;
+  empresaNome: string;
+  onCancel: () => void;
+  onConfirm: (dados: {
+    tipo: TipoProposta;
+    remuneracao: string;
+    beneficios: string;
+    dataInicio: string;
+    canal: CanalProposta;
+    mensagem: string;
+  }) => void;
+}) {
+  const [tipo, setTipo] = useState<TipoProposta>("CLT");
+  const [remuneracao, setRemuneracao] = useState("");
+  const [beneficios, setBeneficios] = useState("VR + VT + Plano de saúde");
+  const [dataInicio, setDataInicio] = useState("");
+  const [canal, setCanal] = useState<CanalProposta>("ambos");
+
+  const buildMsg = (rem: string, dt: string) =>
+    `Olá ${candidatoNome}! 🎉\n\nTemos uma ótima notícia: gostaríamos de oficializar a proposta para a vaga ${vagaTitulo} na ${empresaNome}.\n\n` +
+    `• Modalidade: ${tipo}\n` +
+    `• Remuneração: ${rem || "[a definir]"}\n` +
+    `• Benefícios: ${beneficios}\n` +
+    `• Data de início sugerida: ${dt || "[a definir]"}\n\n` +
+    `Você tem até 24 horas para aceitar ou recusar a proposta. Qualquer dúvida, é só nos chamar!\n\nTime Azumi`;
+  const [mensagem, setMensagem] = useState(buildMsg("", ""));
+  const [tocouMsg, setTocouMsg] = useState(false);
+  useEffect(() => {
+    if (!tocouMsg) setMensagem(buildMsg(remuneracao, dataInicio));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [remuneracao, dataInicio, tipo, beneficios]);
+
+  const valido = remuneracao.trim() && dataInicio.trim() && mensagem.trim();
+
+  return (
+    <div className="space-y-3 text-sm">
+      <div className="rounded-md border border-border bg-muted/30 p-3 text-xs">
+        <div><strong>Candidato:</strong> {candidatoNome}</div>
+        <div><strong>Vaga:</strong> {vagaTitulo} — {empresaNome}</div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Tipo de proposta">
+          <select value={tipo} onChange={(e) => setTipo(e.target.value as TipoProposta)} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm">
+            <option value="CLT">CLT</option>
+            <option value="PJ">PJ</option>
+            <option value="Estagio">Estágio</option>
+          </select>
+        </Field>
+        <Field label="Remuneração">
+          <input value={remuneracao} onChange={(e) => setRemuneracao(e.target.value)} placeholder="R$ 0.000,00" className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm" />
+        </Field>
+      </div>
+      <Field label="Benefícios">
+        <textarea rows={2} value={beneficios} onChange={(e) => setBeneficios(e.target.value)} className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm resize-y" />
+      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Data de início sugerida">
+          <input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm" />
+        </Field>
+        <Field label="Canal de envio">
+          <select value={canal} onChange={(e) => setCanal(e.target.value as CanalProposta)} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm">
+            <option value="whatsapp">WhatsApp</option>
+            <option value="email">E-mail</option>
+            <option value="ambos">WhatsApp + E-mail</option>
+          </select>
+        </Field>
+      </div>
+      <Field label="Mensagem (template editável)">
+        <textarea
+          rows={8}
+          value={mensagem}
+          onChange={(e) => { setMensagem(e.target.value); setTocouMsg(true); }}
+          className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm resize-y font-data"
+        />
+      </Field>
+      <div className="text-[11px] text-muted-foreground rounded-md border border-info/30 bg-info/10 p-2">
+        ⏱ Após o envio, o candidato terá <strong>24 horas</strong> para aceitar ou recusar a proposta.
+      </div>
+      <div className="flex justify-end gap-2 pt-2">
+        <button onClick={onCancel} className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm">Cancelar</button>
+        <button
+          disabled={!valido}
+          onClick={() => onConfirm({ tipo, remuneracao, beneficios, dataInicio, canal, mensagem })}
+          className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center gap-1.5 disabled:opacity-50"
+        >
+          <Send className="h-3.5 w-3.5" /> Enviar proposta
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Etapa 7 — Feedback de reprovados (Doc Mestre)
+// ────────────────────────────────────────────────────────────────────
+function EnviarFeedbackForm({
+  candidatoNome,
+  vagaTitulo,
+  telefone,
+  email,
+  onCancel,
+  onConfirm,
+}: {
+  candidatoNome: string;
+  vagaTitulo: string;
+  telefone: string;
+  email: string;
+  onCancel: () => void;
+  onConfirm: (dados: { canal: FeedbackCanal; templateKey: string; mensagem: string }) => void;
+}) {
+  const TEMPLATES = useMemo(() => [
+    {
+      key: "pos_entrevista",
+      label: "Não aprovado após entrevista",
+      build: () => `Olá ${candidatoNome}, tudo bem?\n\nAgradecemos muito sua participação no processo seletivo da vaga ${vagaTitulo}. ` +
+        `Após a entrevista, decidimos seguir com outro perfil que se mostrou mais aderente neste momento.\n\n` +
+        `Foi um prazer conhecer sua trajetória — vamos manter seu currículo na nossa base para futuras oportunidades.\n\nUm abraço,\nTime Azumi`,
+    },
+    {
+      key: "pos_tecnica",
+      label: "Não aprovado após análise técnica",
+      build: () => `Olá ${candidatoNome},\n\nAgradecemos pelo tempo dedicado à análise técnica da vaga ${vagaTitulo}. ` +
+        `Após avaliação, decidimos seguir com outro candidato cujo perfil técnico se mostrou mais alinhado neste momento.\n\n` +
+        `Continuamos com seu cadastro para próximas oportunidades.\n\nAbraço,\nTime Azumi`,
+    },
+    {
+      key: "alinhamento_vaga",
+      label: "Não aprovado por alinhamento com a vaga",
+      build: () => `Olá ${candidatoNome},\n\nObrigado pelo interesse na vaga ${vagaTitulo}. ` +
+        `Após análise cuidadosa, identificamos que outras experiências se aproximam mais do escopo solicitado pelo cliente nesta posição.\n\n` +
+        `Esperamos te apresentar oportunidades melhor alinhadas em breve.\n\nAbraço,\nTime Azumi`,
+    },
+    {
+      key: "nao_compareceu",
+      label: "Não aprovado por não comparecimento",
+      build: () => `Olá ${candidatoNome},\n\nNotamos que não foi possível comparecer à etapa agendada para a vaga ${vagaTitulo}. ` +
+        `Por essa razão, encerramos sua participação neste processo.\n\n` +
+        `Caso queira retomar a conversa em uma próxima oportunidade, é só nos chamar.\n\nAbraço,\nTime Azumi`,
+    },
+    {
+      key: "personalizada",
+      label: "Mensagem personalizada",
+      build: () => "",
+    },
+  ], [candidatoNome, vagaTitulo]);
+
+  const [templateKey, setTemplateKey] = useState(TEMPLATES[0].key);
+  const [mensagem, setMensagem] = useState(TEMPLATES[0].build());
+  const [canal, setCanal] = useState<FeedbackCanal>("email");
+
+  function trocarTemplate(k: string) {
+    setTemplateKey(k);
+    const t = TEMPLATES.find((x) => x.key === k);
+    if (t) setMensagem(t.build());
+  }
+
+  const podeEnviar = !!mensagem.trim() && (
+    canal === "email" ? !!email :
+    canal === "whatsapp" ? !!telefone :
+    !!email && !!telefone
+  );
+
+  return (
+    <div className="space-y-3 text-sm">
+      <div className="rounded-md border border-border bg-muted/30 p-3 text-xs">
+        <div><strong>Candidato:</strong> {candidatoNome}</div>
+        <div className="text-muted-foreground">
+          {email || "—"} • {telefone || "—"}
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Modelo de mensagem">
+          <select value={templateKey} onChange={(e) => trocarTemplate(e.target.value)} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm">
+            {TEMPLATES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
+          </select>
+        </Field>
+        <Field label="Canal de envio">
+          <select value={canal} onChange={(e) => setCanal(e.target.value as FeedbackCanal)} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm">
+            <option value="email">E-mail</option>
+            <option value="whatsapp">WhatsApp</option>
+            <option value="ambos">E-mail + WhatsApp</option>
+          </select>
+        </Field>
+      </div>
+      <Field label="Mensagem">
+        <textarea
+          rows={9}
+          value={mensagem}
+          onChange={(e) => setMensagem(e.target.value)}
+          className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm resize-y"
+        />
+      </Field>
+      <div className="text-[11px] text-muted-foreground">
+        Mensagens curtas e respeitosas mantêm o relacionamento com o talento para futuras oportunidades.
+      </div>
+      <div className="flex justify-end gap-2 pt-2">
+        <button onClick={onCancel} className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm">Cancelar</button>
+        <button
+          disabled={!podeEnviar}
+          onClick={() => onConfirm({ canal, templateKey, mensagem })}
+          className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center gap-1.5 disabled:opacity-50"
+        >
+          <MessageCircle className="h-3.5 w-3.5" /> Enviar feedback
         </button>
       </div>
     </div>
@@ -3050,6 +3463,9 @@ function CandidatoDetailSheet({
               })}
             </ol>
           </section>
+
+          {/* Bloco: Proposta (Etapa 6 — Doc Mestre) */}
+          <PropostaPanel candidatoId={cand.id} candidatoNome={cand.nome} />
 
           {/* Bloco: Parecer do cliente (lido do store compartilhado) */}
           {(() => {
@@ -4002,3 +4418,114 @@ function AgendamentoGestorPanel({
 // Suprime warnings de imports usados apenas em fluxos opcionais
 void getParecerGestor;
 void getRealinhamento;
+
+// ────────────────────────────────────────────────────────────────────
+// Etapa 6 — Painel de proposta na ficha do candidato (com countdown
+// de 24h e botões de simulação Aceitar/Recusar/Expirar).
+// ────────────────────────────────────────────────────────────────────
+function PropostaPanel({ candidatoId, candidatoNome }: { candidatoId: string; candidatoNome: string }) {
+  const [tick, setTick] = useState(0);
+  // re-render a cada 1s (countdown) + assinar mudanças do store
+  useEffect(() => {
+    const off = subscribePropostas(() => setTick((v) => v + 1));
+    const id = window.setInterval(() => setTick((v) => v + 1), 1000);
+    return () => { off(); window.clearInterval(id); };
+  }, []);
+  // tick is intentionally read to force renders
+  void tick;
+
+  const proposta = getPropostaAtiva(candidatoId);
+  if (!proposta) return null;
+
+  const restantes = msRestantes(proposta);
+  const expiradaPorTempo = isExpiradaPorTempo(proposta);
+  function fmtRestante(ms: number) {
+    if (ms <= 0) return "expirou";
+    const totalSec = Math.floor(ms / 1000);
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+    return `${h}h ${m.toString().padStart(2, "0")}m ${s.toString().padStart(2, "0")}s`;
+  }
+  const statusCls =
+    proposta.status === "aceita" ? "bg-success/15 text-success border-success/30" :
+    proposta.status === "recusada" ? "bg-destructive/15 text-destructive border-destructive/30" :
+    proposta.status === "expirada" || expiradaPorTempo ? "bg-muted text-muted-foreground border-border" :
+    "bg-warning/15 text-warning border-warning/30";
+
+  return (
+    <section>
+      <h3 className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-3">
+        Proposta (Etapa 6)
+      </h3>
+      <div className="rounded-lg border border-border bg-background/40 p-3 space-y-2 text-xs">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border", statusCls)}>
+            <Send className="h-3 w-3" /> {expiradaPorTempo && proposta.status === "enviada" ? "Expirada (sem resposta)" : statusPropostaLabel(proposta.status)}
+          </span>
+          <span className="text-[10px] text-muted-foreground font-data">
+            Enviada em {new Date(proposta.enviadaEm).toLocaleString("pt-BR")}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <div><span className="text-muted-foreground">Tipo:</span> {proposta.tipo}</div>
+          <div><span className="text-muted-foreground">Remuneração:</span> {proposta.remuneracao}</div>
+          <div><span className="text-muted-foreground">Início:</span> {proposta.dataInicio}</div>
+          <div><span className="text-muted-foreground">Canal:</span> {proposta.canal}</div>
+        </div>
+
+        {proposta.status === "enviada" && (
+          <div className={cn(
+            "rounded-md border p-2 text-[11px] inline-flex items-center gap-1.5",
+            restantes > 0
+              ? "border-warning/30 bg-warning/10 text-warning"
+              : "border-destructive/30 bg-destructive/10 text-destructive"
+          )}>
+            <Clock className="h-3 w-3" />
+            Prazo: até {new Date(proposta.expiraEm).toLocaleString("pt-BR")} —{" "}
+            <strong className="font-data">{fmtRestante(restantes)}</strong>
+          </div>
+        )}
+
+        {proposta.respostaEm && (
+          <div className="text-[11px] text-muted-foreground">
+            Resposta registrada em {new Date(proposta.respostaEm).toLocaleString("pt-BR")}
+            {proposta.motivoRecusa && <> — motivo: "{proposta.motivoRecusa}"</>}
+          </div>
+        )}
+
+        {/* Atalhos de simulação para demo (mock) */}
+        {proposta.status === "enviada" && (
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            <button
+              type="button"
+              onClick={() => { aceitarProposta(proposta.id); toast.success(`${candidatoNome} aceitou a proposta — agora contratado(a).`); }}
+              className="h-7 px-2.5 rounded-md bg-success text-success-foreground text-[11px] font-medium inline-flex items-center gap-1"
+            >
+              <CheckCircle2 className="h-3 w-3" /> Simular aceita
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const motivo = window.prompt("Motivo da recusa (opcional):") ?? undefined;
+                recusarProposta(proposta.id, motivo);
+                toast.warning(`${candidatoNome} recusou a proposta.`);
+              }}
+              className="h-7 px-2.5 rounded-md border border-destructive/40 text-destructive text-[11px] font-medium inline-flex items-center gap-1 hover:bg-destructive/10"
+            >
+              <UserX className="h-3 w-3" /> Simular recusa
+            </button>
+            <button
+              type="button"
+              onClick={() => { expirarProposta(proposta.id); toast.info("Proposta marcada como expirada."); }}
+              className="h-7 px-2.5 rounded-md border border-border text-[11px] font-medium inline-flex items-center gap-1 hover:bg-secondary"
+            >
+              <Clock className="h-3 w-3" /> Forçar expiração
+            </button>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
