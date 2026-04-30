@@ -3255,6 +3255,12 @@ function CandidatoDetailSheet({
 }) {
   useScrollLock(open);
   const { id: vagaIdParam } = useParams();
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (open && scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTop = 0;
+    }
+  }, [open, candidato?.id, candidatoExtra?.id]);
   if (!open) return null;
 
   // Aceita tanto candidato "oficial" quanto extra (manual/convidado)
@@ -3392,7 +3398,7 @@ function CandidatoDetailSheet({
         </header>
 
         {/* Conteúdo com scroll */}
-        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-6">
+        <div ref={scrollAreaRef} className="flex-1 overflow-y-auto px-5 py-5 space-y-6">
           {/* Bloco: Dados */}
           <section>
             <h3 className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-3">Dados do candidato</h3>
