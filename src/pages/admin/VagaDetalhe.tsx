@@ -2291,7 +2291,11 @@ function CandidatoDetailSheet({
                 icon: <CheckCircle2 className="h-3.5 w-3.5 text-success" />,
                 texto: "Perfil enviado ao cliente.",
               });
-              if (itens.length === 0) {
+              if (relatorioStatus === "enviado") itens.push({
+                quando: new Date().toLocaleDateString("pt-BR"),
+                icon: <FileText className="h-3.5 w-3.5 text-primary" />,
+                texto: "Relatório enviado ao cliente.",
+              });
                 return <div className="text-xs text-muted-foreground py-2">Sem interações registradas ainda.</div>;
               }
               return (
