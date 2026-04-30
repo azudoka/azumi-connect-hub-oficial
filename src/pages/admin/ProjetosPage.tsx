@@ -224,13 +224,18 @@ export default function ProjetosPage() {
   const [fStatus, setFStatus] = useState<"todos" | ProjetoStatus>("todos");
   const [fFrente, setFFrente] = useState<"todas" | FrenteAtuacao>("todas");
 
+  // Perfil + ID do consultor logado (via AuthContext)
+  const { usuario } = useAuth();
+  const isConsultor = usuario?.role === "consultor";
+  const consultorLogadoId = usuario?.id ?? "";
+
   // Visibilidade por perfil: admin vê tudo; consultor vê só os atribuídos a ele.
   const projetosVisiveis = useMemo(() => {
-    if (PERFIL_DEMO === "consultor") {
-      return projetos.filter((p) => p.assignedConsultorId === CONSULTOR_LOGADO_ID);
+    if (isConsultor) {
+      return projetos.filter((p) => p.assignedConsultorId === consultorLogadoId);
     }
     return projetos;
-  }, [projetos]);
+  }, [projetos, isConsultor, consultorLogadoId]);
 
   const projetosVigentes = useMemo(
     () => projetosVisiveis.filter((p) => p.status !== "encerrado"),
