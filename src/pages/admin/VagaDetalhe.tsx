@@ -2088,6 +2088,7 @@ function CandidatoDetailSheet({
                     {relatorioStatus === "enviado" ? "Relatório enviado" : "Relatório em rascunho"}
                   </span>
                 )}
+              </div>
               <p className="text-xs text-muted-foreground mt-0.5 truncate">
                 Candidato para <strong className="text-foreground/80">{tituloVaga}</strong>
               </p>
