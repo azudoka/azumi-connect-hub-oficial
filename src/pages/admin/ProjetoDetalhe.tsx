@@ -400,16 +400,19 @@ export default function ProjetoDetalhe() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuItem onClick={() => setPanelOpen({ open: true, entId: e.id })}>
+                          <MessageSquare className="mr-2 h-4 w-4" /> Abrir painel (subtarefas / chat)
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setStatusOpen({ open: true, entId: e.id })}>
                           <CheckCircle2 className="mr-2 h-4 w-4" /> Alterar status
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setEditOpen({ open: true, entId: e.id })}>
                           <Pencil className="mr-2 h-4 w-4" /> Editar
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => toast.info("Em breve")}>
-                          <GitBranch className="mr-2 h-4 w-4" /> Criar subtarefa
+                        <DropdownMenuItem onClick={() => setPanelOpen({ open: true, entId: e.id })}>
+                          <GitBranch className="mr-2 h-4 w-4" /> Subtarefas
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => toast.info("Em breve")}>
+                        <DropdownMenuItem onClick={() => setPanelOpen({ open: true, entId: e.id })}>
                           <UserPlus className="mr-2 h-4 w-4" /> Marcar consultor
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setHistoricoOpen({ open: true, entId: e.id })}>
