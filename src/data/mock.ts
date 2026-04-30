@@ -107,6 +107,80 @@ export const vagas = [
   },
 ];
 
+// ────────────────────────────────────────────────────────────────────
+// Gestor cliente da vaga + janela de disponibilidade
+// (mock — em produção viria do cadastro da vaga)
+// ────────────────────────────────────────────────────────────────────
+
+export interface JanelaDisponibilidade {
+  /** Dias da semana permitidos: 0=dom, 1=seg, ..., 6=sáb */
+  diasSemana: number[];
+  /** Faixas de horário no dia, ex.: [{inicio:"09:00", fim:"12:00"}] */
+  blocos: { inicio: string; fim: string }[];
+}
+
+export interface GestorVaga {
+  id: string;
+  nome: string;
+  cargo: string;
+  email: string;
+  janela: JanelaDisponibilidade;
+}
+
+export const gestorPorVaga: Record<string, GestorVaga> = {
+  v1: {
+    id: "g-v1",
+    nome: "Helena Sato",
+    cargo: "Diretora de TI — Kentaki Foods",
+    email: "helena.sato@kentaki.com",
+    janela: {
+      diasSemana: [1, 2, 3, 4, 5],
+      blocos: [
+        { inicio: "09:00", fim: "12:00" },
+        { inicio: "14:00", fim: "18:00" },
+      ],
+    },
+  },
+  v2: {
+    id: "g-v2",
+    nome: "Rafael Pinheiro",
+    cargo: "Head de Marketing — Grupo Maverick",
+    email: "rafael.pinheiro@maverick.com",
+    janela: {
+      diasSemana: [2, 3, 4],
+      blocos: [
+        { inicio: "10:00", fim: "12:30" },
+        { inicio: "15:00", fim: "17:00" },
+      ],
+    },
+  },
+  v3: {
+    id: "g-v3",
+    nome: "Camila Werneck",
+    cargo: "CTO — Tech Plural",
+    email: "camila.werneck@techplural.com",
+    janela: {
+      diasSemana: [1, 2, 3, 4, 5],
+      blocos: [{ inicio: "13:00", fim: "19:00" }],
+    },
+  },
+  v4: {
+    id: "g-v4",
+    nome: "Diego Alencar",
+    cargo: "Head de RH — Alvo Digital",
+    email: "diego.alencar@alvo.com",
+    janela: {
+      diasSemana: [1, 3, 5],
+      blocos: [{ inicio: "09:00", fim: "11:30" }],
+    },
+  },
+};
+
+export function getGestorDaVaga(vagaId: string): GestorVaga | null {
+  return gestorPorVaga[vagaId] ?? null;
+}
+
+
 // Mapa de labels legíveis em PT-BR para benefícios (B06)
 export const beneficiosLabels: Record<string, string> = {
   vale_transporte: "Vale-transporte",
