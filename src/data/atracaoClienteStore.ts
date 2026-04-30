@@ -92,6 +92,8 @@ function seedDemoOnce() {
   // Para a demo: candidatos do mock c1, c2, c3 já têm relatório enviado
   // em suas respectivas vagas (v1, v2, v3). Entrevistas marcadas como
   // realizadas para que o botão de parecer apareça imediatamente.
+  // Para a demo da Kentaki Foods (v1) seedamos os 3 perfis na mesma vaga,
+  // simulando a primeira leva completa enviada pela Azumi.
   const relatorios: Record<string, RelatorioEnviado> = {
     c1: {
       candidatoId: "c1",
@@ -105,18 +107,18 @@ function seedDemoOnce() {
     },
     c2: {
       candidatoId: "c2",
-      vagaId: "v2",
+      vagaId: "v1",
       resumo:
-        "Analista de marketing com foco em performance digital e branding. Atuação prévia em consumer goods e marketplaces.",
+        "Gerente de TI com background em transformação digital e gestão de squads ágeis. Experiência consolidada em varejo e indústria alimentícia.",
       discResumo: "Perfil influente (I), comunicação forte e ótimo fit cultural.",
       fasePlanejada: "Entrevista com cliente",
       enviadoEm: new Date().toISOString(),
     },
     c3: {
       candidatoId: "c3",
-      vagaId: "v3",
+      vagaId: "v1",
       resumo:
-        "Desenvolvedor Full Stack sênior, especialista em React/Node, com experiência em arquiteturas distribuídas.",
+        "Líder técnico sênior, especialista em arquitetura de software e governança de TI. Forte atuação em ambientes de alta complexidade.",
       discResumo: "Perfil consciencioso (C), alta atenção a detalhes e qualidade técnica.",
       fasePlanejada: "Entrevista com cliente",
       enviadoEm: new Date().toISOString(),
