@@ -1141,5 +1141,516 @@ function RadioRow({
   );
 }
 
+// ────────────────────────────────────────────────────────────────────
+// Card resumo do agendamento de entrevista com gestor (visão cliente)
+// ────────────────────────────────────────────────────────────────────
+
+function AgendamentoGestorCard({
+  ag,
+  onResponder,
+}: {
+  ag: AgendamentoEntrevistaGestor;
+  onResponder: () => void;
+}) {
+  const podeResponder =
+    ag.status === "aguardando_resposta_gestor" ||
+    ag.status === "candidato_recusou";
+  const statusCor =
+    ag.status === "confirmado"
+      ? "bg-success/15 text-success border-success/30"
+      : ag.status === "aguardando_resposta_gestor"
+      ? "bg-warning/15 text-warning border-warning/30"
+      : "bg-info/15 text-info border-info/30";
+
+  return (
+    <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="text-sm font-medium truncate">
+            {ag.candidatoNome}
+          </div>
+          <div className="text-[11px] text-muted-foreground">
+            Gestor: {ag.gestorNome}
+          </div>
+        </div>
+        <span
+          className={cn(
+            "text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border",
+            statusCor
+          )}
+        >
+          {statusAgendamentoLabel(ag.status)}
+        </span>
+      </div>
+
+      <div className="text-xs space-y-1">
+        {ag.escolhido ? (
+          <div className="text-success font-medium">
+            ✓ {formatarSugestao(ag.escolhido)}
+          </div>
+        ) : (
+          ag.sugestoes.map((s, i) => (
+            <div key={i} className="text-muted-foreground">
+              <span className="font-data">#{i + 1}</span>{" "}
+              {formatarSugestao(s)}
+            </div>
+          ))
+        )}
+      </div>
+
+      {podeResponder && (
+        <button
+          onClick={onResponder}
+          className="w-full h-9 rounded-lg bg-primary text-primary-foreground text-xs font-medium inline-flex items-center justify-center gap-1.5"
+        >
+          <CalendarClock className="h-3.5 w-3.5" />
+          {ag.status === "candidato_recusou"
+            ? "Sugerir novo horário"
+            : "Responder ao agendamento"}
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Modal: gestor responde sugestões (escolhe ou sugere outro)
+// ────────────────────────────────────────────────────────────────────
+
+function RespostaGestorModal({
+  agendamentoId,
+  onClose,
+  onSaved,
+}: {
+  agendamentoId: string;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const ag = useMemo(
+    () => listarAgendamentosDaVaga("").find((a) => a.id === agendamentoId)
+      ?? listarAgendamentosDaVaga(
+        listarAgendamentosDaVaga("").find((a) => a.id === agendamentoId)?.vagaId ?? ""
+      ).find((a) => a.id === agendamentoId)
+      ?? null,
+    [agendamentoId]
+  );
+  // Mais simples: pegamos por outro caminho
+  const all = useMemo(() => {
+    const map: Record<string, AgendamentoEntrevistaGestor> = {};
+    return map;
+  }, []);
+  void all;
+
+  // Releitura direta via store helper
+  const agendamento = useMemo(() => {
+    // import local evitando cycle
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const mod = require("@/data/entrevistaGestorStore") as typeof import("@/data/entrevistaGestorStore");
+    return mod.getAgendamento(agendamentoId);
+  }, [agendamentoId]);
+  void ag;
+
+  const [modo, setModo] = useState<"escolher" | "sugerir">("escolher");
+  const [escolha, setEscolha] = useState<number | null>(null);
+  const [sugData, setSugData] = useState("");
+  const [sugHora, setSugHora] = useState("");
+  const [sugModo, setSugModo] = useState<"presencial" | "remoto">("remoto");
+  const [sugLocal, setSugLocal] = useState("");
+  const [comentario, setComentario] = useState("");
+
+  if (!agendamento) {
+    return (
+      <ModalShell title="Agendamento" onClose={onClose}>
+        <p className="text-sm text-muted-foreground">
+          Agendamento não encontrado.
+        </p>
+      </ModalShell>
+    );
+  }
+
+  function podeSalvar() {
+    if (modo === "escolher") return escolha !== null;
+    return !!(sugData && sugHora && sugLocal.trim());
+  }
+
+  function salvar() {
+    if (!podeSalvar()) return;
+    if (modo === "escolher" && escolha !== null) {
+      gestorAprovarSugestao(agendamentoId, escolha);
+      toast.success("Horário aprovado. A consultora enviará o link ao candidato.");
+    } else {
+      const nova: SugestaoHorario = {
+        data: sugData,
+        hora: sugHora,
+        modo: sugModo,
+        localOuLink: sugLocal.trim(),
+      };
+      gestorSugerirOutro(agendamentoId, nova, comentario.trim() || undefined);
+      toast.success("Nova sugestão enviada à consultora.");
+    }
+    onSaved();
+  }
+
+  return (
+    <ModalShell
+      title="Responder sugestões de entrevista"
+      subtitle={`Candidato: ${agendamento.candidatoNome}`}
+      onClose={onClose}
+      maxWidth="max-w-2xl"
+      footer={
+        <>
+          <button
+            onClick={onClose}
+            className="h-9 px-4 rounded-lg border border-border text-sm font-medium hover:bg-secondary"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={salvar}
+            disabled={!podeSalvar()}
+            className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {modo === "escolher" ? "Aprovar horário" : "Enviar nova sugestão"}
+          </button>
+        </>
+      }
+    >
+      <div className="space-y-5">
+        <RadioRow
+          name="modo-resposta"
+          value={modo}
+          onChange={(v) => setModo(v as "escolher" | "sugerir")}
+          options={[
+            { value: "escolher", label: "Escolher uma das sugestões" },
+            { value: "sugerir", label: "Sugerir outro horário" },
+          ]}
+        />
+
+        {modo === "escolher" && (
+          <div className="space-y-2">
+            {agendamento.sugestoes.map((s, i) => {
+              const checked = escolha === i;
+              return (
+                <label
+                  key={i}
+                  className={cn(
+                    "flex items-start gap-3 rounded-lg border p-3 cursor-pointer text-sm",
+                    checked
+                      ? "border-primary bg-primary/10"
+                      : "border-border hover:bg-secondary"
+                  )}
+                >
+                  <input
+                    type="radio"
+                    name="sug"
+                    checked={checked}
+                    onChange={() => setEscolha(i)}
+                    className="mt-1"
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium">{formatarSugestao(s)}</div>
+                    <div className="text-[11px] text-muted-foreground inline-flex items-center gap-1 mt-0.5">
+                      {s.modo === "remoto" ? (
+                        <Video className="h-3 w-3" />
+                      ) : (
+                        <MapPin className="h-3 w-3" />
+                      )}
+                      {s.localOuLink}
+                    </div>
+                  </div>
+                </label>
+              );
+            })}
+          </div>
+        )}
+
+        {modo === "sugerir" && (
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Data" required>
+                <input
+                  type="date"
+                  value={sugData}
+                  onChange={(e) => setSugData(e.target.value)}
+                  className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm"
+                />
+              </Field>
+              <Field label="Horário" required>
+                <input
+                  type="time"
+                  value={sugHora}
+                  onChange={(e) => setSugHora(e.target.value)}
+                  className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm"
+                />
+              </Field>
+            </div>
+            <Field label="Modo" required>
+              <RadioRow
+                name="sug-modo"
+                value={sugModo}
+                onChange={(v) => setSugModo(v as "presencial" | "remoto")}
+                options={[
+                  { value: "remoto", label: "Remoto" },
+                  { value: "presencial", label: "Presencial" },
+                ]}
+              />
+            </Field>
+            <Field
+              label={sugModo === "remoto" ? "Link da reunião" : "Endereço"}
+              required
+            >
+              <input
+                value={sugLocal}
+                onChange={(e) => setSugLocal(e.target.value)}
+                placeholder={
+                  sugModo === "remoto"
+                    ? "https://meet.google.com/..."
+                    : "Av. Paulista, 1000 — 12º andar"
+                }
+                className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm"
+              />
+            </Field>
+            <Field label="Comentário para a consultora">
+              <textarea
+                value={comentario}
+                onChange={(e) => setComentario(e.target.value)}
+                rows={3}
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm resize-none"
+                placeholder="Ex.: prefiro pela manhã, evitar sextas…"
+              />
+            </Field>
+          </div>
+        )}
+      </div>
+    </ModalShell>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Modal: parecer do gestor pós-entrevista (Etapa 5)
+// ────────────────────────────────────────────────────────────────────
+
+function ParecerGestorModal({
+  candidatoId,
+  vagaId,
+  onClose,
+  onSaved,
+}: {
+  candidatoId: string;
+  vagaId: string;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const cand = candidatos.find((c) => c.id === candidatoId);
+  const ag = getAgendamentoDoCandidato(candidatoId);
+
+  const [compareceu, setCompareceu] = useState<"sim" | "nao" | "">("");
+  const [remarcar, setRemarcar] = useState<"sim" | "nao" | "">("");
+  const [pontuacao, setPontuacao] = useState<number>(0);
+  const [pontoForte, setPontoForte] = useState("");
+  const [pontoAtencao, setPontoAtencao] = useState("");
+  const [observacoes, setObservacoes] = useState("");
+  const [decisao, setDecisao] = useState<"prosseguir" | "standby" | "reprovar" | "">("");
+  const [motivoReprovacao, setMotivoReprovacao] = useState("");
+
+  const obsValida = observacoes.trim().length >= 200;
+
+  const podeSalvar = (() => {
+    if (compareceu === "") return false;
+    if (compareceu === "nao") return remarcar !== "";
+    if (compareceu === "sim") {
+      if (pontuacao < 1 || pontuacao > 5) return false;
+      if (!pontoForte.trim() || !pontoAtencao.trim()) return false;
+      if (!obsValida) return false;
+      if (!decisao) return false;
+      if (decisao === "reprovar" && !motivoReprovacao.trim()) return false;
+      return true;
+    }
+    return false;
+  })();
+
+  function salvar() {
+    if (!podeSalvar) return;
+    const parecer: ParecerGestor = {
+      candidatoId,
+      vagaId,
+      agendamentoId: ag?.id,
+      compareceu: compareceu === "sim",
+      ...(compareceu === "nao"
+        ? {
+            remarcar: remarcar === "sim",
+            descontinuar: remarcar === "nao",
+          }
+        : {
+            pontuacao,
+            pontoForte: pontoForte.trim(),
+            pontoAtencao: pontoAtencao.trim(),
+            observacoes: observacoes.trim(),
+            decisao: decisao as "prosseguir" | "standby" | "reprovar",
+            motivoReprovacao:
+              decisao === "reprovar" ? motivoReprovacao.trim() : undefined,
+          }),
+      criadoEm: new Date().toISOString(),
+    };
+    salvarParecerGestor(parecer);
+    toast.success("Parecer do gestor registrado.");
+    onSaved();
+  }
+
+  return (
+    <ModalShell
+      title="Parecer do gestor sobre o candidato"
+      subtitle={cand ? `${cand.nome} · ${cand.cargo}` : undefined}
+      onClose={onClose}
+      maxWidth="max-w-2xl"
+      footer={
+        <>
+          <button
+            onClick={onClose}
+            className="h-9 px-4 rounded-lg border border-border text-sm font-medium hover:bg-secondary"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={salvar}
+            disabled={!podeSalvar}
+            className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Salvar parecer
+          </button>
+        </>
+      }
+    >
+      <div className="space-y-5">
+        <Field label="O candidato compareceu à entrevista?" required>
+          <RadioRow
+            name="pg-compareceu"
+            value={compareceu}
+            onChange={(v) => setCompareceu(v as "sim" | "nao")}
+            options={[
+              { value: "sim", label: "Sim" },
+              { value: "nao", label: "Não" },
+            ]}
+          />
+        </Field>
+
+        {compareceu === "nao" && (
+          <Field label="Deseja remarcar?" required>
+            <RadioRow
+              name="pg-remarcar"
+              value={remarcar}
+              onChange={(v) => setRemarcar(v as "sim" | "nao")}
+              options={[
+                { value: "sim", label: "Sim, remarcar" },
+                { value: "nao", label: "Não, descontinuar" },
+              ]}
+            />
+          </Field>
+        )}
+
+        {compareceu === "sim" && (
+          <>
+            <Field label="Pontuação geral (1 a 5)" required>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setPontuacao(n)}
+                    className={cn(
+                      "h-10 w-10 rounded-lg border flex items-center justify-center",
+                      pontuacao >= n
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "border-border hover:bg-secondary"
+                    )}
+                    aria-label={`${n} estrelas`}
+                  >
+                    <Star
+                      className={cn(
+                        "h-4 w-4",
+                        pontuacao >= n ? "fill-current" : ""
+                      )}
+                    />
+                  </button>
+                ))}
+              </div>
+            </Field>
+
+            <Field label="Principal ponto forte" required>
+              <textarea
+                value={pontoForte}
+                onChange={(e) => setPontoForte(e.target.value)}
+                rows={2}
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm resize-none"
+                placeholder="Ex.: experiência sólida em liderança…"
+              />
+            </Field>
+
+            <Field label="Principal ponto de atenção" required>
+              <textarea
+                value={pontoAtencao}
+                onChange={(e) => setPontoAtencao(e.target.value)}
+                rows={2}
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm resize-none"
+                placeholder="Ex.: pouca vivência com o stack…"
+              />
+            </Field>
+
+            <Field label="Observações detalhadas (mínimo 200 caracteres)" required>
+              <textarea
+                value={observacoes}
+                onChange={(e) => setObservacoes(e.target.value)}
+                rows={6}
+                className={cn(
+                  "w-full rounded-lg border bg-background px-3 py-2 text-sm resize-none",
+                  obsValida ? "border-input" : "border-warning/50"
+                )}
+                placeholder="Descreva a entrevista em detalhes — responsabilidades futuras, fit cultural, expectativas etc."
+              />
+              <div
+                className={cn(
+                  "text-[11px] mt-1",
+                  obsValida ? "text-muted-foreground" : "text-warning"
+                )}
+              >
+                {observacoes.trim().length}/200
+              </div>
+            </Field>
+
+            <Field label="Decisão" required>
+              <RadioRow
+                name="pg-decisao"
+                value={decisao}
+                onChange={(v) =>
+                  setDecisao(v as "prosseguir" | "standby" | "reprovar")
+                }
+                options={[
+                  { value: "prosseguir", label: "Prosseguir" },
+                  { value: "standby", label: "Stand by" },
+                  { value: "reprovar", label: "Reprovar" },
+                ]}
+                vertical
+              />
+            </Field>
+
+            {decisao === "reprovar" && (
+              <Field label="Motivo da reprovação" required>
+                <textarea
+                  value={motivoReprovacao}
+                  onChange={(e) => setMotivoReprovacao(e.target.value)}
+                  rows={3}
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm resize-none"
+                  placeholder="Descreva o motivo principal…"
+                />
+              </Field>
+            )}
+          </>
+        )}
+      </div>
+    </ModalShell>
+  );
+}
+
 // Suprime warning de import não usado quando módulo é tree-shaken
 void ClipboardList;
+void getGestorDaVaga;
