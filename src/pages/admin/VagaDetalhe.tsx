@@ -28,7 +28,7 @@ import {
   Users, FileQuestion, History, Filter, Loader2, AlertTriangle, Bot, User,
   MoreVertical, Eye, StickyNote, ChevronRight, UserX, Play, UserPlus, Link2,
   Copy, FileText, MessageCircle, Download, ListChecks, ThumbsDown, CalendarPlus,
-  CalendarDays, Globe, Paperclip, X as XIcon,
+  CalendarDays, Globe, Paperclip, X as XIcon, Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -724,13 +724,10 @@ export default function VagaDetalheAdmin() {
       )}
 
       {tab === "chat" && (
-        <div className="bg-card border border-border rounded-xl p-5 max-w-3xl">
-          <h3 className="font-display font-semibold mb-4">Conversas sobre esta vaga</h3>
-          <ChatVagaPanel
-            mensagens={mensagens}
-            onSend={(m) => setMensagens((prev) => [...prev, m])}
-          />
-        </div>
+        <ChatVagaPanel
+          mensagens={mensagens}
+          onSend={(m) => setMensagens((prev) => [...prev, m])}
+        />
       )}
 
       {tab === "perfis" && (
@@ -1221,3 +1218,108 @@ export default function VagaDetalheAdmin() {
     </div>
   );
 }
+
+// ────────────────────────────────────────────────────────────────────
+// ChatVagaPanel — chat simples com abas Interno / Cliente
+// ────────────────────────────────────────────────────────────────────
+function ChatVagaPanel({
+  mensagens,
+  onSend,
+}: {
+  mensagens: MensagemVaga[];
+  onSend: (m: MensagemVaga) => void;
+}) {
+  const [canal, setCanal] = useState<"interno" | "cliente">("interno");
+  const [texto, setTexto] = useState("");
+
+  const filtradas = mensagens.filter((m) => m.canal === canal);
+
+  function enviar() {
+    const t = texto.trim();
+    if (!t) return;
+    onSend({
+      id: `mv-${Date.now()}`,
+      autor: "Você",
+      iniciais: "VC",
+      quando: new Date().toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }),
+      texto: t,
+      canal,
+    });
+    setTexto("");
+  }
+
+  return (
+    <div className="bg-card border border-border rounded-xl p-5 max-w-3xl">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-display font-semibold">Conversas sobre esta vaga</h3>
+        <div className="inline-flex rounded-md border border-border overflow-hidden text-xs">
+          <button
+            onClick={() => setCanal("interno")}
+            className={cn("px-3 h-7", canal === "interno" ? "bg-primary text-primary-foreground" : "bg-card")}
+          >
+            Interno
+          </button>
+          <button
+            onClick={() => setCanal("cliente")}
+            className={cn("px-3 h-7", canal === "cliente" ? "bg-primary text-primary-foreground" : "bg-card")}
+          >
+            Com cliente
+          </button>
+        </div>
+      </div>
+      <div
+        className={cn(
+          "text-xs rounded-md px-3 py-2 mb-3 border",
+          canal === "interno"
+            ? "bg-muted/40 border-border text-muted-foreground"
+            : "bg-warning/10 border-warning/30 text-warning-foreground",
+        )}
+      >
+        {canal === "interno"
+          ? "Visível apenas para o time Azumi."
+          : "Visível para o cliente. Evite informações internas."}
+      </div>
+      <div className="space-y-3 max-h-80 overflow-y-auto mb-3">
+        {filtradas.length === 0 ? (
+          <div className="text-center text-sm text-muted-foreground py-6">Sem mensagens ainda.</div>
+        ) : (
+          filtradas.map((m) => (
+            <div key={m.id} className="flex gap-3">
+              <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-semibold shrink-0">
+                {m.iniciais}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-sm font-medium">{m.autor}</span>
+                  <span className="text-xs text-muted-foreground">{m.quando}</span>
+                </div>
+                <p className="text-sm text-foreground whitespace-pre-wrap break-words">{m.texto}</p>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+      <div className="flex gap-2">
+        <input
+          value={texto}
+          onChange={(e) => setTexto(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              enviar();
+            }
+          }}
+          placeholder={canal === "interno" ? "Mensagem interna…" : "Mensagem para o cliente…"}
+          className="flex-1 h-9 px-3 rounded-md border border-border bg-background text-sm"
+        />
+        <button
+          onClick={enviar}
+          className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-xs font-medium inline-flex items-center gap-1.5"
+        >
+          <Send className="h-3.5 w-3.5" /> Enviar
+        </button>
+      </div>
+    </div>
+  );
+}
+
