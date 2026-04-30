@@ -591,6 +591,28 @@ export default function VagaDetalheAdmin() {
                               <Link to={`/app/candidatos/${c.id}`} className="text-sm font-medium hover:text-primary truncate block">{c.nome}</Link>
                               <div className="text-[10px] text-muted-foreground">DISC: {c.perfilDom} dominante</div>
                             </div>
+                            {(() => {
+                              const ev = eventos.find((e) => e.candidatoId === c.id);
+                              return ev ? (
+                                <span
+                                  title={`Entrevista agendada em ${ev.data} às ${ev.hora}`}
+                                  className="inline-flex items-center justify-center h-6 w-6 rounded-md bg-primary/10 text-primary border border-primary/20 shrink-0"
+                                >
+                                  <CalendarDays className="h-3.5 w-3.5" />
+                                </span>
+                              ) : null;
+                            })()}
+                            {colunasEstado[c.id] === "Entrevista" && (
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); setAgendarOpen(c.id); }}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                title="Agendar entrevista"
+                                className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-secondary hover:text-foreground shrink-0"
+                              >
+                                <CalendarPlus className="h-4 w-4" />
+                              </button>
+                            )}
                             <button
                               type="button"
                               aria-label="Mais ações"
