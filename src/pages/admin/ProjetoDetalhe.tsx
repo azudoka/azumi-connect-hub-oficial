@@ -1239,3 +1239,423 @@ function NpsDialog({
     </Dialog>
   );
 }
+
+// ────────────────────────────────────────────────────────────────────
+// Painel do entregável: subtarefas + consultor + chat (interno/cliente)
+// ────────────────────────────────────────────────────────────────────
+
+const PESSOAS_MENCAO = [
+  "Ana Beatriz",
+  "Rafael Moura",
+  "Camila Torres",
+  "RH Kentaki",
+  "Cliente — Mariana",
+];
+
+function renderTextoComLinks(texto: string) {
+  const partes = texto.split(/(https?:\/\/[^\s]+|@[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s]*?(?=\s|$|[.,!?]))/g);
+  return partes.map((p, i) => {
+    if (p?.startsWith("http")) {
+      return (
+        <a
+          key={i}
+          href={p}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary underline break-all"
+        >
+          {p}
+        </a>
+      );
+    }
+    if (p?.startsWith("@")) {
+      return (
+        <span key={i} className="text-primary font-medium">
+          {p}
+        </span>
+      );
+    }
+    return <span key={i}>{p}</span>;
+  });
+}
+
+function EntregavelPanelSheet({
+  open, entregavel, onClose, onPatch, onAbrirHoras,
+}: {
+  open: boolean;
+  entregavel: Entregavel | null;
+  onClose: () => void;
+  onPatch: (patch: Partial<Entregavel>) => void;
+  onAbrirHoras: (codigo: string) => void;
+}) {
+  const [novaSubtarefa, setNovaSubtarefa] = useState("");
+  const [novaSubtarefaH, setNovaSubtarefaH] = useState<number | "">("");
+  const [canalAtivo, setCanalAtivo] = useState<"interno" | "cliente">("interno");
+  const [textoMsg, setTextoMsg] = useState("");
+  const [showMencoes, setShowMencoes] = useState(false);
+  const [anexoPendente, setAnexoPendente] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      setNovaSubtarefa("");
+      setNovaSubtarefaH("");
+      setTextoMsg("");
+      setAnexoPendente(null);
+      setCanalAtivo("interno");
+    }
+  }, [open]);
+
+  if (!entregavel) return null;
+
+  const bloqueado = entregavel.status === "aprovado_cliente";
+  const subtarefas = entregavel.subtarefas ?? [];
+  const mensagens = entregavel.mensagens ?? [];
+
+  function adicionarSubtarefa() {
+    if (!novaSubtarefa.trim()) {
+      toast.error("Informe um nome para a subtarefa.");
+      return;
+    }
+    const nova: Subtarefa = {
+      id: `s_${Date.now()}`,
+      nome: novaSubtarefa.trim(),
+      estimativaH: typeof novaSubtarefaH === "number" ? novaSubtarefaH : 0,
+      feita: false,
+    };
+    onPatch({ subtarefas: [...subtarefas, nova] });
+    setNovaSubtarefa("");
+    setNovaSubtarefaH("");
+  }
+
+  function toggleSubtarefa(sid: string) {
+    onPatch({
+      subtarefas: subtarefas.map((s) => (s.id === sid ? { ...s, feita: !s.feita } : s)),
+    });
+  }
+
+  function removerSubtarefa(sid: string) {
+    onPatch({ subtarefas: subtarefas.filter((s) => s.id !== sid) });
+  }
+
+  function trocarConsultor(novoId: string) {
+    if (bloqueado) return;
+    const r = responsaveisDisponiveis.find((x) => x.id === novoId);
+    if (!r) return;
+    onPatch({
+      responsavelId: r.id,
+      responsavelNome: r.nome,
+      responsavelIniciais: r.iniciais,
+    });
+    toast.success(`Consultor alterado para ${r.nome}.`);
+  }
+
+  function enviarMensagem() {
+    if (!textoMsg.trim() && !anexoPendente) {
+      toast.error("Escreva uma mensagem ou anexe um arquivo.");
+      return;
+    }
+    const nova: Mensagem = {
+      id: `m_${Date.now()}`,
+      autor: "Você",
+      iniciais: "VC",
+      quando: format(new Date(), "dd/MM HH:mm", { locale: ptBR }),
+      texto: textoMsg.trim() || "(arquivo enviado)",
+      canal: canalAtivo,
+      anexo: anexoPendente ?? undefined,
+    };
+    onPatch({ mensagens: [...mensagens, nova] });
+    setTextoMsg("");
+    setAnexoPendente(null);
+    setShowMencoes(false);
+    toast.success(canalAtivo === "interno" ? "Mensagem enviada (interno)." : "Mensagem enviada ao cliente.");
+  }
+
+  function handleTextoChange(v: string) {
+    setTextoMsg(v);
+    setShowMencoes(/@\w*$/.test(v));
+  }
+
+  function inserirMencao(nome: string) {
+    setTextoMsg((cur) => cur.replace(/@\w*$/, `@${nome} `));
+    setShowMencoes(false);
+  }
+
+  function simularUpload() {
+    const fake = `arquivo_${Date.now().toString().slice(-4)}.pdf`;
+    setAnexoPendente(fake);
+    toast.info(`Anexo pronto para envio: ${fake}`);
+  }
+
+  const msgsCanal = mensagens.filter((m) => m.canal === canalAtivo);
+
+  return (
+    <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
+      <SheetContent side="right" className="sm:max-w-xl w-full overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="flex items-center gap-2">
+            {entregavel.nome}
+            {bloqueado && <Lock className="h-4 w-4 text-muted-foreground" />}
+          </SheetTitle>
+          <SheetDescription>
+            {entregavel.codigo} · {statusLabels[entregavel.status]}
+          </SheetDescription>
+        </SheetHeader>
+
+        {/* Atalho timer/horas */}
+        <div className="mt-4 flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onAbrirHoras(entregavel.codigo)}
+            disabled={bloqueado}
+            className="gap-1.5"
+          >
+            <Play className="h-3.5 w-3.5" /> Iniciar timer
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => onAbrirHoras(entregavel.codigo)}
+            className="gap-1.5"
+          >
+            <Clock className="h-3.5 w-3.5" /> Ver horas
+          </Button>
+          {(entregavel.horasGastas ?? 0) > 0 && (
+            <span className="text-xs text-muted-foreground font-data ml-auto">
+              {entregavel.horasGastas}h registradas
+            </span>
+          )}
+        </div>
+
+        {/* Consultor responsável */}
+        <div className="mt-6">
+          <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+            Consultor responsável
+          </Label>
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span tabIndex={0} className="block mt-1.5">
+                  <Select
+                    value={entregavel.responsavelId}
+                    onValueChange={trocarConsultor}
+                    disabled={bloqueado}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {responsaveisDisponiveis.map((r) => (
+                        <SelectItem key={r.id} value={r.id}>{r.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </span>
+              </TooltipTrigger>
+              {bloqueado && (
+                <TooltipContent>
+                  Entregável aprovado pelo cliente — responsável fixo
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+
+        {/* Subtarefas */}
+        <div className="mt-6">
+          <div className="flex items-center justify-between mb-2">
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+              Subtarefas
+            </Label>
+            <span className="text-xs text-muted-foreground font-data">
+              {subtarefas.filter((s) => s.feita).length}/{subtarefas.length}
+            </span>
+          </div>
+
+          {subtarefas.length === 0 ? (
+            <div className="text-xs text-muted-foreground border border-dashed border-border rounded-md p-3 text-center">
+              Nenhuma subtarefa criada ainda.
+            </div>
+          ) : (
+            <ul className="space-y-2">
+              {subtarefas.map((s) => (
+                <li
+                  key={s.id}
+                  className="flex items-center gap-2 bg-card border border-border rounded-md px-3 py-2"
+                >
+                  <Checkbox
+                    checked={s.feita}
+                    onCheckedChange={() => toggleSubtarefa(s.id)}
+                    disabled={bloqueado}
+                    aria-label={`Concluir ${s.nome}`}
+                  />
+                  <span className={cn("text-sm flex-1", s.feita && "line-through text-muted-foreground")}>
+                    {s.nome}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground font-data">
+                    {s.estimativaH}h
+                  </span>
+                  {!bloqueado && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => removerSubtarefa(s.id)}
+                      aria-label="Remover subtarefa"
+                      className="h-7 w-7"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {!bloqueado && (
+            <div className="mt-3 flex items-end gap-2">
+              <div className="flex-1 space-y-1">
+                <Label htmlFor="sub-nome" className="text-[11px]">Nova subtarefa</Label>
+                <Input
+                  id="sub-nome"
+                  value={novaSubtarefa}
+                  onChange={(e) => setNovaSubtarefa(e.target.value)}
+                  placeholder="Ex: Revisar layout"
+                />
+              </div>
+              <div className="w-20 space-y-1">
+                <Label htmlFor="sub-h" className="text-[11px]">Horas</Label>
+                <Input
+                  id="sub-h"
+                  type="number"
+                  min={0}
+                  value={novaSubtarefaH}
+                  onChange={(e) => setNovaSubtarefaH(e.target.value === "" ? "" : Number(e.target.value))}
+                  placeholder="0"
+                />
+              </div>
+              <Button onClick={adicionarSubtarefa} size="sm" className="gap-1.5">
+                <Plus className="h-3.5 w-3.5" /> Adicionar
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Chat */}
+        <div className="mt-8">
+          <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+            Conversas
+          </Label>
+          <Tabs value={canalAtivo} onValueChange={(v) => setCanalAtivo(v as "interno" | "cliente")} className="mt-2">
+            <TabsList className="grid grid-cols-2 w-full">
+              <TabsTrigger value="interno">Interno (Azumi)</TabsTrigger>
+              <TabsTrigger value="cliente">Com cliente</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="interno" className="mt-3">
+              <div className="rounded-md border border-warning/30 bg-warning/10 px-3 py-2 text-[11px] text-warning mb-3">
+                Esta conversa não é visível para o cliente.
+              </div>
+              <ChatLista mensagens={msgsCanal} />
+            </TabsContent>
+
+            <TabsContent value="cliente" className="mt-3">
+              <div className="rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-[11px] text-primary mb-3">
+                Mensagens aqui são compartilhadas com o cliente.
+              </div>
+              <ChatLista mensagens={msgsCanal} />
+            </TabsContent>
+          </Tabs>
+
+          {/* Input */}
+          <div className="mt-3 relative">
+            <Textarea
+              value={textoMsg}
+              onChange={(e) => handleTextoChange(e.target.value)}
+              rows={3}
+              placeholder={canalAtivo === "interno" ? "Mensagem para o time Azumi…" : "Mensagem para o cliente…"}
+            />
+            {showMencoes && (
+              <div className="absolute z-10 left-2 bottom-full mb-1 bg-popover border border-border rounded-md shadow-lg w-56 max-h-44 overflow-auto">
+                {PESSOAS_MENCAO.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => inserirMencao(p)}
+                    className="w-full text-left px-3 py-1.5 text-xs hover:bg-accent"
+                  >
+                    @{p}
+                  </button>
+                ))}
+              </div>
+            )}
+            {anexoPendente && (
+              <div className="mt-2 flex items-center gap-2 text-xs bg-secondary/40 border border-border rounded-md px-2 py-1.5">
+                <Paperclip className="h-3.5 w-3.5" />
+                <span className="font-data">{anexoPendente}</span>
+                <button
+                  type="button"
+                  onClick={() => setAnexoPendente(null)}
+                  className="ml-auto text-muted-foreground hover:text-destructive"
+                  aria-label="Remover anexo"
+                >
+                  <XCircle className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
+            <div className="mt-2 flex items-center gap-2">
+              <Button type="button" size="sm" variant="outline" onClick={simularUpload} className="gap-1.5">
+                <Paperclip className="h-3.5 w-3.5" /> Anexar
+              </Button>
+              <Button type="button" size="sm" onClick={enviarMensagem} className="gap-1.5 ml-auto">
+                <Send className="h-3.5 w-3.5" /> Enviar
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {entregavel.motivoCancelamento && (
+          <div className="mt-6 text-xs rounded-md border border-destructive/30 bg-destructive/10 p-3">
+            <div className="font-semibold text-destructive flex items-center gap-1.5">
+              <XCircle className="h-3.5 w-3.5" /> Cancelado
+            </div>
+            <div className="text-muted-foreground mt-1">{entregavel.motivoCancelamento}</div>
+          </div>
+        )}
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function ChatLista({ mensagens }: { mensagens: Mensagem[] }) {
+  if (mensagens.length === 0) {
+    return (
+      <div className="text-xs text-muted-foreground border border-dashed border-border rounded-md p-4 text-center">
+        Nenhuma mensagem ainda.
+      </div>
+    );
+  }
+  return (
+    <ul className="space-y-3 max-h-72 overflow-y-auto pr-1">
+      {mensagens.map((m) => (
+        <li key={m.id} className="flex gap-2.5">
+          <div className="h-7 w-7 rounded-full bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white shrink-0">
+            {m.iniciais}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-baseline gap-2">
+              <span className="text-xs font-semibold">{m.autor}</span>
+              <span className="text-[10px] text-muted-foreground font-data">{m.quando}</span>
+            </div>
+            <div className="text-sm mt-0.5 break-words">{renderTextoComLinks(m.texto)}</div>
+            {m.anexo && (
+              <div className="mt-1 inline-flex items-center gap-1.5 text-xs text-primary bg-primary/10 border border-primary/20 rounded px-2 py-0.5">
+                <FileText className="h-3 w-3" />
+                <span className="font-data">{m.anexo}</span>
+              </div>
+            )}
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
