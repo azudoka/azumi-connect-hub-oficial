@@ -424,6 +424,35 @@ export default function VagaDetalheAdmin() {
       }
       return true;
     }
+    if (coluna === "Proposta") {
+      // Etapa 6 — Doc Mestre: exige aprovação do gestor (parecer "prosseguir").
+      const parecer = getParecerGestor(candId);
+      if (!parecer || parecer.decisao !== "prosseguir") {
+        toast.error(
+          "Este candidato ainda não foi aprovado pelo gestor. Registre o parecer antes de enviar proposta.",
+        );
+        return true; // bloqueia o movimento
+      }
+      // Bloqueia se todas as posições da vaga já foram preenchidas.
+      if (vagaEncerrada && !idsContratados.includes(candId)) {
+        toast.error(
+          `Limite de posições preenchido (${posicoesPreenchidas}/${posicoesVaga}). Vaga encerrada para novas contratações.`,
+        );
+        return true;
+      }
+      // Move + abre modal de envio de proposta.
+      setColunasEstado((prev) => ({ ...prev, [candId]: coluna }));
+      const propostaExistente = getPropostaAtiva(candId);
+      if (!propostaExistente || propostaExistente.status === "expirada") {
+        setEnviarPropostaPara(candId);
+      }
+      return true;
+    }
+    if (coluna === "Reprovados") {
+      // Etapa 7 — Doc Mestre: simples movimento; botão "Enviar feedback" aparece no card.
+      setColunasEstado((prev) => ({ ...prev, [candId]: coluna }));
+      return true;
+    }
     return false;
   }
 
