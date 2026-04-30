@@ -26,19 +26,102 @@ const BENEFICIO_LABEL: Record<string, string> = {
 import {
   ArrowLeft, Building2, MapPin, Send, MessageSquare, CheckCircle2, Clock,
   Users, FileQuestion, History, Filter, Loader2, AlertTriangle, Bot, User,
-  MoreVertical, Eye, StickyNote, ChevronRight, UserX, Play,
+  MoreVertical, Eye, StickyNote, ChevronRight, UserX, Play, UserPlus, Link2,
+  Copy, FileText, MessageCircle, Download, ListChecks, ThumbsDown, CalendarPlus,
+  CalendarDays, Globe, Paperclip, X as XIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 const tabs = [
   { key: "candidatos", label: "Candidatos", icon: Users },
   { key: "perfis", label: "Perfis enviados", icon: Send },
   { key: "questionarios", label: "Questionários", icon: FileQuestion },
+  { key: "agenda", label: "Agenda", icon: CalendarDays },
   { key: "historico", label: "Histórico", icon: History },
-  { key: "chat", label: "Mini-chat", icon: MessageSquare },
+  { key: "chat", label: "Conversas", icon: MessageSquare },
 ] as const;
+
+// ────────────────────────────────────────────────────────────────────
+// Tipos locais (mock — não persiste em backend)
+// ────────────────────────────────────────────────────────────────────
+
+type PublicacaoStatus = "nao_publicada" | "em_revisao" | "publicada";
+
+interface CandidatoExtra {
+  id: string;
+  nome: string;
+  email?: string;
+  telefone?: string;
+  cargo: string;
+  origem: "manual" | "convite" | "site";
+  declinio?: { motivo: string; quem: "candidato" | "azumi" };
+}
+
+interface QuestionarioVaga {
+  id: string;
+  nome: string;
+  tipo: "Comportamental" | "Técnico" | "Cultural";
+  questoes: number;
+  candidatosRespostas: Record<string, "pendente" | "respondido">;
+}
+
+interface EventoEntrevista {
+  id: string;
+  candidatoId: string;
+  candidatoNome: string;
+  tipo: "Interno Azumi" | "Com gestor do cliente";
+  data: string; // dd/mm/yyyy
+  hora: string; // HH:mm
+  local: string;
+}
+
+interface MensagemVaga {
+  id: string;
+  autor: string;
+  iniciais: string;
+  quando: string;
+  texto: string;
+  canal: "interno" | "cliente";
+  anexo?: string;
+}
+
+const PESSOAS_MENCAO_VAGA = [
+  "Ana Beatriz",
+  "Rafael Moura",
+  "Camila Torres",
+  "RH Cliente",
+  "Gestor — Mariana",
+];
+
+// Templates centralizados (Handoff): quando faltarem reais, usar esses placeholders.
+const TEMPLATE_DISC_WHATSAPP = (nome: string) =>
+  `Oi ${nome}! Aqui é da Azumi 👋 Para avançar no processo, pedimos que você responda ` +
+  `nosso teste DISC (leva ~10 min). Acesse: https://azumi.app/disc/{token}. Qualquer dúvida, ` +
+  `é só chamar por aqui!`;
+
+const TEMPLATE_DECLINIO_CANDIDATO = (nome: string) =>
+  `Olá ${nome}! Obrigada pelo seu interesse na vaga. Registramos seu declínio com cuidado e ` +
+  `vamos manter seu perfil em nossa base para futuras oportunidades. Sucesso na sua trajetória! 🚀`;
+
+function renderTextoComLinks(texto: string) {
+  const partes = texto.split(/(https?:\/\/[^\s]+|@[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s]*?(?=\s|$|[.,!?]))/g);
+  return partes.map((p, i) => {
+    if (p?.startsWith("http")) {
+      return (
+        <a key={i} href={p} target="_blank" rel="noopener noreferrer"
+           className="text-primary underline break-all">
+          {p}
+        </a>
+      );
+    }
+    if (p?.startsWith("@")) {
+      return <span key={i} className="text-primary font-medium">{p}</span>;
+    }
+    return <span key={i}>{p}</span>;
+  });
+}
 
 export default function VagaDetalheAdmin() {
   const { id } = useParams();
@@ -104,6 +187,37 @@ export default function VagaDetalheAdmin() {
   type OpcaoDecisao = "Contratado" | "Reprovado pelo cliente" | "Em negociação";
   const [confirmarDecisaoId, setConfirmarDecisaoId] = useState<string | null>(null);
   const [opcaoDecisao, setOpcaoDecisao] = useState<OpcaoDecisao | null>(null);
+
+  // ── Estado adicional (mock) — publicação, candidatos extras, eventos, chat
+  const [publicacao, setPublicacao] = useState<PublicacaoStatus>("nao_publicada");
+  const [candidatosExtras, setCandidatosExtras] = useState<CandidatoExtra[]>([]);
+  const [questionariosVaga, setQuestionariosVaga] = useState<QuestionarioVaga[]>([
+    { id: "q-disc", nome: "DISC padrão", tipo: "Comportamental", questoes: 24, candidatosRespostas: {} },
+  ]);
+  const [eventos, setEventos] = useState<EventoEntrevista[]>([]);
+  const [mensagens, setMensagens] = useState<MensagemVaga[]>([
+    { id: "mv1", autor: "Ana Beatriz", iniciais: "AB", quando: "06/04 14:20",
+      texto: "Iniciamos a triagem com 48 currículos. Foco em perfil executivo.", canal: "interno" },
+    { id: "mv2", autor: "RH Cliente", iniciais: "RH", quando: "07/04 09:10",
+      texto: "Podemos priorizar quem tenha vivência em multinacional?", canal: "cliente" },
+    { id: "mv3", autor: "Ana Beatriz", iniciais: "AB", quando: "07/04 09:42",
+      texto: "Anotado @RH Cliente — vou sinalizar essa prioridade no parecer. https://azumi.app/vaga/v1",
+      canal: "cliente" },
+  ]);
+  const [declinios, setDeclinios] = useState<Record<string, { motivo: string; quem: "candidato" | "azumi" }>>({});
+
+  // ── Modais novos ─────────────────────────────────────────────────
+  const [novoCandOpen, setNovoCandOpen] = useState(false);
+  const [convidarOpen, setConvidarOpen] = useState(false);
+  const [novoQuestOpen, setNovoQuestOpen] = useState(false);
+  const [resumoOpen, setResumoOpen] = useState<string | null>(null);
+  const [discWhatsOpen, setDiscWhatsOpen] = useState<string | null>(null);
+  const [associarQuestOpen, setAssociarQuestOpen] = useState<string | null>(null);
+  const [declinarOpen, setDeclinarOpen] = useState<string | null>(null);
+  const [agendarOpen, setAgendarOpen] = useState<string | null>(null);
+
+  // Link público da vaga (mock)
+  const linkPublico = `https://azumi.jobs/vaga/${vaga.id}`;
 
   function moverCandidato(candId: string, coluna: Coluna) {
     const cand = candidatosVaga.find((c) => c.id === candId);
@@ -209,6 +323,70 @@ export default function VagaDetalheAdmin() {
         }
       />
 
+      {/* ─── Publicação no site de vagas Azumi ───
+          TODO: aqui será plugada a automação real com o site de vagas / APIs.
+          Hoje é só mock em memória. */}
+      <div className="mb-4 rounded-xl border border-border bg-card px-4 py-3 flex items-center gap-3 flex-wrap">
+        <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
+        <div className="text-xs">
+          <span className="text-muted-foreground">Publicação:</span>{" "}
+          {publicacao === "publicada" ? (
+            <span className="inline-flex items-center gap-1 rounded-full border border-success/30 bg-success/10 px-2 py-0.5 text-success font-medium">
+              <CheckCircle2 className="h-3 w-3" /> Publicada no site da Azumi
+            </span>
+          ) : publicacao === "em_revisao" ? (
+            <span className="inline-flex items-center gap-1 rounded-full border border-warning/30 bg-warning/10 px-2 py-0.5 text-warning font-medium">
+              <Clock className="h-3 w-3" /> Em revisão
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 rounded-full border border-border bg-secondary px-2 py-0.5 text-muted-foreground font-medium">
+              Não publicada
+            </span>
+          )}
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          {publicacao !== "publicada" && (
+            <button
+              type="button"
+              onClick={() => {
+                setPublicacao("em_revisao");
+                setTimeout(() => {
+                  setPublicacao("publicada");
+                  toast.success("Vaga marcada como publicada no site da Azumi (mock).");
+                }, 600);
+                toast.info("Enviando para revisão antes de publicar…");
+              }}
+              className="h-8 px-3 rounded-md bg-primary text-primary-foreground text-xs font-medium inline-flex items-center gap-1.5"
+            >
+              <Globe className="h-3.5 w-3.5" /> Publicar no site
+            </button>
+          )}
+          {publicacao === "publicada" && (
+            <button
+              type="button"
+              onClick={() => {
+                setPublicacao("nao_publicada");
+                toast.info("Vaga despublicada do site (mock).");
+              }}
+              className="h-8 px-3 rounded-md border border-border hover:bg-secondary text-xs font-medium"
+            >
+              Despublicar
+            </button>
+          )}
+          <a
+            href={linkPublico}
+            onClick={(e) => {
+              e.preventDefault();
+              navigator.clipboard?.writeText(linkPublico);
+              toast.success("Link público copiado!");
+            }}
+            className="h-8 px-3 rounded-md border border-border hover:bg-secondary text-xs font-medium inline-flex items-center gap-1.5"
+          >
+            <Link2 className="h-3.5 w-3.5" /> Copiar link
+          </a>
+        </div>
+      </div>
+
       {vaga.beneficios && vaga.beneficios.length > 0 && (
         <div className="mb-5 flex flex-wrap items-center gap-2">
           <span className="text-xs uppercase tracking-wider text-muted-foreground mr-1">Benefícios</span>
@@ -305,12 +483,54 @@ export default function VagaDetalheAdmin() {
 
       {tab === "candidatos" && (
         <div>
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
             <button className="h-8 px-3 rounded-lg border border-border text-xs flex items-center gap-1.5 hover:bg-secondary">
               <Filter className="h-3.5 w-3.5" /> Filtrar
             </button>
+            <button
+              onClick={() => setNovoCandOpen(true)}
+              className="h-8 px-3 rounded-lg border border-border text-xs flex items-center gap-1.5 hover:bg-secondary"
+            >
+              <UserPlus className="h-3.5 w-3.5" /> Adicionar candidato
+            </button>
+            <button
+              onClick={() => setConvidarOpen(true)}
+              className="h-8 px-3 rounded-lg border border-border text-xs flex items-center gap-1.5 hover:bg-secondary"
+            >
+              <Link2 className="h-3.5 w-3.5" /> Convidar candidato
+            </button>
+            <button
+              onClick={() => setNovoQuestOpen(true)}
+              className="h-8 px-3 rounded-lg border border-border text-xs flex items-center gap-1.5 hover:bg-secondary"
+            >
+              <FileQuestion className="h-3.5 w-3.5" /> Criar questionário
+            </button>
             <span className="text-xs text-muted-foreground ml-auto">Arraste candidatos entre etapas</span>
           </div>
+
+          {/* Candidatos adicionados manualmente / convidados (mock — não entram no kanban ainda) */}
+          {candidatosExtras.length > 0 && (
+            <div className="mb-4 rounded-lg border border-dashed border-border bg-card p-3">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                Adicionados recentemente ({candidatosExtras.length})
+              </div>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                {candidatosExtras.map((c) => (
+                  <li key={c.id} className="border border-border rounded-md p-2 flex items-center gap-2 bg-background/40">
+                    <div className="h-7 w-7 rounded-full bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white">
+                      {c.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-medium truncate">{c.nome}</div>
+                      <div className="text-[10px] text-muted-foreground truncate">
+                        {c.cargo} · {c.origem === "manual" ? "Adicionado manualmente" : c.origem === "convite" ? "Convidado" : "Site"}
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
             {colunas.map((col) => {
               const candidatosNaColuna = candidatosVaga.filter(
@@ -371,6 +591,28 @@ export default function VagaDetalheAdmin() {
                               <Link to={`/app/candidatos/${c.id}`} className="text-sm font-medium hover:text-primary truncate block">{c.nome}</Link>
                               <div className="text-[10px] text-muted-foreground">DISC: {c.perfilDom} dominante</div>
                             </div>
+                            {(() => {
+                              const ev = eventos.find((e) => e.candidatoId === c.id);
+                              return ev ? (
+                                <span
+                                  title={`Entrevista agendada em ${ev.data} às ${ev.hora}`}
+                                  className="inline-flex items-center justify-center h-6 w-6 rounded-md bg-primary/10 text-primary border border-primary/20 shrink-0"
+                                >
+                                  <CalendarDays className="h-3.5 w-3.5" />
+                                </span>
+                              ) : null;
+                            })()}
+                            {colunasEstado[c.id] === "Entrevista" && (
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); setAgendarOpen(c.id); }}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                title="Agendar entrevista"
+                                className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-secondary hover:text-foreground shrink-0"
+                              >
+                                <CalendarPlus className="h-4 w-4" />
+                              </button>
+                            )}
                             <button
                               type="button"
                               aria-label="Mais ações"
@@ -483,36 +725,11 @@ export default function VagaDetalheAdmin() {
 
       {tab === "chat" && (
         <div className="bg-card border border-border rounded-xl p-5 max-w-3xl">
-          <h3 className="font-display font-semibold mb-4">Mini-chat — Triagem</h3>
-          <ul className="space-y-3 mb-4">
-            {comentariosVaga.map((c) => (
-              <li key={c.id} className={cn("flex gap-3", c.azumi ? "" : "flex-row-reverse")}>
-                <div className={cn(
-                  "h-8 w-8 rounded-full flex items-center justify-center text-[10px] font-semibold shrink-0",
-                  c.azumi ? "bg-gradient-brand text-white" : "bg-secondary text-foreground"
-                )}>
-                  {c.azumi ? "A" : c.autor.split(" ").map(n => n[0]).join("").slice(0, 2)}
-                </div>
-                <div className={cn("max-w-md", c.azumi ? "" : "text-right")}>
-                  <div className="text-xs text-muted-foreground mb-1">{c.autor} · {c.role} · <span className="font-data">{c.quando}</span></div>
-                  <div className={cn(
-                    "rounded-xl px-3 py-2 text-sm border",
-                    c.azumi ? "bg-primary/10 border-primary/20" : "bg-secondary border-border"
-                  )}>{c.texto}</div>
-                </div>
-              </li>
-            ))}
-          </ul>
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              placeholder="Comente nesta etapa…"
-              className="flex-1 h-10 px-3 rounded-lg bg-secondary border border-input focus:border-primary outline-none text-sm"
-            />
-            <button className="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center gap-1.5">
-              <Send className="h-4 w-4" /> Enviar
-            </button>
-          </div>
+          <h3 className="font-display font-semibold mb-4">Conversas sobre esta vaga</h3>
+          <ChatVagaPanel
+            mensagens={mensagens}
+            onSend={(m) => setMensagens((prev) => [...prev, m])}
+          />
         </div>
       )}
 
@@ -525,7 +742,6 @@ export default function VagaDetalheAdmin() {
                 {candidatosVaga.filter(c => c.enviado).length} candidato(s) prontos para apresentação ao cliente
               </p>
             </div>
-            {/* B09: Botão dispara Dialog de confirmação antes do envio */}
             <button
               onClick={handleCliqueEnviar}
               disabled={candidatosVaga.filter(c => c.enviado).length === 0}
@@ -536,32 +752,90 @@ export default function VagaDetalheAdmin() {
           </div>
 
           <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {candidatosVaga.filter(c => c.enviado).map((c) => (
-              <li key={c.id} className="border border-border rounded-lg p-3 bg-background/40">
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-full bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white">
-                    {c.nome.split(" ").map(n => n[0]).join("").slice(0, 2)}
+            {candidatosVaga.filter(c => c.enviado).map((c) => {
+              const declinio = declinios[c.id];
+              return (
+                <li key={c.id} className="border border-border rounded-lg p-3 bg-background/40">
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-full bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white">
+                      {c.nome.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium truncate">{c.nome}</div>
+                      <div className="text-[11px] text-muted-foreground">DISC: {c.perfilDom} dominante</div>
+                    </div>
+                    {declinio ? (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-destructive/15 text-destructive border border-destructive/30">
+                        Declinou
+                      </span>
+                    ) : (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-success/15 text-success border border-success/30">
+                        Pronto
+                      </span>
+                    )}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium truncate">{c.nome}</div>
-                    <div className="text-[11px] text-muted-foreground">DISC: {c.perfilDom} dominante</div>
+                  <p className="mt-2 text-xs text-muted-foreground line-clamp-2">{c.parecer}</p>
+
+                  {/* Ações por candidato */}
+                  <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                    <Link
+                      to={`/app/candidatos/${c.id}`}
+                      className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-border text-[11px] font-medium hover:bg-secondary"
+                    >
+                      <FileText className="h-3 w-3" /> Ver relatório
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setResumoOpen(c.id)}
+                      className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-border text-[11px] font-medium hover:bg-secondary"
+                    >
+                      <Eye className="h-3 w-3" /> Resumo p/ cliente
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDiscWhatsOpen(c.id)}
+                      className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-border text-[11px] font-medium hover:bg-secondary"
+                    >
+                      <MessageCircle className="h-3 w-3" /> Solicitar DISC
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => toast.info(`PDF DISC de ${c.nome} (mock).`)}
+                      className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-border text-[11px] font-medium hover:bg-secondary"
+                    >
+                      <Download className="h-3 w-3" /> PDF DISC
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAssociarQuestOpen(c.id)}
+                      className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-border text-[11px] font-medium hover:bg-secondary"
+                    >
+                      <ListChecks className="h-3 w-3" /> Questionário
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeclinarOpen(c.id)}
+                      className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-destructive/30 text-destructive text-[11px] font-medium hover:bg-destructive/10"
+                    >
+                      <ThumbsDown className="h-3 w-3" /> Registrar declínio
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/app/horas?task_id=${c.id}&vaga=${vaga.id}`)}
+                      className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-border text-[11px] font-medium hover:bg-secondary ml-auto"
+                    >
+                      <Play className="h-3 w-3" /> Play
+                    </button>
                   </div>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-success/15 text-success border border-success/30">
-                    Pronto
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/app/horas?task_id=${c.id}&vaga=${vaga.id}`)}
-                    className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-border text-[11px] font-medium hover:bg-secondary hover:border-primary/40 transition-colors"
-                    aria-label={`Iniciar timer para ${c.nome}`}
-                    title="Iniciar timer para este candidato"
-                  >
-                    <Play className="h-3 w-3" /> Play
-                  </button>
-                </div>
-                <p className="mt-2 text-xs text-muted-foreground line-clamp-2">{c.parecer}</p>
-              </li>
-            ))}
+
+                  {declinio && (
+                    <div className="mt-2 text-[11px] text-muted-foreground italic border-t border-border pt-2">
+                      Declínio ({declinio.quem}): {declinio.motivo}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
             {candidatosVaga.filter(c => c.enviado).length === 0 && (
               <li className="col-span-full text-center text-xs text-muted-foreground py-8">
                 Nenhum candidato marcado para envio ainda.
@@ -571,48 +845,73 @@ export default function VagaDetalheAdmin() {
         </div>
       )}
 
+      {tab === "agenda" && (
+        <div className="bg-card border border-border rounded-xl p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-display font-semibold">Entrevistas agendadas</h3>
+            <span className="text-xs text-muted-foreground">{eventos.length} evento(s)</span>
+          </div>
+          {eventos.length === 0 ? (
+            <div className="text-center text-sm text-muted-foreground py-8">
+              Nenhuma entrevista agendada. Use o botão{" "}
+              <CalendarPlus className="inline h-3.5 w-3.5" /> nos cards de candidatos em "Entrevista".
+            </div>
+          ) : (
+            <ul className="space-y-2">
+              {eventos.map((ev) => (
+                <li key={ev.id} className="flex items-center gap-3 border border-border rounded-lg px-3 py-2 bg-background/40">
+                  <div className="h-9 w-9 rounded-md bg-primary/10 text-primary flex items-center justify-center">
+                    <CalendarDays className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium">{ev.candidatoNome}</div>
+                    <div className="text-[11px] text-muted-foreground">
+                      {ev.tipo} · {ev.data} às {ev.hora} · {ev.local || "—"}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setEventos((p) => p.filter((e) => e.id !== ev.id))}
+                    className="h-7 w-7 rounded-md hover:bg-secondary text-muted-foreground"
+                    aria-label="Remover"
+                  >
+                    <XIcon className="h-3.5 w-3.5 mx-auto" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
       {tab === "historico" && (
         <div className="bg-card border border-border rounded-xl p-5 max-w-3xl">
           <h3 className="font-display font-semibold mb-4">Histórico da vaga</h3>
           <ol className="relative space-y-4 before:absolute before:left-4 before:top-2 before:bottom-2 before:w-px before:bg-border">
             {comentariosVaga.map((c) => {
               const isSistema = !c.autor || /sistema|automátic/i.test(c.role);
-              const dataFmt = c.quando;
               return (
                 <li key={c.id} className="relative flex gap-3 pl-0">
-                  <div
-                    className={cn(
-                      "h-8 w-8 rounded-full flex items-center justify-center text-[10px] font-semibold shrink-0 z-10 border",
-                      isSistema
-                        ? "bg-muted text-muted-foreground border-border"
-                        : c.azumi
-                          ? "bg-gradient-brand text-white border-transparent"
-                          : "bg-secondary text-foreground border-border"
-                    )}
-                  >
-                    {isSistema ? (
-                      <Bot className="h-4 w-4" />
-                    ) : (
-                      c.autor.split(" ").map((n) => n[0]).join("").slice(0, 2)
-                    )}
+                  <div className={cn(
+                    "h-8 w-8 rounded-full flex items-center justify-center text-[10px] font-semibold shrink-0 z-10 border",
+                    isSistema ? "bg-muted text-muted-foreground border-border"
+                      : c.azumi ? "bg-gradient-brand text-white border-transparent"
+                      : "bg-secondary text-foreground border-border"
+                  )}>
+                    {isSistema ? <Bot className="h-4 w-4" /> : c.autor.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
                       {isSistema ? <Bot className="h-3 w-3" /> : <User className="h-3 w-3" />}
                       <span className="font-medium text-foreground">{c.autor}</span>
                       <span>· {c.role} ·</span>
-                      <span className="font-data">{dataFmt}</span>
+                      <span className="font-data">{c.quando}</span>
                     </div>
-                    <div
-                      className={cn(
-                        "rounded-xl px-3 py-2 text-sm border",
-                        isSistema
-                          ? "bg-muted/50 border-border italic"
-                          : c.azumi
-                            ? "bg-primary/10 border-primary/20"
-                            : "bg-secondary border-border"
-                      )}
-                    >
+                    <div className={cn(
+                      "rounded-xl px-3 py-2 text-sm border",
+                      isSistema ? "bg-muted/50 border-border italic"
+                        : c.azumi ? "bg-primary/10 border-primary/20" : "bg-secondary border-border"
+                    )}>
                       {c.texto}
                     </div>
                   </div>
@@ -624,8 +923,41 @@ export default function VagaDetalheAdmin() {
       )}
 
       {tab === "questionarios" && (
-        <div className="bg-card border border-border rounded-xl p-8 text-center text-sm text-muted-foreground">
-          Conteúdo da aba <strong className="text-foreground">Questionários</strong> em construção.
+        <div className="bg-card border border-border rounded-xl p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-display font-semibold">Questionários da vaga</h3>
+            <button
+              onClick={() => setNovoQuestOpen(true)}
+              className="h-8 px-3 rounded-md bg-primary text-primary-foreground text-xs font-medium inline-flex items-center gap-1.5"
+            >
+              <Plus className="h-3.5 w-3.5" /> Novo questionário
+            </button>
+          </div>
+          {questionariosVaga.length === 0 ? (
+            <div className="text-center text-sm text-muted-foreground py-6">
+              Nenhum questionário criado.
+            </div>
+          ) : (
+            <ul className="space-y-2">
+              {questionariosVaga.map((q) => {
+                const respondidos = Object.values(q.candidatosRespostas).filter((s) => s === "respondido").length;
+                const total = Object.keys(q.candidatosRespostas).length;
+                return (
+                  <li key={q.id} className="border border-border rounded-lg px-3 py-2 flex items-center gap-3 bg-background/40">
+                    <div className="h-9 w-9 rounded-md bg-secondary flex items-center justify-center">
+                      <FileQuestion className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium">{q.nome}</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {q.tipo} · {q.questoes} questões · {respondidos}/{total} respondido(s)
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </div>
       )}
 
