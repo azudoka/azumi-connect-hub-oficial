@@ -3464,6 +3464,9 @@ function CandidatoDetailSheet({
             </ol>
           </section>
 
+          {/* Bloco: Proposta (Etapa 6 — Doc Mestre) */}
+          <PropostaPanel candidatoId={cand.id} candidatoNome={cand.nome} />
+
           {/* Bloco: Parecer do cliente (lido do store compartilhado) */}
           {(() => {
             const parecer = getParecerCliente(cand.id);
