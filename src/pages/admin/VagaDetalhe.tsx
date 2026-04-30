@@ -807,7 +807,7 @@ export default function VagaDetalheAdmin() {
               </ul>
             </div>
           )}
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-3">
             {colunas.map((col) => {
               const candidatosNaColuna = candidatosVaga.filter(
                 (c) => colunasEstado[c.id] === col && !desclassificados.has(c.id)
