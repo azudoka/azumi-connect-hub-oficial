@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import SolicitacoesClientePage from "@/pages/SolicitacoesClientePage";
 import { PageHeader } from "@/components/PageHeader";
@@ -10,7 +11,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Search, Copy, Check, X, MessageSquare } from "lucide-react";
+import { Search, Copy, Check, X, MessageSquare, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Status = "aberta" | "andamento" | "finalizada" | "cancelada";
