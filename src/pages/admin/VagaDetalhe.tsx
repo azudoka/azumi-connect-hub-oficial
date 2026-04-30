@@ -3734,3 +3734,271 @@ function BlocoPreview({ titulo, children }: { titulo: string; children: React.Re
     </section>
   );
 }
+
+// ────────────────────────────────────────────────────────────────────
+// Entrevista com Gestor — Modal de agendamento (Etapa 5 — Doc Mestre)
+// ────────────────────────────────────────────────────────────────────
+
+function janelaResumo(j: JanelaDisponibilidade): string {
+  const dias = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+  const diasTxt = j.diasSemana.map((d) => dias[d]).join(", ");
+  const blocosTxt = j.blocos.map((b) => `${b.inicio}–${b.fim}`).join(" e ");
+  return `${diasTxt} · ${blocosTxt}`;
+}
+
+function diaPermitido(dataIso: string, j: JanelaDisponibilidade): boolean {
+  if (!dataIso) return false;
+  const d = new Date(`${dataIso}T00:00:00`);
+  return j.diasSemana.includes(d.getDay());
+}
+
+function horaDentroJanela(hora: string, j: JanelaDisponibilidade): boolean {
+  if (!hora) return false;
+  return j.blocos.some((b) => hora >= b.inicio && hora <= b.fim);
+}
+
+function AgendarEntrevistaGestorModal({
+  vagaId,
+  empresaNome,
+  candidatoId,
+  candidatoNome,
+  candidatoEmail,
+  gestor,
+  onClose,
+  onSaved,
+}: {
+  vagaId: string;
+  empresaNome: string;
+  candidatoId: string;
+  candidatoNome: string;
+  candidatoEmail: string;
+  gestor: { id: string; nome: string; cargo: string; janela: JanelaDisponibilidade };
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  useScrollLock(true);
+  const [s1, setS1] = useState<SugestaoHorario>({ data: "", hora: "", modo: "remoto", localOuLink: "" });
+  const [s2, setS2] = useState<SugestaoHorario>({ data: "", hora: "", modo: "remoto", localOuLink: "" });
+
+  const s1Valida = s1.data && s1.hora && diaPermitido(s1.data, gestor.janela) && horaDentroJanela(s1.hora, gestor.janela);
+  const s2Valida = s2.data && s2.hora && diaPermitido(s2.data, gestor.janela) && horaDentroJanela(s2.hora, gestor.janela);
+  const podeEnviar = s1Valida && s2Valida;
+
+  function handleEnviar() {
+    if (!podeEnviar) return;
+    criarAgendamento({
+      vagaId,
+      candidatoId,
+      candidatoNome,
+      candidatoEmail,
+      gestorId: gestor.id,
+      gestorNome: gestor.nome,
+      empresaNome,
+      sugestoes: [s1, s2],
+    });
+    onSaved();
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} aria-hidden />
+      <div className="relative w-full max-w-2xl bg-card border border-border rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
+        <div className="flex items-start justify-between gap-3 p-5 border-b border-border">
+          <div className="min-w-0">
+            <h3 className="font-display font-semibold text-base">Agendar entrevista com o gestor</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {candidatoNome} · Gestor {gestor.nome} ({gestor.cargo})
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Janela disponível: <span className="font-data">{janelaResumo(gestor.janela)}</span>
+            </p>
+          </div>
+          <button onClick={onClose} className="h-8 w-8 rounded-lg hover:bg-secondary flex items-center justify-center text-muted-foreground" aria-label="Fechar">
+            <XIcon className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-5 space-y-5">
+          <p className="text-xs text-muted-foreground">
+            Escolha duas sugestões de data/horário dentro da janela do gestor. Ambas serão enviadas ao gestor para escolha.
+          </p>
+          <SugestaoForm titulo="Sugestão 1" valor={s1} onChange={setS1} valida={!!s1Valida} janela={gestor.janela} />
+          <SugestaoForm titulo="Sugestão 2" valor={s2} onChange={setS2} valida={!!s2Valida} janela={gestor.janela} />
+        </div>
+        <div className="border-t border-border p-4 flex flex-wrap items-center justify-end gap-2">
+          <button onClick={onClose} className="h-9 px-4 rounded-lg border border-border text-sm font-medium hover:bg-secondary">
+            Cancelar
+          </button>
+          <button onClick={handleEnviar} disabled={!podeEnviar}
+            className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+            Enviar sugestões ao gestor
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SugestaoForm({
+  titulo,
+  valor,
+  onChange,
+  valida,
+  janela,
+}: {
+  titulo: string;
+  valor: SugestaoHorario;
+  onChange: (v: SugestaoHorario) => void;
+  valida: boolean;
+  janela: JanelaDisponibilidade;
+}) {
+  const set = (patch: Partial<SugestaoHorario>) => onChange({ ...valor, ...patch });
+  const erroData = valor.data && !diaPermitido(valor.data, janela);
+  const erroHora = valor.hora && !horaDentroJanela(valor.hora, janela);
+  return (
+    <div className={cn("rounded-xl border p-4", valida ? "border-success/30 bg-success/5" : "border-border bg-background/40")}>
+      <div className="text-xs font-medium mb-3">{titulo}</div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label className="text-[11px] text-muted-foreground block mb-1">Data</label>
+          <input type="date" value={valor.data} onChange={(e) => set({ data: e.target.value })}
+            className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm" />
+          {erroData && <p className="text-[10px] text-destructive mt-1">Dia fora da janela do gestor.</p>}
+        </div>
+        <div>
+          <label className="text-[11px] text-muted-foreground block mb-1">Hora</label>
+          <input type="time" value={valor.hora} onChange={(e) => set({ hora: e.target.value })}
+            className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm" />
+          {erroHora && <p className="text-[10px] text-destructive mt-1">Horário fora da janela do gestor.</p>}
+        </div>
+        <div>
+          <label className="text-[11px] text-muted-foreground block mb-1">Formato</label>
+          <select value={valor.modo} onChange={(e) => set({ modo: e.target.value as ModoEntrevista })}
+            className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm">
+            <option value="remoto">Remoto</option>
+            <option value="presencial">Presencial</option>
+          </select>
+        </div>
+        <div>
+          <label className="text-[11px] text-muted-foreground block mb-1">
+            {valor.modo === "remoto" ? "Link da reunião" : "Endereço"}
+          </label>
+          <input value={valor.localOuLink} onChange={(e) => set({ localOuLink: e.target.value })}
+            placeholder={valor.modo === "remoto" ? "https://meet.google.com/…" : "Av. Paulista 1000, sala 12"}
+            className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Painel de acompanhamento (aba Agenda)
+// ────────────────────────────────────────────────────────────────────
+
+function AgendamentoGestorPanel({
+  vagaId,
+  agendamentos,
+  empresaNome,
+}: {
+  vagaId: string;
+  agendamentos: AgendamentoEntrevistaGestor[];
+  empresaNome: string;
+}) {
+  const origem = typeof window !== "undefined" ? window.location.origin : "https://azumi.jobs";
+  return (
+    <div className="bg-card border border-border rounded-xl p-5">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="font-display font-semibold">Entrevistas com gestor</h3>
+          <p className="text-[11px] text-muted-foreground">
+            Etapa 5 — sugestões enviadas → gestor escolhe → candidato confirma via link com CPF.
+          </p>
+        </div>
+        <span className="text-xs text-muted-foreground">{agendamentos.length} agendamento(s)</span>
+      </div>
+      {agendamentos.length === 0 ? (
+        <div className="text-center text-sm text-muted-foreground py-6">
+          Nenhuma entrevista com gestor ainda. Mova um candidato para a coluna <strong>Entrevista</strong> no Kanban para iniciar.
+          <p className="text-[11px] mt-1">Empresa: {empresaNome}</p>
+        </div>
+      ) : (
+        <ul className="space-y-3">
+          {agendamentos.map((ag) => {
+            const link = ag.linkConfirmacao ?? `${origem}/confirmar-entrevista/${ag.id}?cand=${ag.candidatoId}`;
+            const podeEnviarLink = ag.status === "aprovado_gestor" || ag.status === "nova_sugestao_gestor";
+            const podeSimularConfirmar = ag.status === "aguardando_confirmacao_candidato";
+            return (
+              <li key={ag.id} className="rounded-lg border border-border bg-background/40 p-3 space-y-2">
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium">{ag.candidatoNome}</div>
+                    <div className="text-[11px] text-muted-foreground">
+                      Gestor: {ag.gestorNome}
+                    </div>
+                  </div>
+                  <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-border bg-muted text-muted-foreground">
+                    {statusAgendamentoLabel(ag.status)}
+                  </span>
+                </div>
+                <div className="text-xs space-y-1">
+                  {ag.sugestoes.map((s, i) => (
+                    <div key={i} className="text-muted-foreground">
+                      <span className="font-data">#{i + 1}</span> {formatarSugestao(s)}
+                      {s.localOuLink && <span> · {s.localOuLink}</span>}
+                    </div>
+                  ))}
+                  {ag.escolhido && (
+                    <div className="text-success text-xs mt-1">
+                      ✓ Escolhido: {formatarSugestao(ag.escolhido)}
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {podeEnviarLink && (
+                    <button
+                      onClick={() => {
+                        enviarParaCandidatoConfirmar(ag.id, origem);
+                        toast.success("Link de confirmação enviado ao candidato.");
+                      }}
+                      className="h-8 px-3 rounded-md bg-primary text-primary-foreground text-xs font-medium"
+                    >
+                      Enviar para candidato confirmar
+                    </button>
+                  )}
+                  {ag.linkConfirmacao && (
+                    <a
+                      href={ag.linkConfirmacao}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="h-8 px-3 rounded-md border border-border text-xs font-medium inline-flex items-center gap-1 hover:bg-secondary"
+                    >
+                      <Link2 className="h-3 w-3" /> Abrir link público
+                    </a>
+                  )}
+                  {podeSimularConfirmar && (
+                    <button
+                      onClick={() => {
+                        candidatoConfirmar(ag.id);
+                        toast.success("Confirmação do candidato simulada.");
+                      }}
+                      className="h-8 px-3 rounded-md border border-success/40 text-success text-xs font-medium hover:bg-success/10"
+                      title="Atalho de demo — equivale ao candidato abrir o link"
+                    >
+                      Simular confirmação do candidato (dev)
+                    </button>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {/* Suprime warnings de imports caso ainda não usados */}
+      <span className="hidden">{vagaId}</span>
+    </div>
+  );
+}
+
+// Suprime warnings de imports usados apenas em fluxos opcionais
+void getParecerGestor;
+void getRealinhamento;
