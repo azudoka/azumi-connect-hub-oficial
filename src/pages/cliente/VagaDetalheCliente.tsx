@@ -257,6 +257,28 @@ export default function VagaDetalheCliente() {
                 >
                   <FileText className="h-3.5 w-3.5" /> Ver candidato
                 </button>
+                {(() => {
+                  const ag = getAgendamentoDoCandidato(c.id);
+                  const pg = getParecerGestor(c.id);
+                  if (pg) {
+                    return (
+                      <div className="mt-2 text-[11px] text-muted-foreground inline-flex items-center gap-1">
+                        <CheckCircle2 className="h-3 w-3 text-success" /> Parecer do gestor registrado
+                      </div>
+                    );
+                  }
+                  if (ag?.status === "confirmado") {
+                    return (
+                      <button
+                        onClick={() => setParecerGestorCandId(c.id)}
+                        className="mt-2 w-full h-8 rounded-lg bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center gap-1.5"
+                      >
+                        <Star className="h-3.5 w-3.5" /> Parecer do gestor
+                      </button>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
             );
           })}
