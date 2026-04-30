@@ -745,9 +745,17 @@ export default function ProjetoDetalhe() {
         onConfirm={(justificativa) => {
           const entId = cancelarOpen.entId;
           if (!entId) return;
+          const ent = entregaveis.find((e) => e.id === entId);
           aplicarMudancaStatus(entId, "cancelado");
+          patchEntregavel(entId, { motivoCancelamento: justificativa });
           setCancelarOpen({ open: false, entId: null });
-          toast.warning("Entregável cancelado.", { description: justificativa });
+          const horas = ent?.horasGastas ?? 0;
+          toast.warning("Entregável cancelado.", {
+            description:
+              horas > 0
+                ? `${horas}h registradas não serão devolvidas. Motivo: ${justificativa}`
+                : justificativa,
+          });
         }}
       />
 
