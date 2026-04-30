@@ -462,9 +462,31 @@ export default function ProjetoDetalhe() {
   // ── Card compacto (kanban) ──────────────────────────────────────
   function renderCardKanban(e: Entregavel) {
     const atrasado = new Date(e.prazo) < new Date() && e.status !== "aprovado_cliente" && e.status !== "cancelado";
+    const bloqueado = e.status === "aprovado_cliente";
+    const subCount = e.subtarefas?.length ?? 0;
     return (
-      <div key={e.id} className="bg-background/60 border border-border rounded-lg p-3 hover:border-primary/40 transition-colors">
-        <div className="text-[10px] font-data text-muted-foreground uppercase">{e.codigo}</div>
+      <div
+        key={e.id}
+        draggable={!bloqueado}
+        onDragStart={(ev) => {
+          if (bloqueado) {
+            ev.preventDefault();
+            toast.error("Entregável aprovado pelo cliente — edição e mudança de status bloqueadas.");
+            return;
+          }
+          ev.dataTransfer.setData("text/plain", e.id);
+          ev.dataTransfer.effectAllowed = "move";
+        }}
+        onClick={() => setPanelOpen({ open: true, entId: e.id })}
+        className={cn(
+          "bg-background/60 border border-border rounded-lg p-3 transition-colors cursor-pointer hover:border-primary/40",
+          bloqueado && "opacity-90"
+        )}
+      >
+        <div className="flex items-center justify-between">
+          <div className="text-[10px] font-data text-muted-foreground uppercase">{e.codigo}</div>
+          {bloqueado && <Lock className="h-3 w-3 text-muted-foreground" aria-label="Bloqueado" />}
+        </div>
         <div className="text-sm font-medium leading-tight mt-0.5 line-clamp-2">{e.nome}</div>
 
         <div className="mt-2 flex items-center gap-2 flex-wrap">
@@ -477,6 +499,11 @@ export default function ProjetoDetalhe() {
           )}>
             {format(new Date(e.prazo), "dd/MM", { locale: ptBR })}
           </span>
+          {subCount > 0 && (
+            <span className="text-[10px] text-muted-foreground inline-flex items-center gap-1">
+              <GitBranch className="h-3 w-3" /> {subCount}
+            </span>
+          )}
         </div>
 
         <div className="mt-2 flex items-center gap-1.5">
