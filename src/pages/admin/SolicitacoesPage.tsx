@@ -92,23 +92,37 @@ function CopyBtn({ value }: { value: string }) {
 }
 
 function AdminView() {
+  const navigate = useNavigate();
   const [busca, setBusca]       = useState("");
   const [empresa, setEmpresa]   = useState<string>("all");
   const [tipo, setTipo]         = useState<string>("all");
   const [status, setStatus]     = useState<Status | "all">("all");
+  const [periodo, setPeriodo]   = useState<"all" | "7" | "30" | "90">("all");
   const [selected, setSelected] = useState<Solicitacao | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
 
   const empresas = useMemo(() => Array.from(new Set(MOCK.map((s) => s.empresa))), []);
   const tipos    = useMemo(() => Array.from(new Set(MOCK.map((s) => s.tipo))), []);
 
+  // Parser do formato "DD/MM/YYYY" usado no mock
+  function parseDataBR(s: string): Date {
+    const [d, m, y] = s.split("/").map(Number);
+    return new Date(y, m - 1, d);
+  }
+
   const lista = useMemo(() => MOCK.filter((s) => {
     if (empresa !== "all" && s.empresa !== empresa) return false;
     if (tipo !== "all" && s.tipo !== tipo) return false;
     if (status !== "all" && s.status !== status) return false;
+    if (periodo !== "all") {
+      const dias = Number(periodo);
+      const limite = new Date();
+      limite.setDate(limite.getDate() - dias);
+      if (parseDataBR(s.data) < limite) return false;
+    }
     if (busca && !`${s.protocolo} ${s.titulo} ${s.empresa}`.toLowerCase().includes(busca.toLowerCase())) return false;
     return true;
-  }), [empresa, tipo, status, busca]);
+  }), [empresa, tipo, status, periodo, busca]);
 
   function openPanel(s: Solicitacao) {
     setSelected(s);
