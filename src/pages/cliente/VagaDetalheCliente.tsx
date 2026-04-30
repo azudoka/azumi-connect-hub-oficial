@@ -39,6 +39,7 @@ import {
 } from "@/data/atracaoClienteStore";
 import {
   listarAgendamentosDaVaga,
+  getAgendamento,
   getAgendamentoDoCandidato,
   gestorAprovarSugestao,
   gestorSugerirOutro,
