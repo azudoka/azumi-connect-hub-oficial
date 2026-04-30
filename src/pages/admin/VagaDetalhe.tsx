@@ -1050,41 +1050,50 @@ export default function VagaDetalheAdmin() {
       )}
 
       {tab === "agenda" && (
-        <div className="bg-card border border-border rounded-xl p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-display font-semibold">Entrevistas agendadas</h3>
-            <span className="text-xs text-muted-foreground">{eventos.length} evento(s)</span>
-          </div>
-          {eventos.length === 0 ? (
-            <div className="text-center text-sm text-muted-foreground py-8">
-              Nenhuma entrevista agendada. Use o botão{" "}
-              <CalendarPlus className="inline h-3.5 w-3.5" /> nos cards de candidatos em "Entrevista".
+        <div className="space-y-5">
+          {/* Bloco novo: agendamentos com gestor (Etapa 5) */}
+          <AgendamentoGestorPanel
+            vagaId={vaga.id}
+            agendamentos={agendamentosDaVaga}
+            empresaNome={vaga.empresa}
+          />
+
+          <div className="bg-card border border-border rounded-xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-display font-semibold">Outras entrevistas / eventos</h3>
+              <span className="text-xs text-muted-foreground">{eventos.length} evento(s)</span>
             </div>
-          ) : (
-            <ul className="space-y-2">
-              {eventos.map((ev) => (
-                <li key={ev.id} className="flex items-center gap-3 border border-border rounded-lg px-3 py-2 bg-background/40">
-                  <div className="h-9 w-9 rounded-md bg-primary/10 text-primary flex items-center justify-center">
-                    <CalendarDays className="h-4 w-4" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium">{ev.candidatoNome}</div>
-                    <div className="text-[11px] text-muted-foreground">
-                      {ev.tipo} · {ev.data} às {ev.hora} · {ev.local || "—"}
+            {eventos.length === 0 ? (
+              <div className="text-center text-sm text-muted-foreground py-8">
+                Nenhuma entrevista interna agendada. Use o botão{" "}
+                <CalendarPlus className="inline h-3.5 w-3.5" /> nos cards de candidatos em "Entrevista".
+              </div>
+            ) : (
+              <ul className="space-y-2">
+                {eventos.map((ev) => (
+                  <li key={ev.id} className="flex items-center gap-3 border border-border rounded-lg px-3 py-2 bg-background/40">
+                    <div className="h-9 w-9 rounded-md bg-primary/10 text-primary flex items-center justify-center">
+                      <CalendarDays className="h-4 w-4" />
                     </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setEventos((p) => p.filter((e) => e.id !== ev.id))}
-                    className="h-7 w-7 rounded-md hover:bg-secondary text-muted-foreground"
-                    aria-label="Remover"
-                  >
-                    <XIcon className="h-3.5 w-3.5 mx-auto" />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium">{ev.candidatoNome}</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {ev.tipo} · {ev.data} às {ev.hora} · {ev.local || "—"}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setEventos((p) => p.filter((e) => e.id !== ev.id))}
+                      className="h-7 w-7 rounded-md hover:bg-secondary text-muted-foreground"
+                      aria-label="Remover"
+                    >
+                      <XIcon className="h-3.5 w-3.5 mx-auto" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
       )}
 
