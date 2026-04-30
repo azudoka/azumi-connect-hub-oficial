@@ -1061,6 +1061,7 @@ export default function VagaDetalheAdmin() {
                 </div>
               );
             })}
+            </div>
           </div>
         </div>
       )}
