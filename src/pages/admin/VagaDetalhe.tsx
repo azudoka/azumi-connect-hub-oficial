@@ -787,12 +787,13 @@ export default function VagaDetalheAdmin() {
 
                   {/* Ações por candidato */}
                   <div className="mt-3 flex flex-wrap items-center gap-1.5">
-                    <Link
-                      to={`/app/candidatos/${c.id}`}
+                    <button
+                      type="button"
+                      onClick={() => setFichaCandidatoId(c.id)}
                       className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-border text-[11px] font-medium hover:bg-secondary"
                     >
-                      <FileText className="h-3 w-3" /> Ver relatório
-                    </Link>
+                      <FileText className="h-3 w-3" /> Ver ficha
+                    </button>
                     <button
                       type="button"
                       onClick={() => setResumoOpen(c.id)}
