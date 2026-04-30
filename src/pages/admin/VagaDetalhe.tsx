@@ -35,6 +35,7 @@ import {
   isExpiradaPorTempo,
   msRestantes,
   statusPropostaLabel,
+  jaGerouRelatorioFinal,
   type PropostaCandidato,
   type TipoProposta,
   type CanalProposta,
@@ -374,6 +375,16 @@ export default function VagaDetalheAdmin() {
   );
   const posicoesPreenchidas = idsContratados.length;
   const vagaEncerrada = posicoesPreenchidas >= posicoesVaga;
+
+  // Pop-up automático: "Deseja gerar o Relatório Final?" quando todas as
+  // posições forem preenchidas (apenas 1x por vaga — verifica store).
+  const [relatorioFinalPromptOpen, setRelatorioFinalPromptOpen] = useState(false);
+  useEffect(() => {
+    if (vagaEncerrada && !jaGerouRelatorioFinal(vaga.id)) {
+      setRelatorioFinalPromptOpen(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vagaEncerrada, vaga.id]);
 
   // Re-render quando o store de Entrevista com Gestor muda (cliente / rota pública).
   const [storeVersao, setStoreVersao] = useState(0);
