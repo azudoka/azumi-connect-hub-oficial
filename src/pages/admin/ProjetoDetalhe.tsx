@@ -342,7 +342,13 @@ export default function ProjetoDetalhe() {
         <div className="flex items-start gap-3 flex-wrap">
           <div className="min-w-0 flex-1">
             <div className="text-[10px] font-data text-muted-foreground uppercase tracking-wider">{e.codigo}</div>
-            <h4 className="font-display font-semibold mt-0.5">{e.nome}</h4>
+            <button
+              type="button"
+              onClick={() => setPanelOpen({ open: true, entId: e.id })}
+              className="font-display font-semibold mt-0.5 text-left hover:text-primary transition-colors"
+            >
+              {e.nome}
+            </button>
 
             <div className="mt-2 flex items-center gap-2 flex-wrap">
               <span className="badge-pill bg-secondary text-secondary-foreground border-border">
