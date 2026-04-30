@@ -2987,7 +2987,7 @@ function CandidatoDetailSheet({
           {/* Bloco: Parecer do cliente (lido do store compartilhado) */}
           {(() => {
             const parecer = getParecerCliente(cand.id);
-            const fb1aLeva = getFeedback1aLeva(cand.vagaId);
+            const fb1aLeva = vagaIdParam ? getFeedback1aLeva(vagaIdParam) : null;
             if (!parecer && !fb1aLeva) return null;
             return (
               <section>
