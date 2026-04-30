@@ -724,13 +724,10 @@ export default function VagaDetalheAdmin() {
       )}
 
       {tab === "chat" && (
-        <div className="bg-card border border-border rounded-xl p-5 max-w-3xl">
-          <h3 className="font-display font-semibold mb-4">Conversas sobre esta vaga</h3>
-          <ChatVagaPanel
-            mensagens={mensagens}
-            onSend={(m) => setMensagens((prev) => [...prev, m])}
-          />
-        </div>
+        <ChatVagaPanel
+          mensagens={mensagens}
+          onSend={(m) => setMensagens((prev) => [...prev, m])}
+        />
       )}
 
       {tab === "perfis" && (
