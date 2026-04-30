@@ -2478,6 +2478,226 @@ function WhatsTemplateForm({
   );
 }
 
+// ────────────────────────────────────────────────────────────────────
+// Etapa 6 — Envio de proposta (Doc Mestre)
+// ────────────────────────────────────────────────────────────────────
+function EnviarPropostaForm({
+  candidatoNome,
+  vagaTitulo,
+  empresaNome,
+  onCancel,
+  onConfirm,
+}: {
+  candidatoNome: string;
+  vagaTitulo: string;
+  empresaNome: string;
+  onCancel: () => void;
+  onConfirm: (dados: {
+    tipo: TipoProposta;
+    remuneracao: string;
+    beneficios: string;
+    dataInicio: string;
+    canal: CanalProposta;
+    mensagem: string;
+  }) => void;
+}) {
+  const [tipo, setTipo] = useState<TipoProposta>("CLT");
+  const [remuneracao, setRemuneracao] = useState("");
+  const [beneficios, setBeneficios] = useState("VR + VT + Plano de saúde");
+  const [dataInicio, setDataInicio] = useState("");
+  const [canal, setCanal] = useState<CanalProposta>("ambos");
+
+  const buildMsg = (rem: string, dt: string) =>
+    `Olá ${candidatoNome}! 🎉\n\nTemos uma ótima notícia: gostaríamos de oficializar a proposta para a vaga ${vagaTitulo} na ${empresaNome}.\n\n` +
+    `• Modalidade: ${tipo}\n` +
+    `• Remuneração: ${rem || "[a definir]"}\n` +
+    `• Benefícios: ${beneficios}\n` +
+    `• Data de início sugerida: ${dt || "[a definir]"}\n\n` +
+    `Você tem até 24 horas para aceitar ou recusar a proposta. Qualquer dúvida, é só nos chamar!\n\nTime Azumi`;
+  const [mensagem, setMensagem] = useState(buildMsg("", ""));
+  const [tocouMsg, setTocouMsg] = useState(false);
+  useEffect(() => {
+    if (!tocouMsg) setMensagem(buildMsg(remuneracao, dataInicio));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [remuneracao, dataInicio, tipo, beneficios]);
+
+  const valido = remuneracao.trim() && dataInicio.trim() && mensagem.trim();
+
+  return (
+    <div className="space-y-3 text-sm">
+      <div className="rounded-md border border-border bg-muted/30 p-3 text-xs">
+        <div><strong>Candidato:</strong> {candidatoNome}</div>
+        <div><strong>Vaga:</strong> {vagaTitulo} — {empresaNome}</div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Tipo de proposta">
+          <select value={tipo} onChange={(e) => setTipo(e.target.value as TipoProposta)} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm">
+            <option value="CLT">CLT</option>
+            <option value="PJ">PJ</option>
+            <option value="Estagio">Estágio</option>
+          </select>
+        </Field>
+        <Field label="Remuneração">
+          <input value={remuneracao} onChange={(e) => setRemuneracao(e.target.value)} placeholder="R$ 0.000,00" className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm" />
+        </Field>
+      </div>
+      <Field label="Benefícios">
+        <textarea rows={2} value={beneficios} onChange={(e) => setBeneficios(e.target.value)} className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm resize-y" />
+      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Data de início sugerida">
+          <input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm" />
+        </Field>
+        <Field label="Canal de envio">
+          <select value={canal} onChange={(e) => setCanal(e.target.value as CanalProposta)} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm">
+            <option value="whatsapp">WhatsApp</option>
+            <option value="email">E-mail</option>
+            <option value="ambos">WhatsApp + E-mail</option>
+          </select>
+        </Field>
+      </div>
+      <Field label="Mensagem (template editável)">
+        <textarea
+          rows={8}
+          value={mensagem}
+          onChange={(e) => { setMensagem(e.target.value); setTocouMsg(true); }}
+          className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm resize-y font-data"
+        />
+      </Field>
+      <div className="text-[11px] text-muted-foreground rounded-md border border-info/30 bg-info/10 p-2">
+        ⏱ Após o envio, o candidato terá <strong>24 horas</strong> para aceitar ou recusar a proposta.
+      </div>
+      <div className="flex justify-end gap-2 pt-2">
+        <button onClick={onCancel} className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm">Cancelar</button>
+        <button
+          disabled={!valido}
+          onClick={() => onConfirm({ tipo, remuneracao, beneficios, dataInicio, canal, mensagem })}
+          className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center gap-1.5 disabled:opacity-50"
+        >
+          <Send className="h-3.5 w-3.5" /> Enviar proposta
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Etapa 7 — Feedback de reprovados (Doc Mestre)
+// ────────────────────────────────────────────────────────────────────
+function EnviarFeedbackForm({
+  candidatoNome,
+  vagaTitulo,
+  telefone,
+  email,
+  onCancel,
+  onConfirm,
+}: {
+  candidatoNome: string;
+  vagaTitulo: string;
+  telefone: string;
+  email: string;
+  onCancel: () => void;
+  onConfirm: (dados: { canal: FeedbackCanal; templateKey: string; mensagem: string }) => void;
+}) {
+  const TEMPLATES = useMemo(() => [
+    {
+      key: "pos_entrevista",
+      label: "Não aprovado após entrevista",
+      build: () => `Olá ${candidatoNome}, tudo bem?\n\nAgradecemos muito sua participação no processo seletivo da vaga ${vagaTitulo}. ` +
+        `Após a entrevista, decidimos seguir com outro perfil que se mostrou mais aderente neste momento.\n\n` +
+        `Foi um prazer conhecer sua trajetória — vamos manter seu currículo na nossa base para futuras oportunidades.\n\nUm abraço,\nTime Azumi`,
+    },
+    {
+      key: "pos_tecnica",
+      label: "Não aprovado após análise técnica",
+      build: () => `Olá ${candidatoNome},\n\nAgradecemos pelo tempo dedicado à análise técnica da vaga ${vagaTitulo}. ` +
+        `Após avaliação, decidimos seguir com outro candidato cujo perfil técnico se mostrou mais alinhado neste momento.\n\n` +
+        `Continuamos com seu cadastro para próximas oportunidades.\n\nAbraço,\nTime Azumi`,
+    },
+    {
+      key: "alinhamento_vaga",
+      label: "Não aprovado por alinhamento com a vaga",
+      build: () => `Olá ${candidatoNome},\n\nObrigado pelo interesse na vaga ${vagaTitulo}. ` +
+        `Após análise cuidadosa, identificamos que outras experiências se aproximam mais do escopo solicitado pelo cliente nesta posição.\n\n` +
+        `Esperamos te apresentar oportunidades melhor alinhadas em breve.\n\nAbraço,\nTime Azumi`,
+    },
+    {
+      key: "nao_compareceu",
+      label: "Não aprovado por não comparecimento",
+      build: () => `Olá ${candidatoNome},\n\nNotamos que não foi possível comparecer à etapa agendada para a vaga ${vagaTitulo}. ` +
+        `Por essa razão, encerramos sua participação neste processo.\n\n` +
+        `Caso queira retomar a conversa em uma próxima oportunidade, é só nos chamar.\n\nAbraço,\nTime Azumi`,
+    },
+    {
+      key: "personalizada",
+      label: "Mensagem personalizada",
+      build: () => "",
+    },
+  ], [candidatoNome, vagaTitulo]);
+
+  const [templateKey, setTemplateKey] = useState(TEMPLATES[0].key);
+  const [mensagem, setMensagem] = useState(TEMPLATES[0].build());
+  const [canal, setCanal] = useState<FeedbackCanal>("email");
+
+  function trocarTemplate(k: string) {
+    setTemplateKey(k);
+    const t = TEMPLATES.find((x) => x.key === k);
+    if (t) setMensagem(t.build());
+  }
+
+  const podeEnviar = !!mensagem.trim() && (
+    canal === "email" ? !!email :
+    canal === "whatsapp" ? !!telefone :
+    !!email && !!telefone
+  );
+
+  return (
+    <div className="space-y-3 text-sm">
+      <div className="rounded-md border border-border bg-muted/30 p-3 text-xs">
+        <div><strong>Candidato:</strong> {candidatoNome}</div>
+        <div className="text-muted-foreground">
+          {email || "—"} • {telefone || "—"}
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Modelo de mensagem">
+          <select value={templateKey} onChange={(e) => trocarTemplate(e.target.value)} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm">
+            {TEMPLATES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
+          </select>
+        </Field>
+        <Field label="Canal de envio">
+          <select value={canal} onChange={(e) => setCanal(e.target.value as FeedbackCanal)} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm">
+            <option value="email">E-mail</option>
+            <option value="whatsapp">WhatsApp</option>
+            <option value="ambos">E-mail + WhatsApp</option>
+          </select>
+        </Field>
+      </div>
+      <Field label="Mensagem">
+        <textarea
+          rows={9}
+          value={mensagem}
+          onChange={(e) => setMensagem(e.target.value)}
+          className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm resize-y"
+        />
+      </Field>
+      <div className="text-[11px] text-muted-foreground">
+        Mensagens curtas e respeitosas mantêm o relacionamento com o talento para futuras oportunidades.
+      </div>
+      <div className="flex justify-end gap-2 pt-2">
+        <button onClick={onCancel} className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm">Cancelar</button>
+        <button
+          disabled={!podeEnviar}
+          onClick={() => onConfirm({ canal, templateKey, mensagem })}
+          className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center gap-1.5 disabled:opacity-50"
+        >
+          <MessageCircle className="h-3.5 w-3.5" /> Enviar feedback
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function DeclinarForm({
   nome,
   onCancel,
