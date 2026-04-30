@@ -1619,30 +1619,30 @@ export default function VagaDetalheAdmin() {
       {associarQuestOpen && (() => {
         const c = candidatosVaga.find((x) => x.id === associarQuestOpen);
         return (
-          <ModalShell title="Associar questionário" onClose={() => setAssociarQuestOpen(null)}>
+          <ModalShell title="Associar / enviar questionário" onClose={() => setAssociarQuestOpen(null)}>
             <div className="text-sm space-y-3">
-              <p>Selecione um questionário para <strong>{c?.nome}</strong>:</p>
-              <ul className="space-y-2">
-                {questionariosVaga.map((q) => (
-                  <li key={q.id}>
-                    <button
-                      onClick={() => {
-                        setQuestionariosVaga((prev) => prev.map((x) =>
-                          x.id === q.id
-                            ? { ...x, candidatosRespostas: { ...x.candidatosRespostas, [c?.id ?? ""]: "pendente" } }
-                            : x
-                        ));
-                        setAssociarQuestOpen(null);
-                        toast.success(`Questionário "${q.nome}" associado.`);
-                      }}
-                      className="w-full text-left px-3 py-2 rounded-md border border-border hover:bg-secondary text-sm"
-                    >
-                      <div className="font-medium">{q.nome}</div>
-                      <div className="text-xs text-muted-foreground">{q.tipo} · {q.questoes} questões</div>
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              <p>Selecione um questionário para enviar a <strong>{c?.nome}</strong>:</p>
+              {questionariosVaga.length === 0 ? (
+                <div className="text-xs text-muted-foreground">Nenhum questionário criado ainda.</div>
+              ) : (
+                <ul className="space-y-2">
+                  {questionariosVaga.map((q) => (
+                    <li key={q.id}>
+                      <button
+                        onClick={() => {
+                          if (!associarQuestOpen) return;
+                          enviarQuestionarioParaCandidato(q.id, associarQuestOpen);
+                          setAssociarQuestOpen(null);
+                        }}
+                        className="w-full text-left px-3 py-2 rounded-md border border-border hover:bg-secondary text-sm"
+                      >
+                        <div className="font-medium">{q.nome}</div>
+                        <div className="text-xs text-muted-foreground">{q.perguntas.length} pergunta(s) · criado por {q.criadoPor}</div>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </ModalShell>
         );
