@@ -38,9 +38,90 @@ const tabs = [
   { key: "candidatos", label: "Candidatos", icon: Users },
   { key: "perfis", label: "Perfis enviados", icon: Send },
   { key: "questionarios", label: "Questionários", icon: FileQuestion },
+  { key: "agenda", label: "Agenda", icon: CalendarDays },
   { key: "historico", label: "Histórico", icon: History },
-  { key: "chat", label: "Mini-chat", icon: MessageSquare },
+  { key: "chat", label: "Conversas", icon: MessageSquare },
 ] as const;
+
+// ────────────────────────────────────────────────────────────────────
+// Tipos locais (mock — não persiste em backend)
+// ────────────────────────────────────────────────────────────────────
+
+type PublicacaoStatus = "nao_publicada" | "em_revisao" | "publicada";
+
+interface CandidatoExtra {
+  id: string;
+  nome: string;
+  email?: string;
+  telefone?: string;
+  cargo: string;
+  origem: "manual" | "convite" | "site";
+  declinio?: { motivo: string; quem: "candidato" | "azumi" };
+}
+
+interface QuestionarioVaga {
+  id: string;
+  nome: string;
+  tipo: "Comportamental" | "Técnico" | "Cultural";
+  questoes: number;
+  candidatosRespostas: Record<string, "pendente" | "respondido">;
+}
+
+interface EventoEntrevista {
+  id: string;
+  candidatoId: string;
+  candidatoNome: string;
+  tipo: "Interno Azumi" | "Com gestor do cliente";
+  data: string; // dd/mm/yyyy
+  hora: string; // HH:mm
+  local: string;
+}
+
+interface MensagemVaga {
+  id: string;
+  autor: string;
+  iniciais: string;
+  quando: string;
+  texto: string;
+  canal: "interno" | "cliente";
+  anexo?: string;
+}
+
+const PESSOAS_MENCAO_VAGA = [
+  "Ana Beatriz",
+  "Rafael Moura",
+  "Camila Torres",
+  "RH Cliente",
+  "Gestor — Mariana",
+];
+
+// Templates centralizados (Handoff): quando faltarem reais, usar esses placeholders.
+const TEMPLATE_DISC_WHATSAPP = (nome: string) =>
+  `Oi ${nome}! Aqui é da Azumi 👋 Para avançar no processo, pedimos que você responda ` +
+  `nosso teste DISC (leva ~10 min). Acesse: https://azumi.app/disc/{token}. Qualquer dúvida, ` +
+  `é só chamar por aqui!`;
+
+const TEMPLATE_DECLINIO_CANDIDATO = (nome: string) =>
+  `Olá ${nome}! Obrigada pelo seu interesse na vaga. Registramos seu declínio com cuidado e ` +
+  `vamos manter seu perfil em nossa base para futuras oportunidades. Sucesso na sua trajetória! 🚀`;
+
+function renderTextoComLinks(texto: string) {
+  const partes = texto.split(/(https?:\/\/[^\s]+|@[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s]*?(?=\s|$|[.,!?]))/g);
+  return partes.map((p, i) => {
+    if (p?.startsWith("http")) {
+      return (
+        <a key={i} href={p} target="_blank" rel="noopener noreferrer"
+           className="text-primary underline break-all">
+          {p}
+        </a>
+      );
+    }
+    if (p?.startsWith("@")) {
+      return <span key={i} className="text-primary font-medium">{p}</span>;
+    }
+    return <span key={i}>{p}</span>;
+  });
+}
 
 export default function VagaDetalheAdmin() {
   const { id } = useParams();
