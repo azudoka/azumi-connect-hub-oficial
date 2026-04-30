@@ -770,7 +770,13 @@ export default function VagaDetalheAdmin() {
                       {c.nome.split(" ").map(n => n[0]).join("").slice(0, 2)}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium truncate">{c.nome}</div>
+                      <button
+                        type="button"
+                        onClick={() => setFichaCandidatoId(c.id)}
+                        className="text-sm font-medium truncate text-left hover:text-primary"
+                      >
+                        {c.nome}
+                      </button>
                       <div className="text-[11px] text-muted-foreground">DISC: {c.perfilDom} dominante</div>
                     </div>
                     {declinio ? (
