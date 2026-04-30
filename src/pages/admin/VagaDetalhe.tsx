@@ -2330,6 +2330,7 @@ function CandidatoDetailSheet({
   onAbrirRelatorio: (id: string) => void;
   relatorioStatus?: "rascunho" | "enviado";
 }) {
+  useScrollLock(open);
   if (!open) return null;
 
   // Aceita tanto candidato "oficial" quanto extra (manual/convidado)
