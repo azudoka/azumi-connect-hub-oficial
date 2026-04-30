@@ -1034,7 +1034,7 @@ export default function VagaDetalheAdmin() {
 
                           {obsAberta && (
                             <div
-                              className="mt-2 space-y-2"
+                              className="border-t border-border bg-muted/40 p-3 space-y-2"
                               onMouseDown={(e) => e.stopPropagation()}
                               draggable={false}
                               onDragStart={(e) => e.preventDefault()}
@@ -1045,7 +1045,7 @@ export default function VagaDetalheAdmin() {
                                   setObsTexto((prev) => ({ ...prev, [c.id]: e.target.value }))
                                 }
                                 placeholder="Observação rápida sobre o candidato…"
-                                className="w-full h-20 p-2 rounded-md bg-secondary border border-input focus:border-primary outline-none text-xs resize-none"
+                                className="w-full h-20 p-2 rounded-md bg-background border border-input focus:border-primary outline-none text-xs resize-none"
                               />
                               <div className="flex items-center justify-end gap-1.5">
                                 <button
