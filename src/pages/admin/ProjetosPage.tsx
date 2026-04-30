@@ -172,7 +172,6 @@ const filiaisPorEmpresa: Record<string, string[]> = {
 // === usuario.id (mock atual usa "ab" | "ct" | "rm").
 // ────────────────────────────────────────────────────────────────────
 
-import { useAuth } from "@/context/AuthContext";
 
 // ────────────────────────────────────────────────────────────────────
 // Página
