@@ -628,8 +628,22 @@ export default function ProjetoDetalhe() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
           {colunasKanban.map((col) => {
             const itens = entregaveis.filter((e) => e.status === col.status);
+            const isOver = dragOverCol === col.status;
             return (
-              <div key={col.status} className="bg-card border border-border rounded-xl p-3 min-h-[200px]">
+              <div
+                key={col.status}
+                onDragOver={(ev) => { ev.preventDefault(); ev.dataTransfer.dropEffect = "move"; setDragOverCol(col.status); }}
+                onDragLeave={() => setDragOverCol((cur) => (cur === col.status ? null : cur))}
+                onDrop={(ev) => {
+                  ev.preventDefault();
+                  const entId = ev.dataTransfer.getData("text/plain");
+                  if (entId) onDropColuna(col.status, entId);
+                }}
+                className={cn(
+                  "bg-card border rounded-xl p-3 min-h-[200px] transition-colors",
+                  isOver ? "border-primary ring-2 ring-primary/20" : "border-border"
+                )}
+              >
                 <div className="flex items-center justify-between px-1 mb-3">
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
                     {col.label}
@@ -637,7 +651,9 @@ export default function ProjetoDetalhe() {
                   <span className="font-data text-xs text-muted-foreground">{itens.length}</span>
                 </div>
                 {itens.length === 0 ? (
-                  <div className="flex items-center justify-center h-24 text-xs text-muted-foreground">—</div>
+                  <div className="flex items-center justify-center h-24 text-xs text-muted-foreground border border-dashed border-border/60 rounded-md">
+                    {isOver ? "Soltar aqui" : "—"}
+                  </div>
                 ) : (
                   <ul className="space-y-2">{itens.map(renderCardKanban)}</ul>
                 )}
