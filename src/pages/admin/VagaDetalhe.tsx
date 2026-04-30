@@ -782,12 +782,7 @@ export default function VagaDetalheAdmin() {
             >
               <Link2 className="h-3.5 w-3.5" /> Convidar candidato
             </button>
-            <button
-              onClick={() => setEditorQuestId("novo")}
-              className="h-8 px-3 rounded-lg border border-border text-xs flex items-center gap-1.5 hover:bg-secondary"
-            >
-              <FileQuestion className="h-3.5 w-3.5" /> Criar questionário
-            </button>
+            {/* "Criar questionário" foi movido para a aba Questionários */}
             <span className="text-xs text-muted-foreground ml-auto inline-flex items-center gap-2">
               <span className={cn(
                 "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border",
