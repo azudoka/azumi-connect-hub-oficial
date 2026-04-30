@@ -256,6 +256,47 @@ export default function ProjetoDetalhe() {
     }));
   }
 
+  // Atualiza qualquer campo de um entregável (subtarefas, mensagens, consultor…)
+  function patchEntregavel(entId: string, patch: Partial<Entregavel>) {
+    setEntregaveis((prev) => prev.map((e) => (e.id === entId ? { ...e, ...patch } : e)));
+  }
+
+  // ── Drag & Drop entre colunas do Kanban ─────────────────────────
+  function onDropColuna(targetStatus: EntregavelStatus, entId: string) {
+    setDragOverCol(null);
+    const ent = entregaveis.find((x) => x.id === entId);
+    if (!ent) return;
+    if (ent.status === targetStatus) return;
+
+    // Bloqueio: aprovado_cliente nunca pode voltar
+    if (ent.status === "aprovado_cliente") {
+      toast.error("Entregável aprovado pelo cliente — edição e mudança de status bloqueadas.");
+      return;
+    }
+    // Não permite voltar manualmente para nao_iniciado quando já em andamento
+    if (targetStatus === "nao_iniciado" && ent.status !== "nao_iniciado") {
+      toast.error("Não é possível voltar um entregável já iniciado para 'Não iniciado'.");
+      return;
+    }
+    // Avanços que exigem confirmação reaproveitam o dialog
+    if (targetStatus === "aprovacao_cliente" || targetStatus === "aprovado_cliente") {
+      setConfirmAvancarOpen({ open: true, entId, targetStatus });
+      return;
+    }
+    if (targetStatus === "cancelado") {
+      setCancelarOpen({ open: true, entId });
+      return;
+    }
+    aplicarMudancaStatus(entId, targetStatus);
+    toast.success(`Status alterado para "${statusLabels[targetStatus]}".`);
+  }
+
+  // Alerta no header: entregáveis cancelados com horas registradas
+  const canceladosComHoras = useMemo(
+    () => entregaveis.filter((e) => e.status === "cancelado" && (e.horasGastas ?? 0) > 0),
+    [entregaveis],
+  );
+
   // ── Handlers de mudança de status ───────────────────────────────
   function pedirMudancaStatus(entId: string, novoStatus: EntregavelStatus, justificativa?: string) {
     if (novoStatus === "aprovacao_cliente" || novoStatus === "aprovado_cliente") {
