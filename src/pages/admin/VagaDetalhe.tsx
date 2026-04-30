@@ -874,63 +874,123 @@ export default function VagaDetalheAdmin() {
                             setDragOverCol(null);
                           }}
                           className={cn(
-                            "relative bg-background/60 border border-border rounded-lg p-3 hover:border-primary/40 cursor-grab active:cursor-grabbing transition-colors",
+                            "relative bg-background/60 border border-border rounded-lg overflow-hidden hover:border-primary/40 cursor-grab active:cursor-grabbing transition-colors",
                             draggingId === c.id && "opacity-50"
                           )}
                         >
-                          <div className="flex items-center gap-2">
-                            <div className="h-8 w-8 rounded-full bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white">
-                              {c.nome.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                          {/* Corpo principal do card */}
+                          <div className="p-3 space-y-2">
+                            {/* Linha 1: Avatar + Nome + Mais ações */}
+                            <div className="flex items-start gap-2.5">
+                              <div className="h-10 w-10 shrink-0 rounded-full bg-gradient-brand flex items-center justify-center text-xs font-semibold text-white">
+                                {c.nome.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); setFichaCandidatoId(c.id); }}
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                  className="text-[15px] font-semibold leading-tight hover:text-primary block text-left w-full line-clamp-2"
+                                  title={c.nome}
+                                >
+                                  {c.nome}
+                                </button>
+                                <div className="text-xs text-muted-foreground truncate mt-0.5" title={c.cargo}>
+                                  {c.cargo}
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                aria-label="Mais ações"
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setMenuAbertoId(menuAberto ? null : c.id);
+                                }}
+                                className="h-7 w-7 -mr-1 rounded-md flex items-center justify-center text-muted-foreground hover:bg-secondary hover:text-foreground shrink-0"
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </button>
                             </div>
-                            <div className="min-w-0 flex-1">
+
+                            {/* Linha 3: Tags (DISC) */}
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border bg-primary/10 text-primary border-primary/20">
+                                DISC: {c.perfilDom}
+                              </span>
+                            </div>
+
+                            {/* DISC bars */}
+                            <DiscBars values={c.disc} compact />
+
+                            {/* Linha 4: Ações rápidas */}
+                            <div className="flex items-center gap-1 pt-0.5">
                               <button
                                 type="button"
                                 onClick={(e) => { e.stopPropagation(); setFichaCandidatoId(c.id); }}
                                 onMouseDown={(e) => e.stopPropagation()}
-                                className="text-sm font-medium hover:text-primary truncate block text-left w-full"
+                                title="Ver ficha"
+                                className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-secondary hover:text-foreground"
                               >
-                                {c.nome}
+                                <Eye className="h-3.5 w-3.5" />
                               </button>
-                              <div className="text-[10px] text-muted-foreground">DISC: {c.perfilDom} dominante</div>
-                            </div>
-                            {(() => {
-                              const ev = eventos.find((e) => e.candidatoId === c.id);
-                              return ev ? (
-                                <span
-                                  title={`Entrevista agendada em ${ev.data} às ${ev.hora}`}
-                                  className="inline-flex items-center justify-center h-6 w-6 rounded-md bg-primary/10 text-primary border border-primary/20 shrink-0"
-                                >
-                                  <CalendarDays className="h-3.5 w-3.5" />
-                                </span>
-                              ) : null;
-                            })()}
-                            {colunasEstado[c.id] === "Entrevista" && (
                               <button
                                 type="button"
-                                onClick={(e) => { e.stopPropagation(); setAgendarOpen(c.id); }}
+                                onClick={(e) => { e.stopPropagation(); setRelatorioOpenId(c.id); }}
                                 onMouseDown={(e) => e.stopPropagation()}
-                                title="Agendar entrevista"
-                                className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-secondary hover:text-foreground shrink-0"
+                                title="Relatório"
+                                className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-secondary hover:text-foreground"
                               >
-                                <CalendarPlus className="h-4 w-4" />
+                                <FileText className="h-3.5 w-3.5" />
                               </button>
-                            )}
-                            <button
-                              type="button"
-                              aria-label="Mais ações"
-                              onMouseDown={(e) => e.stopPropagation()}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setMenuAbertoId(menuAberto ? null : c.id);
-                              }}
-                              className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-secondary hover:text-foreground shrink-0"
-                            >
-                              <MoreVertical className="h-4 w-4" />
-                            </button>
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); setDiscWhatsOpen(c.id); }}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                title="WhatsApp"
+                                className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-secondary hover:text-foreground"
+                              >
+                                <MessageCircle className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); setObsAbertaId(c.id); }}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                title="Observação rápida"
+                                className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-secondary hover:text-foreground"
+                              >
+                                <StickyNote className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
                           </div>
-                          <div className="mt-2">
-                            <DiscBars values={c.disc} compact />
-                          </div>
+
+                          {/* Bloco inferior: agendamento (separado, com fundo diferente) */}
+                          {(() => {
+                            const ev = eventos.find((e) => e.candidatoId === c.id);
+                            const podeAgendar = colunasEstado[c.id] === "Entrevista";
+                            if (!ev && !podeAgendar) return null;
+                            return (
+                              <div className="border-t border-border bg-muted/40 px-3 py-2 flex items-center gap-2 text-[11px]">
+                                {ev ? (
+                                  <>
+                                    <CalendarDays className="h-3.5 w-3.5 text-primary shrink-0" />
+                                    <span className="truncate">
+                                      Entrevista <span className="font-medium">{ev.data}</span> às <span className="font-medium">{ev.hora}</span>
+                                    </span>
+                                  </>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); setAgendarOpen(c.id); }}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    className="inline-flex items-center gap-1.5 text-primary hover:underline font-medium"
+                                  >
+                                    <CalendarPlus className="h-3.5 w-3.5" /> Agendar entrevista
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })()}
 
                           {/* Etapa 6 — badge de proposta no card */}
                           {colunasEstado[c.id] === "Proposta" && (() => {
