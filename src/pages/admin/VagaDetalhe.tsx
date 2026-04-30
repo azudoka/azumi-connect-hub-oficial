@@ -284,6 +284,14 @@ export default function VagaDetalheAdmin() {
   const [novoCandOpen, setNovoCandOpen] = useState(false);
   const [convidarOpen, setConvidarOpen] = useState(false);
   const [novoQuestOpen, setNovoQuestOpen] = useState(false);
+  /** Quando aberto: id do questionário a editar; "novo" → criar do zero. */
+  const [editorQuestId, setEditorQuestId] = useState<string | "novo" | null>(null);
+  /** Confirmação de exclusão de questionário. */
+  const [excluirQuestId, setExcluirQuestId] = useState<string | null>(null);
+  /** Modal de envio de questionário ao mover para coluna Quest. */
+  const [enviarQuestParaCand, setEnviarQuestParaCand] = useState<string | null>(null);
+  /** Modal "Enviar via WhatsApp" — guarda candidatoId + questionarioId (opcional). */
+  const [whatsTemplateOpen, setWhatsTemplateOpen] = useState<{ candidatoId: string; questionarioId?: string } | null>(null);
   const [resumoOpen, setResumoOpen] = useState<string | null>(null);
   const [discWhatsOpen, setDiscWhatsOpen] = useState<string | null>(null);
   const [associarQuestOpen, setAssociarQuestOpen] = useState<string | null>(null);
