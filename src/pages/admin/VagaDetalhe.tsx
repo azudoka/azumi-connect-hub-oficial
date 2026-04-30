@@ -2122,6 +2122,7 @@ function CandidatoDetailSheet({
             >
               <FileText className="h-3.5 w-3.5" /> Relatório para cliente
             </button>
+            {etapaPodeAgendar && (
               <button
                 onClick={() => onAgendar(cand.id)}
                 className="inline-flex items-center gap-1 h-8 px-3 rounded-md border border-border hover:bg-secondary text-xs font-medium"
