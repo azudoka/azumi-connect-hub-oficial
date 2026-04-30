@@ -2270,7 +2270,7 @@ function QuestionarioEditorModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+    <div className="fixed inset-0 z-[60] bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
       <div className="bg-card border border-border rounded-2xl shadow-elevated w-full max-w-3xl max-h-[92vh] flex flex-col animate-scale-in overflow-hidden">
         <header className="px-6 py-4 border-b border-border flex items-center gap-3">
           <div className="flex-1 min-w-0">
@@ -3920,7 +3920,7 @@ function RelatorioCandidatoModal({
     }));
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+    <div className="fixed inset-0 z-[60] bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
       <div className="bg-card border border-border rounded-2xl shadow-elevated w-full max-w-5xl max-h-[92vh] flex flex-col animate-scale-in overflow-hidden">
         {/* Header */}
         <header className="px-6 py-4 border-b border-border flex items-center gap-3">
@@ -4317,7 +4317,7 @@ function AgendarEntrevistaGestorModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} aria-hidden />
       <div className="relative w-full max-w-2xl bg-card border border-border rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
         <div className="flex items-start justify-between gap-3 p-5 border-b border-border">
