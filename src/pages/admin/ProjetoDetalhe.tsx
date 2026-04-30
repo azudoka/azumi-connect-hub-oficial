@@ -1104,9 +1104,21 @@ function CancelarDialog({
           </DialogDescription>
         </DialogHeader>
 
+        <div className="rounded-lg border border-warning/30 bg-warning/10 p-3 text-xs text-warning flex items-start gap-2">
+          <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+          <div>
+            <div className="font-semibold">Atenção: as horas já gastas não serão devolvidas.</div>
+            <div className="text-muted-foreground mt-0.5">
+              {(entregavel?.horasGastas ?? 0) > 0
+                ? `Este entregável já consumiu ${entregavel?.horasGastas}h do saldo do cliente. Ao cancelar, essas horas continuam contabilizadas.`
+                : "Não há horas registradas até o momento, mas qualquer hora futura também não será devolvida."}
+            </div>
+          </div>
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="cancel-just">
-            Justificativa <span className="text-destructive">*</span>
+            Motivo do cancelamento <span className="text-destructive">*</span>
           </Label>
           <Textarea
             id="cancel-just"
