@@ -147,6 +147,7 @@ const MOCK_USUARIOS: MockCred[] = [
   { email: "contador@empresa.com", senha: "123", id: "u-cont", nome: "Carlos Lima", role: "contador", empresaNome: "Azumi" },
   { email: "juridico@empresa.com", senha: "123", id: "u-jur", nome: "Dr. Marcos Ribeiro", role: "juridico", empresaNome: "Azumi" },
   { email: "admin@empresa.com", senha: "123", id: "u-adm", nome: "Administrador", role: "admin", empresaNome: "Azumi" },
+  { email: "consultor@azumi.com", senha: "123", id: "ab", nome: "Ana Beatriz", role: "consultor", empresaNome: "Azumi" },
   { email: "cliente@kentaki.com", senha: "123", id: "u-cli-kentaki", nome: "Admin Kentaki", role: "cliente", empresaNome: "Kentaki Foods" },
 ];
 

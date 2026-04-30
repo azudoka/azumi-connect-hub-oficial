@@ -29,6 +29,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 
 import { empresas, consultores } from "@/data/mock";
+import { useAuth } from "@/context/AuthContext";
 
 // ────────────────────────────────────────────────────────────────────
 // Tipos / mocks locais
@@ -166,16 +167,11 @@ const filiaisPorEmpresa: Record<string, string[]> = {
 };
 
 // ────────────────────────────────────────────────────────────────────
-// Regra de visibilidade — perfil + consultor logado (simulado).
-// Nota: o AuthContext atual só conhece "admin" | "cliente". Para validar
-// a regra "consultor vê apenas os atribuídos a ele" sem alterar arquivos
-// fora do escopo, simulamos via estas constantes. Ajuste manualmente para
-// testar (ex.: PERFIL_DEMO = "consultor"; CONSULTOR_LOGADO_ID = "ab").
+// Regra de visibilidade — perfil + consultor logado (via AuthContext).
+// Admin vê tudo; consultor vê apenas projetos onde assignedConsultorId
+// === usuario.id (mock atual usa "ab" | "ct" | "rm").
 // ────────────────────────────────────────────────────────────────────
 
-type PerfilDemo = "admin" | "consultor";
-const PERFIL_DEMO: PerfilDemo = "admin";
-const CONSULTOR_LOGADO_ID = "ab";
 
 // ────────────────────────────────────────────────────────────────────
 // Página
@@ -228,13 +224,18 @@ export default function ProjetosPage() {
   const [fStatus, setFStatus] = useState<"todos" | ProjetoStatus>("todos");
   const [fFrente, setFFrente] = useState<"todas" | FrenteAtuacao>("todas");
 
+  // Perfil + ID do consultor logado (via AuthContext)
+  const { usuario } = useAuth();
+  const isConsultor = usuario?.role === "consultor";
+  const consultorLogadoId = usuario?.id ?? "";
+
   // Visibilidade por perfil: admin vê tudo; consultor vê só os atribuídos a ele.
   const projetosVisiveis = useMemo(() => {
-    if (PERFIL_DEMO === "consultor") {
-      return projetos.filter((p) => p.assignedConsultorId === CONSULTOR_LOGADO_ID);
+    if (isConsultor) {
+      return projetos.filter((p) => p.assignedConsultorId === consultorLogadoId);
     }
     return projetos;
-  }, [projetos]);
+  }, [projetos, isConsultor, consultorLogadoId]);
 
   const projetosVigentes = useMemo(
     () => projetosVisiveis.filter((p) => p.status !== "encerrado"),
@@ -364,7 +365,7 @@ export default function ProjetosPage() {
     <div>
       <PageHeader
         title="Projetos"
-        subtitle="Cronogramas, projetos vigentes e encerrados"
+        subtitle={isConsultor ? "Projetos que você conduz na Azumi." : "Cronogramas, projetos vigentes e encerrados"}
         actions={
           <>
             <Button variant="outline" onClick={() => setCronOpen(true)} className="gap-1.5">
@@ -377,7 +378,7 @@ export default function ProjetosPage() {
         }
       />
 
-      {PERFIL_DEMO === "consultor" && (
+      {isConsultor && (
         <div className="mb-5 rounded-xl border border-info/30 bg-info/10 px-4 py-3 flex items-start gap-3">
           <Briefcase className="h-4 w-4 text-info shrink-0 mt-0.5" />
           <div>

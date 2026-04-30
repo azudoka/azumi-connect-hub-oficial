@@ -152,7 +152,18 @@ const ENTREGAVEIS: EntregavelProx[] = [
 // Página
 // =====================================================================
 
+import { useAuth } from "@/context/AuthContext";
+import ConsultorDashboard from "./ConsultorDashboard";
+
 export default function DashboardPage() {
+  const { usuario } = useAuth();
+  if (usuario?.role === "consultor") {
+    return <ConsultorDashboard />;
+  }
+  return <AdminDashboard />;
+}
+
+function AdminDashboard() {
   const navigate = useNavigate();
   const { pode } = usePermissao();
   const now = useMemo(() => new Date(), []);
