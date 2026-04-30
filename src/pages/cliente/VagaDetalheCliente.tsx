@@ -329,6 +329,31 @@ export default function VagaDetalheCliente() {
           }}
         />
       )}
+
+      {/* Modal: gestor responde sugestões de horário */}
+      {respostaGestorAgId && (
+        <RespostaGestorModal
+          agendamentoId={respostaGestorAgId}
+          onClose={() => setRespostaGestorAgId(null)}
+          onSaved={() => {
+            setRespostaGestorAgId(null);
+            bump();
+          }}
+        />
+      )}
+
+      {/* Modal: parecer do gestor pós-entrevista */}
+      {parecerGestorCandId && (
+        <ParecerGestorModal
+          candidatoId={parecerGestorCandId}
+          vagaId={vaga.id}
+          onClose={() => setParecerGestorCandId(null)}
+          onSaved={() => {
+            setParecerGestorCandId(null);
+            aposSalvarParecerGestor();
+          }}
+        />
+      )}
     </div>
   );
 }
