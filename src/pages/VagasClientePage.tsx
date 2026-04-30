@@ -509,6 +509,9 @@ export default function VagasClientePage() {
         ))}
       </div>
 
+      {/* Card destaque: vaga demo com perfis enviados (novo fluxo cliente) */}
+      <DemoVagaDestaque />
+
       {lista.length === 0 ? (
         <EmptyState
           icon={Inbox}
