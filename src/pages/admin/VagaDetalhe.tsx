@@ -342,6 +342,36 @@ export default function VagaDetalheAdmin() {
   const [relatorioOpenId, setRelatorioOpenId] = useState<string | null>(null);
   const [relatoriosPorCandidato, setRelatoriosPorCandidato] = useState<Record<string, RelatorioCandidato>>({});
 
+  // ── Etapa 6 — Proposta ─────────────────────────────────────────
+  /** Quando aberto: id do candidato p/ enviar proposta. */
+  const [enviarPropostaPara, setEnviarPropostaPara] = useState<string | null>(null);
+  /** Sub p/ rerender quando o store de propostas mudar. */
+  const [propostaTick, setPropostaTick] = useState(0);
+  useEffect(() => subscribePropostas(() => setPropostaTick((v) => v + 1)), []);
+  // Cron leve: a cada 30s, se houver proposta enviada com tempo expirado, marca como expirada.
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      candidatosVaga.forEach((c) => {
+        const p = getPropostaAtiva(c.id);
+        if (p && isExpiradaPorTempo(p)) expirarProposta(p.id);
+      });
+    }, 30000);
+    return () => window.clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vaga.id]);
+
+  // ── Etapa 7 — Feedback de reprovados ──────────────────────────
+  const [enviarFeedbackPara, setEnviarFeedbackPara] = useState<string | null>(null);
+
+  // Lista de contratados (proposta aceita) — para regra de bloqueio
+  const idsContratados = useMemo(
+    () => contratadosNaVaga(vaga.id),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [vaga.id, propostaTick]
+  );
+  const posicoesPreenchidas = idsContratados.length;
+  const vagaEncerrada = posicoesPreenchidas >= posicoesVaga;
+
   // Re-render quando o store de Entrevista com Gestor muda (cliente / rota pública).
   const [storeVersao, setStoreVersao] = useState(0);
   useEffect(() => subscribeEntrevistaGestor(() => setStoreVersao((v) => v + 1)), []);
