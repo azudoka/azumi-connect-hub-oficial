@@ -2719,6 +2719,7 @@ function RelatorioCandidatoModal({
   onSaveDraft: (data: RelatorioCandidato) => void;
   onMarkSent: (data: RelatorioCandidato) => void;
 }) {
+  useScrollLock(true);
   const protocoloAuto = useMemo(
     () => `REL-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000) + 1000)}`,
     [candidato.id],
