@@ -132,7 +132,63 @@ export function registrarFeedback(input: Omit<FeedbackReprovado, "id" | "enviado
   return fb;
 }
 
+// ── NPS por candidato contratado (Doc Mestre) ───────────────────────
+export type NotaNps = 1 | 2 | 3 | 4 | 5;
+export interface NpsCandidato {
+  id: string;
+  candidatoId: string;
+  vagaId: string;
+  nota: NotaNps;
+  justificativa?: string;
+  criadoEm: string; // ISO
+}
+const KEY_NPS = "azumi:nps-candidatos:v1";
+
+export function getNpsDoCandidato(candidatoId: string): NpsCandidato | null {
+  return safeRead<NpsCandidato[]>(KEY_NPS, []).find((n) => n.candidatoId === candidatoId) ?? null;
+}
+export function listarNpsDaVaga(vagaId: string): NpsCandidato[] {
+  return safeRead<NpsCandidato[]>(KEY_NPS, []).filter((n) => n.vagaId === vagaId);
+}
+export function registrarNps(input: Omit<NpsCandidato, "id" | "criadoEm">): NpsCandidato {
+  const all = safeRead<NpsCandidato[]>(KEY_NPS, []);
+  // 1 NPS por candidato — atualiza se já existir
+  const idx = all.findIndex((n) => n.candidatoId === input.candidatoId);
+  const nps: NpsCandidato = {
+    ...input,
+    id: idx >= 0 ? all[idx].id : `nps_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    criadoEm: new Date().toISOString(),
+  };
+  if (idx >= 0) all[idx] = nps; else all.push(nps);
+  safeWrite(KEY_NPS, all);
+  bump();
+  return nps;
+}
+export function mediaNpsDaVaga(vagaId: string): number | null {
+  const lista = listarNpsDaVaga(vagaId);
+  if (lista.length === 0) return null;
+  return lista.reduce((acc, n) => acc + n.nota, 0) / lista.length;
+}
+
+// ── Relatório Final de Encerramento da vaga ─────────────────────────
+export interface RelatorioEncerramentoVaga {
+  vagaId: string;
+  geradoEm: string;
+}
+const KEY_RELATORIOS_FINAIS = "azumi:relatorios-encerramento:v1";
+export function marcarRelatorioFinalGerado(vagaId: string) {
+  const all = safeRead<RelatorioEncerramentoVaga[]>(KEY_RELATORIOS_FINAIS, []);
+  if (all.some((r) => r.vagaId === vagaId)) return;
+  all.push({ vagaId, geradoEm: new Date().toISOString() });
+  safeWrite(KEY_RELATORIOS_FINAIS, all);
+  bump();
+}
+export function jaGerouRelatorioFinal(vagaId: string): boolean {
+  return safeRead<RelatorioEncerramentoVaga[]>(KEY_RELATORIOS_FINAIS, []).some((r) => r.vagaId === vagaId);
+}
+
 // ── Helpers de label ────────────────────────────────────────────────
 export function statusPropostaLabel(s: PropostaStatus): string {
   return { enviada: "Enviada — aguardando resposta", aceita: "Aceita", recusada: "Recusada", expirada: "Expirada" }[s];
 }
+
