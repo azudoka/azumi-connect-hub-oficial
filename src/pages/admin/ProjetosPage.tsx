@@ -647,18 +647,35 @@ export default function ProjetosPage() {
                           ) : cr.status === "aguardando_aprovacao_interna" ? (
                             <StatusBadge status="analise">Aguardando aprovação interna</StatusBadge>
                           ) : (
-                            <StatusBadge status="aguardando">Aguardando aprovação cliente</StatusBadge>
+                            <StatusBadge status="aguardando">Em aprovação pelo cliente</StatusBadge>
                           )}
                         </td>
                         <td className="px-4 py-3 text-xs font-data text-muted-foreground">
                           {format(new Date(cr.criadoEm), "dd/MM/yyyy", { locale: ptBR })}
                         </td>
                         <td className="px-4 py-3 text-right">
-                          <Button asChild size="sm" variant="outline">
-                            <Link to={`/app/projetos/${cr.id}`}>
-                              Revisar <ArrowRight className="ml-1 h-3 w-3" />
-                            </Link>
-                          </Button>
+                          <div className="inline-flex items-center gap-2 justify-end">
+                            {cr.status === "aguardando_aprovacao_interna" && (
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  setCronogramas((prev) =>
+                                    prev.map((c) =>
+                                      c.id === cr.id ? { ...c, status: "aguardando_aprovacao_cliente" } : c,
+                                    ),
+                                  );
+                                  toast.success("Cronograma enviado ao cliente para aprovação.");
+                                }}
+                              >
+                                Enviar para cliente
+                              </Button>
+                            )}
+                            <Button asChild size="sm" variant="outline">
+                              <Link to={`/app/projetos/${cr.id}`}>
+                                Revisar <ArrowRight className="ml-1 h-3 w-3" />
+                              </Link>
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     ))}
