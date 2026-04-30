@@ -324,6 +324,8 @@ export default function ProjetoDetalhe() {
       toast.success("Entregável aprovado pelo cliente.");
       // dispara NPS automaticamente
       setNpsOpen({ open: true, entId });
+    } else if (targetStatus === "aprovacao_cliente") {
+      toast.success("Enviado para aprovação do cliente — prazo de 72h para resposta.");
     } else {
       toast.success(`Status alterado para "${statusLabels[targetStatus]}".`);
     }
