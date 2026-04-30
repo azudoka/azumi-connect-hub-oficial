@@ -70,6 +70,7 @@ import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
+import { ScrollLock } from "@/components/ScrollLock";
 
 const tabs = [
   { key: "candidatos", label: "Candidatos", icon: Users },
@@ -243,7 +244,7 @@ export default function VagaDetalheAdmin() {
   const max = Math.max(...funil.map((f) => f.n), 1);
 
   const candidatosVaga = candidatos.filter((c) => c.vagaId === vaga.id);
-  const colunas = ["Triagem", "Quest.", "Entrevista", "Enviados", "Decisão", "Proposta", "Reprovados"] as const;
+  const colunas = ["Triagem", "Quest.", "Entrevista Azumi", "Entrevista gestor", "Enviados", "Decisão", "Proposta", "Reprovados"] as const;
   type Coluna = typeof colunas[number];
 
   // Posições da vaga (Doc Mestre — Etapa 6: bloquear contratações além do total).
@@ -425,9 +426,14 @@ export default function VagaDetalheAdmin() {
       setEnviarQuestParaCand(candId);
       return true;
     }
-    if (coluna === "Entrevista") {
-      // Move + abre modal de Entrevista com Gestor (Etapa 5 — Doc Mestre).
-      // Apenas dispara se ainda não houver agendamento ativo p/ este candidato.
+    if (coluna === "Entrevista Azumi") {
+      // Entrevista interna com consultor Azumi — modal simples (sem gestor).
+      setColunasEstado((prev) => ({ ...prev, [candId]: coluna }));
+      setAgendarOpen(candId);
+      return true;
+    }
+    if (coluna === "Entrevista gestor") {
+      // Etapa 5 — Doc Mestre: agendamento com gestor (cliente), duas datas.
       setColunasEstado((prev) => ({ ...prev, [candId]: coluna }));
       const existente = getAgendamentoDoCandidato(candId);
       if (!existente) {
@@ -967,7 +973,7 @@ export default function VagaDetalheAdmin() {
                           {/* Bloco inferior: agendamento (separado, com fundo diferente) */}
                           {(() => {
                             const ev = eventos.find((e) => e.candidatoId === c.id);
-                            const podeAgendar = colunasEstado[c.id] === "Entrevista";
+                            const podeAgendar = colunasEstado[c.id] === "Entrevista Azumi" || colunasEstado[c.id] === "Entrevista gestor";
                             if (!ev && !podeAgendar) return null;
                             return (
                               <div className="border-t border-border bg-muted/40 px-3 py-2 flex items-center gap-2 text-[11px]">
@@ -1425,7 +1431,7 @@ export default function VagaDetalheAdmin() {
 
       {/* B09: Dialog de confirmação para envio ao cliente */}
       {enviarOpen && (
-        <div className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 z-[60] bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onWheel={(e)=>e.stopPropagation()}><ScrollLock />
           <div className="bg-card border border-border rounded-2xl shadow-elevated w-full max-w-md p-6 animate-scale-in">
             <div className="flex items-start gap-3">
               <div className="h-10 w-10 rounded-full bg-warning/15 text-warning flex items-center justify-center shrink-0">
@@ -1491,7 +1497,7 @@ export default function VagaDetalheAdmin() {
       )}
 
       {excedeuOpen && (
-        <div className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 z-[60] bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onWheel={(e)=>e.stopPropagation()}><ScrollLock />
           <div className="bg-card border border-border rounded-2xl shadow-elevated w-full max-w-md p-6 animate-scale-in">
             <div className="flex items-start gap-3">
               <div className="h-10 w-10 rounded-full bg-destructive/15 text-destructive flex items-center justify-center shrink-0">
@@ -1537,7 +1543,7 @@ export default function VagaDetalheAdmin() {
       {confirmarDesclId && (() => {
         const cand = candidatosVaga.find((c) => c.id === confirmarDesclId);
         return (
-          <div className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+          <div className="fixed inset-0 z-[60] bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onWheel={(e)=>e.stopPropagation()}><ScrollLock />
             <div className="bg-card border border-border rounded-2xl shadow-elevated w-full max-w-md p-6 animate-scale-in">
               <div className="flex items-start gap-3">
                 <div className="h-10 w-10 rounded-full bg-destructive/15 text-destructive flex items-center justify-center shrink-0">
@@ -1573,7 +1579,7 @@ export default function VagaDetalheAdmin() {
       {confirmarEnviadosId && (() => {
         const cand = candidatosVaga.find((c) => c.id === confirmarEnviadosId);
         return (
-          <div className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+          <div className="fixed inset-0 z-[60] bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onWheel={(e)=>e.stopPropagation()}><ScrollLock />
             <div className="bg-card border border-border rounded-2xl shadow-elevated w-full max-w-md p-6 animate-scale-in">
               <div className="flex items-start gap-3">
                 <div className="h-10 w-10 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0">
@@ -1615,7 +1621,7 @@ export default function VagaDetalheAdmin() {
         const cand = candidatosVaga.find((c) => c.id === confirmarDecisaoId);
         const opcoes: OpcaoDecisao[] = ["Contratado", "Reprovado pelo cliente", "Em negociação"];
         return (
-          <div className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+          <div className="fixed inset-0 z-[60] bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onWheel={(e)=>e.stopPropagation()}><ScrollLock />
             <div className="bg-card border border-border rounded-2xl shadow-elevated w-full max-w-md p-6 animate-scale-in">
               <div className="flex items-start gap-3">
                 <div className="h-10 w-10 rounded-full bg-success/15 text-success flex items-center justify-center shrink-0">
@@ -1922,14 +1928,17 @@ export default function VagaDetalheAdmin() {
       {agendarOpen && (() => {
         const c = candidatosVaga.find((x) => x.id === agendarOpen);
         return (
-          <ModalShell title="Agendar entrevista" onClose={() => setAgendarOpen(null)}>
+          <ModalShell title="Agendar entrevista Azumi" onClose={() => setAgendarOpen(null)}>
+            <p className="text-xs text-muted-foreground mb-3">
+              Entrevista interna com consultor Azumi. Defina data, horário e modo (remoto/presencial).
+            </p>
             <AgendarEntrevistaForm
               candidatoNome={c?.nome ?? "Candidato"}
               onCancel={() => setAgendarOpen(null)}
               onSave={(ev) => {
                 if (agendarOpen && c) {
                   setEventos((prev) => [...prev, { ...ev, id: `ev-${Date.now()}`, candidatoId: c.id, candidatoNome: c.nome }]);
-                  toast.success(`Entrevista agendada para ${ev.data} ${ev.hora}.`);
+                  toast.success(`Entrevista Azumi agendada para ${ev.data} ${ev.hora}.`);
                 }
                 setAgendarOpen(null);
               }}
@@ -2125,7 +2134,7 @@ function ModalShell({
   useScrollLock(true);
   const maxW = size === "xl" ? "max-w-3xl" : size === "lg" ? "max-w-xl" : "max-w-md";
   return (
-    <div className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+    <div className="fixed inset-0 z-[60] bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onWheel={(e)=>e.stopPropagation()}><ScrollLock />
       <div className={cn("bg-card border border-border rounded-2xl shadow-elevated w-full max-h-[92vh] flex flex-col animate-scale-in overflow-hidden", maxW)}>
         <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-border">
           <h3 className="font-display text-lg font-semibold">{title}</h3>
@@ -2269,7 +2278,7 @@ function QuestionarioEditorModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+    <div className="fixed inset-0 z-[60] bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
       <div className="bg-card border border-border rounded-2xl shadow-elevated w-full max-w-3xl max-h-[92vh] flex flex-col animate-scale-in overflow-hidden">
         <header className="px-6 py-4 border-b border-border flex items-center gap-3">
           <div className="flex-1 min-w-0">
@@ -3008,8 +3017,9 @@ function ChatVagaPanel({
   }
 
   return (
-    <div className="bg-card border border-border rounded-xl p-5 max-w-3xl">
-      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+    <div className="bg-card border border-border rounded-xl p-0 w-full flex flex-col" style={{ minHeight: 'calc(100vh - 280px)' }}>
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-3 border-b border-border flex-wrap gap-2">
         <h3 className="font-display font-semibold">Conversas sobre esta vaga</h3>
         <div className="inline-flex rounded-md border border-border overflow-hidden text-xs">
           <button
@@ -3027,109 +3037,137 @@ function ChatVagaPanel({
         </div>
       </div>
 
-      <div
-        className={cn(
-          "text-xs rounded-md px-3 py-2 mb-3 border inline-flex items-center gap-1.5",
-          canal === "interno"
-            ? "bg-muted/40 border-border text-muted-foreground"
-            : "bg-warning/10 border-warning/30 text-warning",
-        )}
-      >
-        {canal === "interno" ? (
-          <><Eye className="h-3 w-3" /> Não visível para o cliente</>
-        ) : (
-          <><AlertTriangle className="h-3 w-3" /> Mensagens aqui aparecem para o cliente</>
-        )}
-      </div>
-
-      <div className="space-y-3 max-h-80 overflow-y-auto mb-3 pr-1">
-        {filtradas.length === 0 ? (
-          <div className="text-center text-sm text-muted-foreground py-6">Sem mensagens ainda.</div>
-        ) : (
-          filtradas.map((m) => (
-            <div key={m.id} className="flex gap-3">
-              <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-semibold shrink-0">
-                {m.iniciais}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-sm font-medium">{m.autor}</span>
-                  <span className="text-xs text-muted-foreground">{m.quando}</span>
-                </div>
-                <p className="text-sm text-foreground whitespace-pre-wrap break-words">
-                  {renderMensagemFormatada(m.texto)}
-                </p>
-                {m.anexo && (
-                  <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2 py-1 text-xs">
-                    <Paperclip className="h-3 w-3" />
-                    <span className="truncate max-w-[220px]">{m.anexo}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-
-      {anexoNome && (
-        <div className="mb-2 inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2 py-1 text-xs">
-          <Paperclip className="h-3 w-3" />
-          <span className="truncate max-w-[220px]">{anexoNome}</span>
-          <button onClick={() => setAnexoNome(null)} className="ml-1 hover:text-destructive">
-            <XIcon className="h-3 w-3" />
-          </button>
-        </div>
-      )}
-
-      <div className="relative">
-        <textarea
-          ref={taRef}
-          value={texto}
-          onChange={handleChange}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey && !mencaoOpen) {
-              e.preventDefault();
-              enviar();
-            }
-            if (e.key === "Escape") setMencaoOpen(false);
-          }}
-          rows={2}
-          placeholder={
+      {/* Aviso de visibilidade */}
+      <div className="px-5 pt-3">
+        <div
+          className={cn(
+            "text-xs rounded-md px-3 py-2 border inline-flex items-center gap-1.5",
             canal === "interno"
-              ? "Mensagem interna… use @ para mencionar"
-              : "Mensagem para o cliente… use @ para mencionar"
-          }
-          className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm resize-none"
-        />
-        {mencaoOpen && sugestoesMencao.length > 0 && (
-          <div className="absolute bottom-full left-0 mb-1 w-64 bg-popover border border-border rounded-md shadow-elevated z-10 overflow-hidden">
-            {sugestoesMencao.map((p) => (
-              <button
-                key={p}
-                onMouseDown={(e) => { e.preventDefault(); inserirMencao(p); }}
-                className="w-full text-left px-3 py-1.5 text-xs hover:bg-secondary"
-              >
-                @{p}
-              </button>
-            ))}
+              ? "bg-muted/40 border-border text-muted-foreground"
+              : "bg-warning/10 border-warning/30 text-warning",
+          )}
+        >
+          {canal === "interno" ? (
+            <><Eye className="h-3 w-3" /> Não visível para o cliente</>
+          ) : (
+            <><AlertTriangle className="h-3 w-3" /> Mensagens aqui aparecem para o cliente</>
+          )}
+        </div>
+      </div>
+
+      {/* Lista de mensagens — bolhas estilo WhatsApp */}
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
+        {filtradas.length === 0 ? (
+          <div className="text-center text-sm text-muted-foreground py-12">Sem mensagens ainda.</div>
+        ) : (
+          filtradas.map((m) => {
+            const ehMinha = m.autor === "Você";
+            const ehCliente = canal === "cliente" && !ehMinha;
+            return (
+              <div key={m.id} className={cn("w-full flex", ehMinha ? "justify-end" : "justify-start")}>
+                <div className={cn("max-w-[78%] sm:max-w-[65%] flex flex-col", ehMinha ? "items-end" : "items-start")}>
+                  {!ehMinha && (
+                    <div className="flex items-center gap-1.5 mb-0.5 px-1">
+                      <span className="text-[11px] font-medium text-foreground/80">{m.autor}</span>
+                      {ehCliente && (
+                        <span className="text-[9px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded-full bg-warning/15 text-warning border border-warning/30">
+                          Cliente
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  <div
+                    className={cn(
+                      "px-3 py-2 shadow-sm break-words text-sm",
+                      ehMinha
+                        ? "bg-primary text-primary-foreground rounded-2xl rounded-br-md"
+                        : "bg-secondary text-foreground rounded-2xl rounded-bl-md",
+                    )}
+                  >
+                    <p className="whitespace-pre-wrap break-words">{renderMensagemFormatada(m.texto)}</p>
+                    {m.anexo && (
+                      <div className={cn(
+                        "mt-1.5 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs border",
+                        ehMinha
+                          ? "bg-primary-foreground/10 border-primary-foreground/30 text-primary-foreground"
+                          : "bg-background/60 border-border text-foreground",
+                      )}>
+                        <Paperclip className="h-3 w-3" />
+                        <span className="truncate max-w-[220px]">{m.anexo}</span>
+                      </div>
+                    )}
+                    <div className={cn("text-[10px] mt-1 opacity-70 text-right", ehMinha ? "text-primary-foreground" : "text-muted-foreground")}>
+                      {m.quando}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Composer */}
+      <div className="border-t border-border p-3">
+        {anexoNome && (
+          <div className="mb-2 inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2 py-1 text-xs">
+            <Paperclip className="h-3 w-3" />
+            <span className="truncate max-w-[220px]">{anexoNome}</span>
+            <button onClick={() => setAnexoNome(null)} className="ml-1 hover:text-destructive">
+              <XIcon className="h-3 w-3" />
+            </button>
           </div>
         )}
-        <div className="flex items-center justify-between mt-2 gap-2">
+        <div className="relative flex items-end gap-2">
           <button
             onClick={() => {
               const nomes = ["briefing.pdf", "curriculo.pdf", "parecer.docx", "anotacoes.txt"];
               setAnexoNome(nomes[Math.floor(Math.random() * nomes.length)]);
               toast.info("Anexo selecionado (mock).");
             }}
-            className="h-8 px-3 rounded-md border border-border hover:bg-secondary text-xs inline-flex items-center gap-1.5"
+            className="h-10 w-10 rounded-full border border-border hover:bg-secondary flex items-center justify-center shrink-0"
+            title="Anexar"
           >
-            <Paperclip className="h-3.5 w-3.5" /> Anexar
+            <Paperclip className="h-4 w-4" />
           </button>
+          <textarea
+            ref={taRef}
+            value={texto}
+            onChange={handleChange}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey && !mencaoOpen) {
+                e.preventDefault();
+                enviar();
+              }
+              if (e.key === "Escape") setMencaoOpen(false);
+            }}
+            rows={1}
+            placeholder={
+              canal === "interno"
+                ? "Mensagem interna… use @ para mencionar"
+                : "Mensagem para o cliente… use @ para mencionar"
+            }
+            className="flex-1 px-4 py-2.5 rounded-2xl border border-border bg-background text-sm resize-none max-h-32"
+          />
+          {mencaoOpen && sugestoesMencao.length > 0 && (
+            <div className="absolute bottom-full left-12 mb-1 w-64 bg-popover border border-border rounded-md shadow-elevated z-10 overflow-hidden">
+              {sugestoesMencao.map((p) => (
+                <button
+                  key={p}
+                  onMouseDown={(e) => { e.preventDefault(); inserirMencao(p); }}
+                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-secondary"
+                >
+                  @{p}
+                </button>
+              ))}
+            </div>
+          )}
           <button
             onClick={enviar}
-            className="h-8 px-3 rounded-md bg-primary text-primary-foreground text-xs font-medium inline-flex items-center gap-1.5"
+            className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0 hover:bg-primary/90"
+            title="Enviar"
           >
-            <Send className="h-3.5 w-3.5" /> Enviar
+            <Send className="h-4 w-4" />
           </button>
         </div>
       </div>
@@ -3254,6 +3292,12 @@ function CandidatoDetailSheet({
 }) {
   useScrollLock(open);
   const { id: vagaIdParam } = useParams();
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (open && scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTop = 0;
+    }
+  }, [open, candidato?.id, candidatoExtra?.id]);
   if (!open) return null;
 
   // Aceita tanto candidato "oficial" quanto extra (manual/convidado)
@@ -3277,7 +3321,7 @@ function CandidatoDetailSheet({
     discStatus: "nao_solicitado" as const,
   };
 
-  const etapaPodeAgendar = etapaAtual === "Entrevista" || etapaAtual === "Quest/Entrevista";
+  const etapaPodeAgendar = etapaAtual === "Entrevista Azumi" || etapaAtual === "Entrevista gestor" || etapaAtual === "Quest/Entrevista";
   const ultimasMensagens = mensagensVaga.slice(-2);
   const questsDoCandidato = questionariosVaga.map((q) => {
     const resp = q.respostasPorCandidato[cand.id];
@@ -3391,7 +3435,7 @@ function CandidatoDetailSheet({
         </header>
 
         {/* Conteúdo com scroll */}
-        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-6">
+        <div ref={scrollAreaRef} className="flex-1 overflow-y-auto px-5 py-5 space-y-6">
           {/* Bloco: Dados */}
           <section>
             <h3 className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-3">Dados do candidato</h3>
@@ -3919,7 +3963,7 @@ function RelatorioCandidatoModal({
     }));
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+    <div className="fixed inset-0 z-[60] bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
       <div className="bg-card border border-border rounded-2xl shadow-elevated w-full max-w-5xl max-h-[92vh] flex flex-col animate-scale-in overflow-hidden">
         {/* Header */}
         <header className="px-6 py-4 border-b border-border flex items-center gap-3">
@@ -4316,7 +4360,7 @@ function AgendarEntrevistaGestorModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} aria-hidden />
       <div className="relative w-full max-w-2xl bg-card border border-border rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
         <div className="flex items-start justify-between gap-3 p-5 border-b border-border">
