@@ -25,6 +25,7 @@ import AdminDashboard from "./pages/admin/DashboardPage";
 import Empresas from "./pages/admin/Empresas";
 import AtracaoRouter from "./pages/AtracaoRouter";
 import VagaDetalheAdmin from "./pages/admin/VagaDetalhe";
+import RelatorioFinalVagaPage from "./pages/admin/RelatorioFinalVagaPage";
 import Analytics from "./pages/admin/Analytics";
 import GestaoConta from "./pages/admin/GestaoConta";
 import HorasPage from "./pages/admin/HorasPage";
@@ -160,6 +161,7 @@ const AppRoutes = () => (
       <Route path="/app/solicitacoes/:id" element={<Stub title="Detalhe da solicitação" />} />
       <Route path="/app/atracao" element={<AtracaoRouter />} />
       <Route path="/app/atracao/:id" element={<VagaDetalheAdmin />} />
+      <Route path="/app/atracao/:id/relatorio-final" element={<RelatorioFinalVagaPage />} />
       <Route path="/app/candidatos/:id" element={<Stub title="Perfil do candidato" subtitle="DISC, questionários, pareceres" />} />
       <Route path="/app/analytics" element={<Analytics />} />
       <Route path="/app/gestao-de-conta" element={<GestaoConta />} />
