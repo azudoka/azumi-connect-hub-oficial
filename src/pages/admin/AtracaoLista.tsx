@@ -152,14 +152,23 @@ export default function AtracaoLista() {
 
       {view === "kanban" ? (
         <>
-          {/* Header de fases com datas (não se confunde com as colunas — é a timeline geral) */}
+          {/* Header de fases — uma "fatia" por coluna, alinhada com o grid abaixo */}
           <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-5 gap-4 mb-2 px-1">
             {FUNIL_ETAPAS.map((etapa) => {
               const d = DATAS_FASE_MOCK[etapa];
+              const inicio = d.inicio || "—";
+              const fim = d.fim || "—";
               return (
-                <div key={`hdr-${etapa}`} className="text-[10px] font-data uppercase tracking-wider text-muted-foreground truncate">
-                  <span className="font-semibold text-foreground/70">{FUNIL_ETAPA_LABEL[etapa]}</span>
-                  <span className="ml-1.5">{d.inicio} → {d.fim}</span>
+                <div
+                  key={`hdr-${etapa}`}
+                  className="min-w-0 flex flex-col gap-0.5 rounded-md border border-border/60 bg-muted/30 px-2 py-1.5"
+                >
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-foreground/70 truncate">
+                    {FUNIL_ETAPA_LABEL[etapa]}
+                  </span>
+                  <span className="font-data text-[10px] text-muted-foreground tabular-nums">
+                    {inicio} <span className="text-foreground/40">→</span> {fim}
+                  </span>
                 </div>
               );
             })}

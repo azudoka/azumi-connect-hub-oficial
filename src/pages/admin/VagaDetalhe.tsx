@@ -1528,26 +1528,62 @@ function DeclinarForm({
   onCancel: () => void;
   onSave: (quem: "candidato" | "azumi", motivo: string) => void;
 }) {
-  const [quem, setQuem] = useState<"candidato" | "azumi">("candidato");
+  const TIPOS = [
+    { value: "candidato_recusou", label: "Candidato recusou", quem: "candidato" as const },
+    { value: "cliente_recusou",   label: "Cliente recusou",   quem: "azumi"     as const },
+    { value: "nao_compareceu",    label: "Não compareceu",    quem: "candidato" as const },
+    { value: "reprovado_azumi",   label: "Reprovado pela Azumi", quem: "azumi"  as const },
+  ];
+  const [tipo, setTipo] = useState(TIPOS[0].value);
   const [motivo, setMotivo] = useState("");
+  const [verTemplate, setVerTemplate] = useState(false);
+
+  const tipoSel = TIPOS.find((t) => t.value === tipo)!;
+  const isCandidatoRecusou = tipo === "candidato_recusou";
+  const templateWhats = `Olá ${nome}, tudo bem? Recebemos sua decisão e respeitamos. Caso queira retomar a conversa no futuro, é só nos chamar por aqui. Desejamos sucesso! — Time Azumi`;
 
   return (
     <div className="space-y-3 text-sm">
       <p>Registrar declínio de <strong>{nome}</strong>.</p>
-      <Field label="Quem declinou">
-        <select value={quem} onChange={(e) => setQuem(e.target.value as "candidato" | "azumi")} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm">
-          <option value="candidato">Candidato</option>
-          <option value="azumi">Azumi (reprovado internamente)</option>
+      <Field label="Tipo de declínio">
+        <select value={tipo} onChange={(e) => setTipo(e.target.value)} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm">
+          {TIPOS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
         </select>
       </Field>
-      <Field label="Motivo">
+      <Field label="Motivo / observação">
         <textarea rows={3} value={motivo} onChange={(e) => setMotivo(e.target.value)} className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm" />
       </Field>
+
+      {isCandidatoRecusou && (
+        <div className="rounded-md border border-border bg-muted/30 p-3 text-xs">
+          <button
+            type="button"
+            onClick={() => setVerTemplate((v) => !v)}
+            className="text-primary font-medium inline-flex items-center gap-1.5"
+          >
+            <MessageCircle className="h-3.5 w-3.5" />
+            {verTemplate ? "Ocultar mensagem sugerida" : "Ver mensagem de WhatsApp sugerida"}
+          </button>
+          {verTemplate && (
+            <div className="mt-2 space-y-2">
+              <div className="rounded bg-background border border-border p-2 whitespace-pre-wrap">{templateWhats}</div>
+              <button
+                type="button"
+                onClick={() => { navigator.clipboard?.writeText(templateWhats); toast.success("Mensagem copiada."); }}
+                className="h-7 px-2 rounded border border-border hover:bg-secondary text-xs inline-flex items-center gap-1.5"
+              >
+                <Copy className="h-3 w-3" /> Copiar mensagem
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="flex justify-end gap-2 pt-2">
         <button onClick={onCancel} className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm">Cancelar</button>
         <button
           disabled={!motivo.trim()}
-          onClick={() => onSave(quem, motivo.trim())}
+          onClick={() => onSave(tipoSel.quem, `[${tipoSel.label}] ${motivo.trim()}`)}
           className="h-9 px-4 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium inline-flex items-center gap-1.5 disabled:opacity-50"
         >
           <ThumbsDown className="h-3.5 w-3.5" /> Registrar
@@ -1569,7 +1605,8 @@ function AgendarEntrevistaForm({
   const [tipo, setTipo] = useState<EventoEntrevista["tipo"]>("Interno Azumi");
   const [data, setData] = useState("");
   const [hora, setHora] = useState("");
-  const [local, setLocal] = useState("Google Meet");
+  const [canal, setCanal] = useState<"Google Meet" | "Microsoft Teams" | "Presencial">("Google Meet");
+  const [endereco, setEndereco] = useState("");
 
   return (
     <div className="space-y-3 text-sm">
@@ -1588,15 +1625,25 @@ function AgendarEntrevistaForm({
           <input type="time" value={hora} onChange={(e) => setHora(e.target.value)} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm" />
         </Field>
       </div>
-      <Field label="Local / link">
-        <input value={local} onChange={(e) => setLocal(e.target.value)} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm" />
+      <Field label="Canal">
+        <select value={canal} onChange={(e) => setCanal(e.target.value as typeof canal)} className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm">
+          <option value="Google Meet">Google Meet</option>
+          <option value="Microsoft Teams">Microsoft Teams</option>
+          <option value="Presencial">Presencial</option>
+        </select>
       </Field>
+      {canal === "Presencial" && (
+        <Field label="Endereço">
+          <input value={endereco} onChange={(e) => setEndereco(e.target.value)} placeholder="Rua, nº, sala" className="w-full h-9 px-3 rounded-md border border-border bg-background text-sm" />
+        </Field>
+      )}
       <div className="flex justify-end gap-2 pt-2">
         <button onClick={onCancel} className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm">Cancelar</button>
         <button
-          disabled={!data || !hora}
+          disabled={!data || !hora || (canal === "Presencial" && !endereco.trim())}
           onClick={() => {
             const [y, m, d] = data.split("-");
+            const local = canal === "Presencial" ? `Presencial — ${endereco}` : canal;
             onSave({ tipo, data: `${d}/${m}/${y}`, hora, local });
           }}
           className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium inline-flex items-center gap-1.5 disabled:opacity-50"
@@ -1629,55 +1676,94 @@ function ChatVagaPanel({
 }) {
   const [canal, setCanal] = useState<"interno" | "cliente">("interno");
   const [texto, setTexto] = useState("");
+  const [anexoNome, setAnexoNome] = useState<string | null>(null);
+  const [mencaoOpen, setMencaoOpen] = useState(false);
+  const [mencaoQuery, setMencaoQuery] = useState("");
+  const taRef = useRef<HTMLTextAreaElement>(null);
 
   const filtradas = mensagens.filter((m) => m.canal === canal);
 
+  const sugestoesMencao = useMemo(
+    () =>
+      PESSOAS_MENCAO_VAGA.filter((p) =>
+        p.toLowerCase().includes(mencaoQuery.toLowerCase()),
+      ).slice(0, 5),
+    [mencaoQuery],
+  );
+
+  function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    const val = e.target.value;
+    setTexto(val);
+    const cursor = e.target.selectionStart ?? val.length;
+    const trecho = val.slice(0, cursor);
+    const m = trecho.match(/@([\wÀ-ÿ ]*)$/);
+    if (m) {
+      setMencaoQuery(m[1]);
+      setMencaoOpen(true);
+    } else {
+      setMencaoOpen(false);
+    }
+  }
+
+  function inserirMencao(nome: string) {
+    setTexto((prev) => prev.replace(/@([\wÀ-ÿ ]*)$/, `@${nome} `));
+    setMencaoOpen(false);
+    taRef.current?.focus();
+  }
+
   function enviar() {
     const t = texto.trim();
-    if (!t) return;
+    if (!t && !anexoNome) return;
     onSend({
       id: `mv-${Date.now()}`,
       autor: "Você",
       iniciais: "VC",
       quando: new Date().toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }),
-      texto: t,
+      texto: t || (anexoNome ? `📎 ${anexoNome}` : ""),
       canal,
+      anexo: anexoNome ?? undefined,
     });
     setTexto("");
+    setAnexoNome(null);
+    setMencaoOpen(false);
   }
 
   return (
     <div className="bg-card border border-border rounded-xl p-5 max-w-3xl">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <h3 className="font-display font-semibold">Conversas sobre esta vaga</h3>
         <div className="inline-flex rounded-md border border-border overflow-hidden text-xs">
           <button
             onClick={() => setCanal("interno")}
-            className={cn("px-3 h-7", canal === "interno" ? "bg-primary text-primary-foreground" : "bg-card")}
+            className={cn("px-3 h-7", canal === "interno" ? "bg-primary text-primary-foreground" : "bg-card hover:bg-secondary")}
           >
-            Interno
+            Interno (Azumi)
           </button>
           <button
             onClick={() => setCanal("cliente")}
-            className={cn("px-3 h-7", canal === "cliente" ? "bg-primary text-primary-foreground" : "bg-card")}
+            className={cn("px-3 h-7", canal === "cliente" ? "bg-primary text-primary-foreground" : "bg-card hover:bg-secondary")}
           >
             Com cliente
           </button>
         </div>
       </div>
+
       <div
         className={cn(
-          "text-xs rounded-md px-3 py-2 mb-3 border",
+          "text-xs rounded-md px-3 py-2 mb-3 border inline-flex items-center gap-1.5",
           canal === "interno"
             ? "bg-muted/40 border-border text-muted-foreground"
-            : "bg-warning/10 border-warning/30 text-warning-foreground",
+            : "bg-warning/10 border-warning/30 text-warning",
         )}
       >
-        {canal === "interno"
-          ? "Visível apenas para o time Azumi."
-          : "Visível para o cliente. Evite informações internas."}
+        {canal === "interno" ? (
+          <><Eye className="h-3 w-3" /> Não visível para o cliente</>
+        ) : (
+          <><AlertTriangle className="h-3 w-3" /> Mensagens aqui aparecem para o cliente</>
+        )}
       </div>
-      <div className="space-y-3 max-h-80 overflow-y-auto mb-3">
+
+      <div className="space-y-3 max-h-80 overflow-y-auto mb-3 pr-1">
         {filtradas.length === 0 ? (
           <div className="text-center text-sm text-muted-foreground py-6">Sem mensagens ainda.</div>
         ) : (
@@ -1691,33 +1777,115 @@ function ChatVagaPanel({
                   <span className="text-sm font-medium">{m.autor}</span>
                   <span className="text-xs text-muted-foreground">{m.quando}</span>
                 </div>
-                <p className="text-sm text-foreground whitespace-pre-wrap break-words">{m.texto}</p>
+                <p className="text-sm text-foreground whitespace-pre-wrap break-words">
+                  {renderMensagemFormatada(m.texto)}
+                </p>
+                {m.anexo && (
+                  <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2 py-1 text-xs">
+                    <Paperclip className="h-3 w-3" />
+                    <span className="truncate max-w-[220px]">{m.anexo}</span>
+                  </div>
+                )}
               </div>
             </div>
           ))
         )}
       </div>
-      <div className="flex gap-2">
-        <input
+
+      {anexoNome && (
+        <div className="mb-2 inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2 py-1 text-xs">
+          <Paperclip className="h-3 w-3" />
+          <span className="truncate max-w-[220px]">{anexoNome}</span>
+          <button onClick={() => setAnexoNome(null)} className="ml-1 hover:text-destructive">
+            <XIcon className="h-3 w-3" />
+          </button>
+        </div>
+      )}
+
+      <div className="relative">
+        <textarea
+          ref={taRef}
           value={texto}
-          onChange={(e) => setTexto(e.target.value)}
+          onChange={handleChange}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
+            if (e.key === "Enter" && !e.shiftKey && !mencaoOpen) {
               e.preventDefault();
               enviar();
             }
+            if (e.key === "Escape") setMencaoOpen(false);
           }}
-          placeholder={canal === "interno" ? "Mensagem interna…" : "Mensagem para o cliente…"}
-          className="flex-1 h-9 px-3 rounded-md border border-border bg-background text-sm"
+          rows={2}
+          placeholder={
+            canal === "interno"
+              ? "Mensagem interna… use @ para mencionar"
+              : "Mensagem para o cliente… use @ para mencionar"
+          }
+          className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm resize-none"
         />
-        <button
-          onClick={enviar}
-          className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-xs font-medium inline-flex items-center gap-1.5"
-        >
-          <Send className="h-3.5 w-3.5" /> Enviar
-        </button>
+        {mencaoOpen && sugestoesMencao.length > 0 && (
+          <div className="absolute bottom-full left-0 mb-1 w-64 bg-popover border border-border rounded-md shadow-elevated z-10 overflow-hidden">
+            {sugestoesMencao.map((p) => (
+              <button
+                key={p}
+                onMouseDown={(e) => { e.preventDefault(); inserirMencao(p); }}
+                className="w-full text-left px-3 py-1.5 text-xs hover:bg-secondary"
+              >
+                @{p}
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="flex items-center justify-between mt-2 gap-2">
+          <button
+            onClick={() => {
+              const nomes = ["briefing.pdf", "curriculo.pdf", "parecer.docx", "anotacoes.txt"];
+              setAnexoNome(nomes[Math.floor(Math.random() * nomes.length)]);
+              toast.info("Anexo selecionado (mock).");
+            }}
+            className="h-8 px-3 rounded-md border border-border hover:bg-secondary text-xs inline-flex items-center gap-1.5"
+          >
+            <Paperclip className="h-3.5 w-3.5" /> Anexar
+          </button>
+          <button
+            onClick={enviar}
+            className="h-8 px-3 rounded-md bg-primary text-primary-foreground text-xs font-medium inline-flex items-center gap-1.5"
+          >
+            <Send className="h-3.5 w-3.5" /> Enviar
+          </button>
+        </div>
       </div>
     </div>
   );
+}
+
+// Renderiza texto com links http(s) clicáveis e @menções destacadas
+function renderMensagemFormatada(texto: string) {
+  const partes = texto.split(/(\s+)/);
+  return partes.map((parte, i) => {
+    if (/^https?:\/\/\S+$/i.test(parte)) {
+      return (
+        <a
+          key={i}
+          href={parte}
+          target="_blank"
+          rel="noreferrer"
+          className="text-primary underline underline-offset-2 break-all"
+        >
+          {parte}
+        </a>
+      );
+    }
+    const mencao = parte.match(/^@([\wÀ-ÿ]+(?: [\wÀ-ÿ]+)?)/);
+    if (mencao) {
+      const resto = parte.slice(mencao[0].length);
+      return (
+        <span key={i}>
+          <span className="rounded bg-primary/10 text-primary px-1 font-medium">@{mencao[1]}</span>
+          {resto}
+        </span>
+      );
+    }
+    return <span key={i}>{parte}</span>;
+  });
 }
 
