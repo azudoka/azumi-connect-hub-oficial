@@ -651,7 +651,7 @@ export default function VagaDetalheAdmin() {
               <Link2 className="h-3.5 w-3.5" /> Convidar candidato
             </button>
             <button
-              onClick={() => setNovoQuestOpen(true)}
+              onClick={() => setEditorQuestId("novo")}
               className="h-8 px-3 rounded-lg border border-border text-xs flex items-center gap-1.5 hover:bg-secondary"
             >
               <FileQuestion className="h-3.5 w-3.5" /> Criar questionário
