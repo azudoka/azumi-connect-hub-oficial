@@ -188,6 +188,37 @@ export default function VagaDetalheAdmin() {
   const [confirmarDecisaoId, setConfirmarDecisaoId] = useState<string | null>(null);
   const [opcaoDecisao, setOpcaoDecisao] = useState<OpcaoDecisao | null>(null);
 
+  // ── Estado adicional (mock) — publicação, candidatos extras, eventos, chat
+  const [publicacao, setPublicacao] = useState<PublicacaoStatus>("nao_publicada");
+  const [candidatosExtras, setCandidatosExtras] = useState<CandidatoExtra[]>([]);
+  const [questionariosVaga, setQuestionariosVaga] = useState<QuestionarioVaga[]>([
+    { id: "q-disc", nome: "DISC padrão", tipo: "Comportamental", questoes: 24, candidatosRespostas: {} },
+  ]);
+  const [eventos, setEventos] = useState<EventoEntrevista[]>([]);
+  const [mensagens, setMensagens] = useState<MensagemVaga[]>([
+    { id: "mv1", autor: "Ana Beatriz", iniciais: "AB", quando: "06/04 14:20",
+      texto: "Iniciamos a triagem com 48 currículos. Foco em perfil executivo.", canal: "interno" },
+    { id: "mv2", autor: "RH Cliente", iniciais: "RH", quando: "07/04 09:10",
+      texto: "Podemos priorizar quem tenha vivência em multinacional?", canal: "cliente" },
+    { id: "mv3", autor: "Ana Beatriz", iniciais: "AB", quando: "07/04 09:42",
+      texto: "Anotado @RH Cliente — vou sinalizar essa prioridade no parecer. https://azumi.app/vaga/v1",
+      canal: "cliente" },
+  ]);
+  const [declinios, setDeclinios] = useState<Record<string, { motivo: string; quem: "candidato" | "azumi" }>>({});
+
+  // ── Modais novos ─────────────────────────────────────────────────
+  const [novoCandOpen, setNovoCandOpen] = useState(false);
+  const [convidarOpen, setConvidarOpen] = useState(false);
+  const [novoQuestOpen, setNovoQuestOpen] = useState(false);
+  const [resumoOpen, setResumoOpen] = useState<string | null>(null);
+  const [discWhatsOpen, setDiscWhatsOpen] = useState<string | null>(null);
+  const [associarQuestOpen, setAssociarQuestOpen] = useState<string | null>(null);
+  const [declinarOpen, setDeclinarOpen] = useState<string | null>(null);
+  const [agendarOpen, setAgendarOpen] = useState<string | null>(null);
+
+  // Link público da vaga (mock)
+  const linkPublico = `https://azumi.jobs/vaga/${vaga.id}`;
+
   function moverCandidato(candId: string, coluna: Coluna) {
     const cand = candidatosVaga.find((c) => c.id === candId);
     setColunasEstado((prev) =>
