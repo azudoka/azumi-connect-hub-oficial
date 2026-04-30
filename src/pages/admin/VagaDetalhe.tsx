@@ -2878,29 +2878,72 @@ function CandidatoDetailSheet({
                   onClick={() => onAssociarQuestionario(cand.id)}
                   className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-border text-[11px] font-medium hover:bg-secondary"
                 >
-                  <ListChecks className="h-3 w-3" /> Associar
+                  <ListChecks className="h-3 w-3" /> Enviar
                 </button>
               </div>
               {questsDoCandidato.length === 0 ? (
                 <div className="text-xs text-muted-foreground py-2">Nenhum questionário criado para esta vaga.</div>
               ) : (
-                <ul className="space-y-1.5">
+                <ul className="space-y-2">
                   {questsDoCandidato.map((q) => (
-                    <li key={q.id} className="flex items-center justify-between text-xs">
-                      <div className="min-w-0">
-                        <div className="font-medium truncate">{q.nome}</div>
-                        <div className="text-muted-foreground text-[11px]">{q.tipo} · {q.questoes} questões</div>
+                    <li key={q.id} className="rounded-md border border-border bg-background/40 p-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="text-xs font-medium truncate">{q.nome}</div>
+                          <div className="text-[10px] text-muted-foreground">
+                            {q.perguntas.length} pergunta(s)
+                            {q.resposta?.enviadoEm && ` · enviado em ${q.resposta.enviadoEm}`}
+                            {q.resposta?.respondidoEm && ` · respondido em ${q.resposta.respondidoEm}`}
+                          </div>
+                        </div>
+                        <span className={cn(
+                          "px-2 py-0.5 rounded-full text-[10px] font-medium border shrink-0",
+                          q.statusCand === "respondido" && "bg-success/10 text-success border-success/30",
+                          q.statusCand === "pendente" && "bg-warning/10 text-warning border-warning/30",
+                          q.statusCand === "nao_associado" && "bg-secondary text-muted-foreground border-border",
+                        )}>
+                          {q.statusCand === "respondido" ? "Respondido"
+                            : q.statusCand === "pendente" ? "Pendente"
+                            : "Não associado"}
+                        </span>
                       </div>
-                      <span className={cn(
-                        "px-2 py-0.5 rounded-full text-[10px] font-medium border shrink-0",
-                        q.statusCand === "respondido" && "bg-success/10 text-success border-success/30",
-                        q.statusCand === "pendente" && "bg-warning/10 text-warning border-warning/30",
-                        q.statusCand === "nao_associado" && "bg-secondary text-muted-foreground border-border",
-                      )}>
-                        {q.statusCand === "respondido" ? "Respondido"
-                          : q.statusCand === "pendente" ? "Pendente"
-                          : "Não associado"}
-                      </span>
+
+                      {q.statusCand === "pendente" && q.resposta?.link && (
+                        <div className="mt-2 flex items-center gap-1.5">
+                          <input
+                            readOnly
+                            value={q.resposta.link}
+                            className="flex-1 h-7 px-2 rounded-md border border-border bg-card text-[10px] font-data"
+                          />
+                          <button
+                            onClick={() => { navigator.clipboard?.writeText(q.resposta!.link!); toast.success("Link copiado."); }}
+                            className="h-7 w-7 inline-flex items-center justify-center rounded-md border border-border hover:bg-secondary"
+                            title="Copiar link"
+                          >
+                            <Copy className="h-3 w-3" />
+                          </button>
+                          {onEnviarWhatsQuestionario && (
+                            <button
+                              onClick={() => onEnviarWhatsQuestionario(cand.id, q.id)}
+                              className="h-7 px-2 rounded-md bg-success text-success-foreground text-[10px] font-medium inline-flex items-center gap-1"
+                              title="Enviar via WhatsApp"
+                            >
+                              <MessageCircle className="h-3 w-3" /> WhatsApp
+                            </button>
+                          )}
+                        </div>
+                      )}
+
+                      {q.statusCand === "respondido" && q.resposta && (
+                        <CorrigirQuestionarioInline
+                          perguntas={q.perguntas}
+                          respostas={q.resposta.respostas ?? {}}
+                          avaliacaoInicial={q.resposta.avaliacao?.questoes ?? {}}
+                          mediaSalva={q.resposta.avaliacao?.media}
+                          salvoComo={q.resposta.avaliacao?.salvoComo}
+                          onSalvar={(quests, modo) => onSalvarAvaliacao?.(q.id, cand.id, quests, modo)}
+                        />
+                      )}
                     </li>
                   ))}
                 </ul>
