@@ -365,7 +365,7 @@ export default function ProjetosPage() {
     <div>
       <PageHeader
         title="Projetos"
-        subtitle="Cronogramas, projetos vigentes e encerrados"
+        subtitle={isConsultor ? "Projetos que você conduz na Azumi." : "Cronogramas, projetos vigentes e encerrados"}
         actions={
           <>
             <Button variant="outline" onClick={() => setCronOpen(true)} className="gap-1.5">
