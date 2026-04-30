@@ -2296,6 +2296,7 @@ function CandidatoDetailSheet({
                 icon: <FileText className="h-3.5 w-3.5 text-primary" />,
                 texto: "Relatório enviado ao cliente.",
               });
+              if (itens.length === 0) {
                 return <div className="text-xs text-muted-foreground py-2">Sem interações registradas ainda.</div>;
               }
               return (
