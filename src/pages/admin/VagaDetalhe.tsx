@@ -1928,14 +1928,17 @@ export default function VagaDetalheAdmin() {
       {agendarOpen && (() => {
         const c = candidatosVaga.find((x) => x.id === agendarOpen);
         return (
-          <ModalShell title="Agendar entrevista" onClose={() => setAgendarOpen(null)}>
+          <ModalShell title="Agendar entrevista Azumi" onClose={() => setAgendarOpen(null)}>
+            <p className="text-xs text-muted-foreground mb-3">
+              Entrevista interna com consultor Azumi. Defina data, horário e modo (remoto/presencial).
+            </p>
             <AgendarEntrevistaForm
               candidatoNome={c?.nome ?? "Candidato"}
               onCancel={() => setAgendarOpen(null)}
               onSave={(ev) => {
                 if (agendarOpen && c) {
                   setEventos((prev) => [...prev, { ...ev, id: `ev-${Date.now()}`, candidatoId: c.id, candidatoNome: c.nome }]);
-                  toast.success(`Entrevista agendada para ${ev.data} ${ev.hora}.`);
+                  toast.success(`Entrevista Azumi agendada para ${ev.data} ${ev.hora}.`);
                 }
                 setAgendarOpen(null);
               }}
