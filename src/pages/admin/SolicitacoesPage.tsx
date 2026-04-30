@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import SolicitacoesClientePage from "@/pages/SolicitacoesClientePage";
 import { PageHeader } from "@/components/PageHeader";
@@ -10,7 +11,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Search, Copy, Check, X, MessageSquare } from "lucide-react";
+import { Search, Copy, Check, X, MessageSquare, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Status = "aberta" | "andamento" | "finalizada" | "cancelada";
@@ -91,23 +92,37 @@ function CopyBtn({ value }: { value: string }) {
 }
 
 function AdminView() {
+  const navigate = useNavigate();
   const [busca, setBusca]       = useState("");
   const [empresa, setEmpresa]   = useState<string>("all");
   const [tipo, setTipo]         = useState<string>("all");
   const [status, setStatus]     = useState<Status | "all">("all");
+  const [periodo, setPeriodo]   = useState<"all" | "7" | "30" | "90">("all");
   const [selected, setSelected] = useState<Solicitacao | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
 
   const empresas = useMemo(() => Array.from(new Set(MOCK.map((s) => s.empresa))), []);
   const tipos    = useMemo(() => Array.from(new Set(MOCK.map((s) => s.tipo))), []);
 
+  // Parser do formato "DD/MM/YYYY" usado no mock
+  function parseDataBR(s: string): Date {
+    const [d, m, y] = s.split("/").map(Number);
+    return new Date(y, m - 1, d);
+  }
+
   const lista = useMemo(() => MOCK.filter((s) => {
     if (empresa !== "all" && s.empresa !== empresa) return false;
     if (tipo !== "all" && s.tipo !== tipo) return false;
     if (status !== "all" && s.status !== status) return false;
+    if (periodo !== "all") {
+      const dias = Number(periodo);
+      const limite = new Date();
+      limite.setDate(limite.getDate() - dias);
+      if (parseDataBR(s.data) < limite) return false;
+    }
     if (busca && !`${s.protocolo} ${s.titulo} ${s.empresa}`.toLowerCase().includes(busca.toLowerCase())) return false;
     return true;
-  }), [empresa, tipo, status, busca]);
+  }), [empresa, tipo, status, periodo, busca]);
 
   function openPanel(s: Solicitacao) {
     setSelected(s);
@@ -126,10 +141,21 @@ function AdminView() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Solicitações" subtitle="Central de solicitações" />
+      <PageHeader
+        title="Solicitações"
+        subtitle="Central de solicitações"
+        actions={
+          <Button
+            onClick={() => navigate("/app/atracao?new=1")}
+            className="rounded-[100px] bg-[#3B82F6] hover:bg-[#3B82F6]/90 text-white gap-1.5"
+          >
+            <Plus className="h-4 w-4" /> Nova solicitação
+          </Button>
+        }
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-        <div className="relative md:col-span-5">
+        <div className="relative md:col-span-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por protocolo, título ou empresa…" className="pl-9 rounded-[100px]" />
         </div>
@@ -148,13 +174,22 @@ function AdminView() {
           </SelectContent>
         </Select>
         <Select value={status} onValueChange={(v) => setStatus(v as Status | "all")}>
-          <SelectTrigger className="md:col-span-3 rounded-[100px]"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectTrigger className="md:col-span-2 rounded-[100px]"><SelectValue placeholder="Status" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos os status</SelectItem>
             <SelectItem value="aberta">Aberta</SelectItem>
             <SelectItem value="andamento">Em andamento</SelectItem>
             <SelectItem value="finalizada">Finalizada</SelectItem>
             <SelectItem value="cancelada">Cancelada</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={periodo} onValueChange={(v) => setPeriodo(v as typeof periodo)}>
+          <SelectTrigger className="md:col-span-2 rounded-[100px]"><SelectValue placeholder="Período" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todo o período</SelectItem>
+            <SelectItem value="7">Últimos 7 dias</SelectItem>
+            <SelectItem value="30">Últimos 30 dias</SelectItem>
+            <SelectItem value="90">Últimos 90 dias</SelectItem>
           </SelectContent>
         </Select>
       </div>
