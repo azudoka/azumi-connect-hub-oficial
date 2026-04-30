@@ -323,6 +323,70 @@ export default function VagaDetalheAdmin() {
         }
       />
 
+      {/* ─── Publicação no site de vagas Azumi ───
+          TODO: aqui será plugada a automação real com o site de vagas / APIs.
+          Hoje é só mock em memória. */}
+      <div className="mb-4 rounded-xl border border-border bg-card px-4 py-3 flex items-center gap-3 flex-wrap">
+        <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
+        <div className="text-xs">
+          <span className="text-muted-foreground">Publicação:</span>{" "}
+          {publicacao === "publicada" ? (
+            <span className="inline-flex items-center gap-1 rounded-full border border-success/30 bg-success/10 px-2 py-0.5 text-success font-medium">
+              <CheckCircle2 className="h-3 w-3" /> Publicada no site da Azumi
+            </span>
+          ) : publicacao === "em_revisao" ? (
+            <span className="inline-flex items-center gap-1 rounded-full border border-warning/30 bg-warning/10 px-2 py-0.5 text-warning font-medium">
+              <Clock className="h-3 w-3" /> Em revisão
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 rounded-full border border-border bg-secondary px-2 py-0.5 text-muted-foreground font-medium">
+              Não publicada
+            </span>
+          )}
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          {publicacao !== "publicada" && (
+            <button
+              type="button"
+              onClick={() => {
+                setPublicacao("em_revisao");
+                setTimeout(() => {
+                  setPublicacao("publicada");
+                  toast.success("Vaga marcada como publicada no site da Azumi (mock).");
+                }, 600);
+                toast.info("Enviando para revisão antes de publicar…");
+              }}
+              className="h-8 px-3 rounded-md bg-primary text-primary-foreground text-xs font-medium inline-flex items-center gap-1.5"
+            >
+              <Globe className="h-3.5 w-3.5" /> Publicar no site
+            </button>
+          )}
+          {publicacao === "publicada" && (
+            <button
+              type="button"
+              onClick={() => {
+                setPublicacao("nao_publicada");
+                toast.info("Vaga despublicada do site (mock).");
+              }}
+              className="h-8 px-3 rounded-md border border-border hover:bg-secondary text-xs font-medium"
+            >
+              Despublicar
+            </button>
+          )}
+          <a
+            href={linkPublico}
+            onClick={(e) => {
+              e.preventDefault();
+              navigator.clipboard?.writeText(linkPublico);
+              toast.success("Link público copiado!");
+            }}
+            className="h-8 px-3 rounded-md border border-border hover:bg-secondary text-xs font-medium inline-flex items-center gap-1.5"
+          >
+            <Link2 className="h-3.5 w-3.5" /> Copiar link
+          </a>
+        </div>
+      </div>
+
       {vaga.beneficios && vaga.beneficios.length > 0 && (
         <div className="mb-5 flex flex-wrap items-center gap-2">
           <span className="text-xs uppercase tracking-wider text-muted-foreground mr-1">Benefícios</span>
