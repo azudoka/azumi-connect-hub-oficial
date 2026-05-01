@@ -3314,6 +3314,7 @@ function CandidatoDetailSheet({
   relatorioStatus,
   onEnviarWhatsQuestionario,
   onSalvarAvaliacao,
+  onSimularResposta,
 }: {
   open: boolean;
   candidato: CandidatoBase | null;
