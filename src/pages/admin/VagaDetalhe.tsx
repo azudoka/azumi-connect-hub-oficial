@@ -498,6 +498,50 @@ export default function VagaDetalheAdmin() {
     return link;
   }
 
+  /**
+   * DEV ONLY — simula a resposta do candidato a um questionário pendente.
+   * Gera respostas fake coerentes por tipo de pergunta e marca como respondido.
+   */
+  function simularRespostaQuestionario(candidatoId: string, questionarioId: string) {
+    const hoje = new Date().toLocaleDateString("pt-BR");
+    setQuestionariosVaga((prev) =>
+      prev.map((q) => {
+        if (q.id !== questionarioId) return q;
+        const atual = q.respostasPorCandidato[candidatoId];
+        // Gera respostas mock coerentes por tipo
+        const respostas: Record<string, string> = {};
+        q.perguntas.forEach((p) => {
+          if (p.tipo === "texto_livre") {
+            respostas[p.id] =
+              "Tenho experiência relevante na área e busco aplicar meus conhecimentos para gerar resultado nesta posição.";
+          } else if (p.tipo === "multipla_escolha") {
+            respostas[p.id] = p.opcoes?.[0] ?? "Opção 1";
+          } else if (p.tipo === "escala_1_5") {
+            respostas[p.id] = "4";
+          }
+        });
+        return {
+          ...q,
+          respostasPorCandidato: {
+            ...q.respostasPorCandidato,
+            [candidatoId]: {
+              ...(atual ?? {}),
+              status: "respondido",
+              enviadoEm: atual?.enviadoEm ?? hoje,
+              respondidoEm: hoje,
+              respostas,
+              // Mantém avaliação anterior se já existia
+              avaliacao: atual?.avaliacao,
+              notaMedia: atual?.notaMedia,
+              link: atual?.link,
+            },
+          },
+        };
+      }),
+    );
+    toast.success("Resposta simulada gerada. Agora você pode corrigir o questionário.");
+  }
+
   function salvarAvaliacaoQuestionario(
     questionarioId: string,
     candidatoId: string,
@@ -1990,6 +2034,7 @@ export default function VagaDetalheAdmin() {
         relatorioStatus={fichaCandidatoId ? relatoriosPorCandidato[fichaCandidatoId]?.status : undefined}
         onEnviarWhatsQuestionario={(candidatoId, questionarioId) => setWhatsTemplateOpen({ candidatoId, questionarioId })}
         onSalvarAvaliacao={salvarAvaliacaoQuestionario}
+        onSimularResposta={simularRespostaQuestionario}
       />
 
       {/* ── Editor de relatório do candidato (modal grande) ─────── */}
@@ -3269,6 +3314,7 @@ function CandidatoDetailSheet({
   relatorioStatus,
   onEnviarWhatsQuestionario,
   onSalvarAvaliacao,
+  onSimularResposta,
 }: {
   open: boolean;
   candidato: CandidatoBase | null;
@@ -3289,6 +3335,7 @@ function CandidatoDetailSheet({
   relatorioStatus?: "rascunho" | "enviado";
   onEnviarWhatsQuestionario?: (candidatoId: string, questionarioId: string) => void;
   onSalvarAvaliacao?: (questionarioId: string, candidatoId: string, questoes: Record<string, AvaliacaoQuestao>, salvoComo: "rascunho" | "definitivo") => void;
+  onSimularResposta?: (candidatoId: string, questionarioId: string) => void;
 }) {
   useScrollLock(open);
   const { id: vagaIdParam } = useParams();
@@ -3559,6 +3606,22 @@ function CandidatoDetailSheet({
                               <MessageCircle className="h-3 w-3" /> WhatsApp
                             </button>
                           )}
+                        </div>
+                      )}
+
+                      {q.statusCand === "pendente" && onSimularResposta && (
+                        <div className="mt-2 flex items-center justify-between gap-2 rounded-md border border-dashed border-warning/40 bg-warning/5 px-2 py-1.5">
+                          <span className="text-[10px] text-muted-foreground">
+                            <strong className="text-warning">Dev only</strong> · ambiente de teste
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => onSimularResposta(cand.id, q.id)}
+                            className="h-6 px-2 rounded border border-warning/40 bg-card text-[10px] font-medium text-warning hover:bg-warning/10"
+                            title="Gera respostas fake como se o candidato tivesse respondido"
+                          >
+                            Simular resposta do candidato (teste)
+                          </button>
                         </div>
                       )}
 
@@ -3920,16 +3983,37 @@ function RelatorioCandidatoModal({
   );
   const hojeBR = new Date().toLocaleDateString("pt-BR");
 
-  // Mock de questões da primeira questionário associado (fonte do conteúdo no relatório)
-  const questoesMock = useMemo(() => {
-    const q = questionariosVaga[0];
-    if (!q) return [] as { id: string; pergunta: string; resposta: string }[];
-    return Array.from({ length: Math.min(q.questoes, 4) }).map((_, i) => ({
-      id: `${q.id}-q${i + 1}`,
-      pergunta: `Pergunta ${i + 1} — ${q.tipo} (${q.nome})`,
-      resposta: `Resposta do candidato à pergunta ${i + 1} (mock).`,
-    }));
-  }, [questionariosVaga]);
+  // Constrói as questões REAIS do questionário a partir das respostas
+  // do candidato e da avaliação já feita pelo consultor (se houver).
+  const questoesReais = useMemo(() => {
+    const out: {
+      id: string;
+      pergunta: string;
+      resposta: string;
+      notaSalva?: number;
+      justificativaSalva?: string;
+    }[] = [];
+    questionariosVaga.forEach((q) => {
+      const resp = q.respostasPorCandidato[candidato.id];
+      if (!resp || resp.status !== "respondido") return;
+      q.perguntas.forEach((p) => {
+        const av = resp.avaliacao?.questoes[p.id];
+        out.push({
+          id: `${q.id}::${p.id}`,
+          pergunta: `${p.ordem}. ${p.texto}`,
+          resposta: resp.respostas?.[p.id] ?? "— sem resposta —",
+          notaSalva: av?.nota,
+          justificativaSalva: av?.justificativa,
+        });
+      });
+    });
+    return out;
+  }, [questionariosVaga, candidato.id]);
+
+  /** Indica se há ao menos um questionário respondido para este candidato. */
+  const algumRespondido = questoesReais.length > 0;
+  /** Indica se a avaliação já foi feita (pelo menos uma nota). */
+  const algumaAvaliacao = questoesReais.some((q) => q.notaSalva !== undefined);
 
   const [form, setForm] = useState<RelatorioCandidato>(() => draft ?? {
     protocolo: protocoloAuto,
@@ -3943,7 +4027,12 @@ function RelatorioCandidatoModal({
     discResumo: candidato.perfilDom
       ? `Perfil dominante ${candidato.perfilDom}.`
       : "Perfil DISC ainda não disponível.",
-    questoes: Object.fromEntries(questoesMock.map((q) => [q.id, { nota: 3, justificativa: "" }])),
+    questoes: Object.fromEntries(
+      questoesReais.map((q) => [
+        q.id,
+        { nota: (q.notaSalva ?? 3) as 1 | 2 | 3 | 4 | 5, justificativa: q.justificativaSalva ?? "" },
+      ]),
+    ),
     recomendacao: "",
     movimento: "",
     consultorNome: "Ana Beatriz",
@@ -4001,7 +4090,7 @@ function RelatorioCandidatoModal({
         {/* Corpo */}
         <div className="flex-1 overflow-y-auto px-6 py-5">
           {preview ? (
-            <RelatorioPreview form={form} candidato={candidato} vagaTitulo={vagaTitulo} empresa={empresa} questoesMock={questoesMock} />
+            <RelatorioPreview form={form} candidato={candidato} vagaTitulo={vagaTitulo} empresa={empresa} questoesReais={questoesReais} algumRespondido={algumRespondido} algumaAvaliacao={algumaAvaliacao} />
           ) : (
             <div className="space-y-6">
               {/* Cabeçalho */}
@@ -4043,11 +4132,20 @@ function RelatorioCandidatoModal({
               </SecaoEditor>
 
               <SecaoEditor titulo="Questionário — respostas e notas">
-                {questoesMock.length === 0 ? (
-                  <div className="text-xs text-muted-foreground">Nenhum questionário associado a esta vaga.</div>
-                ) : (
+                {!algumRespondido ? (
+                  <div className="text-xs text-muted-foreground rounded-md border border-dashed border-border px-3 py-2">
+                    Questionário ainda não respondido por este candidato. Após responder
+                    (ou usar a simulação na ficha), as perguntas e respostas aparecem aqui.
+                  </div>
+                ) : !algumaAvaliacao ? (
+                  <div className="text-xs text-warning rounded-md border border-warning/30 bg-warning/10 px-3 py-2 mb-2">
+                    Questionário ainda não corrigido. Atribua as notas abaixo — ou
+                    corrija na aba <strong>Questionário</strong> da ficha do candidato.
+                  </div>
+                ) : null}
+                {algumRespondido && (
                   <ul className="space-y-3">
-                    {questoesMock.map((q) => {
+                    {questoesReais.map((q) => {
                       const nota = form.questoes[q.id]?.nota ?? 3;
                       const just = form.questoes[q.id]?.justificativa ?? "";
                       return (
@@ -4198,13 +4296,15 @@ function CampoTextarea({
 }
 
 function RelatorioPreview({
-  form, candidato, vagaTitulo, empresa, questoesMock,
+  form, candidato, vagaTitulo, empresa, questoesReais, algumRespondido, algumaAvaliacao,
 }: {
   form: RelatorioCandidato;
   candidato: CandidatoBase;
   vagaTitulo: string;
   empresa: string;
-  questoesMock: { id: string; pergunta: string; resposta: string }[];
+  questoesReais: { id: string; pergunta: string; resposta: string; notaSalva?: number; justificativaSalva?: string }[];
+  algumRespondido: boolean;
+  algumaAvaliacao: boolean;
 }) {
   return (
     <article className="mx-auto max-w-3xl bg-card border border-border rounded-lg p-8 shadow-sm">
@@ -4242,12 +4342,20 @@ function RelatorioPreview({
         <p>{form.discResumo}</p>
       </BlocoPreview>
 
-      {questoesMock.length > 0 && (
-        <BlocoPreview titulo="Questionário — respostas e notas">
+      <BlocoPreview titulo="Questionário — respostas e notas">
+        {!algumRespondido ? (
+          <p className="text-muted-foreground italic">
+            Questionário ainda não respondido por este candidato.
+          </p>
+        ) : !algumaAvaliacao ? (
+          <p className="text-warning">
+            Questionário ainda não corrigido. Corrija na aba <strong>Questionário</strong> da ficha do candidato.
+          </p>
+        ) : (
           <ul className="space-y-3">
-            {questoesMock.map((q) => {
-              const nota = form.questoes[q.id]?.nota ?? "—";
-              const just = form.questoes[q.id]?.justificativa ?? "";
+            {questoesReais.map((q) => {
+              const nota = form.questoes[q.id]?.nota ?? q.notaSalva ?? "—";
+              const just = form.questoes[q.id]?.justificativa ?? q.justificativaSalva ?? "";
               return (
                 <li key={q.id} className="rounded border border-border p-3">
                   <p className="font-medium">{q.pergunta}</p>
@@ -4257,8 +4365,8 @@ function RelatorioPreview({
               );
             })}
           </ul>
-        </BlocoPreview>
-      )}
+        )}
+      </BlocoPreview>
 
       <BlocoPreview titulo="Recomendação do consultor">
         <p>{form.recomendacao || <em className="text-muted-foreground">—</em>}</p>
