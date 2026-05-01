@@ -498,6 +498,50 @@ export default function VagaDetalheAdmin() {
     return link;
   }
 
+  /**
+   * DEV ONLY — simula a resposta do candidato a um questionário pendente.
+   * Gera respostas fake coerentes por tipo de pergunta e marca como respondido.
+   */
+  function simularRespostaQuestionario(candidatoId: string, questionarioId: string) {
+    const hoje = new Date().toLocaleDateString("pt-BR");
+    setQuestionariosVaga((prev) =>
+      prev.map((q) => {
+        if (q.id !== questionarioId) return q;
+        const atual = q.respostasPorCandidato[candidatoId];
+        // Gera respostas mock coerentes por tipo
+        const respostas: Record<string, string> = {};
+        q.perguntas.forEach((p) => {
+          if (p.tipo === "texto_livre") {
+            respostas[p.id] =
+              "Tenho experiência relevante na área e busco aplicar meus conhecimentos para gerar resultado nesta posição.";
+          } else if (p.tipo === "multipla_escolha") {
+            respostas[p.id] = p.opcoes?.[0] ?? "Opção 1";
+          } else if (p.tipo === "escala_1_5") {
+            respostas[p.id] = "4";
+          }
+        });
+        return {
+          ...q,
+          respostasPorCandidato: {
+            ...q.respostasPorCandidato,
+            [candidatoId]: {
+              ...(atual ?? {}),
+              status: "respondido",
+              enviadoEm: atual?.enviadoEm ?? hoje,
+              respondidoEm: hoje,
+              respostas,
+              // Mantém avaliação anterior se já existia
+              avaliacao: atual?.avaliacao,
+              notaMedia: atual?.notaMedia,
+              link: atual?.link,
+            },
+          },
+        };
+      }),
+    );
+    toast.success("Resposta simulada gerada. Agora você pode corrigir o questionário.");
+  }
+
   function salvarAvaliacaoQuestionario(
     questionarioId: string,
     candidatoId: string,
