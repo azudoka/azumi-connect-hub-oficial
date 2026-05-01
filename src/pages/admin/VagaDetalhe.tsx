@@ -3983,16 +3983,37 @@ function RelatorioCandidatoModal({
   );
   const hojeBR = new Date().toLocaleDateString("pt-BR");
 
-  // Mock de questões da primeira questionário associado (fonte do conteúdo no relatório)
-  const questoesMock = useMemo(() => {
-    const q = questionariosVaga[0];
-    if (!q) return [] as { id: string; pergunta: string; resposta: string }[];
-    return Array.from({ length: Math.min(q.questoes, 4) }).map((_, i) => ({
-      id: `${q.id}-q${i + 1}`,
-      pergunta: `Pergunta ${i + 1} — ${q.tipo} (${q.nome})`,
-      resposta: `Resposta do candidato à pergunta ${i + 1} (mock).`,
-    }));
-  }, [questionariosVaga]);
+  // Constrói as questões REAIS do questionário a partir das respostas
+  // do candidato e da avaliação já feita pelo consultor (se houver).
+  const questoesReais = useMemo(() => {
+    const out: {
+      id: string;
+      pergunta: string;
+      resposta: string;
+      notaSalva?: number;
+      justificativaSalva?: string;
+    }[] = [];
+    questionariosVaga.forEach((q) => {
+      const resp = q.respostasPorCandidato[candidato.id];
+      if (!resp || resp.status !== "respondido") return;
+      q.perguntas.forEach((p) => {
+        const av = resp.avaliacao?.questoes[p.id];
+        out.push({
+          id: `${q.id}::${p.id}`,
+          pergunta: `${p.ordem}. ${p.texto}`,
+          resposta: resp.respostas?.[p.id] ?? "— sem resposta —",
+          notaSalva: av?.nota,
+          justificativaSalva: av?.justificativa,
+        });
+      });
+    });
+    return out;
+  }, [questionariosVaga, candidato.id]);
+
+  /** Indica se há ao menos um questionário respondido para este candidato. */
+  const algumRespondido = questoesReais.length > 0;
+  /** Indica se a avaliação já foi feita (pelo menos uma nota). */
+  const algumaAvaliacao = questoesReais.some((q) => q.notaSalva !== undefined);
 
   const [form, setForm] = useState<RelatorioCandidato>(() => draft ?? {
     protocolo: protocoloAuto,
@@ -4006,7 +4027,12 @@ function RelatorioCandidatoModal({
     discResumo: candidato.perfilDom
       ? `Perfil dominante ${candidato.perfilDom}.`
       : "Perfil DISC ainda não disponível.",
-    questoes: Object.fromEntries(questoesMock.map((q) => [q.id, { nota: 3, justificativa: "" }])),
+    questoes: Object.fromEntries(
+      questoesReais.map((q) => [
+        q.id,
+        { nota: (q.notaSalva ?? 3) as 1 | 2 | 3 | 4 | 5, justificativa: q.justificativaSalva ?? "" },
+      ]),
+    ),
     recomendacao: "",
     movimento: "",
     consultorNome: "Ana Beatriz",
