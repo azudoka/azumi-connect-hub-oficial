@@ -3609,6 +3609,22 @@ function CandidatoDetailSheet({
                         </div>
                       )}
 
+                      {q.statusCand === "pendente" && onSimularResposta && (
+                        <div className="mt-2 flex items-center justify-between gap-2 rounded-md border border-dashed border-warning/40 bg-warning/5 px-2 py-1.5">
+                          <span className="text-[10px] text-muted-foreground">
+                            <strong className="text-warning">Dev only</strong> · ambiente de teste
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => onSimularResposta(cand.id, q.id)}
+                            className="h-6 px-2 rounded border border-warning/40 bg-card text-[10px] font-medium text-warning hover:bg-warning/10"
+                            title="Gera respostas fake como se o candidato tivesse respondido"
+                          >
+                            Simular resposta do candidato (teste)
+                          </button>
+                        </div>
+                      )}
+
                       {q.statusCand === "respondido" && q.resposta && (
                         <CorrigirQuestionarioInline
                           perguntas={q.perguntas}
