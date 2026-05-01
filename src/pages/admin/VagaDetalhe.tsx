@@ -4342,12 +4342,20 @@ function RelatorioPreview({
         <p>{form.discResumo}</p>
       </BlocoPreview>
 
-      {questoesMock.length > 0 && (
-        <BlocoPreview titulo="Questionário — respostas e notas">
+      <BlocoPreview titulo="Questionário — respostas e notas">
+        {!algumRespondido ? (
+          <p className="text-muted-foreground italic">
+            Questionário ainda não respondido por este candidato.
+          </p>
+        ) : !algumaAvaliacao ? (
+          <p className="text-warning">
+            Questionário ainda não corrigido. Corrija na aba <strong>Questionário</strong> da ficha do candidato.
+          </p>
+        ) : (
           <ul className="space-y-3">
-            {questoesMock.map((q) => {
-              const nota = form.questoes[q.id]?.nota ?? "—";
-              const just = form.questoes[q.id]?.justificativa ?? "";
+            {questoesReais.map((q) => {
+              const nota = form.questoes[q.id]?.nota ?? q.notaSalva ?? "—";
+              const just = form.questoes[q.id]?.justificativa ?? q.justificativaSalva ?? "";
               return (
                 <li key={q.id} className="rounded border border-border p-3">
                   <p className="font-medium">{q.pergunta}</p>
@@ -4357,8 +4365,8 @@ function RelatorioPreview({
               );
             })}
           </ul>
-        </BlocoPreview>
-      )}
+        )}
+      </BlocoPreview>
 
       <BlocoPreview titulo="Recomendação do consultor">
         <p>{form.recomendacao || <em className="text-muted-foreground">—</em>}</p>
