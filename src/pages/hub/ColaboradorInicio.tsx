@@ -2,169 +2,212 @@ import { PageHeader } from "@/components/PageHeader";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { humorHistorico } from "@/data/mock";
-import { Heart, BookOpen, Megaphone, GraduationCap, MessagesSquare, X, Wallet } from "lucide-react";
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import { politicasMock, comunicadosMock } from "@/data/hubMock";
+import {
+  Megaphone, BookOpen, GraduationCap, ClipboardList, Smile, Trophy, Calendar, ArrowRight,
+  Heart, MessageCircle, Eye,
+} from "lucide-react";
 
 const moods = [
-  { v: 5, label: "Ótimo", emoji: "😄", color: "bg-success/20 hover:bg-success/30 border-success/40" },
-  { v: 4, label: "Bem", emoji: "🙂", color: "bg-success/10 hover:bg-success/20 border-success/30" },
-  { v: 3, label: "Ok", emoji: "😐", color: "bg-warning/15 hover:bg-warning/25 border-warning/30" },
-  { v: 2, label: "Não muito bem", emoji: "😕", color: "bg-warning/10 hover:bg-warning/20 border-warning/40" },
-  { v: 1, label: "Mal", emoji: "😞", color: "bg-destructive/10 hover:bg-destructive/20 border-destructive/30" },
+  { emoji: "😄", label: "Ótimo" },
+  { emoji: "🙂", label: "Bem" },
+  { emoji: "😐", label: "Ok" },
+  { emoji: "😕", label: "Não muito bem" },
+  { emoji: "😞", label: "Mal" },
 ];
 
-export default function ColaboradorInicio() {
-  const [selecionado, setSelecionado] = useState<number | null>(null);
-  const [confete, setConfete] = useState(false);
-  const [modalEmpatico, setModalEmpatico] = useState(false);
+const prioridadeCls: Record<string, string> = {
+  Alta: "bg-red-500/15 text-red-600",
+  Média: "bg-amber-500/15 text-amber-600",
+  Baixa: "bg-emerald-500/15 text-emerald-600",
+};
 
-  function escolherHumor(v: number) {
-    setSelecionado(v);
-    if (v >= 4) {
-      setConfete(true);
-      setTimeout(() => setConfete(false), 2500);
-    } else if (v <= 2) {
-      setModalEmpatico(true);
-    }
-  }
+const comunicadosRecentes = comunicadosMock.slice(0, 3).map((c, i) => ({
+  ...c,
+  prioridade: ["Alta", "Média", "Baixa"][i],
+  leram: 35 - i * 7,
+  total: 48,
+}));
+
+export default function ColaboradorInicio() {
+  const [humor, setHumor] = useState<number | null>(null);
 
   return (
-    <div className="relative">
-      {confete && (
-        <div className="pointer-events-none fixed inset-0 z-40 overflow-hidden">
-          {Array.from({ length: 40 }).map((_, i) => (
-            <span
-              key={i}
-              className="absolute top-0 animate-fade-in"
-              style={{
-                left: `${Math.random() * 100}%`,
-                width: 8, height: 14,
-                background: ["hsl(var(--primary))", "hsl(var(--highlight))", "hsl(var(--warning))", "hsl(var(--success))"][i % 4],
-                transform: `rotate(${Math.random() * 360}deg)`,
-                animation: `fall 2.4s ${Math.random() * 0.5}s linear forwards`,
-                borderRadius: 2,
-              }}
-            />
-          ))}
-          <style>{`@keyframes fall { to { transform: translateY(100vh) rotate(720deg); opacity: 0.5; } }`}</style>
-        </div>
-      )}
+    <div>
+      <PageHeader
+        title="Olá, Ana Carolina 👋"
+        subtitle="Bem-vinda à sua Wiki Organizacional. Confira as novidades."
+        actions={
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary text-xs font-medium">
+            <Calendar className="h-3.5 w-3.5" /> Tempo de casa: 4 anos e 1 mês
+          </span>
+        }
+      />
 
-      <PageHeader title="Olá, Marina! Como você está hoje?" subtitle="Sua resposta é confidencial e ajuda você e seu líder a cuidarem do clima." />
-
-      <div className="bg-card border border-border rounded-2xl p-6 mb-6">
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-          {moods.map((m) => (
-            <button
-              key={m.v}
-              onClick={() => escolherHumor(m.v)}
-              className={cn(
-                "rounded-xl border p-5 flex flex-col items-center gap-2 transition-all hover:scale-105 hover:shadow-violet",
-                m.color,
-                selecionado === m.v && "ring-2 ring-primary scale-105"
-              )}
-            >
-              <span className="text-4xl">{m.emoji}</span>
-              <span className="text-sm font-medium">{m.label}</span>
-            </button>
-          ))}
-        </div>
-        {selecionado && selecionado >= 4 && (
-          <div className="mt-4 text-sm text-success text-center animate-fade-in">
-            Que ótimo saber! Tenha um excelente dia 💜
-          </div>
-        )}
-        {selecionado === 3 && (
-          <div className="mt-4 text-sm text-muted-foreground text-center">
-            Obrigada por compartilhar. Estamos por aqui se precisar.
-          </div>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <div className="lg:col-span-2 bg-card border border-border rounded-xl p-5">
-          <h3 className="font-display font-semibold mb-3">Seu humor nos últimos 30 dias</h3>
-          <div className="h-48">
-            <ResponsiveContainer>
-              <LineChart data={humorHistorico}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                <XAxis dataKey="dia" stroke="hsl(var(--muted-foreground))" fontSize={11} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} domain={[1, 5]} />
-                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
-                <Line type="monotone" dataKey="v" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ r: 4, fill: "hsl(var(--highlight))" }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <QuickCard icon={Megaphone} title="Comunicados" desc="3 novos comunicados" />
-          <QuickCard icon={Wallet} title="Holerites" desc="Março 2026 disponível" to="/hub/colaborador/holerites" />
-          <QuickCard icon={BookOpen} title="Políticas" desc="1 política aguarda ciência" />
-          <QuickCard icon={GraduationCap} title="Treinamentos" desc="2 cursos em andamento" />
-          <QuickCard icon={MessagesSquare} title="Solicitações" desc="1 solicitação aberta" to="/hub/colaborador/solicitacoes" />
-        </div>
-      </div>
-
-      {modalEmpatico && (
-        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-card border border-border rounded-2xl shadow-elevated max-w-md w-full p-6 animate-scale-in">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-                <Heart className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="font-display font-semibold">Estamos aqui por você</h3>
-                <p className="text-xs text-muted-foreground">Como podemos te ajudar agora?</p>
-              </div>
-              <button onClick={() => setModalEmpatico(false)} className="ml-auto h-8 w-8 rounded-md hover:bg-secondary flex items-center justify-center">
-                <X className="h-4 w-4" />
-              </button>
+      {/* Termômetro + KPIs */}
+      <div className="grid grid-cols-12 gap-4 mb-6">
+        <div className="col-span-12 md:col-span-5 bg-card border border-border rounded-2xl shadow-card p-5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="h-10 w-10 rounded-lg bg-amber-500/15 text-amber-600 flex items-center justify-center">
+              <Smile className="h-5 w-5" />
             </div>
+            <div>
+              <div className="font-display font-semibold">Termômetro de Humor</div>
+              <div className="text-xs text-muted-foreground">Como você está hoje? 💛</div>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            {moods.map((m, i) => (
+              <button
+                key={i}
+                onClick={() => setHumor(i)}
+                className={cn(
+                  "flex-1 rounded-lg border py-2 text-2xl transition-all hover:scale-110",
+                  humor === i ? "border-primary bg-primary/10 scale-110" : "border-border"
+                )}
+                title={m.label}
+              >
+                {m.emoji}
+              </button>
+            ))}
+          </div>
+        </div>
 
-            <div className="space-y-2 mt-4">
-              {[
-                "Quero conversar com meu líder",
-                "Quero conversar com o RH",
-                "Quero ser procurado(a) em breve",
-                "Só queria registrar, obrigado",
-              ].map((opt) => (
-                <button
-                  key={opt}
-                  onClick={() => setModalEmpatico(false)}
-                  className="w-full text-left px-4 py-3 rounded-lg border border-border hover:border-primary/40 hover:bg-secondary text-sm transition-colors"
+        <div className="col-span-12 md:col-span-7 grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <KpiCard icon={Megaphone} value={3} label="Comunicados novos" />
+          <KpiCard icon={BookOpen} value={5} label="Políticas vigentes" />
+          <KpiCard icon={GraduationCap} value={4} label="Treinamentos" />
+          <KpiCard icon={ClipboardList} value={1} label="Minhas solicitações" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-12 gap-5">
+        <div className="col-span-12 lg:col-span-8 space-y-6">
+          {/* Políticas */}
+          <section>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-display text-lg font-semibold">Políticas Internas</h2>
+              <Link to="/hub/colaborador/politicas" className="text-sm text-primary hover:underline inline-flex items-center gap-1">
+                Ver todas <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {politicasMock.slice(0, 3).map((p) => (
+                <Link
+                  key={p.id}
+                  to="/hub/colaborador/politicas"
+                  className="bg-card border border-border rounded-2xl shadow-card overflow-hidden hover:border-primary/40 transition-colors"
                 >
-                  {opt}
-                </button>
+                  <div className="aspect-[16/9] bg-muted overflow-hidden">
+                    <img src={p.capa} alt={p.titulo} className="w-full h-full object-cover" loading="lazy" />
+                  </div>
+                  <div className="h-1 bg-primary" />
+                  <div className="p-3">
+                    <div className="font-display font-semibold text-sm">{p.titulo}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{p.categoria} · {p.versao}</div>
+                    <div className="text-xs text-muted-foreground mt-1">{p.assinaturas}/{p.total} assinaturas</div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          {/* Comunicados */}
+          <section>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-display text-lg font-semibold">Comunicados recentes</h2>
+              <Link to="/hub/colaborador/mural" className="text-sm text-primary hover:underline inline-flex items-center gap-1">
+                Ver todos <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+            <div className="space-y-3">
+              {comunicadosRecentes.map((c) => (
+                <Link
+                  key={c.id}
+                  to="/hub/colaborador/mural"
+                  className="block bg-card border border-border rounded-2xl shadow-card p-4 hover:border-primary/40 transition-colors"
+                >
+                  <div className="flex gap-4">
+                    <div className="h-16 w-16 rounded-lg bg-muted overflow-hidden shrink-0">
+                      <img src={c.capa} alt="" className="w-full h-full object-cover" loading="lazy" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={cn("text-[11px] font-medium px-2 py-0.5 rounded-full", prioridadeCls[c.prioridade])}>
+                          {c.prioridade}
+                        </span>
+                        <span className="text-xs text-muted-foreground font-data">{c.data}</span>
+                      </div>
+                      <div className="font-display font-semibold text-sm">{c.titulo}</div>
+                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{c.conteudo}</p>
+                      <div className="text-[11px] text-muted-foreground mt-1">{c.leram}/{c.total} leram</div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        </div>
+
+        {/* Sidebar direita */}
+        <aside className="col-span-12 lg:col-span-4 space-y-4">
+          <div className="bg-card border border-border rounded-2xl shadow-card p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Trophy className="h-4 w-4 text-amber-500" />
+              <h3 className="font-display font-semibold text-sm">Destaque do Mês</h3>
+            </div>
+            <div className="flex flex-col items-center text-center py-3">
+              <div className="h-16 w-16 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xl font-semibold mb-2">A</div>
+              <div className="font-medium">Ana Carolina Silva</div>
+              <div className="text-xs text-muted-foreground">Analista de Marketing</div>
+              <span className="mt-2 text-[11px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600">⭐ Colaborador(a) do Mês</span>
+            </div>
+          </div>
+
+          <div className="bg-card border border-border rounded-2xl shadow-card p-5">
+            <h3 className="font-display font-semibold text-sm mb-3">🏅 Promovidos</h3>
+            <div className="space-y-3">
+              {[
+                { n: "Rafael Almeida", c: "Engenheiro de Dados" },
+                { n: "Fernanda Lima", c: "Tech Lead" },
+              ].map((p) => (
+                <div key={p.n} className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-full bg-emerald-500/20 text-emerald-600 flex items-center justify-center text-xs font-semibold">
+                    {p.n.slice(0, 1)}
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium">{p.n}</div>
+                    <div className="text-xs text-muted-foreground">{p.c}</div>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
-        </div>
-      )}
+
+          <div className="bg-card border border-border rounded-2xl shadow-card p-5">
+            <h3 className="font-display font-semibold text-sm mb-2 flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-primary" /> Próximos eventos
+            </h3>
+            <Link to="/hub/colaborador/onboarding" className="text-xs text-primary hover:underline">
+              Ver calendário completo →
+            </Link>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }
 
-function QuickCard({ icon: Icon, title, desc, to }: { icon: any; title: string; desc: string; to?: string }) {
-  const inner = (
-    <>
-      <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+function KpiCard({ icon: Icon, value, label }: { icon: any; value: number; label: string }) {
+  return (
+    <div className="bg-card border border-border rounded-2xl shadow-card p-4 flex items-center gap-3">
+      <div className="h-10 w-10 rounded-lg bg-primary/15 text-primary flex items-center justify-center shrink-0">
         <Icon className="h-5 w-5" />
       </div>
       <div className="min-w-0">
-        <div className="text-sm font-medium">{title}</div>
-        <div className="text-xs text-muted-foreground truncate">{desc}</div>
+        <div className="text-2xl font-display font-bold leading-none">{value}</div>
+        <div className="text-xs text-muted-foreground truncate mt-1">{label}</div>
       </div>
-    </>
+    </div>
   );
-  const cls = "bg-card border border-border rounded-xl p-4 card-hover flex items-center gap-3";
-  if (to) {
-    return (
-      <Link to={to} className={cn(cls, "hover:border-primary/40 transition-colors")}>
-        {inner}
-      </Link>
-    );
-  }
-  return <div className={cls}>{inner}</div>;
 }
