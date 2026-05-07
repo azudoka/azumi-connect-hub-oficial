@@ -237,8 +237,19 @@ const AppRoutes = () => (
       <Route path="/hub/colaborador/ajuda" element={<AjudaPage />} />
       <Route path="/hub/colaborador/termometro" element={<TermometroPage />} />
       <Route path="/hub/colaborador/mural" element={<MuralPage />} />
+      <Route path="/hub/colaborador/comunicados" element={<MuralPage />} />
+      <Route path="/hub/colaborador/guias" element={<GuiasPage />} />
       <Route path="/hub/colaborador/onboarding" element={<OnboardingColabPage />} />
     </Route>
+
+    {/* Hub — atalhos /hub/* → versão colaborador */}
+    <Route path="/hub" element={<Navigate to="/hub/colaborador/inicio" replace />} />
+    <Route path="/hub/politicas" element={<Navigate to="/hub/colaborador/politicas" replace />} />
+    <Route path="/hub/guias" element={<Navigate to="/hub/colaborador/guias" replace />} />
+    <Route path="/hub/treinamentos" element={<Navigate to="/hub/colaborador/treinamentos" replace />} />
+    <Route path="/hub/comunicados" element={<Navigate to="/hub/colaborador/mural" replace />} />
+    <Route path="/hub/mural" element={<Navigate to="/hub/colaborador/mural" replace />} />
+    <Route path="/hub/ajuda" element={<Navigate to="/hub/colaborador/ajuda" replace />} />
 
     {/* Hub CEO */}
     <Route element={
