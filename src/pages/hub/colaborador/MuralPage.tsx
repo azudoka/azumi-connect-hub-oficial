@@ -1,5 +1,5 @@
 import { PageHeader } from "@/components/PageHeader";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { comunicadosMock, type ComunicadoHub } from "@/data/hubMock";
 import { HubModal } from "@/components/hub/HubModal";
 import { Heart, MessageCircle, Eye } from "lucide-react";
@@ -13,9 +13,22 @@ const tagCls: Record<string, string> = {
   Evento: "bg-emerald-500/15 text-emerald-600",
 };
 
+// TODO: substituir por chamada real ao Supabase quando a tabela estiver pronta:
+//   import { supabase } from "@/lib/supabaseClient";
+//   const { data } = await supabase.from("comunicados").select("*").order("data", { ascending: false });
+//   return (data ?? []) as ComunicadoHub[];
+async function fetchComunicados(): Promise<ComunicadoHub[]> {
+  return comunicadosMock;
+}
+
 export default function MuralPage() {
+  const [comunicados, setComunicados] = useState<ComunicadoHub[]>([]);
   const [aberto, setAberto] = useState<ComunicadoHub | null>(null);
   const [curtidos, setCurtidos] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    fetchComunicados().then(setComunicados);
+  }, []);
 
   function toggleCurtir(id: string) {
     setCurtidos((p) => ({ ...p, [id]: !p[id] }));
@@ -26,7 +39,7 @@ export default function MuralPage() {
       <PageHeader title="Comunicados" subtitle="Novidades, eventos e avisos do seu time." />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {comunicadosMock.map((c) => {
+        {comunicados.map((c) => {
           const liked = curtidos[c.id];
           return (
             <article
