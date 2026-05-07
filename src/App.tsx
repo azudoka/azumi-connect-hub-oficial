@@ -7,6 +7,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { AuthProvider, useAuth, type Papel } from "@/context/AuthContext";
 import { ModulesProvider } from "@/context/ModulesContext";
+import { useCarregarModulosCliente } from "@/hooks/useCarregarModulosCliente";
+import type { ReactNode } from "react";
 
 import { AppLayout } from "@/components/layout/AppLayout";
 import { HubLayout } from "@/components/layout/HubLayout";
@@ -107,6 +109,12 @@ function PrivateRoute({
     return <Navigate to={home} replace />;
   }
   return children;
+}
+
+/** Carrega config de módulos do Supabase após login; reseta no logout. */
+function ModulesLoader({ children }: { children: ReactNode }) {
+  useCarregarModulosCliente();
+  return <>{children}</>;
 }
 
 function RootRedirect() {
@@ -330,7 +338,9 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <ModulesProvider>
-            <AppRoutes />
+            <ModulesLoader>
+              <AppRoutes />
+            </ModulesLoader>
           </ModulesProvider>
         </AuthProvider>
       </BrowserRouter>

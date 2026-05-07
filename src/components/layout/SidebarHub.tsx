@@ -243,7 +243,7 @@ export function SidebarHub({ profile }: { profile: HubProfile }) {
               <ul className="space-y-0.5">
                 {itensFiltrados.map((it) => {
                   const emTrial = it.moduloId ? isEmTrial(it.moduloId) : false;
-                  const diasTrial = it.moduloId ? diasRestantesTrial(it.moduloId) : undefined;
+                  const diasTrial = it.moduloId ? diasRestantesTrial(it.moduloId) : null;
                   return (
                     <li key={`${g.label}-${it.label}`}>
                       <NavLink
@@ -258,7 +258,7 @@ export function SidebarHub({ profile }: { profile: HubProfile }) {
                         {!collapsed && (
                           <>
                             <span className="truncate flex-1">{it.label}</span>
-                            {emTrial && diasTrial !== undefined && (
+                            {emTrial && diasTrial !== null && (
                               <span
                                 title={`Período de teste — ${diasTrial} dia${diasTrial === 1 ? "" : "s"} restante${diasTrial === 1 ? "" : "s"}`}
                                 className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 text-[9px] font-semibold shrink-0"
@@ -281,13 +281,13 @@ export function SidebarHub({ profile }: { profile: HubProfile }) {
         {/* Módulos pagos ativos para este usuário/cliente */}
         {modulosVisiveis.map((g) => {
           const emTrial = g.modulo ? isEmTrial(g.modulo as ModuloId) : false;
-          const diasTrial = g.modulo ? diasRestantesTrial(g.modulo as ModuloId) : undefined;
+          const diasTrial = g.modulo ? diasRestantesTrial(g.modulo as ModuloId) : null;
           return (
             <div key={g.label}>
               {!collapsed && (
                 <div className="px-3 mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
                   {g.label}
-                  {emTrial && diasTrial !== undefined && (
+                  {emTrial && diasTrial !== null && (
                     <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 text-[9px] font-semibold normal-case tracking-normal">
                       <FlaskConical className="h-2.5 w-2.5" />
                       Trial {diasTrial}d

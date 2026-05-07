@@ -24,8 +24,8 @@ export interface ModulesContextValue {
   isPaginaAtiva: (moduloId: ModuloId, paginaId: PaginaId) => boolean;
   /** Módulo com testeInicio/testeFim válidos para hoje. */
   isEmTrial: (id: ModuloId) => boolean;
-  /** Dias restantes de trial (undefined se não estiver em trial). */
-  diasRestantesTrial: (id: ModuloId) => number | undefined;
+  /** Dias restantes de trial (null se não estiver em trial). */
+  diasRestantesTrial: (id: ModuloId) => number | null;
   /** Troca o config — usado ao fazer login com dados reais do Supabase. */
   setConfig: (c: ConfigCliente) => void;
 }
@@ -80,8 +80,8 @@ export function ModulesProvider({ children }: { children: ReactNode }) {
       return isTrialValido(id);
     }
 
-    function diasRestantesTrial(id: ModuloId): number | undefined {
-      if (!isEmTrial(id)) return undefined;
+    function diasRestantesTrial(id: ModuloId): number | null {
+      if (!isEmTrial(id)) return null;
       const m = getModulo(id)!;
       const fim = new Date(m.testeFim! + "T23:59:59");
       const diff = fim.getTime() - Date.now();
