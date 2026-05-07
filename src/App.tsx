@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { AuthProvider, useAuth, type Papel } from "@/context/AuthContext";
+import { ModulesProvider } from "@/context/ModulesContext";
 
 import { AppLayout } from "@/components/layout/AppLayout";
 import { HubLayout } from "@/components/layout/HubLayout";
@@ -328,7 +329,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <AppRoutes />
+          <ModulesProvider>
+            <AppRoutes />
+          </ModulesProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
