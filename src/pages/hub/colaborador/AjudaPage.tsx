@@ -31,14 +31,14 @@ export default function AjudaPage() {
 
   return (
     <div className="max-w-2xl">
-      <PageHeader title="Fale com a Azumi" subtitle="Tire dúvidas, envie sugestões ou relate problemas." />
+      <PageHeader title="Fale com a Azumi" subtitle="Tire dúvidas, envie sugestões ou relate problemas. Este canal é direto com a equipe Azumi." />
 
-      <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 mb-6 flex items-start gap-3">
-        <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-        <div className="text-sm">
-          <div className="font-semibold text-amber-700 dark:text-amber-400">Este NÃO é o canal formal de denúncias.</div>
-          <p className="text-muted-foreground mt-0.5">
-            Para reportar assédio, fraude ou violações ao código de conduta, use o módulo de Governança (Canal de Denúncias).
+      <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-start gap-3">
+        <AlertTriangle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+        <div>
+          <div className="font-semibold text-red-800">Este NÃO é o canal formal de denúncias.</div>
+          <p className="text-sm text-red-700 mt-0.5">
+            Para reportar assédio, fraude ou violações ao Código de Conduta, use o módulo de Governança (Canal de Denúncias) ou fale com seu gestor.
           </p>
         </div>
       </div>
