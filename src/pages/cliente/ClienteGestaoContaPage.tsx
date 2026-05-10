@@ -1,6 +1,8 @@
 import { PageHeader } from "@/components/PageHeader";
-import { CreditCard, FileText, Receipt, Users, Check, Clock as ClockIcon, AlertTriangle, Download } from "lucide-react";
+import { CreditCard, FileText, Receipt, Users, Check, Clock as ClockIcon, AlertTriangle, Download, Boxes, FlaskConical, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useModulos } from "@/context/ModulesContext";
+import type { ModuloId } from "@/config/modules";
 
 const plano = {
   nome: "Ongoing Premium",
@@ -33,7 +35,29 @@ const statusFatura: Record<string, { label: string; cls: string; icon: any }> = 
   atrasado: { label: "Atrasado", cls: "bg-destructive/15 text-destructive border-destructive/30", icon: AlertTriangle },
 };
 
+const MODULO_LABELS: Record<ModuloId, string> = {
+  hub_wiki:           "Hub Wiki — Políticas, Guias, Treinamentos",
+  hub_comunicacao:    "Hub Comunicação — Mural e Comunicados",
+  hub_pessoas:        "Hub Pessoas — Termômetro, Benefícios, Onboarding",
+  hub_dp:             "Hub DP — Holerites e Férias",
+  atracao:            "Atração & Hunting",
+  performance:        "Performance e Avaliações",
+  governanca:         "Governança",
+  regulamentacao:     "Regulamentação",
+  engenharia_pessoas: "Engenharia de Pessoas",
+  endomarketing:      "Endomarketing",
+  dp:                 "Departamento Pessoal",
+  contabilidade:      "Contabilidade",
+  juridico:           "Jurídico",
+};
+
+function formatarDataBr(iso: string): string {
+  const [ano, mes, dia] = iso.split("-");
+  return `${dia}/${mes}/${ano}`;
+}
+
 export default function ClienteGestaoContaPage() {
+  const { config, isEmTrial, diasRestantesTrial } = useModulos();
   return (
     <div>
       <PageHeader
@@ -154,6 +178,58 @@ export default function ClienteGestaoContaPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Módulos contratados e em teste */}
+      <div className="bg-card border border-border rounded-2xl shadow-card p-5 mt-6">
+        <div className="flex items-start gap-3 mb-4">
+          <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><Boxes className="h-5 w-5" /></div>
+          <div>
+            <h3 className="font-display font-semibold">Módulos contratados e em teste</h3>
+            <p className="text-xs text-muted-foreground">Situação atual de cada módulo do Hub para sua empresa.</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {config.modulos.map((m) => {
+            const emTrial  = isEmTrial(m.id);
+            const dias     = diasRestantesTrial(m.id);
+            const label    = MODULO_LABELS[m.id] ?? m.id;
+
+            let statusLabel: string;
+            let statusCls: string;
+            let StatusIcon: React.ElementType;
+
+            if (m.ativo) {
+              statusLabel = "Ativo";
+              statusCls   = "bg-success/15 text-success border-success/30";
+              StatusIcon  = Check;
+            } else if (emTrial) {
+              statusLabel = `Em teste${dias !== null ? ` · ${dias}d` : ""}`;
+              statusCls   = "bg-amber-500/15 text-amber-600 border-amber-400/30";
+              StatusIcon  = FlaskConical;
+            } else {
+              statusLabel = "Inativo";
+              statusCls   = "bg-muted text-muted-foreground border-border";
+              StatusIcon  = XCircle;
+            }
+
+            return (
+              <div key={m.id} className="flex items-center justify-between gap-3 rounded-xl border border-border px-4 py-3 bg-secondary/20">
+                <span className="text-sm font-medium truncate">{label}</span>
+                <div className="flex flex-col items-end gap-0.5 shrink-0">
+                  <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border", statusCls)}>
+                    <StatusIcon className="h-3 w-3" /> {statusLabel}
+                  </span>
+                  {emTrial && m.testeInicio && m.testeFim && (
+                    <span className="text-[10px] text-muted-foreground font-data">
+                      {formatarDataBr(m.testeInicio)} → {formatarDataBr(m.testeFim)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
