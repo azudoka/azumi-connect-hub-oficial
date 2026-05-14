@@ -54,6 +54,46 @@ export default function Empresas() {
           </Link>
         ))}
       </div>
+
+      <Dialog open={novaOpen} onOpenChange={(o) => { setNovaOpen(o); if (!o) setNomeEmpresa(""); }}>
+        <DialogContent className="sm:max-w-md rounded-xl">
+          <DialogHeader>
+            <DialogTitle>Nova empresa</DialogTitle>
+            <DialogDescription>
+              Preencha o nome para criar a empresa. Demais dados podem ser
+              adicionados na página de detalhes.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="nome-empresa">Nome da empresa</Label>
+              <Input
+                id="nome-empresa"
+                value={nomeEmpresa}
+                onChange={(e) => setNomeEmpresa(e.target.value)}
+                placeholder="Ex: Kentaki Foods"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => { setNovaOpen(false); setNomeEmpresa(""); }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                toast.success(`Empresa "${nomeEmpresa}" criada com sucesso.`);
+                setNovaOpen(false);
+                setNomeEmpresa("");
+              }}
+            >
+              Criar empresa
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
-  );
-}
