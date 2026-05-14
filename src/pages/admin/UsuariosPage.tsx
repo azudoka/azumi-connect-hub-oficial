@@ -15,6 +15,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 type Role = "admin" | "consultor" | "cliente_recorrente" | "cliente_avulso";
