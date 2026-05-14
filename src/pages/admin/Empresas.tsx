@@ -14,6 +14,9 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
 export default function Empresas() {
+  const navigate = useNavigate();
+  const [novaOpen, setNovaOpen] = useState(false);
+  const [nomeEmpresa, setNomeEmpresa] = useState("");
   return (
     <div>
       <PageHeader
