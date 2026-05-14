@@ -23,7 +23,10 @@ export default function Empresas() {
         title="Empresas"
         subtitle="Todos os clientes ativos da Azumi"
         actions={
-          <button className="h-9 px-3 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center gap-1.5">
+          <button
+            onClick={() => setNovaOpen(true)}
+            className="h-9 px-3 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center gap-1.5"
+          >
             <Plus className="h-4 w-4" /> Nova empresa
           </button>
         }
