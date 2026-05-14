@@ -87,9 +87,12 @@ export default function UsuariosPage() {
   const [busca, setBusca] = useState("");
   const [filtroRole, setFiltroRole] = useState<Role | "all">("all");
   const [novoOpen, setNovoOpen] = useState(false);
+  const [usuarios, setUsuarios] = useState<Usuario[]>(MOCK);
+  const [editarUsuario, setEditarUsuario] = useState<Usuario | null>(null);
+  const [desativarUsuario, setDesativarUsuario] = useState<Usuario | null>(null);
 
   const lista = useMemo(() => {
-    return MOCK.filter((u) => {
+    return usuarios.filter((u) => {
       if (filtroRole !== "all" && u.role !== filtroRole) return false;
       if (busca && !`${u.nome} ${u.email} ${u.empresa}`.toLowerCase().includes(busca.toLowerCase())) return false;
       return true;
