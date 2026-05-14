@@ -97,7 +97,7 @@ export default function UsuariosPage() {
       if (busca && !`${u.nome} ${u.email} ${u.empresa}`.toLowerCase().includes(busca.toLowerCase())) return false;
       return true;
     });
-  }, [busca, filtroRole]);
+  }, [busca, filtroRole, usuarios]);
 
   return (
     <div className="space-y-6">
