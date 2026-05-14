@@ -1,17 +1,32 @@
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { Plus, Search } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import { empresas } from "@/data/mock";
-import { Plus, Search } from "lucide-react";
-import { Link } from "react-router-dom";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+  DialogFooter, DialogDescription,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 export default function Empresas() {
+  const navigate = useNavigate();
+  const [novaOpen, setNovaOpen] = useState(false);
+  const [nomeEmpresa, setNomeEmpresa] = useState("");
   return (
     <div>
       <PageHeader
         title="Empresas"
         subtitle="Todos os clientes ativos da Azumi"
         actions={
-          <button className="h-9 px-3 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center gap-1.5">
+          <button
+            onClick={() => setNovaOpen(true)}
+            className="h-9 px-3 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center gap-1.5"
+          >
             <Plus className="h-4 w-4" /> Nova empresa
           </button>
         }
@@ -39,6 +54,48 @@ export default function Empresas() {
           </Link>
         ))}
       </div>
+
+      <Dialog open={novaOpen} onOpenChange={(o) => { setNovaOpen(o); if (!o) setNomeEmpresa(""); }}>
+        <DialogContent className="sm:max-w-md rounded-xl">
+          <DialogHeader>
+            <DialogTitle>Nova empresa</DialogTitle>
+            <DialogDescription>
+              Preencha o nome para criar a empresa. Demais dados podem ser
+              adicionados na página de detalhes.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="nome-empresa">Nome da empresa</Label>
+              <Input
+                id="nome-empresa"
+                value={nomeEmpresa}
+                onChange={(e) => setNomeEmpresa(e.target.value)}
+                placeholder="Ex: Kentaki Foods"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => { setNovaOpen(false); setNomeEmpresa(""); }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                toast.success(`Empresa "${nomeEmpresa}" criada com sucesso.`);
+                setNovaOpen(false);
+                setNomeEmpresa("");
+              }}
+            >
+              Criar empresa
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
