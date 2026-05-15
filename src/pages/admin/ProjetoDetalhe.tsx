@@ -377,6 +377,33 @@ export default function ProjetoDetalhe() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {e.status === "aprovacao_interna" && (
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1.5 border-info/40 text-info hover:bg-info/10"
+                      onClick={() =>
+                        setConfirmAvancarOpen({
+                          open: true,
+                          entId: e.id,
+                          targetStatus: "aprovacao_cliente",
+                        })
+                      }
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Aprovar internamente
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Aprovação interna — envia para o cliente após confirmar
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+
             <TooltipProvider delayDuration={200}>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -498,6 +525,13 @@ export default function ProjetoDetalhe() {
           {bloqueado && <Lock className="h-3 w-3 text-muted-foreground" aria-label="Bloqueado" />}
         </div>
         <div className="text-sm font-medium leading-tight mt-0.5 line-clamp-2">{e.nome}</div>
+
+        {e.status === "aprovacao_interna" && (
+          <div className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-medium text-info bg-info/15 border border-info/30 rounded-full px-2 py-0.5">
+            <CheckCircle2 className="h-3 w-3" />
+            Aguarda aprovação interna
+          </div>
+        )}
 
         <div className="mt-2 flex items-center gap-2 flex-wrap">
           <span className={cn("badge-pill border text-[10px]", complexidadeStyle[e.complexidade])}>
