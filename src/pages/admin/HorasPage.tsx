@@ -598,7 +598,23 @@ export default function HorasPage() {
 
         {timerAtivo ? (
           <div className="rounded-lg border border-border bg-background/40 p-4 flex items-center gap-4 flex-wrap">
-            <Timer key={timerKey} onStop={handleTimerStop} onTick={(s) => setSegundosTimer(s)} />
+            <Timer
+              key={timerKey}
+              onStop={handleTimerStop}
+              onTick={(s) => setSegundosTimer(s)}
+              autoStart
+              onPause={() => {
+                timerCtx.pausar();
+                toast.info("Tarefa pausada.", {
+                  description: "Clique em play para retomar o registro.",
+                });
+              }}
+              onResume={() => timerCtx.retomar()}
+              onRequestStop={(s) => {
+                setSegundosParaGravar(s);
+                setConfirmStopOpen(true);
+              }}
+            />
             <div className="flex-1 min-w-[200px]">
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Tarefa ativa</div>
               {tarefaAtiva ? (
