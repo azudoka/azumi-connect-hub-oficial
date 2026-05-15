@@ -21,7 +21,7 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import { Search, Copy, Check, X, MessageSquare, Plus, Send, Pencil, Trash2 } from "lucide-react";
+import { Search, Copy, Check, X, MessageSquare, Plus, Send, Pencil, Trash2, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Status = "aberta" | "andamento" | "finalizada" | "cancelada";
@@ -45,6 +45,7 @@ interface Solicitacao {
   consultor: string;
   titulo: string;
   historico: HistoricoItem[];
+  obsInterna?: string;
 }
 
 const MOCK: Solicitacao[] = [
@@ -84,6 +85,10 @@ const TIPOS_SOL = {
   suporte: "Suporte técnico",
   ajuste_projeto: "Ajuste em projeto/entregável",
   novo_usuario: "Solicitar novo usuário",
+  relatorio: "Relatório personalizado",
+  upgrade_plano: "Upgrade de plano",
+  cancelamento: "Cancelamento de serviço",
+  feedback: "Feedback do cliente",
   outro: "Outro",
 } as const;
 
@@ -307,6 +312,7 @@ function AdminView() {
   const [nDescricao, setNDescricao] = useState("");
   const [nEmpresa, setNEmpresa] = useState("");
   const [nConsultor, setNConsultor] = useState("");
+  const [nObsInterna, setNObsInterna] = useState("");
 
   const empresas = useMemo(() => Array.from(new Set(solicitacoes.map((s) => s.empresa))), [solicitacoes]);
   const tipos    = useMemo(() => Array.from(new Set(solicitacoes.map((s) => s.tipo))), [solicitacoes]);
@@ -515,6 +521,16 @@ function AdminView() {
                 <div className="text-muted-foreground text-xs mb-1">Consultor responsável</div>
                 <div className="font-medium">{selected.consultor}</div>
               </div>
+
+              {selected.obsInterna && (
+                <div className="rounded-lg border border-warning/30 bg-warning/5 p-3 text-xs">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1 flex items-center gap-1">
+                    <Lock className="h-3 w-3" />
+                    Observação interna (somente equipe Azumi)
+                  </div>
+                  <p className="text-foreground">{selected.obsInterna}</p>
+                </div>
+              )}
 
               {/* Chat */}
               <div>
@@ -757,7 +773,7 @@ function AdminView() {
         setNovaOpen(o);
         if (!o) {
           setNTipo("duvida"); setNTitulo(""); setNUrgencia("media");
-          setNDescricao(""); setNEmpresa(""); setNConsultor("");
+          setNDescricao(""); setNEmpresa(""); setNConsultor(""); setNObsInterna("");
         }
       }}>
         <SheetContent className="sm:max-w-md w-full overflow-y-auto flex flex-col">
@@ -845,6 +861,22 @@ function AdminView() {
                 placeholder="Descreva a solicitação com detalhes."
               />
             </div>
+
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                Observação interna
+                <span className="text-[10px] text-muted-foreground font-normal">
+                  (não visível para o cliente)
+                </span>
+              </Label>
+              <Textarea
+                rows={3}
+                className="resize-none border-warning/40 bg-warning/5"
+                value={nObsInterna}
+                onChange={(e) => setNObsInterna(e.target.value)}
+                placeholder="Ex: Cliente ligou pedindo urgência, veio por WhatsApp..."
+              />
+            </div>
           </div>
 
           <SheetFooter className="border-t pt-4 flex-row gap-2 sm:justify-end">
@@ -869,12 +901,14 @@ function AdminView() {
                   consultor: nConsultor || "—",
                   titulo: nTitulo.trim(),
                   historico: [],
+                  obsInterna: nObsInterna.trim() || undefined,
                 };
                 setSolicitacoes((prev) => [nova, ...prev]);
                 toast.success(`Solicitação criada — ${nova.protocolo}`);
                 setNovaOpen(false);
                 setNTipo("duvida"); setNTitulo(""); setNUrgencia("media");
                 setNDescricao(""); setNEmpresa(""); setNConsultor("");
+                setNObsInterna("");
               }}
             >
               Criar solicitação
