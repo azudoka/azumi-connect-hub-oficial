@@ -149,6 +149,8 @@ function AdminView() {
   const [confirmAcao, setConfirmAcao] = useState<"finalizar" | "reabrir" | null>(null);
   const [notaOpen, setNotaOpen] = useState(false);
   const [notaTexto, setNotaTexto] = useState("");
+  const [encaminharOpen, setEncaminharOpen] = useState(false);
+  const [consultorDestino, setConsultorDestino] = useState("");
 
   const empresas = useMemo(() => Array.from(new Set(solicitacoes.map((s) => s.empresa))), [solicitacoes]);
   const tipos    = useMemo(() => Array.from(new Set(solicitacoes.map((s) => s.tipo))), [solicitacoes]);
