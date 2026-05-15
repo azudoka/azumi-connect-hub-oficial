@@ -66,6 +66,54 @@ export default function AtracaoLista() {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<FunilEtapa | null>(null);
 
+  // Sheet de nova vaga
+  const [novaVagaOpen, setNovaVagaOpen] = useState(false);
+
+  const TIPOS_VAGA = [
+    { value: "operacional", label: "Operacional" },
+    { value: "tatico", label: "Tático" },
+    { value: "gestao", label: "Gestão" },
+    { value: "hunting", label: "Hunt Executivo" },
+  ] as const;
+  type TipoVaga = typeof TIPOS_VAGA[number]["value"];
+
+  const MODALIDADES = [
+    { value: "presencial", label: "Presencial" },
+    { value: "hibrido", label: "Híbrido" },
+    { value: "remoto", label: "Remoto" },
+  ] as const;
+
+  const BENEFICIOS_OPCOES = [
+    { value: "vale_transporte", label: "Vale-transporte" },
+    { value: "vale_alimentacao", label: "Vale-alimentação" },
+    { value: "plano_saude", label: "Plano de saúde" },
+    { value: "plano_odontologico", label: "Plano odontológico" },
+    { value: "gympass", label: "Gympass" },
+    { value: "home_office", label: "Home office" },
+    { value: "bonus", label: "Bônus" },
+    { value: "seguro_vida", label: "Seguro de vida" },
+  ] as const;
+
+  // Estados do form
+  const [nTitulo, setNTitulo] = useState("");
+  const [nEmpresa, setNEmpresa] = useState("");
+  const [nFilial, setNFilial] = useState("");
+  const [nTipo, setNTipo] = useState("operacional");
+  const [nModalidade, setNModalidade] = useState("presencial");
+  const [nPosicoes, setNPosicoes] = useState("1");
+  const [nBeneficios, setNBeneficios] = useState<string[]>([]);
+  const [nDescricao, setNDescricao] = useState("");
+
+  function resetNovaVaga() {
+    setNTitulo(""); setNEmpresa(""); setNFilial("");
+    setNTipo("operacional"); setNModalidade("presencial");
+    setNPosicoes("1"); setNBeneficios([]); setNDescricao("");
+  }
+
+  // Validação de plano: Hunt Executivo bloqueado no plano Ongoing.
+  const PLANO_ATUAL = "ongoing"; // mock — em prod vem do contexto de auth
+  const huntBloqueado = nTipo === "hunting" && PLANO_ATUAL === "ongoing";
+
   // Suporte a deep-link /app/atracao?new=1 vindo de "Nova solicitação"
   useEffect(() => {
     if (searchParams.get("new") === "1") {
