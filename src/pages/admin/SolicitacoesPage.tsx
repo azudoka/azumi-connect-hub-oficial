@@ -773,7 +773,7 @@ function AdminView() {
         setNovaOpen(o);
         if (!o) {
           setNTipo("duvida"); setNTitulo(""); setNUrgencia("media");
-          setNDescricao(""); setNEmpresa(""); setNConsultor("");
+          setNDescricao(""); setNEmpresa(""); setNConsultor(""); setNObsInterna("");
         }
       }}>
         <SheetContent className="sm:max-w-md w-full overflow-y-auto flex flex-col">
