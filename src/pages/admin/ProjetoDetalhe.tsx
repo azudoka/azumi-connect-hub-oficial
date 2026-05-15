@@ -382,7 +382,7 @@ export default function ProjetoDetalhe() {
                       size="icon"
                       variant="outline"
                       disabled={bloqueado}
-                      onClick={() => ativaTimerPara(e.codigo)}
+                      onClick={() => ativaTimerPara(e)}
                       aria-label={`Iniciar timer para ${e.codigo}`}
                     >
                       {bloqueado ? <Lock className="h-4 w-4" /> : <Play className="h-4 w-4" />}
