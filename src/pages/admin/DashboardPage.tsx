@@ -169,6 +169,7 @@ const ENTREGAVEIS: EntregavelProx[] = [
 // =====================================================================
 
 import { useAuth } from "@/context/AuthContext";
+import { useValorFinanceiro } from "@/hooks/useValorFinanceiro";
 import ConsultorDashboard from "./ConsultorDashboard";
 
 export default function DashboardPage() {
@@ -182,6 +183,7 @@ export default function DashboardPage() {
 function AdminDashboard() {
   const navigate = useNavigate();
   const { pode } = usePermissao();
+  const { ocultar } = useValorFinanceiro();
   const now = useMemo(() => new Date(), []);
   const saudacao = getSaudacao(now.getHours());
   const dataFormatada = useMemo(
@@ -286,10 +288,10 @@ function AdminDashboard() {
             {pode("financeiro.ver_valores") && (
               <KpiCard
                 label="Faturamento do mês"
-                value={formatBRL(fin.faturado)}
+                value={ocultar(formatBRL(fin.faturado))}
                 icon={CircleDollarSign}
-                hint={`Meta: ${formatBRL(fin.metaFaturamento)}`}
-                trend={{ value: `${pctFaturamento}% da meta`, positive: pctFaturamento >= 80 }}
+                hint={`Meta: ${ocultar(formatBRL(fin.metaFaturamento))}`}
+                trend={{ value: ocultar(`${pctFaturamento}% da meta`), positive: pctFaturamento >= 80 }}
                 onClick={() => navigate("/app/financeiro")}
               />
             )}
@@ -386,7 +388,7 @@ function AdminDashboard() {
                           />
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-medium leading-snug">{al.titulo}</p>
-                            <p className="text-xs text-muted-foreground mt-0.5">{al.descricao}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{al.descricao.match(/R\$/) ? ocultar(al.descricao) : al.descricao}</p>
                           </div>
                         </Link>
                       </li>
@@ -471,22 +473,22 @@ function AdminDashboard() {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">Faturado</p>
-                    <p className="font-data text-2xl font-semibold tabular-nums mt-1">{formatBRL(fin.faturado)}</p>
-                    <p className="text-xs text-muted-foreground mt-1">Meta: {formatBRL(fin.metaFaturamento)}</p>
+                    <p className="font-data text-2xl font-semibold tabular-nums mt-1">{ocultar(formatBRL(fin.faturado))}</p>
+                    <p className="text-xs text-muted-foreground mt-1">Meta: {ocultar(formatBRL(fin.metaFaturamento))}</p>
                   </div>
                   <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
                     <TrendingUp className="h-4 w-4" />
                   </div>
                 </div>
-                <SlaBar percent={pctFaturamento} label={`${pctFaturamento.toFixed(1)}% da meta`} className="mt-4" />
+                <SlaBar percent={pctFaturamento} label={ocultar(`${pctFaturamento.toFixed(1)}% da meta`)} className="mt-4" />
               </Card>
 
               <Card className="p-5">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">Recebido</p>
-                    <p className="font-data text-2xl font-semibold tabular-nums mt-1">{formatBRL(fin.recebido)}</p>
-                    <p className="text-xs text-muted-foreground mt-1">Pendente: {formatBRL(fin.pendente)}</p>
+                    <p className="font-data text-2xl font-semibold tabular-nums mt-1">{ocultar(formatBRL(fin.recebido))}</p>
+                    <p className="text-xs text-muted-foreground mt-1">Pendente: {ocultar(formatBRL(fin.pendente))}</p>
                   </div>
                   <div className="h-9 w-9 rounded-lg bg-success/15 text-success flex items-center justify-center">
                     <CheckCircle2 className="h-4 w-4" />
@@ -505,8 +507,8 @@ function AdminDashboard() {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">Repasses pendentes</p>
-                    <p className="font-data text-2xl font-semibold tabular-nums mt-1">{formatBRL(fin.repassesPendentes)}</p>
-                    <p className="text-xs text-muted-foreground mt-1">Repassado: {formatBRL(fin.repassado)}</p>
+                    <p className="font-data text-2xl font-semibold tabular-nums mt-1">{ocultar(formatBRL(fin.repassesPendentes))}</p>
+                    <p className="text-xs text-muted-foreground mt-1">Repassado: {ocultar(formatBRL(fin.repassado))}</p>
                   </div>
                   <div className="h-9 w-9 rounded-lg bg-info/15 text-info flex items-center justify-center">
                     <Wallet className="h-4 w-4" />
