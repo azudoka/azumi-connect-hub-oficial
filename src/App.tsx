@@ -345,9 +345,11 @@ const App = () => (
         <AuthProvider>
           <ModulesProvider>
             <FinanceiroProvider>
-              <ModulesLoader>
-                <AppRoutes />
-              </ModulesLoader>
+              <TimerProvider>
+                <ModulesLoader>
+                  <AppRoutes />
+                </ModulesLoader>
+              </TimerProvider>
             </FinanceiroProvider>
           </ModulesProvider>
         </AuthProvider>
