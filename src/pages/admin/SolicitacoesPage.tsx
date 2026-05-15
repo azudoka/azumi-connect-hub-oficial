@@ -646,10 +646,11 @@ function AdminView() {
               onClick={() => {
                 if (!selected || !notaTexto.trim()) return;
                 const agora = format(new Date(), "dd/MM HH:mm");
-                const novaMensagem = {
+                const novaMensagem: HistoricoItem = {
                   autor: "Você (interno)",
                   quando: agora,
                   texto: notaTexto.trim(),
+                  enviadoEm: Date.now(),
                 };
                 atualizarSolicitacao(selected.id, {
                   historico: [...(selected.historico ?? []), novaMensagem],
