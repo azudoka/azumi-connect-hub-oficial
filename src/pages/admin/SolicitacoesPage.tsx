@@ -149,6 +149,125 @@ function RespostaInput({ onEnviar }: { onEnviar: (texto: string) => void }) {
   );
 }
 
+function MensagemChat({
+  mensagem,
+  index,
+  onEditar,
+  onExcluir,
+}: {
+  mensagem: HistoricoItem;
+  index: number;
+  onEditar: (index: number, novoTexto: string, editadoEm: string) => void;
+  onExcluir: (index: number) => void;
+}) {
+  const [editando, setEditando] = useState(false);
+  const [textoEdit, setTextoEdit] = useState(mensagem.texto);
+  const isMe = mensagem.autor === "Você" || mensagem.autor.includes("interno");
+  const podeExcluir =
+    isMe &&
+    mensagem.enviadoEm !== undefined &&
+    Date.now() - mensagem.enviadoEm < 60_000;
+
+  return (
+    <div className={cn("flex gap-2 items-end group", isMe && "flex-row-reverse")}>
+      {!isMe && (
+        <div className="h-7 w-7 rounded-md bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white shrink-0">
+          {mensagem.autor.charAt(0)}
+        </div>
+      )}
+      <div className="relative max-w-[78%]">
+        {editando ? (
+          <div className="space-y-1">
+            <textarea
+              className="text-sm rounded-xl px-3 py-2 bg-primary/10 border border-primary/30 resize-none w-full min-h-[60px] focus:outline-none"
+              value={textoEdit}
+              onChange={(e) => setTextoEdit(e.target.value)}
+              autoFocus
+            />
+            <div className="flex gap-2 justify-end">
+              <button
+                type="button"
+                className="text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  setEditando(false);
+                  setTextoEdit(mensagem.texto);
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="text-xs text-primary font-medium"
+                onClick={() => {
+                  if (!textoEdit.trim()) return;
+                  const agora = format(new Date(), "HH:mm");
+                  onEditar(index, textoEdit.trim(), agora);
+                  setEditando(false);
+                }}
+              >
+                Salvar
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div
+            className={cn(
+              "rounded-2xl px-3 py-2 text-sm shadow-sm",
+              isMe
+                ? "bg-primary text-primary-foreground rounded-br-sm"
+                : "bg-secondary text-foreground rounded-bl-sm border border-border"
+            )}
+          >
+            {!isMe && (
+              <div className="text-[10px] font-semibold mb-0.5 text-primary">
+                {mensagem.autor}
+              </div>
+            )}
+            <p className="break-words">{mensagem.texto}</p>
+            {mensagem.editadoEm && (
+              <span className="text-[9px] opacity-60 ml-1">
+                · editado {mensagem.editadoEm}
+              </span>
+            )}
+            <div
+              className={cn(
+                "text-[10px] font-data mt-1 text-right",
+                isMe ? "text-primary-foreground/70" : "text-muted-foreground"
+              )}
+            >
+              {mensagem.quando}
+            </div>
+          </div>
+        )}
+        {isMe && !editando && (
+          <div className="absolute -top-6 right-0 hidden group-hover:flex items-center gap-1 bg-background border border-border rounded-md px-1.5 py-0.5 shadow-sm">
+            <button
+              type="button"
+              title="Editar"
+              onClick={() => setEditando(true)}
+              className="text-muted-foreground hover:text-foreground p-0.5"
+            >
+              <Pencil className="h-3 w-3" />
+            </button>
+            {podeExcluir && (
+              <button
+                type="button"
+                title="Excluir"
+                onClick={() => {
+                  if (confirm("Excluir esta mensagem?")) onExcluir(index);
+                }}
+                className="text-muted-foreground hover:text-destructive p-0.5"
+              >
+                <Trash2 className="h-3 w-3" />
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function AdminView() {
   const navigate = useNavigate();
   const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>(MOCK);
