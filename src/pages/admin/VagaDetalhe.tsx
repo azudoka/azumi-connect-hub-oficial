@@ -3,7 +3,6 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { SectionDivider } from "@/components/SectionDivider";
 import { SlaBar } from "@/components/SlaBar";
 import { DiscBars } from "@/components/DiscBars";
-import { Timer } from "@/components/Timer";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { vagas, candidatos, etapasVaga, comentariosVaga, getGestorDaVaga, type JanelaDisponibilidade } from "@/data/mock";
 import { getParecerCliente, getFeedback1aLeva } from "@/data/atracaoClienteStore";
@@ -626,7 +625,7 @@ export default function VagaDetalheAdmin() {
   }
 
   function handleCliqueEnviar() {
-    const total = candidatosVaga.filter(c => c.enviado).length;
+    const total = candidatosVaga.filter(c => colunasEstado[c.id] === "Enviados").length;
     if (total > 3) {
       setExcedeuOpen(true);
     } else {
@@ -651,7 +650,15 @@ export default function VagaDetalheAdmin() {
         actions={
           <>
             <StatusBadge status={vaga.status} />
-            <Timer compact />
+            <button
+              type="button"
+              title="Iniciar timer para esta vaga"
+              onClick={() => navigate(`/app/horas?task_id=${vaga.id}&vaga=${encodeURIComponent(vaga.titulo)}`)}
+              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-border hover:bg-secondary text-xs font-medium text-muted-foreground transition-colors"
+            >
+              <Play className="h-3.5 w-3.5" />
+              Play
+            </button>
           </>
         }
       />
@@ -1189,12 +1196,12 @@ export default function VagaDetalheAdmin() {
             <div>
               <h3 className="font-display font-semibold">Perfis selecionados para envio</h3>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {candidatosVaga.filter(c => c.enviado).length} candidato(s) prontos para apresentação ao cliente
+                {candidatosVaga.filter(c => colunasEstado[c.id] === "Enviados").length} candidato(s) prontos para apresentação ao cliente
               </p>
             </div>
             <button
               onClick={handleCliqueEnviar}
-              disabled={candidatosVaga.filter(c => c.enviado).length === 0}
+              disabled={candidatosVaga.filter(c => colunasEstado[c.id] === "Enviados").length === 0}
               className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center gap-1.5 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send className="h-4 w-4" /> Enviar para o cliente
@@ -1202,7 +1209,7 @@ export default function VagaDetalheAdmin() {
           </div>
 
           <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {candidatosVaga.filter(c => c.enviado).map((c) => {
+            {candidatosVaga.filter(c => colunasEstado[c.id] === "Enviados").map((c) => {
               const declinio = declinios[c.id];
               return (
                 <li key={c.id} className="border border-border rounded-lg p-3 bg-background/40">
@@ -1293,7 +1300,7 @@ export default function VagaDetalheAdmin() {
                 </li>
               );
             })}
-            {candidatosVaga.filter(c => c.enviado).length === 0 && (
+            {candidatosVaga.filter(c => colunasEstado[c.id] === "Enviados").length === 0 && (
               <li className="col-span-full text-center text-xs text-muted-foreground py-8">
                 Nenhum candidato marcado para envio ainda.
               </li>
@@ -1485,7 +1492,7 @@ export default function VagaDetalheAdmin() {
                 <h3 className="font-display text-lg font-semibold">Confirmar envio ao cliente?</h3>
                 <p className="text-sm text-muted-foreground mt-1">
                   Você está prestes a enviar{" "}
-                  <strong className="text-foreground">{candidatosVaga.filter(c => c.enviado).length} perfil(is)</strong>{" "}
+                  <strong className="text-foreground">{candidatosVaga.filter(c => colunasEstado[c.id] === "Enviados").length} perfil(is)</strong>{" "}
                   para <strong className="text-foreground">{vaga.empresa}</strong>. Esta ação dispara
                   notificação ao cliente e inicia a contagem de SLA do parecer.
                 </p>
@@ -1525,7 +1532,7 @@ export default function VagaDetalheAdmin() {
                   await new Promise((r) => setTimeout(r, 800));
                   setEnviando(false);
                   setEnviarOpen(false);
-                  toast.success(`${candidatosVaga.filter(c => c.enviado).length} perfil(is) enviado(s) para ${vaga.empresa}.`, {
+                  toast.success(`${candidatosVaga.filter(c => colunasEstado[c.id] === "Enviados").length} perfil(is) enviado(s) para ${vaga.empresa}.`, {
                     description: "O cliente foi notificado e tem 48h para emitir parecer.",
                   });
                 }}
@@ -1551,7 +1558,7 @@ export default function VagaDetalheAdmin() {
                 <h3 className="font-display text-lg font-semibold">Limite de perfis excedido</h3>
                 <p className="text-sm text-muted-foreground mt-1">
                   O contrato permite o envio de no máximo 3 perfis por rodada. Você selecionou{" "}
-                  <strong>{candidatosVaga.filter(c => c.enviado).length} perfis</strong>.
+                  <strong>{candidatosVaga.filter(c => colunasEstado[c.id] === "Enviados").length} perfis</strong>.
                   Para prosseguir, justifique o motivo abaixo.
                 </p>
               </div>
