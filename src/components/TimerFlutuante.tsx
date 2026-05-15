@@ -1,5 +1,5 @@
-import { useLocation } from "react-router-dom";
-import { Clock, Square, Pause, Play, X } from "lucide-react";
+import { useRef, useState, useEffect } from "react";
+import { Clock, Square, Pause, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TimerFlutuanteProps {
@@ -32,13 +32,54 @@ export function TimerFlutuante({
   onRetomar,
   onEncerrar,
 }: TimerFlutuanteProps) {
-  const location = useLocation();
-  const naHoras = location.pathname === "/app/horas";
+  const [pos, setPos] = useState({ x: 24, y: 24 }); // distância do canto inferior direito
+  const [dragging, setDragging] = useState(false);
+  const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
 
-  if (!ativo || naHoras) return null;
+  function onMouseDown(e: React.MouseEvent) {
+    if ((e.target as HTMLElement).closest("button")) return;
+    dragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      origX: pos.x,
+      origY: pos.y,
+    };
+    setDragging(true);
+  }
+
+  useEffect(() => {
+    function onMouseMove(e: MouseEvent) {
+      if (!dragRef.current) return;
+      const dx = e.clientX - dragRef.current.startX;
+      const dy = e.clientY - dragRef.current.startY;
+      setPos({
+        x: Math.max(8, dragRef.current.origX - dx),
+        y: Math.max(8, dragRef.current.origY - dy),
+      });
+    }
+    function onMouseUp() {
+      dragRef.current = null;
+      setDragging(false);
+    }
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+  }, []);
+
+  if (!ativo) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-2.5 shadow-elevated max-w-[420px]">
+    <div
+      onMouseDown={onMouseDown}
+      style={{ right: pos.x, bottom: pos.y }}
+      className={cn(
+        "fixed z-50 flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-2.5 shadow-elevated max-w-[420px] select-none",
+        dragging ? "cursor-grabbing" : "cursor-grab"
+      )}
+    >
       <span
         className={cn(
           "h-2.5 w-2.5 rounded-full shrink-0",
