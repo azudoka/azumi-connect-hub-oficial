@@ -300,6 +300,13 @@ function AdminView() {
   const [notaTexto, setNotaTexto] = useState("");
   const [encaminharOpen, setEncaminharOpen] = useState(false);
   const [consultorDestino, setConsultorDestino] = useState("");
+  const [novaOpen, setNovaOpen] = useState(false);
+  const [nTipo, setNTipo] = useState<keyof typeof TIPOS_SOL>("duvida");
+  const [nTitulo, setNTitulo] = useState("");
+  const [nUrgencia, setNUrgencia] = useState<"alta" | "media" | "baixa">("media");
+  const [nDescricao, setNDescricao] = useState("");
+  const [nEmpresa, setNEmpresa] = useState("");
+  const [nConsultor, setNConsultor] = useState("");
 
   const empresas = useMemo(() => Array.from(new Set(solicitacoes.map((s) => s.empresa))), [solicitacoes]);
   const tipos    = useMemo(() => Array.from(new Set(solicitacoes.map((s) => s.tipo))), [solicitacoes]);
