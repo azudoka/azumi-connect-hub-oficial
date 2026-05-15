@@ -205,6 +205,7 @@ function isHorarioPermitido(now: Date = new Date()): {
 export default function HorasPage() {
   const { usuario } = useAuth();
   const isAdmin = usuario?.role === "admin";
+  const timerCtx = useTimerGlobal();
 
   // Lista do extrato
   const [lancamentos, setLancamentos] = useState<Lancamento[]>(lancamentosIniciais);
@@ -215,6 +216,8 @@ export default function HorasPage() {
   const [timerKey, setTimerKey] = useState(0);
   const [timerAtivo, setTimerAtivo] = useState(false);
   const [confirmStartOpen, setConfirmStartOpen] = useState(false);
+  const [confirmStopOpen, setConfirmStopOpen] = useState(false);
+  const [segundosParaGravar, setSegundosParaGravar] = useState(0);
   const [etapaOpen, setEtapaOpen] = useState(false);
   const [etapaSelecionada, setEtapaSelecionada] = useState<string>("");
   const [segundosTimer, setSegundosTimer] = useState(0);
