@@ -1413,7 +1413,7 @@ function EntregavelPanelSheet({
           <Button
             size="sm"
             variant="outline"
-            onClick={() => onAbrirHoras(entregavel.codigo)}
+            onClick={() => onAbrirHoras(entregavel)}
             disabled={bloqueado}
             className="gap-1.5"
           >
