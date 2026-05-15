@@ -505,7 +505,7 @@ export default function HorasPage() {
 
         {timerAtivo ? (
           <div className="rounded-lg border border-border bg-background/40 p-4 flex items-center gap-4 flex-wrap">
-            <Timer key={timerKey} onStop={handleTimerStop} />
+            <Timer key={timerKey} onStop={handleTimerStop} onTick={(s) => setSegundosTimer(s)} />
             <div className="flex-1 min-w-[200px]">
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Tarefa ativa</div>
               {tarefaAtiva ? (
@@ -564,7 +564,7 @@ export default function HorasPage() {
 
       {/* ───────── 2. Lançamento Manual ───────── */}
       <section className="bg-card border border-border rounded-xl mb-6 overflow-hidden">
-        <Accordion type="single" collapsible>
+        <Accordion type="single" collapsible value={manualAberto} onValueChange={setManualAberto}>
           <AccordionItem value="manual" className="border-none">
             <AccordionTrigger className="px-5 py-4 hover:no-underline">
               <div className="flex items-center gap-2">
@@ -617,7 +617,7 @@ export default function HorasPage() {
                   <Select value={mEmpresa} onValueChange={(v) => { setMEmpresa(v); setMProjeto(""); }}>
                     <SelectTrigger><SelectValue placeholder="Selecione a empresa" /></SelectTrigger>
                     <SelectContent>
-                      {empresas.slice(0, 3).map((e) => (
+                      {empresas.filter((e) => projetosPorEmpresa[e.id]).map((e) => (
                         <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
                       ))}
                     </SelectContent>
