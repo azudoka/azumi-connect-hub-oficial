@@ -362,6 +362,192 @@ export default function AtracaoLista() {
           </table>
         </div>
       )}
+
+      {/* Sheet de nova vaga */}
+      <Sheet open={novaVagaOpen} onOpenChange={(o) => {
+        setNovaVagaOpen(o);
+        if (!o) resetNovaVaga();
+      }}>
+        <SheetContent className="sm:max-w-lg w-[90vw] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Nova vaga</SheetTitle>
+            <SheetDescription>
+              Preencha os dados para iniciar o funil de atração.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-6 space-y-5">
+            {/* Título */}
+            <div className="space-y-2">
+              <Label htmlFor="nTitulo">Título da vaga *</Label>
+              <Input
+                id="nTitulo"
+                value={nTitulo}
+                onChange={(e) => setNTitulo(e.target.value)}
+                placeholder="Ex.: Gerente de TI Sênior"
+              />
+            </div>
+
+            {/* Empresa e Filial */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="nEmpresa">Empresa *</Label>
+                <Input
+                  id="nEmpresa"
+                  value={nEmpresa}
+                  onChange={(e) => setNEmpresa(e.target.value)}
+                  placeholder="Nome da empresa"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="nFilial">Filial</Label>
+                <Input
+                  id="nFilial"
+                  value={nFilial}
+                  onChange={(e) => setNFilial(e.target.value)}
+                  placeholder="SP, RJ, BH..."
+                />
+              </div>
+            </div>
+
+            {/* Tipo + Modalidade */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Tipo *</Label>
+                <Select value={nTipo} onValueChange={(v) => setNTipo(v as TipoVaga)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIPOS_VAGA.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>
+                        {t.label}
+                        {t.value === "hunting" && PLANO_ATUAL === "ongoing" &&
+                          " (indisponível no plano Ongoing)"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {huntBloqueado && (
+                  <div className="text-xs text-destructive flex items-center gap-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    Hunt Executivo não está disponível no plano Ongoing.
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label>Modalidade</Label>
+                <Select value={nModalidade} onValueChange={setNModalidade}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MODALIDADES.map((m) => (
+                      <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Posições */}
+            <div className="space-y-2">
+              <Label htmlFor="nPosicoes">Número de posições abertas</Label>
+              <Input
+                id="nPosicoes"
+                type="number"
+                min={1}
+                value={nPosicoes}
+                onChange={(e) => setNPosicoes(e.target.value)}
+                className="w-24"
+              />
+            </div>
+
+            {/* Benefícios — checkboxes múltiplos */}
+            <div className="space-y-2">
+              <Label>Benefícios</Label>
+              <div className="flex flex-wrap gap-2">
+                {BENEFICIOS_OPCOES.map((b) => {
+                  const sel = nBeneficios.includes(b.value);
+                  return (
+                    <button
+                      key={b.value}
+                      type="button"
+                      onClick={() =>
+                        setNBeneficios((prev) =>
+                          sel ? prev.filter((x) => x !== b.value) : [...prev, b.value]
+                        )
+                      }
+                      className={cn(
+                        "rounded-full border px-3 py-1 text-xs transition-colors",
+                        sel
+                          ? "border-primary bg-primary/10 text-primary font-medium"
+                          : "border-border hover:bg-muted/40"
+                      )}
+                    >
+                      {b.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Descrição */}
+            <div className="space-y-2">
+              <Label htmlFor="nDescricao">Descrição e requisitos</Label>
+              <Textarea
+                id="nDescricao"
+                value={nDescricao}
+                onChange={(e) => setNDescricao(e.target.value)}
+                placeholder="Descreva o perfil desejado, requisitos obrigatórios e diferenciais."
+              />
+            </div>
+          </div>
+          <SheetFooter className="border-t pt-4 flex-row gap-2 sm:justify-end">
+            <Button variant="outline" className="rounded-full"
+              onClick={() => { setNovaVagaOpen(false); resetNovaVaga(); }}>
+              Cancelar
+            </Button>
+            <Button
+              className="rounded-full"
+              disabled={!nTitulo.trim() || !nEmpresa.trim() || huntBloqueado}
+              onClick={() => {
+                const ano = new Date().getFullYear();
+                const cod = `VAG-${ano}-${String(Math.floor(Math.random() * 9000) + 1000)}`;
+                // Cria vaga como rascunho no estado local
+                const nova: VagaLocal = {
+                  id: `v-${Date.now()}`,
+                  titulo: nTitulo.trim(),
+                  empresa: nEmpresa.trim(),
+                  filial: nFilial.trim() || "—",
+                  etapa: "briefing",
+                  etapaFunil: "briefing",
+                  status: "briefing",
+                  sla: 0,
+                  diasAbertos: 0,
+                  diasPrevistos: 30,
+                  candidatosTotal: 0,
+                  candidatosTriagem: 0,
+                  candidatosEntrevista: 0,
+                  candidatosEnviados: 0,
+                  candidatosContratados: 0,
+                  tipo: nTipo,
+                  modalidade: nModalidade as "presencial" | "hibrido" | "remoto",
+                  posicoes: Number(nPosicoes) || 1,
+                  beneficios: nBeneficios,
+                } as VagaLocal;
+                setVagas((prev) => [nova, ...prev]);
+                setNovaVagaOpen(false);
+                resetNovaVaga();
+                toast.success(`Vaga "${nova.titulo}" criada — código ${cod}.`, {
+                  description: "Status: Briefing. Complete o preenchimento antes de publicar.",
+                });
+              }}
+            >
+              Criar vaga
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
