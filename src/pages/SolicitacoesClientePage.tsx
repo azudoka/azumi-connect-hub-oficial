@@ -1,5 +1,4 @@
 import { useMemo, useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -12,6 +11,7 @@ import {
   AlertCircle,
   CheckCircle2,
   ArrowRight,
+  Send,
 } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
