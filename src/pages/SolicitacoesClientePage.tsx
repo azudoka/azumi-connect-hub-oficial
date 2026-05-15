@@ -272,6 +272,7 @@ export default function SolicitacoesClientePage() {
   const [form, setForm] = useState(FORM_INICIAL);
   const [expandidos, setExpandidos] = useState<Record<string, boolean>>({});
   const [conversaAberta, setConversaAberta] = useState<Solicitacao | null>(null);
+  const [cancelarSol, setCancelarSol] = useState<Solicitacao | null>(null);
 
   const lista = useMemo(() => {
     const base =
