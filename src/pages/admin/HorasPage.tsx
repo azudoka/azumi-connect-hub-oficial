@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
+import { useAuth } from "@/context/AuthContext";
 import { empresas, consultores } from "@/data/mock";
 
 // ────────────────────────────────────────────────────────────────────
@@ -56,6 +57,7 @@ interface Lancamento {
   consultorNome: string;
   justificativa?: string;  // só para manual
   observacao?: string;     // detalhe extra (somente expandido)
+  requerRevisao?: boolean;
 }
 
 // Projetos por empresa para o select dependente
@@ -174,8 +176,12 @@ function isHorarioPermitido(now: Date = new Date()): {
 // ────────────────────────────────────────────────────────────────────
 
 export default function HorasPage() {
+  const { usuario } = useAuth();
+  const isAdmin = usuario?.role === "admin";
+
   // Lista do extrato
   const [lancamentos, setLancamentos] = useState<Lancamento[]>(lancamentosIniciais);
+  const [proximoRequerRevisao, setProximoRequerRevisao] = useState(false);
 
   // ── Timer global ────────────────────────────────────────────────
   // Re-mount via key permite "encerrar programaticamente" sem alterar o componente Timer.
@@ -254,6 +260,7 @@ export default function HorasPage() {
   function encerrarAutomaticamente() {
     setTimerAtivo(false);
     setTimerKey((k) => k + 1);
+    setProximoRequerRevisao(true);
     toast.warning("Seu timer foi encerrado automaticamente às 18h.", {
       description: "Deseja ajustar as horas manualmente?",
     });
@@ -298,8 +305,10 @@ export default function HorasPage() {
         tipo: "timer",
         consultorId: "ab",
         consultorNome: "Ana Beatriz",
+        requerRevisao: proximoRequerRevisao,
       };
       setLancamentos((prev) => [novo, ...prev]);
+      setProximoRequerRevisao(false);
       toast.success(`Timer encerrado: ${horasReg.toFixed(2)}h registradas.`);
     } else if (seconds > 0) {
       toast.success(`Timer encerrado: ${(seconds / 3600).toFixed(2)}h registradas.`);
@@ -377,6 +386,7 @@ export default function HorasPage() {
 
   const filtrados = useMemo(() => {
     return lancamentos.filter((l) => {
+      if (!isAdmin && l.consultorId !== (usuario?.id ?? "ab")) return false;
       if (fEmpresa !== "todas" && l.empresaId !== fEmpresa) return false;
       if (fConsultor !== "todos" && l.consultorId !== fConsultor) return false;
       const d = new Date(l.data);
@@ -384,7 +394,7 @@ export default function HorasPage() {
       if (fPeriodoFim && d > fPeriodoFim) return false;
       return true;
     });
-  }, [lancamentos, fEmpresa, fConsultor, fPeriodoInicio, fPeriodoFim]);
+  }, [lancamentos, fEmpresa, fConsultor, fPeriodoInicio, fPeriodoFim, isAdmin, usuario]);
 
   const totalHoras = filtrados.reduce((acc, l) => acc + l.horas, 0);
   const totalTimer = filtrados.filter((l) => l.tipo === "timer").reduce((a, l) => a + l.horas, 0);
@@ -683,15 +693,17 @@ export default function HorasPage() {
             </SelectContent>
           </Select>
 
-          <Select value={fConsultor} onValueChange={setFConsultor}>
-            <SelectTrigger className="h-9 w-[180px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos os consultores</SelectItem>
-              {consultores.map((c) => (
-                <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {isAdmin && (
+            <Select value={fConsultor} onValueChange={setFConsultor}>
+              <SelectTrigger className="h-9 w-[180px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os consultores</SelectItem>
+                {consultores.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
 
           <Popover>
             <PopoverTrigger asChild>
@@ -787,15 +799,22 @@ export default function HorasPage() {
                         <td className="px-4 py-3 text-muted-foreground">{l.entregavel}</td>
                         <td className="px-4 py-3 text-right font-data tabular-nums">{l.horas.toFixed(2)}h</td>
                         <td className="px-4 py-3">
-                          {l.tipo === "timer" ? (
-                            <span className="badge-pill bg-info/15 text-info border-info/30">
-                              <TimerIcon className="h-3 w-3" /> Timer
-                            </span>
-                          ) : (
-                            <span className="badge-pill bg-warning/15 text-warning border-warning/30">
-                              <PenSquare className="h-3 w-3" /> Manual
-                            </span>
-                          )}
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {l.tipo === "timer" ? (
+                              <span className="badge-pill bg-info/15 text-info border-info/30">
+                                <TimerIcon className="h-3 w-3" /> Timer
+                              </span>
+                            ) : (
+                              <span className="badge-pill bg-warning/15 text-warning border-warning/30">
+                                <PenSquare className="h-3 w-3" /> Manual
+                              </span>
+                            )}
+                            {l.requerRevisao && (
+                              <span className="badge-pill bg-destructive/15 text-destructive border-destructive/30">
+                                <AlertTriangle className="h-3 w-3" /> Revisar
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-3 text-xs">{l.consultorNome}</td>
                       </tr>
@@ -812,7 +831,7 @@ export default function HorasPage() {
                                   <p className="text-foreground">{l.justificativa}</p>
                                 </div>
                               )}
-                              {l.observacao && (
+                              {l.observacao && !l.observacao.startsWith("Início") && (
                                 <div>
                                   <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
                                     Observação adicional
