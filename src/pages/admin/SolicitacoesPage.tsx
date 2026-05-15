@@ -312,6 +312,7 @@ function AdminView() {
   const [nDescricao, setNDescricao] = useState("");
   const [nEmpresa, setNEmpresa] = useState("");
   const [nConsultor, setNConsultor] = useState("");
+  const [nObsInterna, setNObsInterna] = useState("");
 
   const empresas = useMemo(() => Array.from(new Set(solicitacoes.map((s) => s.empresa))), [solicitacoes]);
   const tipos    = useMemo(() => Array.from(new Set(solicitacoes.map((s) => s.tipo))), [solicitacoes]);
