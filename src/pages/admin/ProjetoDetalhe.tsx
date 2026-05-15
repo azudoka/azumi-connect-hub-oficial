@@ -1293,7 +1293,7 @@ function EntregavelPanelSheet({
   entregavel: Entregavel | null;
   onClose: () => void;
   onPatch: (patch: Partial<Entregavel>) => void;
-  onAbrirHoras: (codigo: string) => void;
+  onAbrirHoras: (entregavel: Entregavel) => void;
 }) {
   const [novaSubtarefa, setNovaSubtarefa] = useState("");
   const [novaSubtarefaH, setNovaSubtarefaH] = useState<number | "">("");
