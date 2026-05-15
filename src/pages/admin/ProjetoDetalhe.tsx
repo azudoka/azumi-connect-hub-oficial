@@ -1642,27 +1642,57 @@ function ChatLista({ mensagens }: { mensagens: Mensagem[] }) {
     );
   }
   return (
-    <ul className="space-y-3 max-h-72 overflow-y-auto pr-1">
-      {mensagens.map((m) => (
-        <li key={m.id} className="flex gap-2.5">
-          <div className="h-7 w-7 rounded-full bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white shrink-0">
-            {m.iniciais}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-baseline gap-2">
-              <span className="text-xs font-semibold">{m.autor}</span>
-              <span className="text-[10px] text-muted-foreground font-data">{m.quando}</span>
-            </div>
-            <div className="text-sm mt-0.5 break-words">{renderTextoComLinks(m.texto)}</div>
-            {m.anexo && (
-              <div className="mt-1 inline-flex items-center gap-1.5 text-xs text-primary bg-primary/10 border border-primary/20 rounded px-2 py-0.5">
-                <FileText className="h-3 w-3" />
-                <span className="font-data">{m.anexo}</span>
+    <ul className="space-y-2 max-h-80 overflow-y-auto pr-1 py-1">
+      {mensagens.map((m) => {
+        const isMe = m.autor === "Você";
+        return (
+          <li key={m.id} className={cn("flex gap-2 items-end", isMe && "flex-row-reverse")}>
+            {!isMe && (
+              <div className="h-7 w-7 rounded-full bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white shrink-0">
+                {m.iniciais}
               </div>
             )}
-          </div>
-        </li>
-      ))}
+            <div
+              className={cn(
+                "max-w-[78%] rounded-2xl px-3 py-2 shadow-sm",
+                isMe
+                  ? "bg-primary text-primary-foreground rounded-br-sm"
+                  : "bg-secondary text-foreground rounded-bl-sm"
+              )}
+            >
+              {!isMe && (
+                <div className="text-[11px] font-semibold mb-0.5 text-primary">
+                  {m.autor}
+                </div>
+              )}
+              <div className="text-sm break-words leading-snug">
+                {renderTextoComLinks(m.texto)}
+              </div>
+              {m.anexo && (
+                <div
+                  className={cn(
+                    "mt-1.5 inline-flex items-center gap-1.5 text-xs rounded px-2 py-0.5 border",
+                    isMe
+                      ? "bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground"
+                      : "bg-primary/10 border-primary/20 text-primary"
+                  )}
+                >
+                  <FileText className="h-3 w-3" />
+                  <span className="font-data">{m.anexo}</span>
+                </div>
+              )}
+              <div
+                className={cn(
+                  "text-[10px] font-data mt-1 text-right",
+                  isMe ? "text-primary-foreground/70" : "text-muted-foreground"
+                )}
+              >
+                {m.quando}
+              </div>
+            </div>
+          </li>
+        );
+      })}
     </ul>
   );
 }
