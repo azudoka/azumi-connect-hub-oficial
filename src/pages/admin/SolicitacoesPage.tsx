@@ -752,6 +752,136 @@ function AdminView() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Sheet open={novaOpen} onOpenChange={(o) => {
+        setNovaOpen(o);
+        if (!o) {
+          setNTipo("duvida"); setNTitulo(""); setNUrgencia("media");
+          setNDescricao(""); setNEmpresa(""); setNConsultor("");
+        }
+      }}>
+        <SheetContent className="sm:max-w-md w-full overflow-y-auto flex flex-col">
+          <SheetHeader>
+            <SheetTitle>Nova solicitação</SheetTitle>
+            <SheetDescription>
+              Registre uma demanda recebida pelo cliente.
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="flex-1 space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Empresa *</Label>
+              <Select value={nEmpresa} onValueChange={setNEmpresa}>
+                <SelectTrigger><SelectValue placeholder="Selecione a empresa" /></SelectTrigger>
+                <SelectContent>
+                  {empresas.map((e) => (
+                    <SelectItem key={e} value={e}>{e}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Tipo *</Label>
+              <Select value={nTipo} onValueChange={(v) => setNTipo(v as keyof typeof TIPOS_SOL)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(TIPOS_SOL).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Título *</Label>
+              <Input
+                value={nTitulo}
+                onChange={(e) => setNTitulo(e.target.value)}
+                placeholder="Resumo da solicitação"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Urgência</Label>
+              <div className="flex gap-2">
+                {(["alta", "media", "baixa"] as const).map((u) => (
+                  <button
+                    key={u}
+                    type="button"
+                    onClick={() => setNUrgencia(u)}
+                    className={cn(
+                      "flex-1 rounded-full border px-3 py-2 text-xs transition-colors",
+                      nUrgencia === u
+                        ? "border-primary bg-primary/10 font-medium"
+                        : "border-border hover:bg-muted/40"
+                    )}
+                  >
+                    {URGENCIA_LABEL[u]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Consultor responsável</Label>
+              <Select value={nConsultor} onValueChange={setNConsultor}>
+                <SelectTrigger><SelectValue placeholder="Selecione um consultor" /></SelectTrigger>
+                <SelectContent>
+                  {CONSULTORES_AZUMI.map((c) => (
+                    <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Descrição *</Label>
+              <Textarea
+                rows={4}
+                className="resize-none"
+                value={nDescricao}
+                onChange={(e) => setNDescricao(e.target.value)}
+                placeholder="Descreva a solicitação com detalhes."
+              />
+            </div>
+          </div>
+
+          <SheetFooter className="border-t pt-4 flex-row gap-2 sm:justify-end">
+            <Button variant="outline" className="rounded-full"
+              onClick={() => setNovaOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              className="rounded-full"
+              disabled={!nEmpresa || !nTitulo.trim() || !nDescricao.trim()}
+              onClick={() => {
+                const ano = new Date().getFullYear();
+                const suf = String(Math.floor(Math.random() * 9000) + 1000);
+                const nova: Solicitacao = {
+                  id: `adm-${Date.now()}`,
+                  protocolo: `SOL-${ano}-${suf}`,
+                  empresa: nEmpresa,
+                  tipo: TIPOS_SOL[nTipo],
+                  status: "aberta",
+                  urgencia: nUrgencia,
+                  data: format(new Date(), "dd/MM/yyyy"),
+                  consultor: nConsultor || "—",
+                  titulo: nTitulo.trim(),
+                  historico: [],
+                };
+                setSolicitacoes((prev) => [nova, ...prev]);
+                toast.success(`Solicitação criada — ${nova.protocolo}`);
+                setNovaOpen(false);
+                setNTipo("duvida"); setNTitulo(""); setNUrgencia("media");
+                setNDescricao(""); setNEmpresa(""); setNConsultor("");
+              }}
+            >
+              Criar solicitação
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
