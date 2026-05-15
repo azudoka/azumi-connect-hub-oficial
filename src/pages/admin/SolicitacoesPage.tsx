@@ -59,6 +59,13 @@ const STATUS_LABEL: Record<Status, string> = {
   aberta: "Aberta", andamento: "Em andamento", finalizada: "Finalizada", cancelada: "Cancelada",
 };
 
+const CONSULTORES_AZUMI = [
+  { id: "ab", nome: "Ana Beatriz" },
+  { id: "rm", nome: "Rafael Moura" },
+  { id: "ct", nome: "Camila Torres" },
+  { id: "da", nome: "Diego Alves" },
+];
+
 function StatusPill({ s }: { s: Status }) {
   const map: Record<Status, string> = {
     aberta:     "bg-[#3B82F6]/15 text-[#3B82F6] border-[#3B82F6]/30",
