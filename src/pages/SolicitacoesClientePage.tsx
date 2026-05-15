@@ -761,39 +761,39 @@ export default function SolicitacoesClientePage() {
                 Nenhuma mensagem ainda.
               </p>
             )}
-            {(conversaAberta?.historico ?? []).map((m, i) => {
-              const isMe = m.autor === "Você";
-              return (
-                <div key={i}
-                  className={cn("flex gap-2 items-end",
-                    isMe && "flex-row-reverse")}>
-                  {!isMe && (
-                    <div className="h-7 w-7 rounded-md bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white shrink-0">
-                      {m.autor.charAt(0)}
-                    </div>
-                  )}
-                  <div className={cn(
-                    "max-w-[78%] rounded-2xl px-3 py-2 text-sm shadow-sm",
-                    isMe
-                      ? "bg-primary text-primary-foreground rounded-br-sm"
-                      : "bg-secondary text-foreground rounded-bl-sm border border-border"
-                  )}>
-                    {!isMe && (
-                      <div className="text-[10px] font-semibold mb-0.5 text-primary">
-                        {m.autor}
-                      </div>
-                    )}
-                    <p className="break-words">{m.texto}</p>
-                    <div className={cn(
-                      "text-[10px] font-data mt-1 text-right",
-                      isMe ? "text-primary-foreground/70" : "text-muted-foreground"
-                    )}>
-                      {format(new Date(m.data), "dd/MM HH:mm", { locale: ptBR })}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {(conversaAberta?.historico ?? []).map((m, i) => (
+              <MensagemChatCliente
+                key={i}
+                mensagem={m}
+                index={i}
+                onEditar={(idx, texto, editadoEm) => {
+                  const atualizado = (conversaAberta?.historico ?? []).map((msg, j) =>
+                    j === idx ? { ...msg, texto, editadoEm } : msg
+                  );
+                  setConversaAberta((prev) =>
+                    prev ? { ...prev, historico: atualizado } : prev
+                  );
+                  setSolicitacoes((prev) =>
+                    prev.map((s) =>
+                      s.id === conversaAberta?.id ? { ...s, historico: atualizado } : s
+                    )
+                  );
+                }}
+                onExcluir={(idx) => {
+                  const atualizado = (conversaAberta?.historico ?? []).filter(
+                    (_, j) => j !== idx
+                  );
+                  setConversaAberta((prev) =>
+                    prev ? { ...prev, historico: atualizado } : prev
+                  );
+                  setSolicitacoes((prev) =>
+                    prev.map((s) =>
+                      s.id === conversaAberta?.id ? { ...s, historico: atualizado } : s
+                    )
+                  );
+                }}
+              />
+            ))}
           </div>
 
           {conversaAberta &&
