@@ -366,7 +366,7 @@ function AdminView() {
         subtitle="Central de solicitações"
         actions={
           <Button
-            onClick={() => navigate("/app/atracao?new=1")}
+            onClick={() => setNovaOpen(true)}
             className="rounded-[100px] bg-[#3B82F6] hover:bg-[#3B82F6]/90 text-white gap-1.5"
           >
             <Plus className="h-4 w-4" /> Nova solicitação
