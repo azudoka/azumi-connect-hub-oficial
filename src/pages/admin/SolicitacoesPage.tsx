@@ -284,7 +284,7 @@ function MensagemChat({
 }
 
 function AdminView() {
-  const navigate = useNavigate();
+  // navigate removido — agora abre Sheet local
   const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>(MOCK);
   const [busca, setBusca]       = useState("");
   const [empresa, setEmpresa]   = useState<string>("all");
