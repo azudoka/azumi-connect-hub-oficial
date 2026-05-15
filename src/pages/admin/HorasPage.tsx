@@ -350,6 +350,7 @@ export default function HorasPage() {
       return;
     }
     setTimerAtivo(true);
+    timerCtx.iniciar(tarefaAtiva?.label ?? "", tarefaAtiva?.empresaNome ?? "");
   }
 
   function confirmarEtapaEIniciar() {
@@ -359,6 +360,7 @@ export default function HorasPage() {
     }
     setEtapaOpen(false);
     setTimerAtivo(true);
+    timerCtx.iniciar(tarefaAtiva?.label ?? "", tarefaAtiva?.empresaNome ?? "");
   }
 
   function confirmarEncerrarEReiniciar() {
