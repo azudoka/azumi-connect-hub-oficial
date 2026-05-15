@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { AuthProvider, useAuth, type Papel } from "@/context/AuthContext";
 import { ModulesProvider } from "@/context/ModulesContext";
+import { FinanceiroProvider } from "@/context/FinanceiroContext";
 import { useCarregarModulosCliente } from "@/hooks/useCarregarModulosCliente";
 import type { ReactNode } from "react";
 
@@ -342,9 +343,11 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <ModulesProvider>
-            <ModulesLoader>
-              <AppRoutes />
-            </ModulesLoader>
+            <FinanceiroProvider>
+              <ModulesLoader>
+                <AppRoutes />
+              </ModulesLoader>
+            </FinanceiroProvider>
           </ModulesProvider>
         </AuthProvider>
       </BrowserRouter>
