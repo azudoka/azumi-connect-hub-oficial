@@ -100,6 +100,7 @@ interface Entregavel {
   mensagens?: Mensagem[];
   anexos?: Anexo[];
   motivoCancelamento?: string;
+  tipoDocumento?: boolean;
 }
 
 interface HistoricoEvento {
@@ -155,7 +156,7 @@ const SLA_APROVACAO_MS = 72 * 60 * 60 * 1000;
 const setentaEDuasHorasAtras = Date.now() - SLA_APROVACAO_MS + 4 * 60 * 60 * 1000; // ~68h ativo p/ exibir
 
 const entregaveisIniciais: Entregavel[] = [
-  { id: "1", codigo: "ENT-001", nome: "Diagnóstico inicial",     frente: "consultoria", complexidade: "C1", status: "aprovado_cliente",  responsavelId: "ab", responsavelNome: "Ana Beatriz",   responsavelIniciais: "AB", prazo: "2026-04-10", horasGastas: 18 },
+  { id: "1", codigo: "ENT-001", nome: "Diagnóstico inicial",     frente: "consultoria", complexidade: "C1", status: "aprovado_cliente",  responsavelId: "ab", responsavelNome: "Ana Beatriz",   responsavelIniciais: "AB", prazo: "2026-04-10", horasGastas: 18, tipoDocumento: true },
   { id: "2", codigo: "ENT-002", nome: "Workshop de validação",   frente: "consultoria", complexidade: "C2", status: "aprovacao_cliente", responsavelId: "ab", responsavelNome: "Ana Beatriz",   responsavelIniciais: "AB", prazo: "2026-04-28", aprovacaoClienteIniciadaEm: setentaEDuasHorasAtras, horasGastas: 12,
     subtarefas: [
       { id: "s1", nome: "Material de apoio", estimativaH: 4, feita: true },
@@ -168,9 +169,9 @@ const entregaveisIniciais: Entregavel[] = [
     ],
     anexos: [{ id: "a1", nome: "workshop_v2.pdf" }],
   },
-  { id: "3", codigo: "ENT-003", nome: "Política de cargos",      frente: "consultoria", complexidade: "C2", status: "aprovacao_interna", responsavelId: "ct", responsavelNome: "Camila Torres", responsavelIniciais: "CT", prazo: "2026-05-10", horasGastas: 9 },
+  { id: "3", codigo: "ENT-003", nome: "Política de cargos",      frente: "consultoria", complexidade: "C2", status: "aprovacao_interna", responsavelId: "ct", responsavelNome: "Camila Torres", responsavelIniciais: "CT", prazo: "2026-05-10", horasGastas: 9, tipoDocumento: true },
   { id: "4", codigo: "ENT-004", nome: "Treinamento de líderes",  frente: "consultoria", complexidade: "C3", status: "em_andamento",      responsavelId: "rm", responsavelNome: "Rafael Moura",  responsavelIniciais: "RM", prazo: "2026-05-20", horasGastas: 4 },
-  { id: "5", codigo: "ENT-005", nome: "Relatório executivo",     frente: "estrategia",  complexidade: "C3", status: "nao_iniciado",      responsavelId: "ab", responsavelNome: "Ana Beatriz",   responsavelIniciais: "AB", prazo: "2026-06-01", horasGastas: 0 },
+  { id: "5", codigo: "ENT-005", nome: "Relatório executivo",     frente: "estrategia",  complexidade: "C3", status: "nao_iniciado",      responsavelId: "ab", responsavelNome: "Ana Beatriz",   responsavelIniciais: "AB", prazo: "2026-06-01", horasGastas: 0, tipoDocumento: true },
   { id: "6", codigo: "ENT-006", nome: "Revisão jurídica",        frente: "juridico",    complexidade: "C1", status: "ajuste_solicitado", responsavelId: "ct", responsavelNome: "Camila Torres", responsavelIniciais: "CT", prazo: "2026-04-22", horasGastas: 6 },
   { id: "7", codigo: "ENT-007", nome: "Entrega final",           frente: "consultoria", complexidade: "C3", status: "nao_iniciado",      responsavelId: "ab", responsavelNome: "Ana Beatriz",   responsavelIniciais: "AB", prazo: "2026-06-15", horasGastas: 0 },
 ];
@@ -225,6 +226,7 @@ export default function ProjetoDetalhe() {
     open: boolean; entId: string | null; targetStatus: EntregavelStatus | null;
   }>({ open: false, entId: null, targetStatus: null });
   const [npsOpen, setNpsOpen] = useState<{ open: boolean; entId: string | null }>({ open: false, entId: null });
+  const [docsOficiaisOpen, setDocsOficiaisOpen] = useState<{ open: boolean; entId: string | null }>({ open: false, entId: null });
 
   // KPIs
   const kpis = useMemo(() => ({
@@ -852,12 +854,64 @@ export default function ProjetoDetalhe() {
         open={npsOpen.open}
         entregavel={entregaveis.find((e) => e.id === npsOpen.entId) ?? null}
         onSubmit={(nota, comentario) => {
+          const entId = npsOpen.entId;
+          const ent = entId ? entregaveis.find((e) => e.id === entId) : null;
           setNpsOpen({ open: false, entId: null });
           toast.success(`Avaliação registrada (${nota}/5).`, {
             description: comentario ? `"${comentario}"` : undefined,
           });
+          if (ent?.tipoDocumento) {
+            setDocsOficiaisOpen({ open: true, entId });
+          }
         }}
       />
+
+      {/* ─────────── Dialog: Vincular a Docs Oficiais ─────────── */}
+      <Dialog
+        open={docsOficiaisOpen.open}
+        onOpenChange={(o) => !o && setDocsOficiaisOpen({ open: false, entId: null })}
+      >
+        <DialogContent
+          className="max-w-md [&>button]:hidden"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              Vincular aos Docs Oficiais?
+            </DialogTitle>
+            <DialogDescription className="pt-1">
+              Este entregável é um documento formal. Deseja disponibilizá-lo
+              na biblioteca de Docs Oficiais da empresa? Ele ficará acessível
+              para os usuários do cliente com a ciência necessária.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 flex-row sm:flex-row">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => {
+                setDocsOficiaisOpen({ open: false, entId: null });
+                toast.info("Documento mantido apenas no histórico do projeto.");
+              }}
+            >
+              Não, manter no projeto
+            </Button>
+            <Button
+              className="flex-1"
+              onClick={() => {
+                setDocsOficiaisOpen({ open: false, entId: null });
+                toast.success("Documento vinculado aos Docs Oficiais.", {
+                  description: "Disponível em /app/documentos para ciência do cliente.",
+                });
+              }}
+            >
+              Sim, vincular
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ─────────── Painel do entregável (subtarefas, consultor, chat) ─────────── */}
       <EntregavelPanelSheet
