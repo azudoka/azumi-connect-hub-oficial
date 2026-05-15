@@ -22,6 +22,14 @@ import { cn } from "@/lib/utils";
 
 type Status = "aberta" | "andamento" | "finalizada" | "cancelada";
 
+interface HistoricoItem {
+  autor: string;
+  quando: string;
+  texto: string;
+  enviadoEm?: number;
+  editadoEm?: string;
+}
+
 interface Solicitacao {
   id: string;
   protocolo: string;
@@ -32,7 +40,7 @@ interface Solicitacao {
   data: string;
   consultor: string;
   titulo: string;
-  historico: { autor: string; quando: string; texto: string }[];
+  historico: HistoricoItem[];
 }
 
 const MOCK: Solicitacao[] = [
