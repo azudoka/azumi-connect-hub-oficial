@@ -514,14 +514,15 @@ export default function AtracaoLista() {
                 const ano = new Date().getFullYear();
                 const cod = `VAG-${ano}-${String(Math.floor(Math.random() * 9000) + 1000)}`;
                 // Cria vaga como rascunho no estado local
-                const nova: VagaLocal = {
+                const nova = {
                   id: `v-${Date.now()}`,
                   titulo: nTitulo.trim(),
                   empresa: nEmpresa.trim(),
+                  empresaId: nEmpresa.trim().toLowerCase().replace(/\s+/g, "-"),
                   filial: nFilial.trim() || "—",
                   etapa: "briefing",
-                  etapaFunil: "briefing",
-                  status: "briefing",
+                  etapaFunil: "briefing" as FunilEtapa,
+                  status: "ativa" as StatusKey,
                   sla: 0,
                   diasAbertos: 0,
                   diasPrevistos: 30,
@@ -530,11 +531,10 @@ export default function AtracaoLista() {
                   candidatosEntrevista: 0,
                   candidatosEnviados: 0,
                   candidatosContratados: 0,
-                  tipo: nTipo,
-                  modalidade: nModalidade as "presencial" | "hibrido" | "remoto",
-                  posicoes: Number(nPosicoes) || 1,
+                  consultor: "Não atribuído",
+                  modalidade: nModalidade.charAt(0).toUpperCase() + nModalidade.slice(1),
                   beneficios: nBeneficios,
-                } as VagaLocal;
+                } as unknown as VagaLocal;
                 setVagas((prev) => [nova, ...prev]);
                 setNovaVagaOpen(false);
                 resetNovaVaga();
