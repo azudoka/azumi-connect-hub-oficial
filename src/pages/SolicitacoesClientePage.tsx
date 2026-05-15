@@ -805,6 +805,7 @@ export default function SolicitacoesClientePage() {
                     autor: "Você",
                     texto,
                     data: new Date().toISOString(),
+                    enviadoEm: Date.now(),
                   };
                   setSolicitacoes((prev) =>
                     prev.map((s) =>
