@@ -399,6 +399,42 @@ export default function HorasPage() {
   const [mFim, setMFim] = useState<string>("");          // "HH:mm"
   const [mJustificativa, setMJustificativa] = useState<string>("");
 
+  // ── Interações externas ────────────────────────────────────────
+  const [interacoes, setInteracoes] = useState<Interacao[]>([]);
+  const [interacaoAberta, setInteracaoAberta] = useState<string>("");
+  const [iCanal, setICanal] = useState<CanalInteracao>("WhatsApp");
+  const [iEmpresa, setIEmpresa] = useState<string>("");
+  const [iEntregavel, setIEntregavel] = useState<string>("");
+  const [iData, setIData] = useState<Date | undefined>(undefined);
+  const [iDuracao, setIDuracao] = useState<string>("");
+  const [iDescricao, setIDescricao] = useState<string>("");
+
+  function salvarInteracao(e: React.FormEvent) {
+    e.preventDefault();
+    if (!iCanal || !iEmpresa || !iData || !iDuracao || !iDescricao.trim()) {
+      toast.error("Preencha todos os campos obrigatórios.");
+      return;
+    }
+    const empresa = empresas.find((emp) => emp.id === iEmpresa);
+    const nova: Interacao = {
+      id: `int_${Date.now()}`,
+      data: format(iData, "yyyy-MM-dd"),
+      canal: iCanal,
+      empresaId: iEmpresa,
+      empresaNome: empresa?.nome ?? iEmpresa,
+      entregavel: iEntregavel || undefined,
+      duracaoMin: Number(iDuracao),
+      descricao: iDescricao.trim(),
+      consultorId: "ab",
+      consultorNome: "Ana Beatriz",
+    };
+    setInteracoes((prev) => [nova, ...prev]);
+    toast.success(`Interação via ${iCanal} registrada.`);
+    setInteracaoAberta("");
+    setICanal("WhatsApp"); setIEmpresa(""); setIEntregavel("");
+    setIData(undefined); setIDuracao(""); setIDescricao("");
+  }
+
   const projetosDisponiveis = useMemo(
     () => (mEmpresa ? projetosPorEmpresa[mEmpresa] ?? [] : []),
     [mEmpresa]
