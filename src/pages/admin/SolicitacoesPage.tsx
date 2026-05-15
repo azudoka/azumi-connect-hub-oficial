@@ -441,7 +441,7 @@ function AdminView() {
                     <Button
                       variant="outline"
                       className="rounded-[100px]"
-                      onClick={() => toast.info("Encaminhar: em breve.")}
+                      onClick={() => { setConsultorDestino(""); setEncaminharOpen(true); }}
                     >
                       Encaminhar
                     </Button>
