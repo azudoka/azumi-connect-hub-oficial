@@ -61,6 +61,9 @@ interface Subtarefa {
   nome: string;
   estimativaH: number;
   feita: boolean;
+  consultorId?: string;
+  consultorNome?: string;
+  prazo?: string; // yyyy-MM-dd
 }
 
 interface Anexo {
@@ -1297,6 +1300,8 @@ function EntregavelPanelSheet({
 }) {
   const [novaSubtarefa, setNovaSubtarefa] = useState("");
   const [novaSubtarefaH, setNovaSubtarefaH] = useState<number | "">("");
+  const [novaSubtarefaConsultor, setNovaSubtarefaConsultor] = useState<string>("");
+  const [novaSubtarefaPrazo, setNovaSubtarefaPrazo] = useState<Date | undefined>();
   const [canalAtivo, setCanalAtivo] = useState<"interno" | "cliente">("interno");
   const [textoMsg, setTextoMsg] = useState("");
   const [showMencoes, setShowMencoes] = useState(false);
@@ -1306,6 +1311,8 @@ function EntregavelPanelSheet({
     if (open) {
       setNovaSubtarefa("");
       setNovaSubtarefaH("");
+      setNovaSubtarefaConsultor("");
+      setNovaSubtarefaPrazo(undefined);
       setTextoMsg("");
       setAnexoPendente(null);
       setCanalAtivo("interno");
@@ -1323,15 +1330,20 @@ function EntregavelPanelSheet({
       toast.error("Informe um nome para a subtarefa.");
       return;
     }
+    const consultor = responsaveisDisponiveis.find((r) => r.id === novaSubtarefaConsultor);
     const nova: Subtarefa = {
       id: `s_${Date.now()}`,
       nome: novaSubtarefa.trim(),
       estimativaH: typeof novaSubtarefaH === "number" ? novaSubtarefaH : 0,
       feita: false,
+      ...(consultor && { consultorId: consultor.id, consultorNome: consultor.nome }),
+      ...(novaSubtarefaPrazo && { prazo: format(novaSubtarefaPrazo, "yyyy-MM-dd") }),
     };
     onPatch({ subtarefas: [...subtarefas, nova] });
     setNovaSubtarefa("");
     setNovaSubtarefaH("");
+    setNovaSubtarefaConsultor("");
+    setNovaSubtarefaPrazo(undefined);
   }
 
   function toggleSubtarefa(sid: string) {
@@ -1499,6 +1511,15 @@ function EntregavelPanelSheet({
                   <span className={cn("text-sm flex-1", s.feita && "line-through text-muted-foreground")}>
                     {s.nome}
                   </span>
+                  {s.consultorNome && (
+                    <span className="text-[11px] text-muted-foreground hidden sm:inline">{s.consultorNome}</span>
+                  )}
+                  {s.prazo && (
+                    <span className="text-[11px] text-muted-foreground font-data flex items-center gap-0.5">
+                      <CalendarIcon className="h-3 w-3" />
+                      {format(new Date(s.prazo + "T00:00:00"), "dd/MM", { locale: ptBR })}
+                    </span>
+                  )}
                   <span className="text-[11px] text-muted-foreground font-data">
                     {s.estimativaH}h
                   </span>
@@ -1519,29 +1540,66 @@ function EntregavelPanelSheet({
           )}
 
           {!bloqueado && (
-            <div className="mt-3 flex items-end gap-2">
-              <div className="flex-1 space-y-1">
-                <Label htmlFor="sub-nome" className="text-[11px]">Nova subtarefa</Label>
-                <Input
-                  id="sub-nome"
-                  value={novaSubtarefa}
-                  onChange={(e) => setNovaSubtarefa(e.target.value)}
-                  placeholder="Ex: Revisar layout"
-                />
+            <div className="mt-3 space-y-2">
+              <div className="flex items-end gap-2">
+                <div className="flex-1 space-y-1">
+                  <Label htmlFor="sub-nome" className="text-[11px]">Nova subtarefa</Label>
+                  <Input
+                    id="sub-nome"
+                    value={novaSubtarefa}
+                    onChange={(e) => setNovaSubtarefa(e.target.value)}
+                    placeholder="Ex: Revisar layout"
+                  />
+                </div>
+                <div className="w-20 space-y-1">
+                  <Label htmlFor="sub-h" className="text-[11px]">Horas</Label>
+                  <Input
+                    id="sub-h"
+                    type="number"
+                    min={0}
+                    value={novaSubtarefaH}
+                    onChange={(e) => setNovaSubtarefaH(e.target.value === "" ? "" : Number(e.target.value))}
+                    placeholder="0"
+                  />
+                </div>
               </div>
-              <div className="w-20 space-y-1">
-                <Label htmlFor="sub-h" className="text-[11px]">Horas</Label>
-                <Input
-                  id="sub-h"
-                  type="number"
-                  min={0}
-                  value={novaSubtarefaH}
-                  onChange={(e) => setNovaSubtarefaH(e.target.value === "" ? "" : Number(e.target.value))}
-                  placeholder="0"
-                />
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label className="text-[11px]">Consultor</Label>
+                  <Select value={novaSubtarefaConsultor} onValueChange={setNovaSubtarefaConsultor}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder="Nenhum" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {responsaveisDisponiveis.map((r) => (
+                        <SelectItem key={r.id} value={r.id} className="text-xs">{r.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[11px]">Prazo</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="w-full h-8 justify-start text-xs font-normal gap-1.5">
+                        <CalendarIcon className="h-3 w-3" />
+                        {novaSubtarefaPrazo ? format(novaSubtarefaPrazo, "dd/MM/yyyy") : "Sem prazo"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={novaSubtarefaPrazo}
+                        onSelect={setNovaSubtarefaPrazo}
+                        locale={ptBR}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
-              <Button onClick={adicionarSubtarefa} size="sm" className="gap-1.5">
-                <Plus className="h-3.5 w-3.5" /> Adicionar
+              <Button onClick={adicionarSubtarefa} size="sm" className="gap-1.5 w-full">
+                <Plus className="h-3.5 w-3.5" /> Adicionar subtarefa
               </Button>
             </div>
           )}
