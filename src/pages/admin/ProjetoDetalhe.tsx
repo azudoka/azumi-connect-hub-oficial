@@ -238,8 +238,9 @@ export default function ProjetoDetalhe() {
     return Math.round((concluidos / total) * 100) || 62;
   }, [entregaveis]);
 
-  function ativaTimerPara(codigo: string) {
-    navigate(`/app/horas?task_id=${codigo}`);
+  function ativaTimerPara(entregavel: Entregavel) {
+    const taskId = encodeURIComponent(entregavel.nome);
+    navigate(`/app/horas?entregavel=${taskId}&codigo=${entregavel.codigo}`);
   }
 
   function aplicarMudancaStatus(entId: string, novoStatus: EntregavelStatus) {
