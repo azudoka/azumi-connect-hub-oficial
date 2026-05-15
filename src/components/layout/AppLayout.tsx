@@ -1,7 +1,9 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { SidebarConnect } from "./SidebarConnect";
 import { Header } from "./Header";
 import { useAuth } from "@/context/AuthContext";
+import { TimerFlutuante } from "@/components/TimerFlutuante";
+import { useTimerGlobal } from "@/context/TimerContext";
 
 interface AppLayoutProps {
   /**
@@ -17,6 +19,9 @@ export function AppLayout({ variant: variantOverride }: AppLayoutProps) {
   const variant: "admin" | "cliente" =
     variantOverride ?? (user?.papel === "cliente" ? "cliente" : "admin");
 
+  const timerCtx = useTimerGlobal();
+  const navigate = useNavigate();
+
   return (
     <div className="flex h-full w-full bg-background text-foreground">
       <SidebarConnect variant={variant} />
@@ -28,6 +33,20 @@ export function AppLayout({ variant: variantOverride }: AppLayoutProps) {
           </div>
         </main>
       </div>
+      <TimerFlutuante
+        ativo={timerCtx.ativo}
+        tarefaNome={timerCtx.tarefaNome}
+        empresaNome={timerCtx.empresaNome}
+        segundos={timerCtx.segundos}
+        pausado={timerCtx.pausado}
+        onIrParaHoras={() => navigate("/app/horas")}
+        onPausar={timerCtx.pausar}
+        onRetomar={timerCtx.retomar}
+        onEncerrar={() => {
+          timerCtx.encerrar();
+          navigate("/app/horas");
+        }}
+      />
     </div>
   );
 }
