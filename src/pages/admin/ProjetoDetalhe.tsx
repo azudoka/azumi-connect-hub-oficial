@@ -101,6 +101,7 @@ interface Entregavel {
   anexos?: Anexo[];
   motivoCancelamento?: string;
   tipoDocumento?: boolean;
+  historico?: HistoricoEvento[];
 }
 
 interface HistoricoEvento {
@@ -168,19 +169,18 @@ const entregaveisIniciais: Entregavel[] = [
       { id: "m3", autor: "Ana Beatriz", iniciais: "AB", quando: "27/04 09:00", texto: "Olá! Material em anexo para sua aprovação. https://docs.azumi.com/ws-2026", canal: "cliente", anexo: "workshop_v2.pdf" },
     ],
     anexos: [{ id: "a1", nome: "workshop_v2.pdf" }],
+    historico: [
+      { id: "h1", titulo: "Entregável criado", autor: "Ana Beatriz", quando: "01/03/2026", descricao: "Cadastrado pela consultora responsável." },
+      { id: "h2", titulo: "Status alterado para Em andamento", autor: "Ana Beatriz", quando: "15/03/2026", descricao: "Trabalho iniciado após reunião de kickoff." },
+      { id: "h3", titulo: "Enviado para aprovação interna", autor: "Camila Torres", quando: "05/04/2026", descricao: "Documento submetido à revisão da liderança Azumi." },
+      { id: "h4", titulo: "Enviado para aprovação do cliente", autor: "Ana Beatriz", quando: "20/04/2026", descricao: "Cliente notificado por e-mail. SLA: 72h." },
+    ],
   },
   { id: "3", codigo: "ENT-003", nome: "Política de cargos",      frente: "consultoria", complexidade: "C2", status: "aprovacao_interna", responsavelId: "ct", responsavelNome: "Camila Torres", responsavelIniciais: "CT", prazo: "2026-05-10", horasGastas: 9, tipoDocumento: true },
   { id: "4", codigo: "ENT-004", nome: "Treinamento de líderes",  frente: "consultoria", complexidade: "C3", status: "em_andamento",      responsavelId: "rm", responsavelNome: "Rafael Moura",  responsavelIniciais: "RM", prazo: "2026-05-20", horasGastas: 4 },
   { id: "5", codigo: "ENT-005", nome: "Relatório executivo",     frente: "estrategia",  complexidade: "C3", status: "nao_iniciado",      responsavelId: "ab", responsavelNome: "Ana Beatriz",   responsavelIniciais: "AB", prazo: "2026-06-01", horasGastas: 0, tipoDocumento: true },
   { id: "6", codigo: "ENT-006", nome: "Revisão jurídica",        frente: "juridico",    complexidade: "C1", status: "ajuste_solicitado", responsavelId: "ct", responsavelNome: "Camila Torres", responsavelIniciais: "CT", prazo: "2026-04-22", horasGastas: 6 },
   { id: "7", codigo: "ENT-007", nome: "Entrega final",           frente: "consultoria", complexidade: "C3", status: "nao_iniciado",      responsavelId: "ab", responsavelNome: "Ana Beatriz",   responsavelIniciais: "AB", prazo: "2026-06-15", horasGastas: 0 },
-];
-
-const historicoMock: HistoricoEvento[] = [
-  { id: "h1", titulo: "Entregável criado",                      autor: "Ana Beatriz",   quando: "01/03/2026", descricao: "Cadastrado pela consultora responsável." },
-  { id: "h2", titulo: "Status alterado para Em andamento",      autor: "Ana Beatriz",   quando: "15/03/2026", descricao: "Trabalho iniciado após reunião de kickoff." },
-  { id: "h3", titulo: "Enviado para aprovação interna",         autor: "Camila Torres", quando: "05/04/2026", descricao: "Documento submetido à revisão da liderança Azumi." },
-  { id: "h4", titulo: "Enviado para aprovação do cliente",      autor: "Ana Beatriz",   quando: "20/04/2026", descricao: "Cliente notificado por e-mail. SLA de parecer: 72h." },
 ];
 
 const responsaveisDisponiveis = [
@@ -260,11 +260,30 @@ export default function ProjetoDetalhe() {
       }
       return next;
     }));
+    registrarHistorico(entId, `Status alterado para "${statusLabels[novoStatus]}"`);
   }
 
   // Atualiza qualquer campo de um entregável (subtarefas, mensagens, consultor…)
   function patchEntregavel(entId: string, patch: Partial<Entregavel>) {
     setEntregaveis((prev) => prev.map((e) => (e.id === entId ? { ...e, ...patch } : e)));
+  }
+
+  function registrarHistorico(entId: string, titulo: string, descricao?: string) {
+    const agora = format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR });
+    const evento: HistoricoEvento = {
+      id: `hev_${Date.now()}`,
+      titulo,
+      autor: "Você",
+      quando: agora,
+      descricao,
+    };
+    setEntregaveis((prev) =>
+      prev.map((e) =>
+        e.id === entId
+          ? { ...e, historico: [...(e.historico ?? []), evento] }
+          : e
+      )
+    );
   }
 
   // ── Drag & Drop entre colunas do Kanban ─────────────────────────
@@ -794,6 +813,7 @@ export default function ProjetoDetalhe() {
           const ent = entregaveis.find((e) => e.id === entId);
           aplicarMudancaStatus(entId, "cancelado");
           patchEntregavel(entId, { motivoCancelamento: justificativa });
+          registrarHistorico(entId, "Entregável cancelado", justificativa);
           setCancelarOpen({ open: false, entId: null });
           const horas = ent?.horasGastas ?? 0;
           toast.warning("Entregável cancelado.", {
@@ -814,6 +834,7 @@ export default function ProjetoDetalhe() {
           const entId = editOpen.entId;
           if (!entId) return;
           setEntregaveis((prev) => prev.map((e) => e.id === entId ? { ...e, ...patch } : e));
+          registrarHistorico(entId, "Entregável editado");
           setEditOpen({ open: false, entId: null });
           toast.success("Entregável atualizado.");
         }}
@@ -832,19 +853,28 @@ export default function ProjetoDetalhe() {
             </SheetDescription>
           </SheetHeader>
 
+          {(entregaveis.find((e) => e.id === historicoOpen.entId)?.historico ?? []).length === 0 && (
+            <div className="text-xs text-muted-foreground text-center py-8 border border-dashed border-border rounded-md mt-6">
+              Nenhuma ação registrada para este entregável.
+            </div>
+          )}
+
           <ol className="mt-6 relative border-l border-border pl-6 space-y-5">
-            {historicoMock.map((h) => (
-              <li key={h.id} className="relative">
-                <span className="absolute -left-[31px] top-1 h-3 w-3 rounded-full bg-primary ring-4 ring-background" />
-                <div className="text-sm font-medium">{h.titulo}</div>
-                <div className="text-[11px] text-muted-foreground font-data mt-0.5">
-                  {h.autor} · {h.quando}
-                </div>
-                {h.descricao && (
-                  <p className="text-xs text-muted-foreground mt-1">{h.descricao}</p>
-                )}
-              </li>
-            ))}
+            {(entregaveis.find((e) => e.id === historicoOpen.entId)?.historico ?? [])
+              .slice()
+              .reverse()
+              .map((h) => (
+                <li key={h.id} className="relative">
+                  <span className="absolute -left-[31px] top-1 h-3 w-3 rounded-full bg-primary ring-4 ring-background" />
+                  <div className="text-sm font-medium">{h.titulo}</div>
+                  <div className="text-[11px] text-muted-foreground font-data mt-0.5">
+                    {h.autor} · {h.quando}
+                  </div>
+                  {h.descricao && (
+                    <p className="text-xs text-muted-foreground mt-1">{h.descricao}</p>
+                  )}
+                </li>
+              ))}
           </ol>
         </SheetContent>
       </Sheet>
