@@ -1422,7 +1422,7 @@ function EntregavelPanelSheet({
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => onAbrirHoras(entregavel.codigo)}
+            onClick={() => onAbrirHoras(entregavel)}
             className="gap-1.5"
           >
             <Clock className="h-3.5 w-3.5" /> Ver horas
