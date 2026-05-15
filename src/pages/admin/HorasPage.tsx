@@ -188,6 +188,8 @@ export default function HorasPage() {
   const [timerKey, setTimerKey] = useState(0);
   const [timerAtivo, setTimerAtivo] = useState(false);
   const [confirmStartOpen, setConfirmStartOpen] = useState(false);
+  const [segundosTimer, setSegundosTimer] = useState(0);
+  const [manualAberto, setManualAberto] = useState<string>("");
 
   // Tarefa selecionada para o timer (empresa → projeto/entregável)
   const [tEmpresa, setTEmpresa] = useState<string>("");
@@ -220,6 +222,8 @@ export default function HorasPage() {
         toast.info(`Tarefa pré-selecionada: ${tarefa.label}`);
         return;
       }
+      toast.error("Tarefa não encontrada para o link informado.");
+      return;
     }
 
     if (entNome) {
@@ -233,6 +237,8 @@ export default function HorasPage() {
       }
       if (codigo) {
         toast.info(`Aberto para ${decoded} (${codigo}). Selecione a empresa manualmente.`);
+      } else {
+        toast.error("Tarefa não encontrada. Selecione manualmente.");
       }
     }
   }, [searchParams]);
@@ -258,11 +264,31 @@ export default function HorasPage() {
   }, [timerAtivo]);
 
   function encerrarAutomaticamente() {
+    if (segundosTimer > 0) {
+      handleTimerStop(segundosTimer);
+    }
     setTimerAtivo(false);
     setTimerKey((k) => k + 1);
+    setSegundosTimer(0);
     setProximoRequerRevisao(true);
-    toast.warning("Seu timer foi encerrado automaticamente às 18h.", {
-      description: "Deseja ajustar as horas manualmente?",
+    if (tarefaAtiva) {
+      setMEmpresa(tarefaAtiva.empresaId);
+      setMProjeto(`${tarefaAtiva.projeto}::${tarefaAtiva.entregavel}`);
+    }
+    setManualAberto("manual");
+    toast.warning("Timer encerrado automaticamente às 18h.", {
+      description: "As horas foram registradas. Deseja ajustar?",
+      action: {
+        label: "Ajustar horas",
+        onClick: () => {
+          if (tarefaAtiva) {
+            setMEmpresa(tarefaAtiva.empresaId);
+            setMProjeto(`${tarefaAtiva.projeto}::${tarefaAtiva.entregavel}`);
+          }
+          setManualAberto("manual");
+          window.scrollTo({ top: 400, behavior: "smooth" });
+        },
+      },
     });
   }
 
@@ -479,7 +505,7 @@ export default function HorasPage() {
 
         {timerAtivo ? (
           <div className="rounded-lg border border-border bg-background/40 p-4 flex items-center gap-4 flex-wrap">
-            <Timer key={timerKey} onStop={handleTimerStop} />
+            <Timer key={timerKey} onStop={handleTimerStop} onTick={(s) => setSegundosTimer(s)} />
             <div className="flex-1 min-w-[200px]">
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Tarefa ativa</div>
               {tarefaAtiva ? (
@@ -538,7 +564,7 @@ export default function HorasPage() {
 
       {/* ───────── 2. Lançamento Manual ───────── */}
       <section className="bg-card border border-border rounded-xl mb-6 overflow-hidden">
-        <Accordion type="single" collapsible>
+        <Accordion type="single" collapsible value={manualAberto} onValueChange={setManualAberto}>
           <AccordionItem value="manual" className="border-none">
             <AccordionTrigger className="px-5 py-4 hover:no-underline">
               <div className="flex items-center gap-2">
@@ -591,7 +617,7 @@ export default function HorasPage() {
                   <Select value={mEmpresa} onValueChange={(v) => { setMEmpresa(v); setMProjeto(""); }}>
                     <SelectTrigger><SelectValue placeholder="Selecione a empresa" /></SelectTrigger>
                     <SelectContent>
-                      {empresas.slice(0, 3).map((e) => (
+                      {empresas.filter((e) => projetosPorEmpresa[e.id]).map((e) => (
                         <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
                       ))}
                     </SelectContent>
