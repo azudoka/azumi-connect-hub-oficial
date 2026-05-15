@@ -603,6 +603,7 @@ export default function HorasPage() {
               onStop={handleTimerStop}
               onTick={(s) => setSegundosTimer(s)}
               autoStart
+              externalSeconds={timerCtx.ativo ? timerCtx.segundos : undefined}
               onPause={() => {
                 timerCtx.pausar();
                 toast.info("Tarefa pausada.", {

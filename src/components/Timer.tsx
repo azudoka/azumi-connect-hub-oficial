@@ -13,6 +13,7 @@ interface TimerProps {
   initial?: number;
   compact?: boolean;
   autoStart?: boolean;
+  externalSeconds?: number;
   onStop?: (seconds: number) => void;
   onTick?: (seconds: number) => void;
   onPause?: () => void;
@@ -24,6 +25,7 @@ export function Timer({
   initial = 0,
   compact,
   autoStart,
+  externalSeconds,
   onStop,
   onTick,
   onPause,
@@ -40,6 +42,13 @@ export function Timer({
   }, []);
 
   useEffect(() => {
+    if (externalSeconds !== undefined) {
+      setSeconds(externalSeconds);
+    }
+  }, [externalSeconds]);
+
+  useEffect(() => {
+    if (externalSeconds !== undefined) return; // contexto é fonte da verdade
     if (state === "running") {
       ref.current = window.setInterval(() => {
         setSeconds((s) => {
@@ -55,7 +64,7 @@ export function Timer({
     return () => {
       if (ref.current) window.clearInterval(ref.current);
     };
-  }, [state, onTick]);
+  }, [state, onTick, externalSeconds]);
 
   const dotColor =
     state === "running" ? "bg-success animate-soft-pulse" :
