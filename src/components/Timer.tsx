@@ -13,16 +13,23 @@ interface TimerProps {
   initial?: number;
   compact?: boolean;
   onStop?: (seconds: number) => void;
+  onTick?: (seconds: number) => void;
 }
 
-export function Timer({ initial = 0, compact, onStop }: TimerProps) {
+export function Timer({ initial = 0, compact, onStop, onTick }: TimerProps) {
   const [seconds, setSeconds] = useState(initial);
   const [state, setState] = useState<"idle" | "running" | "paused">("idle");
   const ref = useRef<number | null>(null);
 
   useEffect(() => {
     if (state === "running") {
-      ref.current = window.setInterval(() => setSeconds((s) => s + 1), 1000);
+      ref.current = window.setInterval(() => {
+        setSeconds((s) => {
+          const next = s + 1;
+          onTick?.(next);
+          return next;
+        });
+      }, 1000);
     } else if (ref.current) {
       window.clearInterval(ref.current);
       ref.current = null;
@@ -30,7 +37,7 @@ export function Timer({ initial = 0, compact, onStop }: TimerProps) {
     return () => {
       if (ref.current) window.clearInterval(ref.current);
     };
-  }, [state]);
+  }, [state, onTick]);
 
   const dotColor =
     state === "running" ? "bg-success animate-soft-pulse" :
