@@ -45,6 +45,7 @@ interface Solicitacao {
   consultor: string;
   titulo: string;
   historico: HistoricoItem[];
+  obsInterna?: string;
 }
 
 const MOCK: Solicitacao[] = [
