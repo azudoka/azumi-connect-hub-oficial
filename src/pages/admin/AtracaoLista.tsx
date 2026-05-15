@@ -49,6 +49,15 @@ function isSlaCritico(etapa: FunilEtapa, sla: number) {
   return etapa === "perfis_enviados" && sla >= 80;
 }
 
+const STATUS_ORDEM: Record<string, number> = {
+  em_processo: 0,
+  briefing: 1,
+  aberta: 2,
+  aguardando_briefing: 2,
+  finalizada: 3,
+  cancelada: 4,
+};
+
 type VagaLocal = (typeof vagasMock)[number] & { etapaFunil: FunilEtapa };
 
 export default function AtracaoLista() {
@@ -57,10 +66,17 @@ export default function AtracaoLista() {
 
   // Estado local (mock): vagas com etapa do funil derivada do legacy.
   const [vagas, setVagas] = useState<VagaLocal[]>(() =>
-    vagasMock.map((v) => ({
-      ...v,
-      etapaFunil: LEGACY_ETAPA_TO_FUNIL[v.etapa] ?? "briefing",
-    })),
+    vagasMock
+      .map((v) => ({
+        ...v,
+        etapaFunil: LEGACY_ETAPA_TO_FUNIL[v.etapa] ?? "briefing",
+      }))
+      .sort((a, b) => {
+        const pa = STATUS_ORDEM[a.status] ?? 99;
+        const pb = STATUS_ORDEM[b.status] ?? 99;
+        if (pa !== pb) return pa - pb;
+        return b.id.localeCompare(a.id);
+      })
   );
 
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -143,7 +159,13 @@ export default function AtracaoLista() {
     }
 
     setVagas((prev) =>
-      prev.map((v) => (v.id === vagaId ? { ...v, etapaFunil: destino } : v)),
+      prev
+        .map((v) => (v.id === vagaId ? { ...v, etapaFunil: destino } : v))
+        .sort((a, b) => {
+          const pa = STATUS_ORDEM[a.status] ?? 99;
+          const pb = STATUS_ORDEM[b.status] ?? 99;
+          return pa !== pb ? pa - pb : b.id.localeCompare(a.id);
+        })
     );
 
     if (destino === "perfis_enviados") {
