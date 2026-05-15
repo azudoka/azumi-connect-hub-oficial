@@ -79,6 +79,8 @@ interface Mensagem {
   texto: string;
   canal: "interno" | "cliente";
   anexo?: string;
+  editadaEm?: string;
+  enviadaEm?: number;
 }
 
 interface Entregavel {
@@ -1529,6 +1531,7 @@ function EntregavelPanelSheet({
       texto: textoMsg.trim() || "(arquivo enviado)",
       canal: canalAtivo,
       anexo: anexoPendente ?? undefined,
+      enviadaEm: Date.now(),
     };
     onPatch({ mensagens: [...mensagens, nova] });
     setTextoMsg("");
@@ -1768,14 +1771,38 @@ function EntregavelPanelSheet({
               <div className="rounded-md border border-warning/30 bg-warning/10 px-3 py-2 text-[11px] text-warning mb-3">
                 Esta conversa não é visível para o cliente.
               </div>
-              <ChatLista mensagens={msgsCanal} />
+              <ChatLista
+                mensagens={msgsCanal}
+                onEditar={(id, novoTexto, editadaEm) => {
+                  onPatch({
+                    mensagens: mensagens.map((m) =>
+                      m.id === id ? { ...m, texto: novoTexto, editadaEm } : m
+                    ),
+                  });
+                }}
+                onExcluir={(id) => {
+                  onPatch({ mensagens: mensagens.filter((m) => m.id !== id) });
+                }}
+              />
             </TabsContent>
 
             <TabsContent value="cliente" className="mt-3">
               <div className="rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-[11px] text-primary mb-3">
                 Mensagens aqui são compartilhadas com o cliente.
               </div>
-              <ChatLista mensagens={msgsCanal} />
+              <ChatLista
+                mensagens={msgsCanal}
+                onEditar={(id, novoTexto, editadaEm) => {
+                  onPatch({
+                    mensagens: mensagens.map((m) =>
+                      m.id === id ? { ...m, texto: novoTexto, editadaEm } : m
+                    ),
+                  });
+                }}
+                onExcluir={(id) => {
+                  onPatch({ mensagens: mensagens.filter((m) => m.id !== id) });
+                }}
+              />
             </TabsContent>
           </Tabs>
 
@@ -1839,7 +1866,18 @@ function EntregavelPanelSheet({
   );
 }
 
-function ChatLista({ mensagens }: { mensagens: Mensagem[] }) {
+function ChatLista({
+  mensagens,
+  onEditar,
+  onExcluir,
+}: {
+  mensagens: Mensagem[];
+  onEditar?: (id: string, novoTexto: string, editadaEm: string) => void;
+  onExcluir?: (id: string) => void;
+}) {
+  const [editandoId, setEditandoId] = useState<string | null>(null);
+  const [textoEditado, setTextoEditado] = useState("");
+
   if (mensagens.length === 0) {
     return (
       <div className="text-xs text-muted-foreground border border-dashed border-border rounded-md p-4 text-center">
@@ -1851,50 +1889,128 @@ function ChatLista({ mensagens }: { mensagens: Mensagem[] }) {
     <ul className="space-y-2 max-h-80 overflow-y-auto pr-1 py-1">
       {mensagens.map((m) => {
         const isMe = m.autor === "Você";
+        const podeExcluir =
+          onExcluir !== undefined &&
+          m.enviadaEm !== undefined &&
+          Date.now() - m.enviadaEm < 60_000;
+
+        if (isMe && editandoId === m.id) {
+          return (
+            <li key={m.id} className="flex justify-end">
+              <div className="max-w-[78%] self-end flex flex-col gap-1">
+                <textarea
+                  className="text-sm rounded-xl px-3 py-2 bg-primary/10 border border-primary/30 resize-none w-full min-h-[60px] focus:outline-none focus:ring-1 focus:ring-primary"
+                  value={textoEditado}
+                  onChange={(e) => setTextoEditado(e.target.value)}
+                  rows={2}
+                  autoFocus
+                />
+                <div className="flex items-center gap-2 justify-end">
+                  <button
+                    type="button"
+                    className="text-xs text-muted-foreground hover:text-foreground"
+                    onClick={() => { setEditandoId(null); setTextoEditado(""); }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    className="text-xs text-primary font-medium hover:underline"
+                    onClick={() => {
+                      if (!textoEditado.trim()) return;
+                      const agora = format(new Date(), "HH:mm", { locale: ptBR });
+                      onEditar?.(m.id, textoEditado.trim(), agora);
+                      setEditandoId(null);
+                      setTextoEditado("");
+                    }}
+                  >
+                    Salvar
+                  </button>
+                </div>
+              </div>
+            </li>
+          );
+        }
+
         return (
-          <li key={m.id} className={cn("flex gap-2 items-end", isMe && "flex-row-reverse")}>
+          <li key={m.id} className={cn("flex gap-2 items-end group", isMe && "flex-row-reverse")}>
             {!isMe && (
               <div className="h-7 w-7 rounded-full bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white shrink-0">
                 {m.iniciais}
               </div>
             )}
-            <div
-              className={cn(
-                "max-w-[78%] rounded-2xl px-3 py-2 shadow-sm",
-                isMe
-                  ? "bg-primary text-primary-foreground rounded-br-sm"
-                  : "bg-secondary text-foreground rounded-bl-sm"
-              )}
-            >
-              {!isMe && (
-                <div className="text-[11px] font-semibold mb-0.5 text-primary">
-                  {m.autor}
-                </div>
-              )}
-              <div className="text-sm break-words leading-snug">
-                {renderTextoComLinks(m.texto)}
-              </div>
-              {m.anexo && (
-                <div
-                  className={cn(
-                    "mt-1.5 inline-flex items-center gap-1.5 text-xs rounded px-2 py-0.5 border",
-                    isMe
-                      ? "bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground"
-                      : "bg-primary/10 border-primary/20 text-primary"
-                  )}
-                >
-                  <FileText className="h-3 w-3" />
-                  <span className="font-data">{m.anexo}</span>
-                </div>
-              )}
+            <div className="relative">
               <div
                 className={cn(
-                  "text-[10px] font-data mt-1 text-right",
-                  isMe ? "text-primary-foreground/70" : "text-muted-foreground"
+                  "max-w-[78%] rounded-2xl px-3 py-2 shadow-sm",
+                  isMe
+                    ? "bg-primary text-primary-foreground rounded-br-sm"
+                    : "bg-secondary text-foreground rounded-bl-sm"
                 )}
               >
-                {m.quando}
+                {!isMe && (
+                  <div className="text-[11px] font-semibold mb-0.5 text-primary">
+                    {m.autor}
+                  </div>
+                )}
+                <div className="text-sm break-words leading-snug">
+                  {renderTextoComLinks(m.texto)}
+                </div>
+                {m.anexo && (
+                  <div
+                    className={cn(
+                      "mt-1.5 inline-flex items-center gap-1.5 text-xs rounded px-2 py-0.5 border",
+                      isMe
+                        ? "bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground"
+                        : "bg-primary/10 border-primary/20 text-primary"
+                    )}
+                  >
+                    <FileText className="h-3 w-3" />
+                    <span className="font-data">{m.anexo}</span>
+                  </div>
+                )}
+                <div
+                  className={cn(
+                    "text-[10px] font-data mt-1 text-right",
+                    isMe ? "text-primary-foreground/70" : "text-muted-foreground"
+                  )}
+                >
+                  {m.quando}
+                  {m.editadaEm && (
+                    <span className="text-[9px] font-data opacity-60 ml-1">
+                      · editado {m.editadaEm}
+                    </span>
+                  )}
+                </div>
               </div>
+
+              {isMe && (onEditar || podeExcluir) && (
+                <div className="absolute -top-6 right-0 hidden group-hover:flex items-center gap-1 bg-background border border-border rounded-md px-1.5 py-0.5 shadow-sm">
+                  {onEditar && (
+                    <button
+                      type="button"
+                      title="Editar mensagem"
+                      onClick={() => {
+                        setEditandoId(m.id);
+                        setTextoEditado(m.texto);
+                      }}
+                      className="text-muted-foreground hover:text-foreground p-0.5"
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </button>
+                  )}
+                  {podeExcluir && (
+                    <button
+                      type="button"
+                      title="Excluir mensagem"
+                      onClick={() => onExcluir?.(m.id)}
+                      className="text-muted-foreground hover:text-destructive p-0.5"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </li>
         );
