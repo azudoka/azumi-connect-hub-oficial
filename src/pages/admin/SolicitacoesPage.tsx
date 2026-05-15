@@ -1,5 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
+import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import SolicitacoesClientePage from "@/pages/SolicitacoesClientePage";
 import { PageHeader } from "@/components/PageHeader";
@@ -11,7 +13,11 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Search, Copy, Check, X, MessageSquare, Plus } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
+import { Search, Copy, Check, X, MessageSquare, Plus, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Status = "aberta" | "andamento" | "finalizada" | "cancelada";
@@ -91,8 +97,46 @@ function CopyBtn({ value }: { value: string }) {
   );
 }
 
+function RespostaInput({ onEnviar }: { onEnviar: (texto: string) => void }) {
+  const [texto, setTexto] = useState("");
+  return (
+    <div className="flex gap-2 items-end border-t border-border pt-3">
+      <Textarea
+        rows={2}
+        placeholder="Escreva uma mensagem…"
+        value={texto}
+        onChange={(e) => setTexto(e.target.value)}
+        className="resize-none flex-1 text-sm"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            if (texto.trim()) {
+              onEnviar(texto.trim());
+              setTexto("");
+            }
+          }
+        }}
+      />
+      <Button
+        size="sm"
+        disabled={!texto.trim()}
+        onClick={() => {
+          if (texto.trim()) {
+            onEnviar(texto.trim());
+            setTexto("");
+          }
+        }}
+        className="gap-1.5 shrink-0"
+      >
+        <Send className="h-3.5 w-3.5" /> Enviar
+      </Button>
+    </div>
+  );
+}
+
 function AdminView() {
   const navigate = useNavigate();
+  const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>(MOCK);
   const [busca, setBusca]       = useState("");
   const [empresa, setEmpresa]   = useState<string>("all");
   const [tipo, setTipo]         = useState<string>("all");
@@ -101,16 +145,20 @@ function AdminView() {
   const [selected, setSelected] = useState<Solicitacao | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
 
-  const empresas = useMemo(() => Array.from(new Set(MOCK.map((s) => s.empresa))), []);
-  const tipos    = useMemo(() => Array.from(new Set(MOCK.map((s) => s.tipo))), []);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmAcao, setConfirmAcao] = useState<"finalizar" | "reabrir" | null>(null);
+  const [notaOpen, setNotaOpen] = useState(false);
+  const [notaTexto, setNotaTexto] = useState("");
 
-  // Parser do formato "DD/MM/YYYY" usado no mock
+  const empresas = useMemo(() => Array.from(new Set(solicitacoes.map((s) => s.empresa))), [solicitacoes]);
+  const tipos    = useMemo(() => Array.from(new Set(solicitacoes.map((s) => s.tipo))), [solicitacoes]);
+
   function parseDataBR(s: string): Date {
     const [d, m, y] = s.split("/").map(Number);
     return new Date(y, m - 1, d);
   }
 
-  const lista = useMemo(() => MOCK.filter((s) => {
+  const lista = useMemo(() => solicitacoes.filter((s) => {
     if (empresa !== "all" && s.empresa !== empresa) return false;
     if (tipo !== "all" && s.tipo !== tipo) return false;
     if (status !== "all" && s.status !== status) return false;
@@ -122,7 +170,21 @@ function AdminView() {
     }
     if (busca && !`${s.protocolo} ${s.titulo} ${s.empresa}`.toLowerCase().includes(busca.toLowerCase())) return false;
     return true;
-  }), [empresa, tipo, status, periodo, busca]);
+  }), [solicitacoes, empresa, tipo, status, periodo, busca]);
+
+  const kpis = useMemo(() => ({
+    total: solicitacoes.length,
+    abertas: solicitacoes.filter((s) => s.status === "aberta").length,
+    andamento: solicitacoes.filter((s) => s.status === "andamento").length,
+    finalizadas: solicitacoes.filter((s) => s.status === "finalizada").length,
+  }), [solicitacoes]);
+
+  function atualizarSolicitacao(id: string, patch: Partial<Solicitacao>) {
+    setSolicitacoes((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, ...patch } : s))
+    );
+    setSelected((prev) => (prev && prev.id === id ? { ...prev, ...patch } : prev));
+  }
 
   function openPanel(s: Solicitacao) {
     setSelected(s);
@@ -153,6 +215,22 @@ function AdminView() {
           </Button>
         }
       />
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: "Total", value: kpis.total, cor: "text-foreground" },
+          { label: "Abertas", value: kpis.abertas, cor: "text-info" },
+          { label: "Em andamento", value: kpis.andamento, cor: "text-warning" },
+          { label: "Finalizadas", value: kpis.finalizadas, cor: "text-success" },
+        ].map((k) => (
+          <div key={k.label} className="rounded-xl border border-border bg-card p-4">
+            <div className={cn("text-2xl font-semibold font-data", k.cor)}>
+              {k.value}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">{k.label}</div>
+          </div>
+        ))}
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
         <div className="relative md:col-span-4">
@@ -273,50 +351,202 @@ function AdminView() {
                 <div className="font-medium">{selected.consultor}</div>
               </div>
 
+              {/* Chat */}
               <div>
-                <div className="flex items-center gap-2 mb-2 text-sm font-medium">
-                  <MessageSquare className="h-4 w-4" /> Histórico
+                <div className="flex items-center gap-2 mb-3 text-sm font-medium">
+                  <MessageSquare className="h-4 w-4" /> Conversa
                 </div>
-                <div className="space-y-3">
-                  {selected.historico.length === 0 && (
-                    <p className="text-sm text-muted-foreground">Sem interações registradas.</p>
+
+                <div className="space-y-2 max-h-64 overflow-y-auto pr-1 mb-3">
+                  {(selected.historico ?? []).length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Sem mensagens ainda.
+                    </p>
                   )}
-                  {selected.historico.map((h, i) => (
-                    <div key={i} className="rounded-lg border border-border bg-muted/30 p-3">
-                      <div className="flex items-center justify-between text-xs mb-1">
-                        <span className="font-medium">{h.autor}</span>
-                        <span className="text-muted-foreground">{h.quando}</span>
+                  {(selected.historico ?? []).map((h, i) => {
+                    const isMe = h.autor.includes("Costa") ||
+                      h.autor.includes("Lima") ||
+                      h.autor.includes("Beatriz") ||
+                      h.autor.includes("Azumi") ||
+                      h.autor.includes("interno") ||
+                      h.autor === "Você";
+                    return (
+                      <div key={i}
+                        className={cn("flex gap-2 items-end",
+                          isMe && "flex-row-reverse")}>
+                        {!isMe && (
+                          <div className="h-7 w-7 rounded-md bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white shrink-0">
+                            {h.autor.charAt(0)}
+                          </div>
+                        )}
+                        <div className={cn(
+                          "max-w-[78%] rounded-2xl px-3 py-2 text-sm shadow-sm",
+                          isMe
+                            ? "bg-primary text-primary-foreground rounded-br-sm"
+                            : "bg-secondary text-foreground rounded-bl-sm border border-border"
+                        )}>
+                          {!isMe && (
+                            <div className="text-[10px] font-semibold mb-0.5 text-primary">
+                              {h.autor}
+                            </div>
+                          )}
+                          <p className="break-words">{h.texto}</p>
+                          <div className={cn(
+                            "text-[10px] font-data mt-1 text-right",
+                            isMe ? "text-primary-foreground/70" : "text-muted-foreground"
+                          )}>
+                            {h.quando}
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-sm">{h.texto}</p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
+
+                {selected.status !== "finalizada" && selected.status !== "cancelada" && (
+                  <RespostaInput
+                    onEnviar={(texto) => {
+                      const agora = format(new Date(), "dd/MM HH:mm");
+                      const nova = { autor: "Você", quando: agora, texto };
+                      atualizarSolicitacao(selected.id, {
+                        historico: [...(selected.historico ?? []), nova],
+                      });
+                      toast.success("Mensagem enviada.");
+                    }}
+                  />
+                )}
               </div>
 
               <div className="pt-2 flex flex-wrap gap-2">
                 {selected.status === "aberta" && (
                   <>
-                    <Button className="rounded-[100px] bg-[#3B82F6] hover:bg-[#3B82F6]/90 text-white">Assumir</Button>
-                    <Button variant="outline" className="rounded-[100px]">Encaminhar</Button>
+                    <Button
+                      className="rounded-[100px] bg-[#3B82F6] hover:bg-[#3B82F6]/90 text-white"
+                      onClick={() => {
+                        atualizarSolicitacao(selected.id, { status: "andamento" });
+                        toast.success("Solicitação assumida.");
+                      }}
+                    >
+                      Assumir
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="rounded-[100px]"
+                      onClick={() => toast.info("Encaminhar: em breve.")}
+                    >
+                      Encaminhar
+                    </Button>
                   </>
                 )}
                 {selected.status === "andamento" && (
                   <>
-                    <Button className="rounded-[100px] bg-emerald-600 hover:bg-emerald-600/90 text-white">Finalizar</Button>
-                    <Button variant="outline" className="rounded-[100px]">Adicionar nota</Button>
+                    <Button
+                      className="rounded-[100px] bg-emerald-600 hover:bg-emerald-600/90 text-white"
+                      onClick={() => { setConfirmAcao("finalizar"); setConfirmOpen(true); }}
+                    >
+                      Finalizar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="rounded-[100px]"
+                      onClick={() => { setNotaTexto(""); setNotaOpen(true); }}
+                    >
+                      Adicionar nota
+                    </Button>
                   </>
                 )}
-                {selected.status === "finalizada" && (
-                  <Button variant="outline" className="rounded-[100px]">Reabrir</Button>
-                )}
-                {selected.status === "cancelada" && (
-                  <Button variant="outline" className="rounded-[100px]">Reabrir</Button>
+                {(selected.status === "finalizada" || selected.status === "cancelada") && (
+                  <Button
+                    variant="outline"
+                    className="rounded-[100px]"
+                    onClick={() => { setConfirmAcao("reabrir"); setConfirmOpen(true); }}
+                  >
+                    Reabrir
+                  </Button>
                 )}
               </div>
             </div>
           </aside>
         </>
       )}
+
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {confirmAcao === "finalizar"
+                ? "Finalizar solicitação?"
+                : "Reabrir solicitação?"}
+            </DialogTitle>
+            <DialogDescription>
+              {confirmAcao === "finalizar"
+                ? "Esta ação marca a solicitação como finalizada. Confirma?"
+                : "A solicitação voltará para Em andamento. Confirma?"}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={() => {
+              if (!selected) return;
+              const novoStatus: Status = confirmAcao === "finalizar" ? "finalizada" : "andamento";
+              atualizarSolicitacao(selected.id, { status: novoStatus });
+              toast.success(
+                confirmAcao === "finalizar"
+                  ? "Solicitação finalizada."
+                  : "Solicitação reaberta."
+              );
+              setConfirmOpen(false);
+            }}>
+              Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={notaOpen} onOpenChange={setNotaOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Adicionar nota interna</DialogTitle>
+            <DialogDescription>
+              A nota será visível apenas para a equipe Azumi.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            rows={4}
+            placeholder="Escreva a nota interna…"
+            value={notaTexto}
+            onChange={(e) => setNotaTexto(e.target.value)}
+            className="mt-2"
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNotaOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              disabled={!notaTexto.trim()}
+              onClick={() => {
+                if (!selected || !notaTexto.trim()) return;
+                const agora = format(new Date(), "dd/MM HH:mm");
+                const novaMensagem = {
+                  autor: "Você (interno)",
+                  quando: agora,
+                  texto: notaTexto.trim(),
+                };
+                atualizarSolicitacao(selected.id, {
+                  historico: [...(selected.historico ?? []), novaMensagem],
+                });
+                toast.success("Nota adicionada.");
+                setNotaOpen(false);
+                setNotaTexto("");
+              }}
+            >
+              Salvar nota
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
