@@ -44,6 +44,16 @@ import { empresas, consultores } from "@/data/mock";
 
 type LancamentoTipo = "timer" | "manual";
 
+const ETAPAS_VAGA = [
+  "Briefing",
+  "Divulgação",
+  "Triagem",
+  "Entrevista Azumi",
+  "Entrevista Cliente",
+  "Encerramento",
+] as const;
+type EtapaVaga = typeof ETAPAS_VAGA[number];
+
 interface Lancamento {
   id: string;
   data: string;            // "2025-04-21"
@@ -58,6 +68,7 @@ interface Lancamento {
   justificativa?: string;  // só para manual
   observacao?: string;     // detalhe extra (somente expandido)
   requerRevisao?: boolean;
+  etapaVaga?: EtapaVaga;
 }
 
 // Projetos por empresa para o select dependente
@@ -188,6 +199,8 @@ export default function HorasPage() {
   const [timerKey, setTimerKey] = useState(0);
   const [timerAtivo, setTimerAtivo] = useState(false);
   const [confirmStartOpen, setConfirmStartOpen] = useState(false);
+  const [etapaOpen, setEtapaOpen] = useState(false);
+  const [etapaSelecionada, setEtapaSelecionada] = useState<string>("");
   const [segundosTimer, setSegundosTimer] = useState(0);
   const [manualAberto, setManualAberto] = useState<string>("");
 
@@ -292,6 +305,12 @@ export default function HorasPage() {
     });
   }
 
+  function isVaga(tarefa: Tarefa | null): boolean {
+    if (!tarefa) return false;
+    const p = tarefa.projeto.toLowerCase();
+    return p.includes("hunting") || p.includes("vaga") || p.includes("recolocação");
+  }
+
   function handleIniciarTimer() {
     if (!horarioCheck.permitido) {
       toast.error(horarioCheck.motivo ?? "Fora do horário permitido.");
@@ -306,6 +325,20 @@ export default function HorasPage() {
       setConfirmStartOpen(true);
       return;
     }
+    if (isVaga(tarefaAtiva)) {
+      setEtapaSelecionada("");
+      setEtapaOpen(true);
+      return;
+    }
+    setTimerAtivo(true);
+  }
+
+  function confirmarEtapaEIniciar() {
+    if (!etapaSelecionada) {
+      toast.error("Selecione a etapa antes de iniciar.");
+      return;
+    }
+    setEtapaOpen(false);
     setTimerAtivo(true);
   }
 
