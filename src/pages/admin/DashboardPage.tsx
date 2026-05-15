@@ -23,7 +23,6 @@ import { SlaBar } from "@/components/SlaBar";
 import { EmptyState } from "@/components/EmptyState";
 
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
   Table,
@@ -312,16 +311,16 @@ function AdminDashboard() {
               {ALERTAS.map((al) => {
                 const isCritical = al.severidade === "critical";
                 return (
-                  <li
-                    key={al.id}
-                    className={cn(
-                      "rounded-lg border p-3",
-                      isCritical
-                        ? "border-destructive/30 bg-destructive/5"
-                        : "border-warning/30 bg-warning/5"
-                    )}
-                  >
-                    <div className="flex items-start gap-2">
+                  <li key={al.id}>
+                    <Link
+                      to={al.to}
+                      className={cn(
+                        "flex items-start gap-2 rounded-lg border p-3 transition-colors hover:brightness-95",
+                        isCritical
+                          ? "border-destructive/30 bg-destructive/5"
+                          : "border-warning/30 bg-warning/5"
+                      )}
+                    >
                       <AlertTriangle
                         className={cn(
                           "h-4 w-4 shrink-0 mt-0.5",
@@ -330,16 +329,9 @@ function AdminDashboard() {
                       />
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium leading-snug">{al.titulo}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {al.descricao}
-                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{al.descricao}</p>
                       </div>
-                    </div>
-                    <div className="mt-2 flex justify-end">
-                      <Button variant="ghost" size="sm" asChild className="h-7 text-xs">
-                        <Link to={al.to}>Ver</Link>
-                      </Button>
-                    </div>
+                    </Link>
                   </li>
                 );
               })}
@@ -387,7 +379,14 @@ function AdminDashboard() {
                     <TableCell className="font-medium">{e.nome}</TableCell>
                     <TableCell className="text-muted-foreground">{e.projeto}</TableCell>
                     <TableCell>{e.empresa}</TableCell>
-                    <TableCell className="text-sm">{e.responsavel}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className="h-6 w-6 rounded-md bg-gradient-brand flex items-center justify-center text-[9px] font-semibold text-white shrink-0">
+                          {e.responsavel.split(" ").map((n) => n[0]).slice(0, 2).join("")}
+                        </div>
+                        <span className="text-sm">{e.responsavel}</span>
+                      </div>
+                    </TableCell>
                     <TableCell
                       className={cn(
                         "font-data tabular-nums",
