@@ -2102,7 +2102,7 @@ export default function VagaDetalheAdmin() {
         mensagensVaga={mensagens}
         onClose={() => setFichaCandidatoId(null)}
         onSolicitarDisc={(id) => setDiscWhatsOpen(id)}
-        onVerResumo={(id) => setResumoOpen(id)}
+        
         onAssociarQuestionario={(id) => setAssociarQuestOpen(id)}
         onDeclinar={(id) => setDeclinarOpen(id)}
         onAgendar={(id) => setAgendarOpen(id)}
