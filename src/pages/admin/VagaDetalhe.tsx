@@ -3357,6 +3357,7 @@ const DADOS_EXTRA_MOCK: Record<string, {
   email: string; telefone: string; cidade: string; origem: string; pretensao: string;
   resumo: string; experiencias: { empresa: string; cargo: string; periodo: string }[];
   discStatus: "nao_solicitado" | "solicitado" | "concluido";
+  cpf?: string;
 }> = {
   c1: {
     email: "pedro.alves@email.com", telefone: "(11) 99876-1122", cidade: "São Paulo / SP",
@@ -3368,6 +3369,7 @@ const DADOS_EXTRA_MOCK: Record<string, {
       { empresa: "DataPlus", cargo: "Analista Sênior", periodo: "2014 — 2018" },
     ],
     discStatus: "concluido",
+    cpf: "123.456.789-00",
   },
 };
 
@@ -3594,6 +3596,7 @@ function CandidatoDetailSheet({
           <section>
             <h3 className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-3">Dados do candidato</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+              <DadoLinha icon={<FileText className="h-3.5 w-3.5" />} label="CPF" value={dados.cpf ?? "—"} />
               <DadoLinha icon={<Mail className="h-3.5 w-3.5" />} label="E-mail" value={dados.email} />
               <DadoLinha icon={<Phone className="h-3.5 w-3.5" />} label="Telefone" value={dados.telefone} />
               <DadoLinha icon={<MapPin className="h-3.5 w-3.5" />} label="Cidade / UF" value={dados.cidade} />
