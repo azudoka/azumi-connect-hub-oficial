@@ -1959,35 +1959,6 @@ export default function VagaDetalheAdmin() {
         );
       })()}
 
-      {/* ── Modal: Resumo para o cliente ─────────────────────────── */}
-      {resumoOpen && (() => {
-        const c = candidatosVaga.find((x) => x.id === resumoOpen);
-        return (
-          <ModalShell title="Resumo para o cliente" onClose={() => setResumoOpen(null)}>
-            <div className="text-sm text-foreground space-y-3">
-              <p><strong>{c?.nome ?? "Candidato"}</strong> — versão resumida sem dados sensíveis.</p>
-              <div className="bg-muted/40 border border-border rounded-md p-3 text-xs text-muted-foreground">
-                Pré-visualização do PDF que será enviado ao cliente. Inclui experiência,
-                fit cultural e DISC. Não inclui contato direto.
-              </div>
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  onClick={() => setResumoOpen(null)}
-                  className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm"
-                >
-                  Fechar
-                </button>
-                <button
-                  onClick={() => { toast.success("Resumo enviado ao cliente."); setResumoOpen(null); }}
-                  className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium inline-flex items-center gap-1.5"
-                >
-                  <Send className="h-3.5 w-3.5" /> Enviar ao cliente
-                </button>
-              </div>
-            </div>
-          </ModalShell>
-        );
-      })()}
 
       {/* ── Modal: Solicitar DISC via WhatsApp ───────────────────── */}
       {discWhatsOpen && (() => {
