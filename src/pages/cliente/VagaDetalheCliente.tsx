@@ -315,18 +315,9 @@ export default function VagaDetalheCliente() {
         <FichaCandidatoModal
           candidato={fichaCand}
           onClose={() => setFichaCandId(null)}
-          onAbrirRelatorio={(cid) => setRelatorioCandId(cid)}
           onGerarParecer={(cid) => setParecerCandId(cid)}
           parecerExistente={getParecerCliente(fichaCand.id)}
           podeGerarParecer={entrevistaRealizada(fichaCand.id)}
-        />
-      )}
-
-      {/* Visualização do relatório (modo leitura) */}
-      {relatorioCandId && (
-        <RelatorioVisualizacaoModal
-          candidatoId={relatorioCandId}
-          onClose={() => setRelatorioCandId(null)}
         />
       )}
 
@@ -527,14 +518,12 @@ interface CandidatoMock {
 function FichaCandidatoModal({
   candidato,
   onClose,
-  onAbrirRelatorio,
   onGerarParecer,
   parecerExistente,
   podeGerarParecer,
 }: {
   candidato: CandidatoMock;
   onClose: () => void;
-  onAbrirRelatorio: (candidatoId: string) => void;
   onGerarParecer: (candidatoId: string) => void;
   parecerExistente: ParecerCliente | null;
   podeGerarParecer: boolean;
@@ -554,12 +543,6 @@ function FichaCandidatoModal({
             className="h-9 px-4 rounded-lg border border-border text-sm font-medium hover:bg-secondary"
           >
             Fechar
-          </button>
-          <button
-            onClick={() => onAbrirRelatorio(candidato.id)}
-            className="h-9 px-4 rounded-lg border border-border text-sm font-medium hover:bg-secondary inline-flex items-center gap-1.5"
-          >
-            <FileText className="h-3.5 w-3.5" /> Visualizar relatório
           </button>
           {parecerSalvo ? (
             <button
