@@ -1343,13 +1343,6 @@ export default function VagaDetalheAdmin() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setResumoOpen(c.id)}
-                      className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-border text-[11px] font-medium hover:bg-secondary"
-                    >
-                      <Eye className="h-3 w-3" /> Resumo p/ cliente
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => setDiscWhatsOpen(c.id)}
                       className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-border text-[11px] font-medium hover:bg-secondary"
                     >
