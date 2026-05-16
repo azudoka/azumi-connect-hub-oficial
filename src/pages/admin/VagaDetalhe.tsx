@@ -349,7 +349,7 @@ export default function VagaDetalheAdmin() {
   const [enviarQuestParaCand, setEnviarQuestParaCand] = useState<string | null>(null);
   /** Modal "Enviar via WhatsApp" — guarda candidatoId + questionarioId (opcional). */
   const [whatsTemplateOpen, setWhatsTemplateOpen] = useState<{ candidatoId: string; questionarioId?: string } | null>(null);
-  const [resumoOpen, setResumoOpen] = useState<string | null>(null);
+  
   const [discWhatsOpen, setDiscWhatsOpen] = useState<string | null>(null);
   const [associarQuestOpen, setAssociarQuestOpen] = useState<string | null>(null);
   const [declinarOpen, setDeclinarOpen] = useState<string | null>(null);
@@ -903,7 +903,7 @@ export default function VagaDetalheAdmin() {
                     onClick={() => setFichaCandidatoId(c.id)}
                     className="border border-border rounded-md p-2 flex items-center gap-2 bg-background/40 cursor-pointer hover:border-primary/50 hover:bg-secondary/40 transition-colors"
                   >
-                    <div className="h-7 w-7 rounded-full bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white">
+                    <div className="h-7 w-7 rounded-md bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white">
                       {c.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -976,7 +976,7 @@ export default function VagaDetalheAdmin() {
                           <div className="p-3 space-y-2">
                             {/* Linha 1: Avatar + Nome + Mais ações */}
                             <div className="flex items-start gap-2.5">
-                              <div className="h-10 w-10 shrink-0 rounded-full bg-gradient-brand flex items-center justify-center text-xs font-semibold text-white">
+                              <div className="h-10 w-10 shrink-0 rounded-md bg-gradient-brand flex items-center justify-center text-xs font-semibold text-white">
                                 {c.nome.split(" ").map(n => n[0]).join("").slice(0, 2)}
                               </div>
                               <div className="min-w-0 flex-1">
@@ -1307,7 +1307,7 @@ export default function VagaDetalheAdmin() {
               return (
                 <li key={c.id} className="border border-border rounded-lg p-3 bg-background/40">
                   <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-full bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white">
+                    <div className="h-9 w-9 rounded-md bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white">
                       {c.nome.split(" ").map(n => n[0]).join("").slice(0, 2)}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -1340,13 +1340,6 @@ export default function VagaDetalheAdmin() {
                       className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-border text-[11px] font-medium hover:bg-secondary"
                     >
                       <FileText className="h-3 w-3" /> Ver ficha
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setResumoOpen(c.id)}
-                      className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-border text-[11px] font-medium hover:bg-secondary"
-                    >
-                      <Eye className="h-3 w-3" /> Resumo p/ cliente
                     </button>
                     <button
                       type="button"
@@ -1832,7 +1825,8 @@ export default function VagaDetalheAdmin() {
               <button
                 onClick={() => {
                   setAlertaPlayOpen(false);
-                  navigate(`/app/horas?task_id=${vaga.id}&vaga=${encodeURIComponent(vaga.titulo)}`);
+                  navigate("/app/horas");
+                  toast.info("Acesse o timer e selecione a etapa desta vaga para iniciar.");
                 }}
                 className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium inline-flex items-center gap-1.5"
               >
@@ -1966,35 +1960,6 @@ export default function VagaDetalheAdmin() {
         );
       })()}
 
-      {/* ── Modal: Resumo para o cliente ─────────────────────────── */}
-      {resumoOpen && (() => {
-        const c = candidatosVaga.find((x) => x.id === resumoOpen);
-        return (
-          <ModalShell title="Resumo para o cliente" onClose={() => setResumoOpen(null)}>
-            <div className="text-sm text-foreground space-y-3">
-              <p><strong>{c?.nome ?? "Candidato"}</strong> — versão resumida sem dados sensíveis.</p>
-              <div className="bg-muted/40 border border-border rounded-md p-3 text-xs text-muted-foreground">
-                Pré-visualização do PDF que será enviado ao cliente. Inclui experiência,
-                fit cultural e DISC. Não inclui contato direto.
-              </div>
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  onClick={() => setResumoOpen(null)}
-                  className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm"
-                >
-                  Fechar
-                </button>
-                <button
-                  onClick={() => { toast.success("Resumo enviado ao cliente."); setResumoOpen(null); }}
-                  className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium inline-flex items-center gap-1.5"
-                >
-                  <Send className="h-3.5 w-3.5" /> Enviar ao cliente
-                </button>
-              </div>
-            </div>
-          </ModalShell>
-        );
-      })()}
 
       {/* ── Modal: Solicitar DISC via WhatsApp ───────────────────── */}
       {discWhatsOpen && (() => {
@@ -2138,7 +2103,7 @@ export default function VagaDetalheAdmin() {
         mensagensVaga={mensagens}
         onClose={() => setFichaCandidatoId(null)}
         onSolicitarDisc={(id) => setDiscWhatsOpen(id)}
-        onVerResumo={(id) => setResumoOpen(id)}
+        
         onAssociarQuestionario={(id) => setAssociarQuestOpen(id)}
         onDeclinar={(id) => setDeclinarOpen(id)}
         onAgendar={(id) => setAgendarOpen(id)}
@@ -3418,7 +3383,7 @@ function CandidatoDetailSheet({
   mensagensVaga,
   onClose,
   onSolicitarDisc,
-  onVerResumo,
+  
   onAssociarQuestionario,
   onDeclinar,
   onAgendar,
@@ -3439,7 +3404,7 @@ function CandidatoDetailSheet({
   mensagensVaga: MensagemVaga[];
   onClose: () => void;
   onSolicitarDisc: (id: string) => void;
-  onVerResumo: (id: string) => void;
+  
   onAssociarQuestionario: (id: string) => void;
   onDeclinar: (id: string) => void;
   onAgendar: (id: string) => void;
@@ -3454,7 +3419,12 @@ function CandidatoDetailSheet({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (open && scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = 0;
+      const t = setTimeout(() => {
+        if (scrollAreaRef.current) {
+          scrollAreaRef.current.scrollTop = 0;
+        }
+      }, 50);
+      return () => clearTimeout(t);
     }
   }, [open, candidato?.id, candidatoExtra?.id]);
   if (!open) return null;
@@ -3492,13 +3462,24 @@ function CandidatoDetailSheet({
   });
 
   // Timeline simulada por etapa
-  const ETAPAS_TL = ["Triagem", "Quest/Entrevista", "Entrevista", "Perfis enviados", "Decisão"];
+  const ETAPAS_TL = [
+    "Recebido",
+    "Triagem",
+    "Questionário",
+    "Entrevista Azumi",
+    "Teste Técnico",
+    "Entrevista Cliente",
+    "Proposta",
+    "Contratado",
+  ];
 
   return (
     <>
       {/* Backdrop — z-30 para ficar abaixo dos modais (z-50) */}
       <div
         onClick={onClose}
+        onWheel={(e) => e.stopPropagation()}
+        onTouchMove={(e) => e.stopPropagation()}
         className="fixed inset-0 z-30 bg-background/60 backdrop-blur-sm animate-fade-in"
       />
 
@@ -3507,11 +3488,13 @@ function CandidatoDetailSheet({
         className="fixed top-2 right-2 bottom-2 z-40 w-[min(640px,calc(100vw-1rem))] bg-card border border-border rounded-2xl shadow-elevated flex flex-col animate-scale-in overflow-hidden"
         role="dialog"
         aria-label={`Ficha de ${cand.nome}`}
+        onWheel={(e) => e.stopPropagation()}
+        style={{ touchAction: "none" }}
       >
         {/* Header fixo */}
         <header className="px-5 pt-5 pb-4 border-b border-border bg-card">
           <div className="flex items-start gap-3">
-            <div className="h-12 w-12 rounded-full bg-gradient-brand flex items-center justify-center text-sm font-semibold text-white shrink-0">
+            <div className="h-12 w-12 rounded-md bg-gradient-brand flex items-center justify-center text-sm font-semibold text-white shrink-0">
               {iniciais}
             </div>
             <div className="flex-1 min-w-0">
@@ -3522,7 +3505,7 @@ function CandidatoDetailSheet({
                     {etapaAtual}
                   </span>
                 )}
-                {cand.status && STATUS_LABEL[cand.status] && (
+                {!etapaAtual && cand.status && STATUS_LABEL[cand.status] && (
                   <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-secondary text-foreground/70 border border-border">
                     {STATUS_LABEL[cand.status]}
                   </span>
@@ -3564,18 +3547,30 @@ function CandidatoDetailSheet({
             >
               <MessageCircle className="h-3.5 w-3.5" /> Solicitar DISC
             </button>
-            <button
-              onClick={() => onVerResumo(cand.id)}
-              className="inline-flex items-center gap-1 h-8 px-3 rounded-md border border-border hover:bg-secondary text-xs font-medium"
-            >
-              <FileText className="h-3.5 w-3.5" /> Ver resumo
-            </button>
-            <button
-              onClick={() => onAbrirRelatorio(cand.id)}
-              className="inline-flex items-center gap-1 h-8 px-3 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-medium"
-            >
-              <FileText className="h-3.5 w-3.5" /> Relatório para cliente
-            </button>
+            {(() => {
+              const labelRelatorio = relatorioStatus === "enviado"
+                ? "Relatório enviado"
+                : relatorioStatus === "rascunho"
+                ? "Rascunho salvo"
+                : "Gerar relatório";
+              const corRelatorio = relatorioStatus === "enviado"
+                ? "bg-success text-success-foreground hover:bg-success/90"
+                : relatorioStatus === "rascunho"
+                ? "bg-warning/20 text-warning border border-warning/40 hover:bg-warning/30"
+                : "bg-primary text-primary-foreground hover:bg-primary/90";
+              return (
+                <button
+                  onClick={() => onAbrirRelatorio(cand.id)}
+                  className={cn(
+                    "inline-flex items-center gap-1 h-8 px-3 rounded-md text-xs font-medium",
+                    corRelatorio
+                  )}
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                  {labelRelatorio}
+                </button>
+              );
+            })()}
             {etapaPodeAgendar && (
               <button
                 onClick={() => onAgendar(cand.id)}

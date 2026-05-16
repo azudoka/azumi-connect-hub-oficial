@@ -117,7 +117,7 @@ export default function VagaDetalheCliente() {
 
   // Estado de modais
   const [fichaCandId, setFichaCandId] = useState<string | null>(null);
-  const [relatorioCandId, setRelatorioCandId] = useState<string | null>(null);
+  
   const [parecerCandId, setParecerCandId] = useState<string | null>(null);
   const [feedback1aLevaOpen, setFeedback1aLevaOpen] = useState(false);
   const [respostaGestorAgId, setRespostaGestorAgId] = useState<string | null>(null);
@@ -243,7 +243,7 @@ export default function VagaDetalheCliente() {
                 className="bg-card border border-border rounded-xl p-5 card-hover"
               >
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-gradient-brand flex items-center justify-center text-xs font-semibold text-white">
+                  <div className="h-10 w-10 rounded-md bg-gradient-brand flex items-center justify-center text-xs font-semibold text-white">
                     {c.nome
                       .split(" ")
                       .map((n) => n[0])
@@ -315,18 +315,9 @@ export default function VagaDetalheCliente() {
         <FichaCandidatoModal
           candidato={fichaCand}
           onClose={() => setFichaCandId(null)}
-          onAbrirRelatorio={(cid) => setRelatorioCandId(cid)}
           onGerarParecer={(cid) => setParecerCandId(cid)}
           parecerExistente={getParecerCliente(fichaCand.id)}
           podeGerarParecer={entrevistaRealizada(fichaCand.id)}
-        />
-      )}
-
-      {/* Visualização do relatório (modo leitura) */}
-      {relatorioCandId && (
-        <RelatorioVisualizacaoModal
-          candidatoId={relatorioCandId}
-          onClose={() => setRelatorioCandId(null)}
         />
       )}
 
@@ -527,14 +518,12 @@ interface CandidatoMock {
 function FichaCandidatoModal({
   candidato,
   onClose,
-  onAbrirRelatorio,
   onGerarParecer,
   parecerExistente,
   podeGerarParecer,
 }: {
   candidato: CandidatoMock;
   onClose: () => void;
-  onAbrirRelatorio: (candidatoId: string) => void;
   onGerarParecer: (candidatoId: string) => void;
   parecerExistente: ParecerCliente | null;
   podeGerarParecer: boolean;
@@ -554,12 +543,6 @@ function FichaCandidatoModal({
             className="h-9 px-4 rounded-lg border border-border text-sm font-medium hover:bg-secondary"
           >
             Fechar
-          </button>
-          <button
-            onClick={() => onAbrirRelatorio(candidato.id)}
-            className="h-9 px-4 rounded-lg border border-border text-sm font-medium hover:bg-secondary inline-flex items-center gap-1.5"
-          >
-            <FileText className="h-3.5 w-3.5" /> Visualizar relatório
           </button>
           {parecerSalvo ? (
             <button
@@ -704,73 +687,6 @@ function ResumoParecer({ parecer }: { parecer: ParecerCliente }) {
         </>
       )}
     </div>
-  );
-}
-
-// ────────────────────────────────────────────────────────────────────
-// Visualização de relatório (modo leitura)
-// ────────────────────────────────────────────────────────────────────
-
-function RelatorioVisualizacaoModal({
-  candidatoId,
-  onClose,
-}: {
-  candidatoId: string;
-  onClose: () => void;
-}) {
-  const cand = candidatos.find((c) => c.id === candidatoId);
-  const relatorio = getRelatorioEnviado(candidatoId);
-
-  return (
-    <ModalShell
-      title="Relatório do candidato"
-      subtitle={cand?.nome}
-      onClose={onClose}
-      maxWidth="max-w-2xl"
-      footer={
-        <button
-          onClick={onClose}
-          className="h-9 px-4 rounded-lg border border-border text-sm font-medium hover:bg-secondary"
-        >
-          Fechar
-        </button>
-      }
-    >
-      {!relatorio ? (
-        <p className="text-sm text-muted-foreground">
-          Relatório indisponível.
-        </p>
-      ) : (
-        <div className="space-y-5">
-          <section>
-            <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
-              Síntese de carreira
-            </h4>
-            <p className="text-sm">{relatorio.resumo}</p>
-          </section>
-          <section>
-            <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
-              Perfil DISC
-            </h4>
-            {cand && <DiscBars values={cand.disc} />}
-            <p className="mt-2 text-sm text-muted-foreground">
-              {relatorio.discResumo}
-            </p>
-          </section>
-          {relatorio.fasePlanejada && (
-            <section>
-              <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
-                Próxima fase prevista pela Azumi
-              </h4>
-              <p className="text-sm">{relatorio.fasePlanejada}</p>
-            </section>
-          )}
-          <p className="text-[11px] text-muted-foreground italic">
-            Enviado em {new Date(relatorio.enviadoEm).toLocaleString("pt-BR")}
-          </p>
-        </div>
-      )}
-    </ModalShell>
   );
 }
 
