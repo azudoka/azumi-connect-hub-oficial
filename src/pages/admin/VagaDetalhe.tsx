@@ -417,11 +417,28 @@ export default function VagaDetalheAdmin() {
 
   function moverCandidato(candId: string, coluna: Coluna) {
     const cand = candidatosVaga.find((c) => c.id === candId);
+    const anterior = colunasEstado[candId];
     setColunasEstado((prev) =>
       prev[candId] === coluna ? prev : { ...prev, [candId]: coluna }
     );
-    if (cand && colunasEstado[candId] !== coluna) {
+    if (cand && anterior !== coluna) {
       toast.info(`${cand.nome} movido para ${coluna}`);
+      const agora = new Date();
+      const quando = agora.toLocaleString("pt-BR", {
+        day: "2-digit", month: "2-digit",
+        hour: "2-digit", minute: "2-digit",
+      });
+      setMensagens((prev) => [
+        ...prev,
+        {
+          id: `hist-${Date.now()}`,
+          autor: "Sistema",
+          iniciais: "SY",
+          quando,
+          texto: `📋 ${cand.nome} movido de "${anterior}" → "${coluna}"`,
+          canal: "interno" as const,
+        },
+      ]);
     }
   }
 
@@ -1845,7 +1862,10 @@ export default function VagaDetalheAdmin() {
                 onClick={() => {
                   setAlertaPlayOpen(false);
                   navigate("/app/horas");
-                  toast.info("Acesse o timer e selecione a etapa desta vaga para iniciar.");
+                  toast.info(
+                    "Selecione a etapa desta vaga no timer para iniciar.",
+                    { duration: 5000 }
+                  );
                 }}
                 className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium inline-flex items-center gap-1.5"
               >
@@ -3482,18 +3502,6 @@ function CandidatoDetailSheet({
     };
   });
 
-  // Timeline simulada por etapa
-  const ETAPAS_TL = [
-    "Recebido",
-    "Triagem",
-    "Questionário",
-    "Entrevista Azumi",
-    "Teste Técnico",
-    "Entrevista Cliente",
-    "Proposta",
-    "Contratado",
-  ];
-
   return (
     <>
       {/* Backdrop — z-30 para ficar abaixo dos modais (z-50) */}
@@ -3769,35 +3777,6 @@ function CandidatoDetailSheet({
                 </ul>
               )}
             </div>
-          </section>
-
-          {/* Bloco: Linha do tempo no processo */}
-          <section>
-            <h3 className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-3">Linha do tempo no processo</h3>
-            <ol className="relative border-l border-border pl-5 space-y-3">
-              {ETAPAS_TL.map((et) => {
-                const atual = et === etapaAtual;
-                const idxAtual = ETAPAS_TL.indexOf(etapaAtual ?? "");
-                const idxEt = ETAPAS_TL.indexOf(et);
-                const passada = idxAtual >= 0 && idxEt < idxAtual;
-                return (
-                  <li key={et} className="relative">
-                    <span className={cn(
-                      "absolute -left-[27px] top-1 h-3 w-3 rounded-full border-2",
-                      atual ? "bg-primary border-primary" : passada ? "bg-success border-success" : "bg-card border-border",
-                    )} />
-                    <div className="flex items-center justify-between gap-2">
-                      <span className={cn("text-sm", atual ? "font-semibold text-foreground" : passada ? "text-foreground/80" : "text-muted-foreground")}>
-                        {et}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground font-data">
-                        {atual ? "Em andamento" : passada ? "Concluído" : "—"}
-                      </span>
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
           </section>
 
           {/* Bloco: Proposta (Etapa 6 — Doc Mestre) */}
