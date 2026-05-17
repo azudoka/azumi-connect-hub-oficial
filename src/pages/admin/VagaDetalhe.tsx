@@ -945,6 +945,7 @@ export default function VagaDetalheAdmin() {
                   )}
                   <div className="mt-1 text-warning/70">
                     Prepare a 2ª leva ajustando o perfil conforme o feedback acima.
+                  </div>
                 </div>
                 {import.meta.env.DEV && (
                   <button
