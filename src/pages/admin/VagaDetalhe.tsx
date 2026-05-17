@@ -1869,7 +1869,135 @@ export default function VagaDetalheAdmin() {
         );
       })()}
 
-      {/* Confirmação: Mover para "Enviados" (apresentação ao cliente) */}
+      {/* Confirmação: Bloquear candidato */}
+      {confirmarBloquearId && (() => {
+        const cand = candidatosVaga.find((c) => c.id === confirmarBloquearId);
+        return (
+          <div className="fixed inset-0 z-[60] bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onWheel={(e)=>e.stopPropagation()} onClick={() => setConfirmarBloquearId(null)}>
+            <ScrollLock />
+            <div className="bg-card border border-border rounded-2xl shadow-elevated w-full max-w-md p-6 animate-scale-in" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-start gap-3">
+                <div className="h-10 w-10 rounded-full bg-destructive/15 text-destructive flex items-center justify-center shrink-0">
+                  <ShieldOff className="h-5 w-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-display text-lg font-semibold">Bloquear {cand?.nome}?</h3>
+                  <div className="text-xs font-semibold uppercase tracking-wider text-destructive mt-2">
+                    Ação permanente
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {cand?.nome} será bloqueado e não aparecerá em nenhuma vaga futura. Esta ação é registrada
+                    no histórico e não pode ser desfeita sem intervenção do administrador.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-5 flex items-center justify-end gap-2">
+                <button
+                  onClick={() => setConfirmarBloquearId(null)}
+                  className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    const id = confirmarBloquearId;
+                    if (!id) return;
+                    setBloqueados(prev => new Set(prev).add(id));
+                    setDesclassificados(prev => new Set(prev).add(id));
+                    const quando = new Date().toLocaleString("pt-BR", {
+                      day: "2-digit", month: "2-digit",
+                      hour: "2-digit", minute: "2-digit"
+                    });
+                    setMensagens(prev => [...prev, {
+                      id: `blq-${Date.now()}`,
+                      autor: "Sistema",
+                      iniciais: "SY",
+                      quando,
+                      texto: `🚫 ${cand?.nome} bloqueado — não aparecerá em vagas futuras.`,
+                      canal: "interno" as const,
+                    }]);
+                    toast.error(`${cand?.nome} bloqueado.`);
+                    setConfirmarBloquearId(null);
+                  }}
+                  className="h-9 px-4 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium inline-flex items-center gap-1.5"
+                >
+                  <Ban className="h-3.5 w-3.5" /> Confirmar bloqueio
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Confirmação: Suspender candidato */}
+      {confirmarSuspenderId && (() => {
+        const cand = candidatosVaga.find((c) => c.id === confirmarSuspenderId);
+        const jaSuspenso = suspensos.has(confirmarSuspenderId);
+        return (
+          <div className="fixed inset-0 z-[60] bg-background/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onWheel={(e)=>e.stopPropagation()} onClick={() => setConfirmarSuspenderId(null)}>
+            <ScrollLock />
+            <div className="bg-card border border-border rounded-2xl shadow-elevated w-full max-w-md p-6 animate-scale-in" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-start gap-3">
+                <div className="h-10 w-10 rounded-full bg-warning/15 text-warning flex items-center justify-center shrink-0">
+                  <PauseCircle className="h-5 w-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-display text-lg font-semibold">
+                    {jaSuspenso ? "Reativar candidato?" : "Suspender candidato?"}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {jaSuspenso
+                      ? `Reativar ${cand?.nome} no processo? Ele voltará para a etapa atual.`
+                      : `Suspender ${cand?.nome} temporariamente? O candidato será pausado mas não removido do processo.`}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-5 flex items-center justify-end gap-2">
+                <button
+                  onClick={() => setConfirmarSuspenderId(null)}
+                  className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    const id = confirmarSuspenderId;
+                    if (!id) return;
+                    setSuspensos(prev => {
+                      const next = new Set(prev);
+                      if (jaSuspenso) next.delete(id);
+                      else next.add(id);
+                      return next;
+                    });
+                    const quando = new Date().toLocaleString("pt-BR", {
+                      day: "2-digit", month: "2-digit",
+                      hour: "2-digit", minute: "2-digit"
+                    });
+                    setMensagens(prev => [...prev, {
+                      id: `sus-${Date.now()}`,
+                      autor: "Sistema",
+                      iniciais: "SY",
+                      quando,
+                      texto: jaSuspenso
+                        ? `▶️ ${cand?.nome} reativado no processo.`
+                        : `⏸️ ${cand?.nome} suspenso temporariamente.`,
+                      canal: "interno" as const,
+                    }]);
+                    toast.info(jaSuspenso ? `${cand?.nome} reativado.` : `${cand?.nome} suspenso.`);
+                    setConfirmarSuspenderId(null);
+                  }}
+                  className="h-9 px-4 rounded-lg bg-warning text-warning-foreground text-sm font-medium inline-flex items-center gap-1.5"
+                >
+                  <PauseCircle className="h-3.5 w-3.5" />
+                  {jaSuspenso ? "Reativar" : "Suspender"}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+
       {confirmarEnviadosId && (() => {
         const cand = candidatosVaga.find((c) => c.id === confirmarEnviadosId);
         return (
