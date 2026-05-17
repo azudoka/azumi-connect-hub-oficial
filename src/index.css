@@ -2,139 +2,186 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Azumi Connect Design System
+/* Azumi Connect / Hub — Brand Kit v2.3
    All colors MUST be HSL.
-   - Connect: dark mode (default em :root)
-   - Hub: light mode acolhedor (.hub-light wrapper)
+   - Connect default: light com lavagem azul/violeta (em :root e .product-connect)
+   - Hub: light com lavagem mint (.product-hub)
+   - Midnight: alternativa dark on-brand (.theme-midnight)
 */
 
 @layer base {
   :root {
-    /* Connect — modo dark */
-    --background: 224 20% 10%;
-    --foreground: 220 15% 92%;
+    /* Surfaces — Connect default (light + blue/violet tinted) */
+    --background: 220 35% 98%;
+    --foreground: 213 40% 14%;
 
-    --card: 224 18% 14%;
-    --card-foreground: 220 15% 90%;
+    --card: 0 0% 100%;
+    --card-foreground: 213 40% 14%;
 
-    --popover: 224 18% 14%;
-    --popover-foreground: 220 15% 90%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 213 40% 14%;
 
-    --primary: 258 80% 65%;
+    --border: 218 28% 90%;
+    --input: 220 30% 96%;
+    --ring: 217 90% 50%;
+
+    /* Brand */
+    --primary: 217 92% 42%;          /* Azul Electric #0050D3 */
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 258 90% 75%;
+    --primary-glow: 217 92% 60%;
 
-    --secondary: 224 18% 18%;
-    --secondary-foreground: 220 15% 80%;
-
-    --muted: 224 15% 20%;
-    --muted-foreground: 220 10% 60%;
-
-    --accent: 258 60% 55%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 72% 55%;
-    --destructive-foreground: 0 0% 100%;
-
-    --success: 142 70% 42%;
-    --success-foreground: 0 0% 100%;
-
-    --warning: 38 95% 54%;
-    --warning-foreground: 224 20% 10%;
-
-    --info: 210 85% 58%;
-    --info-foreground: 0 0% 100%;
-
-    --highlight: 168 70% 45%;
+    --highlight: 258 70% 60%;        /* Violeta Inovação */
     --highlight-foreground: 0 0% 100%;
 
-    --violet: 258 80% 65%;
-    --teal: 168 70% 45%;
-    --amber: 38 95% 54%;
-    --navy: 224 40% 18%;
-    --navy-light: 224 30% 28%;
-    --navy-dark: 224 45% 12%;
+    --accent: 217 92% 95%;
+    --accent-foreground: 217 92% 30%;
 
-    --border: 224 15% 22%;
-    --input: 224 15% 18%;
-    --ring: 258 80% 65%;
+    --secondary: 220 28% 95%;
+    --secondary-foreground: 213 40% 20%;
+
+    --muted: 220 25% 94%;
+    --muted-foreground: 218 10% 45%;
+
+    /* Brand named (reutilizáveis) */
+    --ocean: 213 95% 12%;            /* Azul Oceano #031D38 */
+    --azumi-blue: 210 96% 28%;       /* Azul Azumi #034C8B */
+    --azul-destaque: 217 92% 60%;    /* Azul Destaque #3B82F6 */
+    --violeta: 258 70% 66%;          /* Violeta #8B5CF6 */
+    --ice: 214 95% 78%;              /* Azul Gelo #93C5FD */
+    --mint: 191 50% 95%;             /* Mint #EAF6F8 */
+
+    /* Status */
+    --destructive: 0 72% 52%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 152 60% 38%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 95% 50%;
+    --warning-foreground: 213 40% 14%;
+    --info: 211 90% 52%;
+    --info-foreground: 0 0% 100%;
+
+    /* Legacy named (mantidos para compat) */
+    --violet: 258 70% 60%;
+    --teal: 191 70% 36%;
+    --amber: 38 95% 50%;
+    --navy: 213 95% 12%;
+    --navy-light: 213 60% 22%;
+    --navy-dark: 213 95% 7%;
 
     --radius: 0.625rem;
 
-    /* Sidebar — Connect (dark) */
-    --sidebar-background: 224 30% 8%;
-    --sidebar-foreground: 220 15% 70%;
-    --sidebar-primary: 258 80% 65%;
+    /* Sidebar — Connect: light com lavagem azul+violeta */
+    --sidebar-background: 220 40% 99%;
+    --sidebar-foreground: 213 25% 32%;
+    --sidebar-primary: 217 92% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 224 20% 14%;
-    --sidebar-accent-foreground: 220 15% 92%;
-    --sidebar-border: 224 20% 15%;
-    --sidebar-ring: 258 80% 65%;
+    --sidebar-accent: 258 60% 95%;
+    --sidebar-accent-foreground: 258 70% 38%;
+    --sidebar-border: 218 28% 90%;
+    --sidebar-ring: 217 92% 42%;
 
-    /* Gradients */
-    --gradient-brand: linear-gradient(90deg, hsl(258 80% 65%), hsl(168 70% 45%));
-    --gradient-sidebar: linear-gradient(180deg, hsl(224 45% 10%) 0%, hsl(224 30% 8%) 100%);
-    --gradient-card-hover: linear-gradient(180deg, hsl(224 18% 16%), hsl(224 18% 13%));
-    --gradient-divider: linear-gradient(90deg, hsl(258 80% 65% / 0.4), transparent);
+    /* Gradients — Azumi Transformation */
+    --gradient-brand: linear-gradient(90deg, #034C8B 0%, #3B82F6 50%, #8B5CF6 100%);
+    --gradient-brand-bg: linear-gradient(135deg, #034C8B 0%, #3B82F6 50%, #8B5CF6 100%);
+    --gradient-sidebar: linear-gradient(180deg, hsl(220 40% 99%) 0%, hsl(220 35% 97%) 100%);
+    --gradient-card-hover: linear-gradient(180deg, hsl(0 0% 100%), hsl(220 35% 98%));
+    --gradient-divider: linear-gradient(90deg, hsl(217 92% 42% / 0.35), transparent);
 
     /* Shadows */
-    --shadow-violet: 0 8px 24px -8px hsl(258 80% 65% / 0.35);
-    --shadow-card: 0 4px 16px -4px hsl(224 45% 4% / 0.5);
-    --shadow-elevated: 0 12px 32px -8px hsl(224 45% 4% / 0.6);
+    --shadow-violet: 0 8px 24px -8px hsl(258 70% 60% / 0.35);
+    --shadow-card: 0 4px 16px -4px hsl(213 60% 30% / 0.12);
+    --shadow-elevated: 0 12px 32px -8px hsl(213 60% 25% / 0.18);
   }
 
-  /* Hub — light theme */
-  .hub-light {
-    --background: 220 25% 97%;
-    --foreground: 224 30% 15%;
+  /* Connect explícito (mesmos tokens do :root) */
+  .product-connect {
+    /* herda :root */
+  }
 
+  /* HUB — diferencial mint para distinguir do Connect */
+  .product-hub {
+    --background: 191 35% 97%;
+    --foreground: 213 40% 14%;
     --card: 0 0% 100%;
-    --card-foreground: 224 25% 15%;
+    --border: 191 25% 86%;
+    --input: 191 30% 94%;
+    --ring: 211 90% 38%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 25% 15%;
-
-    --primary: 258 80% 58%;
+    --primary: 211 90% 38%;          /* Azul Médio — softer */
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 258 90% 70%;
+    --primary-glow: 211 90% 55%;
 
-    --secondary: 220 20% 93%;
-    --secondary-foreground: 224 30% 20%;
-
-    --muted: 220 20% 93%;
-    --muted-foreground: 220 15% 45%;
-
-    --accent: 258 60% 92%;
-    --accent-foreground: 258 80% 35%;
-
-    --destructive: 0 72% 50%;
-    --destructive-foreground: 0 0% 100%;
-
-    --success: 142 65% 38%;
-    --success-foreground: 0 0% 100%;
-    --warning: 38 95% 50%;
-    --warning-foreground: 224 30% 15%;
-    --info: 210 85% 50%;
-    --info-foreground: 0 0% 100%;
-    --highlight: 168 65% 40%;
+    --highlight: 191 70% 36%;
     --highlight-foreground: 0 0% 100%;
 
-    --border: 220 20% 88%;
-    --input: 220 20% 88%;
-    --ring: 258 80% 58%;
+    --accent: 191 60% 92%;
+    --accent-foreground: 213 90% 18%;
+    --secondary: 191 35% 93%;
+    --muted: 191 30% 93%;
+    --muted-foreground: 213 12% 38%;
 
-    --sidebar-background: 258 60% 97%;
-    --sidebar-foreground: 224 30% 25%;
-    --sidebar-primary: 258 80% 58%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 258 50% 93%;
-    --sidebar-accent-foreground: 258 80% 30%;
-    --sidebar-border: 258 30% 88%;
-    --sidebar-ring: 258 80% 58%;
+    --sidebar-background: 191 45% 96%;
+    --sidebar-foreground: 213 35% 28%;
+    --sidebar-primary: 211 90% 38%;
+    --sidebar-accent: 191 55% 88%;
+    --sidebar-accent-foreground: 213 90% 16%;
+    --sidebar-border: 191 28% 86%;
 
-    --gradient-sidebar: linear-gradient(180deg, hsl(258 60% 97%), hsl(258 50% 95%));
-    --gradient-card-hover: linear-gradient(180deg, hsl(0 0% 100%), hsl(258 50% 99%));
-    --shadow-card: 0 4px 16px -4px hsl(258 50% 60% / 0.12);
+    --gradient-sidebar: linear-gradient(180deg, hsl(191 45% 96%) 0%, hsl(191 40% 94%) 100%);
+  }
+
+  /* Compat: .hub-light usado em layouts antigos = product-hub */
+  .hub-light {
+    --background: 191 35% 97%;
+    --foreground: 213 40% 14%;
+    --card: 0 0% 100%;
+    --border: 191 25% 86%;
+    --input: 191 30% 94%;
+    --ring: 211 90% 38%;
+    --primary: 211 90% 38%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 211 90% 55%;
+    --highlight: 191 70% 36%;
+    --accent: 191 60% 92%;
+    --accent-foreground: 213 90% 18%;
+    --secondary: 191 35% 93%;
+    --muted: 191 30% 93%;
+    --muted-foreground: 213 12% 38%;
+    --sidebar-background: 191 45% 96%;
+    --sidebar-foreground: 213 35% 28%;
+    --sidebar-primary: 211 90% 38%;
+    --sidebar-accent: 191 55% 88%;
+    --sidebar-accent-foreground: 213 90% 16%;
+    --sidebar-border: 191 28% 86%;
+    --gradient-sidebar: linear-gradient(180deg, hsl(191 45% 96%) 0%, hsl(191 40% 94%) 100%);
+  }
+
+  /* MIDNIGHT — alternativa dark on-brand (Azul Oceano) */
+  .theme-midnight {
+    --background: 213 92% 7%;
+    --foreground: 214 35% 92%;
+    --card: 213 80% 11%;
+    --card-foreground: 214 35% 92%;
+    --popover: 213 80% 11%;
+    --popover-foreground: 214 35% 92%;
+    --border: 213 50% 18%;
+    --input: 213 50% 16%;
+    --ring: 217 92% 60%;
+    --primary: 217 92% 60%;
+    --primary-foreground: 0 0% 100%;
+    --highlight: 258 70% 68%;
+    --accent: 213 70% 18%;
+    --accent-foreground: 214 95% 90%;
+    --secondary: 213 60% 16%;
+    --muted: 213 60% 16%;
+    --muted-foreground: 214 20% 65%;
+    --sidebar-background: 213 95% 8%;
+    --sidebar-foreground: 214 35% 70%;
+    --sidebar-primary: 217 92% 60%;
+    --sidebar-accent: 213 70% 14%;
+    --sidebar-accent-foreground: 214 95% 84%;
+    --sidebar-border: 213 50% 16%;
+    --gradient-sidebar: linear-gradient(180deg, hsl(213 95% 8%) 0%, hsl(213 92% 6%) 100%);
   }
 }
 
@@ -154,27 +201,32 @@
 
   /* Esconder a barra de rolagem em toda a aplicação, mantendo o scroll funcional. */
   * {
-    scrollbar-width: none;        /* Firefox */
-    -ms-overflow-style: none;     /* IE/Edge legacy */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
   }
   *::-webkit-scrollbar {
     width: 0;
     height: 0;
-    display: none;                /* Chrome / Safari / Edge */
+    display: none;
   }
 
-  /* Quando um modal grande estiver aberto, travar scroll da página de fundo. */
   body.modal-open {
     overflow: hidden;
   }
 }
 
 @layer components {
-  .text-gradient-brand {
+  .text-gradient-brand,
+  .brand-gradient {
     background: var(--gradient-brand);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+  }
+
+  .brand-gradient-bg,
+  .bg-gradient-brand {
+    background: var(--gradient-brand-bg);
   }
 
   .divider-gradient {
@@ -199,6 +251,52 @@
 
   .badge-pill {
     @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium border;
+  }
+
+  /* Botões — Brand Kit v2.3 */
+  .btn-primary {
+    background: var(--gradient-brand-bg);
+    color: #fff;
+    border-radius: 100px;
+    padding: 11px 26px;
+    font-family: "Space Grotesk", "Inter", sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  .btn-primary:hover { opacity: 0.95; }
+  .btn-primary:active { transform: translateY(1px); }
+
+  .btn-dark {
+    background: linear-gradient(135deg, #031D38 0%, #052E5A 50%, #031D38 100%);
+    color: #fff;
+    border-radius: 100px;
+    padding: 11px 26px;
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  .btn-outline-brand {
+    background: transparent;
+    color: hsl(var(--ocean));
+    border: 1.5px solid hsl(var(--ocean));
+    border-radius: 100px;
+    padding: 10px 24px;
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  .btn-glass {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 100px;
+    padding: 10px 24px;
+    font-weight: 600;
+    font-size: 13px;
   }
 
   .shimmer {
