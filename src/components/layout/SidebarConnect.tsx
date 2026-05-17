@@ -11,6 +11,7 @@ import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { usePermissao, type Permissao } from "@/config/permissoes";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { AzumiLogo } from "@/components/brand/AzumiLogo";
 
 interface SidebarConnectProps {
   variant?: "admin" | "cliente";
