@@ -340,6 +340,8 @@ export default function VagaDetalheAdmin() {
   // ── Modais novos ─────────────────────────────────────────────────
   const [novoCandOpen, setNovoCandOpen] = useState(false);
   const [convidarOpen, setConvidarOpen] = useState(false);
+  const [convidarVagaOpen, setConvidarVagaOpen] = useState(false);
+  const [convidarVagaCandId, setConvidarVagaCandId] = useState<string | null>(null);
   // (legado removido — substituído por editorQuestId)
   /** Quando aberto: id do questionário a editar; "novo" → criar do zero. */
   const [editorQuestId, setEditorQuestId] = useState<string | "novo" | null>(null);
@@ -1055,15 +1057,23 @@ export default function VagaDetalheAdmin() {
                               )}
                             </div>
 
-                            {/* Linha 3: Tags (DISC) */}
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border bg-primary/10 text-primary border-primary/20">
-                                DISC: {c.perfilDom}
-                              </span>
-                            </div>
-
-                            {/* DISC bars */}
-                            <DiscBars values={c.disc} compact />
+                            {/* Linha 3: Tags DISC compactas */}
+                            {c.disc && (
+                              <div className="flex items-center gap-1 flex-wrap">
+                                {(["D","I","S","C"] as const).map((fator) => {
+                                  const val = c.disc![fator];
+                                  const isDom = fator === c.perfilDom?.[0];
+                                  return (
+                                    <span key={fator} className={cn(
+                                      "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold border",
+                                      isDom ? "bg-primary text-primary-foreground border-primary" : "bg-secondary text-muted-foreground border-border"
+                                    )}>
+                                      {fator}<span className="font-data font-normal opacity-80">{val}%</span>
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            )}
 
                             {/* Estrelas — visível apenas na Triagem */}
                             {colunasEstado[c.id] === "Triagem" && (
@@ -2190,7 +2200,43 @@ export default function VagaDetalheAdmin() {
         onEnviarWhatsQuestionario={(candidatoId, questionarioId) => setWhatsTemplateOpen({ candidatoId, questionarioId })}
         onSalvarAvaliacao={salvarAvaliacaoQuestionario}
         onSimularResposta={simularRespostaQuestionario}
+        onConvidarParaVaga={(id) => { setConvidarVagaCandId(id); setConvidarVagaOpen(true); }}
       />
+
+      {/* ── Modal: Convidar para outra vaga ──────────────────────── */}
+      {convidarVagaOpen && convidarVagaCandId && (() => {
+        const cand = candidatosVaga.find((c) => c.id === convidarVagaCandId)
+          ?? candidatosExtras.find((c) => c.id === convidarVagaCandId) ?? null;
+        if (!cand) return null;
+        return (
+          <ModalShell
+            title="Convidar para vaga"
+            onClose={() => { setConvidarVagaOpen(false); setConvidarVagaCandId(null); }}
+            size="lg"
+          >
+            <ConvidarParaVagaForm
+              candidatoId={cand.id}
+              candidatoNome={cand.nome}
+              vagaOrigemId={vaga.id}
+              onEnviar={(vagaDestId, canal, msg) => {
+                const quando = new Date().toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+                setMensagens((prev) => [...prev, {
+                  id: `conv-${Date.now()}`,
+                  autor: "Sistema",
+                  iniciais: "SY",
+                  quando,
+                  texto: `📨 ${cand.nome} convidado para vaga "${vagaDestId}" via ${canal}.\n${msg}`,
+                  canal: "interno" as const,
+                }]);
+                toast.success(`Convite enviado para ${cand.nome}.`, { description: `Canal: ${canal}` });
+                setConvidarVagaOpen(false);
+                setConvidarVagaCandId(null);
+              }}
+              onClose={() => { setConvidarVagaOpen(false); setConvidarVagaCandId(null); }}
+            />
+          </ModalShell>
+        );
+      })()}
 
       {/* ── Editor de relatório do candidato (modal grande) ─────── */}
       {relatorioOpenId && (() => {
@@ -3500,7 +3546,7 @@ function CandidatoDetailSheet({
   mensagensVaga,
   onClose,
   onSolicitarDisc,
-  
+
   onAssociarQuestionario,
   onDeclinar,
   onAgendar,
@@ -3509,6 +3555,7 @@ function CandidatoDetailSheet({
   onEnviarWhatsQuestionario,
   onSalvarAvaliacao,
   onSimularResposta,
+  onConvidarParaVaga,
 }: {
   open: boolean;
   candidato: CandidatoBase | null;
@@ -3530,6 +3577,7 @@ function CandidatoDetailSheet({
   onEnviarWhatsQuestionario?: (candidatoId: string, questionarioId: string) => void;
   onSalvarAvaliacao?: (questionarioId: string, candidatoId: string, questoes: Record<string, AvaliacaoQuestao>, salvoComo: "rascunho" | "definitivo") => void;
   onSimularResposta?: (candidatoId: string, questionarioId: string) => void;
+  onConvidarParaVaga?: (candidatoId: string) => void;
 }) {
   useScrollLock(open);
   const { id: vagaIdParam } = useParams();
@@ -3688,11 +3736,7 @@ function CandidatoDetailSheet({
               </button>
             )}
             <button
-              onClick={() => {
-                toast.success(`Convite enviado para ${cand.nome} via WhatsApp (mock).`, {
-                  description: "Link da vaga copiado para a área de transferência.",
-                });
-              }}
+              onClick={() => onConvidarParaVaga?.(cand.id)}
               className="inline-flex items-center gap-1 h-8 px-3 rounded-md border border-border hover:bg-secondary text-xs font-medium"
             >
               <UserPlus className="h-3.5 w-3.5" /> Convidar para vaga
@@ -5098,5 +5142,137 @@ function PropostaPanel({ candidatoId, candidatoNome }: { candidatoId: string; ca
         )}
       </div>
     </section>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────
+// ConvidarParaVagaForm — seleciona vaga destino, canal e mensagem
+// ────────────────────────────────────────────────────────────────────
+
+const VAGAS_ATIVAS_MOCK = [
+  { id: "v1", titulo: "Head de TI", empresa: "Kentaki Foods" },
+  { id: "v2", titulo: "Gerente de Operações", empresa: "Grupo Marcelo" },
+  { id: "v3", titulo: "Analista de RH Sênior", empresa: "Azumi Interna" },
+  { id: "v4", titulo: "Coordenador Comercial", empresa: "Kentaki Foods" },
+  { id: "v5", titulo: "Tech Lead", empresa: "Fintech Alpha" },
+];
+
+type CanalConvite = "WhatsApp" | "E-mail" | "LinkedIn";
+
+function buildConviteMsg(candidatoNome: string, vagaTitulo: string, empresa: string, canal: CanalConvite): string {
+  const primeiro = candidatoNome.split(" ")[0];
+  if (canal === "WhatsApp") {
+    return `Olá, ${primeiro}! Tudo bem?\n\nPassando para compartilhar uma oportunidade que pode ser do seu interesse: *${vagaTitulo}* na ${empresa}.\n\nPodemos conversar sobre os detalhes? 😊`;
+  }
+  if (canal === "LinkedIn") {
+    return `Olá, ${primeiro}! Identifiquei seu perfil e acredito que você seria um ótimo fit para a oportunidade de *${vagaTitulo}* na ${empresa}. Posso compartilhar mais detalhes?`;
+  }
+  return `Olá, ${primeiro},\n\nTemos uma oportunidade em aberto para ${vagaTitulo} na ${empresa} e seu perfil chamou nossa atenção.\n\nFicamos à disposição para conversar sobre a vaga!\n\nAtenciosamente,\nEquipe Azumi`;
+}
+
+function ConvidarParaVagaForm({
+  candidatoId,
+  candidatoNome,
+  vagaOrigemId,
+  onEnviar,
+  onClose,
+}: {
+  candidatoId: string;
+  candidatoNome: string;
+  vagaOrigemId: string;
+  onEnviar: (vagaDestId: string, canal: CanalConvite, mensagem: string) => void;
+  onClose: () => void;
+}) {
+  const vagasDisponiveis = VAGAS_ATIVAS_MOCK.filter((v) => v.id !== vagaOrigemId);
+  const [vagaSel, setVagaSel] = useState(vagasDisponiveis[0]?.id ?? "");
+  const [canal, setCanal] = useState<CanalConvite>("WhatsApp");
+  const vagaDest = vagasDisponiveis.find((v) => v.id === vagaSel);
+  const [mensagem, setMensagem] = useState(() =>
+    vagaDest ? buildConviteMsg(candidatoNome, vagaDest.titulo, vagaDest.empresa, "WhatsApp") : ""
+  );
+
+  function handleVagaChange(id: string) {
+    setVagaSel(id);
+    const v = vagasDisponiveis.find((x) => x.id === id);
+    if (v) setMensagem(buildConviteMsg(candidatoNome, v.titulo, v.empresa, canal));
+  }
+
+  function handleCanalChange(c: CanalConvite) {
+    setCanal(c);
+    if (vagaDest) setMensagem(buildConviteMsg(candidatoNome, vagaDest.titulo, vagaDest.empresa, c));
+  }
+
+  return (
+    <div className="space-y-4 text-sm">
+      <div className="rounded-lg bg-secondary/40 px-3 py-2 text-xs text-muted-foreground">
+        Candidato: <span className="font-medium text-foreground">{candidatoNome}</span>
+        <span className="mx-1.5">·</span>
+        ID: <span className="font-data">{candidatoId}</span>
+        <span className="mx-1.5">·</span>
+        Origem rastreada automaticamente
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium">Vaga destino</label>
+        <select
+          value={vagaSel}
+          onChange={(e) => handleVagaChange(e.target.value)}
+          className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+        >
+          {vagasDisponiveis.map((v) => (
+            <option key={v.id} value={v.id}>{v.titulo} — {v.empresa}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium">Canal de envio</label>
+        <div className="flex gap-2">
+          {(["WhatsApp", "E-mail", "LinkedIn"] as CanalConvite[]).map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => handleCanalChange(c)}
+              className={cn(
+                "flex-1 h-8 rounded-md border text-xs font-medium transition-colors",
+                canal === c
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border bg-background text-muted-foreground hover:bg-secondary"
+              )}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium">Mensagem</label>
+        <textarea
+          value={mensagem}
+          onChange={(e) => setMensagem(e.target.value)}
+          rows={5}
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+        />
+      </div>
+
+      <div className="flex justify-end gap-2 pt-1">
+        <button
+          type="button"
+          onClick={onClose}
+          className="h-9 px-4 rounded-md border border-border text-sm hover:bg-secondary"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          disabled={!vagaSel || !mensagem.trim()}
+          onClick={() => onEnviar(vagaSel, canal, mensagem.trim())}
+          className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
+        >
+          <UserPlus className="h-4 w-4" /> Enviar convite
+        </button>
+      </div>
+    </div>
   );
 }

@@ -133,10 +133,31 @@ function seedDemoOnce() {
 
   writeMap(KEY_RELATORIOS, relatorios);
   writeMap(KEY_ENTREVISTAS, entrevistas);
+
+  const feedbacks: Record<string, FeedbackPrimeiraLeva> = {
+    "v1": {
+      vagaId: "v1",
+      motivoPrincipal: "Perfis com senioridade abaixo do esperado para o estágio atual da operação. Os três candidatos apresentaram boa comunicação, mas nenhum trouxe experiência comprovada em transformação digital em ambientes de alta complexidade.",
+      direcionamentos: "Priorizar candidatos com histórico de liderança em projetos de migração de sistemas legados e com ao menos uma passagem em empresa acima de 500 funcionários. Valorizamos experiência no setor de alimentos ou varejo.",
+      criadoEm: new Date().toISOString(),
+    },
+  };
+  writeMap(KEY_FEEDBACKS, feedbacks);
+
   window.localStorage.setItem(SEED_FLAG_KEY, "1");
 }
 
 seedDemoOnce();
+
+export function resetSeedDemo(): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(SEED_FLAG_KEY);
+  window.localStorage.removeItem(KEY_RELATORIOS);
+  window.localStorage.removeItem(KEY_ENTREVISTAS);
+  window.localStorage.removeItem(KEY_PARECERES);
+  window.localStorage.removeItem(KEY_FEEDBACKS);
+  window.location.reload();
+}
 
 // ────────────────────────────────────────────────────────────────────
 // API pública
