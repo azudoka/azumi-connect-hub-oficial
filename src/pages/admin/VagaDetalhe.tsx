@@ -1070,21 +1070,43 @@ export default function VagaDetalheAdmin() {
                               )}
                             </div>
 
-                            {/* Linha 3: Tags DISC compactas */}
-                            {c.disc && (
-                              <div className="flex items-center gap-1 flex-wrap">
-                                {(["D","I","S","C"] as const).map((fator) => {
-                                  const val = c.disc![fator];
-                                  const isDom = fator === c.perfilDom?.[0];
-                                  return (
-                                    <span key={fator} className={cn(
-                                      "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold border",
-                                      isDom ? "bg-primary text-primary-foreground border-primary" : "bg-secondary text-muted-foreground border-border"
-                                    )}>
-                                      {fator}<span className="font-data font-normal opacity-80">{val}%</span>
+                            {/* Linha 3: DISC com nome e cor por fator */}
+                            {c.disc && (() => {
+                              const disc = c.disc!;
+                              const dominante = (["D","I","S","C"] as const).reduce(
+                                (a, b) => disc[a] >= disc[b] ? a : b
+                              );
+                              const cfg = DISC_CONFIG[dominante];
+                              const secundarios = (["D","I","S","C"] as const)
+                                .filter(f => f !== dominante && disc[f] >= 30);
+                              return (
+                                <div className="flex items-center gap-1 flex-wrap">
+                                  <span
+                                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold"
+                                    style={{ backgroundColor: cfg.cor, color: cfg.corTexto }}
+                                  >
+                                    {dominante} · {cfg.nome}
+                                    <span className="font-data font-normal opacity-90">{disc[dominante]}%</span>
+                                  </span>
+                                  {secundarios.map(f => (
+                                    <span
+                                      key={f}
+                                      className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-semibold border"
+                                      style={{ borderColor: DISC_CONFIG[f].cor, color: DISC_CONFIG[f].cor }}
+                                    >
+                                      {f} <span className="font-data font-normal opacity-80">{disc[f]}%</span>
                                     </span>
-                                  );
-                                })}
+                                  ))}
+                                </div>
+                              );
+                            })()}
+
+                            {/* Badge: candidato suspenso */}
+                            {suspensos.has(c.id) && (
+                              <div className="pt-0.5">
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-warning/15 text-warning border border-warning/30">
+                                  <PauseCircle className="h-3 w-3" /> Suspenso
+                                </span>
                               </div>
                             )}
 
