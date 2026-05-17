@@ -13,6 +13,7 @@ import { useState } from "react";
 import { useAuth, type ModuloSlug } from "@/context/AuthContext";
 import { useModulos } from "@/context/ModulesContext";
 import type { ModuloId, PaginaId } from "@/config/modules";
+import { AzumiLogo } from "@/components/brand/AzumiLogo";
 
 type HubProfile = "lider" | "colaborador" | "ceo";
 
