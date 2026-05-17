@@ -945,8 +945,17 @@ export default function VagaDetalheAdmin() {
                   )}
                   <div className="mt-1 text-warning/70">
                     Prepare a 2ª leva ajustando o perfil conforme o feedback acima.
-                  </div>
                 </div>
+                {import.meta.env.DEV && (
+                  <button
+                    type="button"
+                    onClick={() => resetSeedDemo()}
+                    className="ml-auto text-[10px] px-2 py-0.5 rounded border border-warning/40 text-warning hover:bg-warning/10 shrink-0"
+                    title="Limpa o localStorage de demo e recarrega"
+                  >
+                    ↺ Reset demo
+                  </button>
+                )}
               </div>
             );
           })()}
