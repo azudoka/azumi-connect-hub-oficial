@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Mail, Lock, Sparkles, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { AzumiLogo } from "@/components/brand/AzumiLogo";
 
 export default function Login() {
   const navigate = useNavigate();
