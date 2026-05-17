@@ -1404,6 +1404,8 @@ export default function VagaDetalheAdmin() {
                                 className="w-full flex items-center gap-2 px-3 py-2 hover:bg-secondary text-left text-destructive"
                               >
                                 <ShieldOff className="h-3.5 w-3.5" /> Bloquear candidato
+                              </button>
+
                               <button
                                 type="button"
                                 onClick={() => {
