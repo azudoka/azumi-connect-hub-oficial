@@ -306,6 +306,12 @@ export default function VagaDetalheAdmin() {
   // Confirmação de contratação via Kanban
   const [confirmarContratadoId, setConfirmarContratadoId] = useState<string | null>(null);
 
+  // Bloquear / Suspender candidato
+  const [bloqueados, setBloqueados] = useState<Set<string>>(new Set());
+  const [suspensos, setSuspensos] = useState<Set<string>>(new Set());
+  const [confirmarBloquearId, setConfirmarBloquearId] = useState<string | null>(null);
+  const [confirmarSuspenderId, setConfirmarSuspenderId] = useState<string | null>(null);
+
   // Avaliação por estrelas (triagem interna)
   const [avaliacaoEstrelas, setAvaliacaoEstrelas] = useState<Record<string, number>>({});
 
