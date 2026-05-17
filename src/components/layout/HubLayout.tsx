@@ -6,7 +6,7 @@ type Profile = "lider" | "colaborador" | "ceo";
 
 export function HubLayout({ profile }: { profile: Profile }) {
   return (
-    <div className="hub-light flex min-h-screen w-full bg-background text-foreground">
+    <div className="product-hub hub-light flex min-h-screen w-full bg-background text-foreground">
       <SidebarHub profile={profile} />
       <div className="flex-1 flex flex-col min-w-0">
         <Header context="hub" />
