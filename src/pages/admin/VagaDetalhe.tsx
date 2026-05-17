@@ -1369,6 +1369,41 @@ export default function VagaDetalheAdmin() {
                                 <ChevronLeft className="h-3.5 w-3.5 text-muted-foreground" />
                                 Retornar etapa anterior
                               </button>
+
+                              <div className="my-1 border-t border-border" />
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setMenuAbertoId(null);
+                                  setDiscWhatsOpen(c.id);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-secondary text-left"
+                              >
+                                <MessageCircle className="h-3.5 w-3.5 text-muted-foreground" /> Enviar mensagem
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setMenuAbertoId(null);
+                                  setConfirmarSuspenderId(c.id);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-secondary text-left text-warning"
+                              >
+                                <PauseCircle className="h-3.5 w-3.5" />
+                                {suspensos.has(c.id) ? "Reativar candidato" : "Suspender candidato"}
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setMenuAbertoId(null);
+                                  setConfirmarBloquearId(c.id);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-secondary text-left text-destructive"
+                              >
+                                <ShieldOff className="h-3.5 w-3.5" /> Bloquear candidato
                               <button
                                 type="button"
                                 onClick={() => {
