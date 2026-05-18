@@ -10,10 +10,10 @@ import type { Report, TaskRow, SolRow, ReportStatus } from "@/components/relator
 const REPORT_SELECT = `
   id, title, status, month_ref, summary_text, risks_text, next_steps_text,
   total_hours_minutes, hours_deliverables_minutes, hours_solicitations_minutes,
-  reference_start, reference_end, consultant_name, consultant_job_title, company_id,
+  reference_start, reference_end, consultant_name, consultant_job_title, empresa_id,
   admin_approved_at, admin_name, published_at, client_signed_at, report_type,
   template_data,
-  company:companies(name, logo_url, monthly_hours)
+  company:empresas(nome, logo_url, monthly_hours)
 `.trim();
 
 const STATUS_LABELS: Record<ReportStatus, string> = {
@@ -59,7 +59,7 @@ export default function RelatorioDocumentoPage() {
           return;
         }
 
-        const r = rep as Report & { company_id?: string };
+        const r = rep as unknown as Report & { empresa_id?: string };
         setReport(r);
         setAcknowledged(!!r.client_signed_at);
 
@@ -71,48 +71,10 @@ export default function RelatorioDocumentoPage() {
             .eq("id", id);
         }
 
-        // Fetch time entries for deliverables
-        if (r.reference_start && r.reference_end && r.company_id) {
-          const [{ data: entries }, { data: sols }] = await Promise.all([
-            supabase
-              .from("time_entries")
-              .select("title, entry_type, status, duration_minutes, is_manual, justificativa")
-              .eq("company_id", r.company_id)
-              .gte("date", r.reference_start)
-              .lte("date", r.reference_end),
-            supabase
-              .from("solicitations")
-              .select("title, type, status, hours_spent")
-              .eq("company_id", r.company_id)
-              .gte("created_at", r.reference_start)
-              .lte("created_at", r.reference_end),
-          ]);
-
-          setTaskRows(
-            ((entries ?? []) as {
-              title: string; entry_type: string; status: string;
-              duration_minutes: number; is_manual?: boolean; justificativa?: string;
-            }[]).map((e) => ({
-              title: e.title ?? "Sem título",
-              type: e.entry_type ?? "—",
-              status: e.status ?? "—",
-              hours: (e.duration_minutes ?? 0) / 60,
-              isManual: e.is_manual ?? false,
-              justificativa: e.justificativa,
-            }))
-          );
-
-          setSolRows(
-            ((sols ?? []) as {
-              title: string; type: string; status: string; hours_spent: number;
-            }[]).map((s) => ({
-              title: s.title ?? "Sem título",
-              type: s.type ?? "—",
-              status: s.status ?? "—",
-              hours: s.hours_spent ?? 0,
-            }))
-          );
-        }
+        // time_entries será implementado quando tabela existir
+        setTaskRows([]);
+        // solicitations será implementado quando tabela existir
+        setSolRows([]);
       } catch (err) {
         console.error(err);
         toast.error("Erro ao carregar relatório.");
@@ -143,12 +105,12 @@ export default function RelatorioDocumentoPage() {
     }
 
     if (newStatus === "published") {
-      const companyId = (report as Report & { company_id?: string }).company_id;
-      if (companyId) {
+      const empresaId = (report as Report & { empresa_id?: string }).empresa_id;
+      if (empresaId) {
         const { data: users } = await supabase
-          .from("users_profile")
+          .from("profiles")
           .select("id")
-          .eq("company_id", companyId)
+          .eq("empresa_id", empresaId)
           .eq("role", "cliente_user");
         if (users?.length) {
           await supabase.from("app_notifications").insert(
@@ -192,7 +154,7 @@ export default function RelatorioDocumentoPage() {
 
   if (!report) return null;
 
-  const comp = report.company as { name: string } | null;
+  const comp = report.company as { nome: string } | null;
 
   return (
     <div>
@@ -209,8 +171,8 @@ export default function RelatorioDocumentoPage() {
           <div className="font-semibold text-sm truncate">
             {report.title ?? report.month_ref}
           </div>
-          {comp?.name && (
-            <div className="text-xs text-muted-foreground">{comp.name}</div>
+          {comp?.nome && (
+            <div className="text-xs text-muted-foreground">{comp.nome}</div>
           )}
         </div>
 

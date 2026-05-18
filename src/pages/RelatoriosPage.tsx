@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
   Loader2, Plus, BarChart2, FileText, CheckCircle, Clock, AlertTriangle,
-  Eye, Trash2, ChevronRight, ExternalLink, Upload, Edit2, X, Send,
+  Eye, Trash2, ChevronRight, ExternalLink, Upload, Edit2, X, Send, Info,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
@@ -54,17 +54,17 @@ const STATUS_COLORS: Record<ReportStatus, string> = {
 const REPORT_SELECT = `
   id, title, status, month_ref, summary_text, risks_text, next_steps_text,
   total_hours_minutes, hours_deliverables_minutes, hours_solicitations_minutes,
-  reference_start, reference_end, consultant_name, consultant_job_title, company_id,
+  reference_start, reference_end, consultant_name, consultant_job_title, empresa_id,
   created_by_user_id, admin_approved_at, admin_name, client_opened_at, published_at,
   report_type, template_data, client_signed_at,
   boleto_url, boleto_vencimento, boleto_valor, comprovante_url, comprovante_uploaded_at,
-  company:companies(name, logo_url, monthly_hours)
+  company:empresas(nome, logo_url, monthly_hours)
 `.trim();
 
-type Company = { id: string; name: string; logo_url: string | null; monthly_hours: number; service_type?: string };
+type Company = { id: string; nome: string; logo_url: string | null; monthly_hours: number; service_type?: string };
 
 type ReportRow = Report & {
-  company_id?: string;
+  empresa_id?: string;
   client_opened_at?: string | null;
   boleto_url?: string | null;
   boleto_vencimento?: string | null;
@@ -150,9 +150,9 @@ export default function RelatoriosPage() {
   useEffect(() => {
     if (!isClient || !usuario?.empresaNome) return;
     supabase
-      .from("companies")
+      .from("empresas")
       .select("id")
-      .ilike("name", usuario.empresaNome)
+      .ilike("nome", usuario.empresaNome)
       .maybeSingle()
       .then(({ data }) => {
         if (data) setClientCompanyId((data as { id: string }).id);
@@ -161,10 +161,10 @@ export default function RelatoriosPage() {
 
   useEffect(() => {
     if (!canCreate) return;
-    supabase.from("companies").select("id, name, logo_url, monthly_hours, service_type")
-      .order("name")
+    supabase.from("empresas").select("id, nome, logo_url, monthly_hours, service_type")
+      .order("nome")
       .then(({ data }) => {
-        if (data) setCompanies(data as Company[]);
+        if (data) setCompanies(data as unknown as Company[]);
       });
   }, [canCreate]);
 
@@ -174,11 +174,11 @@ export default function RelatoriosPage() {
       let query = supabase.from("monthly_reports").select(REPORT_SELECT);
       if (isClient) {
         if (!clientCompanyId) { setLoading(false); return; }
-        query = query.eq("company_id", clientCompanyId).eq("status", "published");
+        query = query.eq("empresa_id", clientCompanyId).eq("status", "published");
       }
       const { data, error } = await query.order("month_ref", { ascending: false });
       if (error) throw error;
-      setReports((data ?? []) as ReportRow[]);
+      setReports((data ?? []) as unknown as ReportRow[]);
     } catch (err) {
       console.error(err);
       toast.error("Erro ao carregar relatórios.");
@@ -193,7 +193,7 @@ export default function RelatoriosPage() {
   }, [fetchReports, isClient, clientCompanyId]);
 
   const filtered = reports.filter((r) => {
-    if (filterCompany && (r.company as { name: string } | null)?.name !== filterCompany) return false;
+    if (filterCompany && (r.company as { nome: string } | null)?.nome !== filterCompany) return false;
     if (filterMonth && r.month_ref !== filterMonth) return false;
     if (filterType && r.report_type !== filterType) return false;
     if (filterStatus && r.status !== filterStatus) return false;
@@ -242,11 +242,11 @@ export default function RelatoriosPage() {
     if (error) { toast.error("Erro ao atualizar status."); return; }
     if (newStatus === "published") {
       const rep = reports.find((r) => r.id === id);
-      if (rep?.company_id) {
+      if (rep?.empresa_id) {
         const { data: users } = await supabase
-          .from("users_profile")
+          .from("profiles")
           .select("id")
-          .eq("company_id", rep.company_id)
+          .eq("empresa_id", rep.empresa_id)
           .eq("role", "cliente_user");
         if (users?.length) {
           await supabase.from("app_notifications").insert(
@@ -309,15 +309,8 @@ export default function RelatoriosPage() {
     if (!company) return;
     setAutoLoading(true);
     try {
-      const [{ data: jobs }, { data: entries }] = await Promise.all([
-        supabase.from("job_solicitations").select("id, status").eq("company_id", formEmpresa)
-          .gte("created_at", formStart).lte("created_at", formEnd),
-        supabase.from("time_entries").select("duration_minutes").eq("company_id", formEmpresa)
-          .gte("date", formStart).lte("date", formEnd),
-      ]);
-      const vagas = (jobs ?? []).length;
-      const horas = ((entries ?? []) as { duration_minutes: number }[]).reduce((s, e) => s + (e.duration_minutes ?? 0), 0) / 60;
-      setAutoPreview({ vagas, candidatos: vagas * 4, aprovacao: 32, horas: Math.round(horas * 10) / 10 });
+      // job_solicitations / time_entries serão implementados quando tabelas existirem
+      setAutoPreview(null);
     } finally {
       setAutoLoading(false);
     }
@@ -329,20 +322,8 @@ export default function RelatoriosPage() {
     }
     setFormSaving(true);
 
-    let totalMins = 0, delivMins = 0, solMins = 0;
-    if (formStart && formEnd) {
-      const [{ data: entries }, { data: sols }] = await Promise.all([
-        supabase.from("time_entries").select("duration_minutes, entry_type")
-          .eq("company_id", formEmpresa).gte("date", formStart).lte("date", formEnd)
-          .not("status", "in", '("cancelado","nao_iniciado")'),
-        supabase.from("solicitations").select("hours_spent, type")
-          .eq("company_id", formEmpresa).gte("created_at", formStart).lte("created_at", formEnd)
-          .not("status", "in", '("cancelado","nao_iniciado")'),
-      ]);
-      delivMins = ((entries ?? []) as { duration_minutes: number }[]).reduce((s, e) => s + (e.duration_minutes ?? 0), 0);
-      solMins = ((sols ?? []) as { hours_spent: number }[]).reduce((s, e) => s + (e.hours_spent ?? 0) * 60, 0);
-      totalMins = delivMins + solMins;
-    }
+    // time_entries / solicitations serão implementados quando tabelas existirem
+    const totalMins = 0, delivMins = 0, solMins = 0;
 
     let template_data: Record<string, unknown> = {};
     if (formTipo === "hraas_operacao_continua") {
@@ -374,7 +355,7 @@ export default function RelatoriosPage() {
     }
 
     const { error } = await supabase.from("monthly_reports").insert({
-      company_id: formEmpresa,
+      empresa_id: formEmpresa,
       report_type: formTipo,
       title: formTitulo,
       month_ref: formMonthRef,
@@ -397,6 +378,7 @@ export default function RelatoriosPage() {
     setCreateOpen(false);
     fetchReports();
   }
+
 
   if (isClient) return (
     <div>
@@ -448,7 +430,7 @@ export default function RelatoriosPage() {
               hraas_operacao_continua: "#034C8B", atracao: "#8B5CF6",
               gotomarket: "#10B981", encerramento_vaga: "#F59E0B",
             }[r.report_type] : "#034C8B";
-            const comp = r.company as { name: string; logo_url: string | null; monthly_hours: number } | null;
+            const comp = r.company as { nome: string; logo_url: string | null; monthly_hours: number } | null;
             const contractedH = comp?.monthly_hours ?? 0;
             const usedH = (r.total_hours_minutes ?? 0) / 60;
             const pct = contractedH > 0 ? Math.min((usedH / contractedH) * 100, 100) : 0;
@@ -545,7 +527,7 @@ export default function RelatoriosPage() {
                               disabled={uploading === r.id}
                               onChange={(e) => {
                                 const f = e.target.files?.[0];
-                                if (f && r.company_id) handleUploadComprovante(r.id, f, r.company_id);
+                                if (f && r.empresa_id) handleUploadComprovante(r.id, f, r.empresa_id);
                               }}
                             />
                           </label>
@@ -611,7 +593,7 @@ export default function RelatoriosPage() {
           className="h-9 px-3 rounded-lg border border-border bg-card text-sm"
         >
           <option value="">Todas as empresas</option>
-          {[...new Set(reports.map((r) => (r.company as { name: string } | null)?.name).filter(Boolean))].map((n) => (
+          {[...new Set(reports.map((r) => (r.company as { nome: string } | null)?.nome).filter(Boolean))].map((n) => (
             <option key={n} value={n!}>{n}</option>
           ))}
         </select>
@@ -684,7 +666,7 @@ export default function RelatoriosPage() {
             </thead>
             <tbody>
               {filtered.map((r) => {
-                const comp = r.company as { name: string; logo_url: string | null; monthly_hours: number } | null;
+                const comp = r.company as { nome: string; logo_url: string | null; monthly_hours: number } | null;
                 const contractedH = comp?.monthly_hours ?? 0;
                 const usedH = (r.total_hours_minutes ?? 0) / 60;
                 const pct = contractedH > 0 ? Math.min((usedH / contractedH) * 100, 100) : 0;
@@ -705,13 +687,13 @@ export default function RelatoriosPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         {comp?.logo_url ? (
-                          <img src={comp.logo_url} alt={comp.name} className="h-6 w-6 rounded-md object-contain bg-secondary" />
+                          <img src={comp.logo_url} alt={comp.nome} className="h-6 w-6 rounded-md object-contain bg-secondary" />
                         ) : (
                           <div className="h-6 w-6 rounded-md bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">
-                            {(comp?.name ?? "?").charAt(0)}
+                            {(comp?.nome ?? "?").charAt(0)}
                           </div>
                         )}
-                        <span className="text-sm">{comp?.name ?? "—"}</span>
+                        <span className="text-sm">{comp?.nome ?? "—"}</span>
                       </div>
                     </td>
                     <td className="px-4 py-3 font-data text-xs">{fmtMonthRef(r.month_ref)}</td>
@@ -894,7 +876,7 @@ export default function RelatoriosPage() {
                   className="w-full h-9 mt-1.5 px-3 rounded-md border border-input bg-background text-sm"
                 >
                   <option value="">Selecione...</option>
-                  {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  {companies.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
                 </select>
               </div>
               <div>
@@ -952,18 +934,9 @@ export default function RelatoriosPage() {
 
             {(formTipo === "atracao" || formTipo === "encerramento_vaga") && (
               <>
-                <div className="flex items-center gap-2">
-                  <Button type="button" variant="outline" size="sm" onClick={fetchAutoPreview} disabled={!formEmpresa || !formStart || !formEnd || autoLoading}>
-                    {autoLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-                    Carregar dados automáticos
-                  </Button>
-                  {autoPreview && (
-                    <div className="flex gap-3 text-xs">
-                      <span className="text-muted-foreground">Vagas: <b>{autoPreview.vagas}</b></span>
-                      <span className="text-muted-foreground">Candidatos: <b>{autoPreview.candidatos}</b></span>
-                      <span className="text-muted-foreground">Horas: <b>{autoPreview.horas}h</b></span>
-                    </div>
-                  )}
+                <div className="rounded-md bg-secondary p-3 flex items-start gap-2 text-xs text-muted-foreground">
+                  <Info className="h-4 w-4 mt-0.5 shrink-0" />
+                  <span>Dados automáticos disponíveis em breve</span>
                 </div>
                 <div>
                   <Label>Síntese do pipeline</Label>
