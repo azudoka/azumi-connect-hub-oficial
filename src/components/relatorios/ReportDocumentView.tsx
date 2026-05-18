@@ -319,7 +319,7 @@ export default function ReportDocumentView({ report, taskRows, solicitationRows,
             {report.company?.logo_url ? (
               <img
                 src={report.company.logo_url}
-                alt={report.company.name}
+                alt={report.company.nome}
                 style={{ height: 52, width: 52, borderRadius: 10, objectFit: "contain", background: "#fff", padding: 4 }}
               />
             ) : (
@@ -328,12 +328,12 @@ export default function ReportDocumentView({ report, taskRows, solicitationRows,
                 background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 20, fontWeight: 800, color: "#fff"
               }}>
-                {(report.company?.name ?? "?").charAt(0).toUpperCase()}
+                {(report.company?.nome ?? "?").charAt(0).toUpperCase()}
               </div>
             )}
-            {report.company?.name && (
+            {report.company?.nome && (
               <div style={{ fontSize: 10, color: "rgba(255,255,255,0.6)", textAlign: "center", marginTop: 4 }}>
-                {report.company.name}
+                {report.company.nome}
               </div>
             )}
           </div>
