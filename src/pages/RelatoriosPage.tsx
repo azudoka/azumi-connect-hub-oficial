@@ -934,18 +934,9 @@ export default function RelatoriosPage() {
 
             {(formTipo === "atracao" || formTipo === "encerramento_vaga") && (
               <>
-                <div className="flex items-center gap-2">
-                  <Button type="button" variant="outline" size="sm" onClick={fetchAutoPreview} disabled={!formEmpresa || !formStart || !formEnd || autoLoading}>
-                    {autoLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-                    Carregar dados automáticos
-                  </Button>
-                  {autoPreview && (
-                    <div className="flex gap-3 text-xs">
-                      <span className="text-muted-foreground">Vagas: <b>{autoPreview.vagas}</b></span>
-                      <span className="text-muted-foreground">Candidatos: <b>{autoPreview.candidatos}</b></span>
-                      <span className="text-muted-foreground">Horas: <b>{autoPreview.horas}h</b></span>
-                    </div>
-                  )}
+                <div className="rounded-md bg-secondary p-3 flex items-start gap-2 text-xs text-muted-foreground">
+                  <Info className="h-4 w-4 mt-0.5 shrink-0" />
+                  <span>Dados automáticos disponíveis em breve</span>
                 </div>
                 <div>
                   <Label>Síntese do pipeline</Label>
