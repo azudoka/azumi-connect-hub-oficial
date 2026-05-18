@@ -611,7 +611,7 @@ export default function RelatoriosPage() {
           className="h-9 px-3 rounded-lg border border-border bg-card text-sm"
         >
           <option value="">Todas as empresas</option>
-          {[...new Set(reports.map((r) => (r.company as { name: string } | null)?.name).filter(Boolean))].map((n) => (
+          {[...new Set(reports.map((r) => (r.company as { nome: string } | null)?.nome).filter(Boolean))].map((n) => (
             <option key={n} value={n!}>{n}</option>
           ))}
         </select>
