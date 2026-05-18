@@ -97,9 +97,9 @@ export default function RelatoriosPage() {
   const { usuario } = useAuth();
   const navigate = useNavigate();
 
-  const isAdmin = usuario?.role === "admin";
-  const isConsultant = usuario?.role === "consultor";
-  const isClient = usuario?.role === "cliente";
+  const isAdmin = ["admin", "admin_azumi"].includes(usuario?.role ?? "");
+  const isConsultant = ["consultor"].includes(usuario?.role ?? "");
+  const isClient = ["cliente", "gestor_cliente"].includes(usuario?.role ?? "");
   const canCreate = isAdmin || isConsultant;
 
   const [reports, setReports] = useState<ReportRow[]>([]);
@@ -122,9 +122,6 @@ export default function RelatoriosPage() {
   const [boletoVenc, setBoletoVenc] = useState("");
   const [boletoValor, setBoletoValor] = useState("");
 
-  const [autoPreview, setAutoPreview] = useState<{
-    vagas: number; candidatos: number; aprovacao: number; horas: number;
-  } | null>(null);
   const [autoLoading, setAutoLoading] = useState(false);
 
   const [formEmpresa, setFormEmpresa] = useState("");
@@ -145,7 +142,14 @@ export default function RelatoriosPage() {
   const [formAvgTime, setFormAvgTime] = useState("");
   const [formRejections, setFormRejections] = useState("");
   const [formPhases, setFormPhases] = useState("");
+  const [formHorasEntregaveis, setFormHorasEntregaveis] = useState("");
+  const [formHorasSolicitacoes, setFormHorasSolicitacoes] = useState("");
   const [formSaving, setFormSaving] = useState(false);
+
+  const [contextoRelatorios, setContextoRelatorios] = useState<{ month_ref: string; total_hours_minutes: number | null }[]>([]);
+  const [contextoEmpresaHoras, setContextoEmpresaHoras] = useState(0);
+  const [atracaoVagas, setAtracaoVagas] = useState<{ id: string; titulo: string; status: string }[]>([]);
+  const [atracaoCandidatos, setAtracaoCandidatos] = useState<{ id: string; nome: string; status: string }[]>([]);
 
   useEffect(() => {
     if (!isClient || !usuario?.empresaNome) return;
@@ -161,7 +165,7 @@ export default function RelatoriosPage() {
 
   useEffect(() => {
     if (!canCreate) return;
-    supabase.from("empresas").select("id, nome, logo_url, monthly_hours, service_type")
+    supabase.from("empresas").select("id, nome, logo_url, monthly_hours")
       .order("nome")
       .then(({ data }) => {
         if (data) setCompanies(data as unknown as Company[]);
@@ -309,12 +313,56 @@ export default function RelatoriosPage() {
     if (!company) return;
     setAutoLoading(true);
     try {
-      // job_solicitations / time_entries serão implementados quando tabelas existirem
-      setAutoPreview(null);
+      // Relatórios anteriores para contexto de horas
+      const { data: prevReps } = await supabase
+        .from("monthly_reports")
+        .select("month_ref, total_hours_minutes")
+        .eq("empresa_id", formEmpresa)
+        .eq("status", "published")
+        .order("month_ref", { ascending: false })
+        .limit(3);
+      setContextoRelatorios((prevReps ?? []) as { month_ref: string; total_hours_minutes: number | null }[]);
+      setContextoEmpresaHoras(company.monthly_hours ?? 0);
+
+      // Dados de atração — vagas e candidatos no período
+      if (formTipo === "atracao" || formTipo === "encerramento_vaga") {
+        const { data: vagas } = await supabase
+          .from("vagas")
+          .select("id, titulo, status, created_at")
+          .eq("empresa_id", formEmpresa)
+          .gte("created_at", formStart)
+          .lte("created_at", formEnd + "T23:59:59");
+        const vagasArr = (vagas ?? []) as { id: string; titulo: string; status: string; created_at: string }[];
+        setAtracaoVagas(vagasArr);
+        if (vagasArr.length > 0) {
+          const vagasIds = vagasArr.map((v) => v.id);
+          const { data: cands } = await supabase
+            .from("candidatos")
+            .select("id, nome, status, vaga_id")
+            .in("vaga_id", vagasIds);
+          setAtracaoCandidatos((cands ?? []) as { id: string; nome: string; status: string }[]);
+        } else {
+          setAtracaoCandidatos([]);
+        }
+      }
     } finally {
       setAutoLoading(false);
     }
   }
+
+  useEffect(() => {
+    if (!createOpen) {
+      setContextoRelatorios([]);
+      setContextoEmpresaHoras(0);
+      setAtracaoVagas([]);
+      setAtracaoCandidatos([]);
+      return;
+    }
+    if (formEmpresa && formStart && formEnd) {
+      fetchAutoPreview();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [createOpen, formEmpresa, formStart, formEnd, formTipo]);
 
   async function handleCreate() {
     if (!formEmpresa || !formTipo || !formTitulo || !formMonthRef) {
@@ -322,8 +370,13 @@ export default function RelatoriosPage() {
     }
     setFormSaving(true);
 
-    // time_entries / solicitations serão implementados quando tabelas existirem
-    const totalMins = 0, delivMins = 0, solMins = 0;
+    const delivMins = formTipo === "hraas_operacao_continua"
+      ? Math.round((parseFloat(formHorasEntregaveis) || 0) * 60)
+      : 0;
+    const solMins = formTipo === "hraas_operacao_continua"
+      ? Math.round((parseFloat(formHorasSolicitacoes) || 0) * 60)
+      : 0;
+    const totalMins = delivMins + solMins;
 
     let template_data: Record<string, unknown> = {};
     if (formTipo === "hraas_operacao_continua") {
@@ -333,18 +386,19 @@ export default function RelatoriosPage() {
         pendencies: formPendencies.split("\n").filter(Boolean),
       };
     } else if (formTipo === "atracao" || formTipo === "encerramento_vaga") {
+      const candidatosPorStatus = atracaoCandidatos.reduce<Record<string, number>>((acc, c) => {
+        acc[c.status] = (acc[c.status] ?? 0) + 1;
+        return acc;
+      }, {});
       template_data = {
         pipeline_summary: formPipeline,
         positions_worked: formPositions.split("\n").filter(Boolean),
         funnel: formFunnel,
         avg_time_per_stage: formAvgTime,
         rejection_reasons: formRejections,
-        ...(autoPreview ? {
-          auto_vagas: autoPreview.vagas,
-          auto_candidatos: autoPreview.candidatos,
-          auto_aprovacao: autoPreview.aprovacao,
-          auto_horas: autoPreview.horas,
-        } : {}),
+        auto_vagas: atracaoVagas.length,
+        auto_candidatos: atracaoCandidatos.length,
+        auto_candidatos_por_status: candidatosPorStatus,
       };
     } else if (formTipo === "gotomarket") {
       template_data = {
@@ -376,6 +430,8 @@ export default function RelatoriosPage() {
     if (error) { toast.error("Erro ao criar relatório."); return; }
     toast.success("Relatório criado como rascunho.");
     setCreateOpen(false);
+    setFormHorasEntregaveis("");
+    setFormHorasSolicitacoes("");
     fetchReports();
   }
 
@@ -917,6 +973,98 @@ export default function RelatoriosPage() {
 
             {formTipo === "hraas_operacao_continua" && (
               <>
+                {/* Contexto do período */}
+                {autoLoading && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> Carregando contexto…
+                  </div>
+                )}
+                {!autoLoading && (formEmpresa && formStart && formEnd) && (
+                  <div className="rounded-lg border border-border bg-secondary/30 p-4 space-y-3">
+                    <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Contexto do período</div>
+                    {contextoEmpresaHoras > 0 && (
+                      <div className="text-sm">
+                        <span className="font-medium">Franquia contratada:</span>{" "}
+                        <span className="font-data">{contextoEmpresaHoras}h/mês</span>
+                      </div>
+                    )}
+                    {contextoRelatorios.length > 0 ? (
+                      <div className="space-y-1">
+                        <div className="text-xs text-muted-foreground mb-1">Últimos relatórios publicados:</div>
+                        {contextoRelatorios.map((r) => {
+                          const h = ((r.total_hours_minutes ?? 0) / 60).toFixed(1);
+                          return (
+                            <div key={r.month_ref} className="flex items-center justify-between text-xs">
+                              <span>{fmtMonthRef(r.month_ref ?? "")}</span>
+                              <span className="font-data font-medium">{h}h</span>
+                            </div>
+                          );
+                        })}
+                        {(() => {
+                          const avg = contextoRelatorios.reduce((s, r) => s + (r.total_hours_minutes ?? 0), 0) / contextoRelatorios.length / 60;
+                          return (
+                            <div className="pt-1 border-t border-border text-xs text-muted-foreground">
+                              Média: <span className="font-data font-medium">{avg.toFixed(1)}h/mês</span>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">Nenhum relatório anterior encontrado.</p>
+                    )}
+                    <p className="text-xs text-muted-foreground italic">Registre as horas manualmente nos campos abaixo.</p>
+                  </div>
+                )}
+
+                {/* Apuração de Horas */}
+                <div className="rounded-lg border border-border bg-secondary/20 p-4 space-y-3">
+                  <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Apuração de Horas</div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Horas em entregáveis</Label>
+                      <Input
+                        type="number"
+                        step="0.5"
+                        min="0"
+                        value={formHorasEntregaveis}
+                        onChange={(e) => setFormHorasEntregaveis(e.target.value)}
+                        placeholder="0"
+                        className="mt-1.5 font-data"
+                      />
+                    </div>
+                    <div>
+                      <Label>Horas em solicitações</Label>
+                      <Input
+                        type="number"
+                        step="0.5"
+                        min="0"
+                        value={formHorasSolicitacoes}
+                        onChange={(e) => setFormHorasSolicitacoes(e.target.value)}
+                        placeholder="0"
+                        className="mt-1.5 font-data"
+                      />
+                    </div>
+                  </div>
+                  {(() => {
+                    const totalH = (parseFloat(formHorasEntregaveis) || 0) + (parseFloat(formHorasSolicitacoes) || 0);
+                    const pct = contextoEmpresaHoras > 0 ? (totalH / contextoEmpresaHoras) * 100 : null;
+                    const colorCls = pct === null ? "text-muted-foreground"
+                      : pct >= 100 ? "text-destructive"
+                      : pct >= 80 ? "text-warning"
+                      : "text-success";
+                    return (
+                      <div className={cn("text-sm font-medium", colorCls)}>
+                        Total: <span className="font-data">{totalH.toFixed(1)}h</span>
+                        {pct !== null && (
+                          <span className="ml-1 font-data">
+                            ({pct.toFixed(0)}% do pacote de {contextoEmpresaHoras}h/mês)
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
+
                 <div>
                   <Label>Objetivos do período (um por linha)</Label>
                   <Textarea value={formObjectives} onChange={(e) => setFormObjectives(e.target.value)} rows={3} className="mt-1.5" />
@@ -934,10 +1082,52 @@ export default function RelatoriosPage() {
 
             {(formTipo === "atracao" || formTipo === "encerramento_vaga") && (
               <>
-                <div className="rounded-md bg-secondary p-3 flex items-start gap-2 text-xs text-muted-foreground">
-                  <Info className="h-4 w-4 mt-0.5 shrink-0" />
-                  <span>Dados automáticos disponíveis em breve</span>
-                </div>
+                {/* Dados automáticos de atração */}
+                {autoLoading && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> Buscando dados do período…
+                  </div>
+                )}
+                {!autoLoading && formEmpresa && formStart && formEnd && (
+                  <div className="rounded-lg border border-border bg-secondary/30 p-4 space-y-3">
+                    <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Dados automáticos do período</div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-md bg-card border border-border p-3 text-center">
+                        <div className="text-2xl font-bold font-data text-primary">{atracaoVagas.length}</div>
+                        <div className="text-xs text-muted-foreground">Vagas no período</div>
+                      </div>
+                      <div className="rounded-md bg-card border border-border p-3 text-center">
+                        <div className="text-2xl font-bold font-data text-primary">{atracaoCandidatos.length}</div>
+                        <div className="text-xs text-muted-foreground">Total de candidatos</div>
+                      </div>
+                    </div>
+                    {atracaoCandidatos.length > 0 && (() => {
+                      const porStatus = atracaoCandidatos.reduce<Record<string, number>>((acc, c) => {
+                        acc[c.status] = (acc[c.status] ?? 0) + 1;
+                        return acc;
+                      }, {});
+                      return (
+                        <div className="flex flex-wrap gap-2">
+                          {Object.entries(porStatus).map(([status, count]) => (
+                            <span key={status} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-card border border-border">
+                              <span className="font-data font-semibold">{count}</span>
+                              <span className="text-muted-foreground">{status}</span>
+                            </span>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                    {atracaoVagas.length === 0 && (
+                      <p className="text-xs text-muted-foreground">Nenhuma vaga encontrada no período selecionado.</p>
+                    )}
+                  </div>
+                )}
+                {!autoLoading && !(formEmpresa && formStart && formEnd) && (
+                  <div className="rounded-md bg-secondary p-3 flex items-start gap-2 text-xs text-muted-foreground">
+                    <Info className="h-4 w-4 mt-0.5 shrink-0" />
+                    <span>Selecione empresa e período para carregar dados automáticos.</span>
+                  </div>
+                )}
                 <div>
                   <Label>Síntese do pipeline</Label>
                   <Textarea value={formPipeline} onChange={(e) => setFormPipeline(e.target.value)} rows={2} className="mt-1.5" />

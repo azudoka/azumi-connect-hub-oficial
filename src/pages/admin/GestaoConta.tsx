@@ -9,6 +9,9 @@ import {
   Plus, Download, FileText, AlertTriangle, Check,
   Clock as ClockIcon, X, Loader2, ExternalLink, Eye,
 } from "lucide-react";
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
+} from "@/components/ui/sheet";
 
 const tabs = ["Boletos", "Extrato de Horas", "Relatórios Mensais"] as const;
 
@@ -70,7 +73,7 @@ function calcularAtraso(invoice: Invoice): { diasAtraso: number; totalDevido: nu
 export default function GestaoConta() {
   const { usuario } = useAuth();
   const navigate = useNavigate();
-  const isAdmin = usuario?.role === "admin";
+  const isAdmin = ["admin", "admin_azumi"].includes(usuario?.role ?? "");
 
   const [tab, setTab] = useState<typeof tabs[number]>("Boletos");
   const [novoOpen, setNovoOpen] = useState(false);
@@ -419,22 +422,14 @@ export default function GestaoConta() {
         </div>
       )}
 
-      {/* ── Modal Novo Boleto ─────────────────────────────────────────── */}
-      {novoOpen && (
-        <div className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm flex justify-end animate-fade-in">
-          <div className="h-full w-full max-w-md bg-card border-l border-border shadow-elevated p-6 overflow-y-auto animate-slide-in-right">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h2 className="font-display text-lg font-semibold">Novo boleto</h2>
-                <p className="text-xs text-muted-foreground">Preencha os dados para emissão.</p>
-              </div>
-              <button
-                onClick={() => setNovoOpen(false)}
-                className="h-8 w-8 rounded-md hover:bg-secondary flex items-center justify-center"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
+      {/* ── Sheet Novo Boleto ─────────────────────────────────────────── */}
+      <Sheet open={novoOpen} onOpenChange={setNovoOpen}>
+        <SheetContent side="right" className="w-full max-w-md overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Novo boleto</SheetTitle>
+            <SheetDescription>Preencha os dados para emissão.</SheetDescription>
+          </SheetHeader>
+          <div className="mt-6">
             <form onSubmit={handleCriarBoleto} className="space-y-4">
               <Field label="Empresa *">
                 <select
@@ -503,8 +498,8 @@ export default function GestaoConta() {
               </button>
             </form>
           </div>
-        </div>
-      )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
