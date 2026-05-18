@@ -684,7 +684,7 @@ export default function RelatoriosPage() {
             </thead>
             <tbody>
               {filtered.map((r) => {
-                const comp = r.company as { name: string; logo_url: string | null; monthly_hours: number } | null;
+                const comp = r.company as { nome: string; logo_url: string | null; monthly_hours: number } | null;
                 const contractedH = comp?.monthly_hours ?? 0;
                 const usedH = (r.total_hours_minutes ?? 0) / 60;
                 const pct = contractedH > 0 ? Math.min((usedH / contractedH) * 100, 100) : 0;
@@ -705,13 +705,13 @@ export default function RelatoriosPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         {comp?.logo_url ? (
-                          <img src={comp.logo_url} alt={comp.name} className="h-6 w-6 rounded-md object-contain bg-secondary" />
+                          <img src={comp.logo_url} alt={comp.nome} className="h-6 w-6 rounded-md object-contain bg-secondary" />
                         ) : (
                           <div className="h-6 w-6 rounded-md bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">
-                            {(comp?.name ?? "?").charAt(0)}
+                            {(comp?.nome ?? "?").charAt(0)}
                           </div>
                         )}
-                        <span className="text-sm">{comp?.name ?? "—"}</span>
+                        <span className="text-sm">{comp?.nome ?? "—"}</span>
                       </div>
                     </td>
                     <td className="px-4 py-3 font-data text-xs">{fmtMonthRef(r.month_ref)}</td>
