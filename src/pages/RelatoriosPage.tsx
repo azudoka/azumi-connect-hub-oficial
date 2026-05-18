@@ -309,15 +309,8 @@ export default function RelatoriosPage() {
     if (!company) return;
     setAutoLoading(true);
     try {
-      const [{ data: jobs }, { data: entries }] = await Promise.all([
-        supabase.from("job_solicitations").select("id, status").eq("company_id", formEmpresa)
-          .gte("created_at", formStart).lte("created_at", formEnd),
-        supabase.from("time_entries").select("duration_minutes").eq("company_id", formEmpresa)
-          .gte("date", formStart).lte("date", formEnd),
-      ]);
-      const vagas = (jobs ?? []).length;
-      const horas = ((entries ?? []) as { duration_minutes: number }[]).reduce((s, e) => s + (e.duration_minutes ?? 0), 0) / 60;
-      setAutoPreview({ vagas, candidatos: vagas * 4, aprovacao: 32, horas: Math.round(horas * 10) / 10 });
+      // job_solicitations / time_entries serão implementados quando tabelas existirem
+      setAutoPreview(null);
     } finally {
       setAutoLoading(false);
     }
@@ -329,20 +322,8 @@ export default function RelatoriosPage() {
     }
     setFormSaving(true);
 
-    let totalMins = 0, delivMins = 0, solMins = 0;
-    if (formStart && formEnd) {
-      const [{ data: entries }, { data: sols }] = await Promise.all([
-        supabase.from("time_entries").select("duration_minutes, entry_type")
-          .eq("company_id", formEmpresa).gte("date", formStart).lte("date", formEnd)
-          .not("status", "in", '("cancelado","nao_iniciado")'),
-        supabase.from("solicitations").select("hours_spent, type")
-          .eq("company_id", formEmpresa).gte("created_at", formStart).lte("created_at", formEnd)
-          .not("status", "in", '("cancelado","nao_iniciado")'),
-      ]);
-      delivMins = ((entries ?? []) as { duration_minutes: number }[]).reduce((s, e) => s + (e.duration_minutes ?? 0), 0);
-      solMins = ((sols ?? []) as { hours_spent: number }[]).reduce((s, e) => s + (e.hours_spent ?? 0) * 60, 0);
-      totalMins = delivMins + solMins;
-    }
+    // time_entries / solicitations serão implementados quando tabelas existirem
+    const totalMins = 0, delivMins = 0, solMins = 0;
 
     let template_data: Record<string, unknown> = {};
     if (formTipo === "hraas_operacao_continua") {
@@ -374,7 +355,7 @@ export default function RelatoriosPage() {
     }
 
     const { error } = await supabase.from("monthly_reports").insert({
-      company_id: formEmpresa,
+      empresa_id: formEmpresa,
       report_type: formTipo,
       title: formTitulo,
       month_ref: formMonthRef,
@@ -397,6 +378,7 @@ export default function RelatoriosPage() {
     setCreateOpen(false);
     fetchReports();
   }
+
 
   if (isClient) return (
     <div>
