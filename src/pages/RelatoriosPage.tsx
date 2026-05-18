@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
   Loader2, Plus, BarChart2, FileText, CheckCircle, Clock, AlertTriangle,
-  Eye, Trash2, ChevronRight, ExternalLink, Upload, Edit2, X, Send,
+  Eye, Trash2, ChevronRight, ExternalLink, Upload, Edit2, X, Send, Info,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
