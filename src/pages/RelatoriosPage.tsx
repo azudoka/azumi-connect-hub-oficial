@@ -448,7 +448,7 @@ export default function RelatoriosPage() {
               hraas_operacao_continua: "#034C8B", atracao: "#8B5CF6",
               gotomarket: "#10B981", encerramento_vaga: "#F59E0B",
             }[r.report_type] : "#034C8B";
-            const comp = r.company as { name: string; logo_url: string | null; monthly_hours: number } | null;
+            const comp = r.company as { nome: string; logo_url: string | null; monthly_hours: number } | null;
             const contractedH = comp?.monthly_hours ?? 0;
             const usedH = (r.total_hours_minutes ?? 0) / 60;
             const pct = contractedH > 0 ? Math.min((usedH / contractedH) * 100, 100) : 0;
