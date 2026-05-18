@@ -150,9 +150,9 @@ export default function RelatoriosPage() {
   useEffect(() => {
     if (!isClient || !usuario?.empresaNome) return;
     supabase
-      .from("companies")
+      .from("empresas")
       .select("id")
-      .ilike("name", usuario.empresaNome)
+      .ilike("nome", usuario.empresaNome)
       .maybeSingle()
       .then(({ data }) => {
         if (data) setClientCompanyId((data as { id: string }).id);
@@ -161,10 +161,10 @@ export default function RelatoriosPage() {
 
   useEffect(() => {
     if (!canCreate) return;
-    supabase.from("companies").select("id, name, logo_url, monthly_hours, service_type")
-      .order("name")
+    supabase.from("empresas").select("id, nome, logo_url, monthly_hours, service_type")
+      .order("nome")
       .then(({ data }) => {
-        if (data) setCompanies(data as Company[]);
+        if (data) setCompanies(data as unknown as Company[]);
       });
   }, [canCreate]);
 
@@ -174,11 +174,11 @@ export default function RelatoriosPage() {
       let query = supabase.from("monthly_reports").select(REPORT_SELECT);
       if (isClient) {
         if (!clientCompanyId) { setLoading(false); return; }
-        query = query.eq("company_id", clientCompanyId).eq("status", "published");
+        query = query.eq("empresa_id", clientCompanyId).eq("status", "published");
       }
       const { data, error } = await query.order("month_ref", { ascending: false });
       if (error) throw error;
-      setReports((data ?? []) as ReportRow[]);
+      setReports((data ?? []) as unknown as ReportRow[]);
     } catch (err) {
       console.error(err);
       toast.error("Erro ao carregar relatórios.");
@@ -193,7 +193,7 @@ export default function RelatoriosPage() {
   }, [fetchReports, isClient, clientCompanyId]);
 
   const filtered = reports.filter((r) => {
-    if (filterCompany && (r.company as { name: string } | null)?.name !== filterCompany) return false;
+    if (filterCompany && (r.company as { nome: string } | null)?.nome !== filterCompany) return false;
     if (filterMonth && r.month_ref !== filterMonth) return false;
     if (filterType && r.report_type !== filterType) return false;
     if (filterStatus && r.status !== filterStatus) return false;
