@@ -59,7 +59,7 @@ export default function RelatorioDocumentoPage() {
           return;
         }
 
-        const r = rep as Report & { company_id?: string };
+        const r = rep as unknown as Report & { empresa_id?: string };
         setReport(r);
         setAcknowledged(!!r.client_signed_at);
 
@@ -71,48 +71,10 @@ export default function RelatorioDocumentoPage() {
             .eq("id", id);
         }
 
-        // Fetch time entries for deliverables
-        if (r.reference_start && r.reference_end && r.company_id) {
-          const [{ data: entries }, { data: sols }] = await Promise.all([
-            supabase
-              .from("time_entries")
-              .select("title, entry_type, status, duration_minutes, is_manual, justificativa")
-              .eq("company_id", r.company_id)
-              .gte("date", r.reference_start)
-              .lte("date", r.reference_end),
-            supabase
-              .from("solicitations")
-              .select("title, type, status, hours_spent")
-              .eq("company_id", r.company_id)
-              .gte("created_at", r.reference_start)
-              .lte("created_at", r.reference_end),
-          ]);
-
-          setTaskRows(
-            ((entries ?? []) as {
-              title: string; entry_type: string; status: string;
-              duration_minutes: number; is_manual?: boolean; justificativa?: string;
-            }[]).map((e) => ({
-              title: e.title ?? "Sem título",
-              type: e.entry_type ?? "—",
-              status: e.status ?? "—",
-              hours: (e.duration_minutes ?? 0) / 60,
-              isManual: e.is_manual ?? false,
-              justificativa: e.justificativa,
-            }))
-          );
-
-          setSolRows(
-            ((sols ?? []) as {
-              title: string; type: string; status: string; hours_spent: number;
-            }[]).map((s) => ({
-              title: s.title ?? "Sem título",
-              type: s.type ?? "—",
-              status: s.status ?? "—",
-              hours: s.hours_spent ?? 0,
-            }))
-          );
-        }
+        // time_entries será implementado quando tabela existir
+        setTaskRows([]);
+        // solicitations será implementado quando tabela existir
+        setSolRows([]);
       } catch (err) {
         console.error(err);
         toast.error("Erro ao carregar relatório.");
