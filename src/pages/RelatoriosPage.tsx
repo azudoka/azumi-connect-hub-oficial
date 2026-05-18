@@ -894,7 +894,7 @@ export default function RelatoriosPage() {
                   className="w-full h-9 mt-1.5 px-3 rounded-md border border-input bg-background text-sm"
                 >
                   <option value="">Selecione...</option>
-                  {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  {companies.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
                 </select>
               </div>
               <div>
