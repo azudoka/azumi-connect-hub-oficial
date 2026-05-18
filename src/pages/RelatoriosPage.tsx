@@ -242,11 +242,11 @@ export default function RelatoriosPage() {
     if (error) { toast.error("Erro ao atualizar status."); return; }
     if (newStatus === "published") {
       const rep = reports.find((r) => r.id === id);
-      if (rep?.company_id) {
+      if (rep?.empresa_id) {
         const { data: users } = await supabase
-          .from("users_profile")
+          .from("profiles")
           .select("id")
-          .eq("company_id", rep.company_id)
+          .eq("empresa_id", rep.empresa_id)
           .eq("role", "cliente_user");
         if (users?.length) {
           await supabase.from("app_notifications").insert(
