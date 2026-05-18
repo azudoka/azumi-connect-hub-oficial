@@ -61,7 +61,7 @@ const REPORT_SELECT = `
   company:empresas(nome, logo_url, monthly_hours)
 `.trim();
 
-type Company = { id: string; nome: string; logo_url: string | null; monthly_hours: number; service_type?: string };
+type Company = { id: string; nome: string; logo_url?: string | null; monthly_hours?: number | null };
 
 type ReportRow = Report & {
   empresa_id?: string;
@@ -151,6 +151,7 @@ export default function RelatoriosPage() {
   const [atracaoVagas, setAtracaoVagas] = useState<{ id: string; titulo: string; status: string }[]>([]);
   const [atracaoCandidatos, setAtracaoCandidatos] = useState<{ id: string; nome: string; status: string }[]>([]);
 
+  // Resolve empresa_id para usuário cliente (campo nome, não name)
   useEffect(() => {
     if (!isClient || !usuario?.empresaNome) return;
     supabase
@@ -158,19 +159,27 @@ export default function RelatoriosPage() {
       .select("id")
       .ilike("nome", usuario.empresaNome)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) { console.error("empresas ilike error:", error); return; }
         if (data) setClientCompanyId((data as { id: string }).id);
+        // se retornar null (empresa não encontrada), clientCompanyId permanece null — tratado em fetchReports
       });
   }, [isClient, usuario?.empresaNome]);
 
+  // Carrega lista de empresas para admin/consultor — roda ao montar e ao mudar role
+  // Usa apenas id e nome para garantir compatibilidade com qualquer schema
   useEffect(() => {
-    if (!canCreate) return;
-    supabase.from("empresas").select("id, nome, logo_url, monthly_hours")
+    const role = usuario?.role ?? "";
+    if (!["admin", "admin_azumi", "consultor"].includes(role)) return;
+    supabase
+      .from("empresas")
+      .select("id, nome")
       .order("nome")
-      .then(({ data }) => {
-        if (data) setCompanies(data as unknown as Company[]);
+      .then(({ data, error }) => {
+        if (error) { console.error("empresas load error:", error); return; }
+        if (data) setCompanies(data as Company[]);
       });
-  }, [canCreate]);
+  }, [usuario?.role]);
 
   const fetchReports = useCallback(async () => {
     setLoading(true);
@@ -309,10 +318,17 @@ export default function RelatoriosPage() {
 
   async function fetchAutoPreview() {
     if (!formEmpresa || !formStart || !formEnd) return;
-    const company = companies.find((c) => c.id === formEmpresa);
-    if (!company) return;
     setAutoLoading(true);
     try {
+      // Busca monthly_hours diretamente para não depender da query de listagem
+      const { data: empDetail } = await supabase
+        .from("empresas")
+        .select("monthly_hours")
+        .eq("id", formEmpresa)
+        .maybeSingle();
+      const monthlyHours = (empDetail as { monthly_hours?: number | null } | null)?.monthly_hours ?? 0;
+      setContextoEmpresaHoras(monthlyHours);
+
       // Relatórios anteriores para contexto de horas
       const { data: prevReps } = await supabase
         .from("monthly_reports")
@@ -322,7 +338,6 @@ export default function RelatoriosPage() {
         .order("month_ref", { ascending: false })
         .limit(3);
       setContextoRelatorios((prevReps ?? []) as { month_ref: string; total_hours_minutes: number | null }[]);
-      setContextoEmpresaHoras(company.monthly_hours ?? 0);
 
       // Dados de atração — vagas e candidatos no período
       if (formTipo === "atracao" || formTipo === "encerramento_vaga") {
