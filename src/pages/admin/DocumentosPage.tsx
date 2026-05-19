@@ -123,8 +123,7 @@ export default function DocumentosPage() {
     if (!form.titulo.trim()) return;
     const empresa = mockEmpresas.find((e) => e.id === form.empresa_id)?.nome ?? "";
     if (editId) {
-      setDocs((prev) => prev.map((d) => d.id === editId ? {
-        ...d,
+      const patch: Partial<Documento> = {
         empresa,
         empresa_id: form.empresa_id,
         titulo: form.titulo,
@@ -133,7 +132,9 @@ export default function DocumentosPage() {
         status: form.status,
         file_url: form.file_url || null,
         capa_url: form.capa_url || null,
-      } : d));
+      };
+      atualizarDocumento(editId, patch);
+      setDocs((prev) => prev.map((d) => d.id === editId ? { ...d, ...patch } : d));
     } else {
       const novo: Documento = {
         id: `doc-${Date.now()}`,
@@ -151,6 +152,7 @@ export default function DocumentosPage() {
         publicado_de_entregavel: false,
         capa_url: form.capa_url || null,
       };
+      adicionarDocumento(novo);
       setDocs((prev) => [novo, ...prev]);
     }
     setModalOpen(false);
@@ -158,6 +160,7 @@ export default function DocumentosPage() {
 
   function excluir() {
     if (!excluirId) return;
+    removerDocumento(excluirId);
     setDocs((prev) => prev.filter((d) => d.id !== excluirId));
     setExcluirId(null);
   }
