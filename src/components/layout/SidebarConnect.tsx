@@ -225,17 +225,16 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
               {g.items.map((it) => (
                 <li key={it.to}>
                   {collapsed ? (
-                    <NavTooltip label={it.label}>
-                      <NavLink
-                        to={it.to}
-                        onClick={(e) => e.stopPropagation()}
-                        style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", padding: "10px 0", borderRadius: 8, color: "#8B5CF6", transition: "background 0.15s" }}
-                        className="hover:bg-[#DDD6FE]"
-                        activeClassName="!bg-[#C4B5FD]"
-                      >
-                        <it.icon className="h-5 w-5 shrink-0" />
-                      </NavLink>
-                    </NavTooltip>
+                    <NavLink
+                      to={it.to}
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex items-center justify-center w-full py-2.5 hover:bg-[#DDD6FE] transition-colors rounded-none"
+                      activeClassName="!bg-[#C4B5FD]"
+                    >
+                      <span title={it.label}>
+                        <it.icon className="h-4 w-4 shrink-0 text-[#8B5CF6]" />
+                      </span>
+                    </NavLink>
                   ) : (
                     <NavLink
                       to={it.to}
