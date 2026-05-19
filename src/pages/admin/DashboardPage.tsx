@@ -307,48 +307,71 @@ function AdminDashboard() {
 
           {/* 2. Atividade + Alertas */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-            <Card className="lg:col-span-3 p-5">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className="font-display text-lg font-semibold">Últimas atualizações</h2>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Movimentações recentes da operação
-                  </p>
+            {(() => {
+              const comunicadoRecente = {
+                id: "C-001",
+                titulo: "Atualização da política de férias 2026",
+                corpo: "Os colaboradores poderão fracionar em até 3 períodos, com mínimo de 5 dias corridos cada. A atualização entra em vigor a partir de junho/2026.",
+                coverUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80",
+                tipo: "atualizacao" as const,
+                autor: "Patricia Lima",
+                iniciais: "PL",
+                data: "20/04/2026",
+                reacoes: { "❤️": 5, "👍": 8, "🎉": 3, "🔥": 1 },
+                comentarios: 2,
+                leitores: 3,
+              };
+              const TIPO_COR = { label: "Atualização", hex: "#3B82F6", bg: "#EFF6FF", border: "#BFDBFE" };
+              const U: React.CSSProperties = { fontFamily: "'Urbanist',sans-serif" };
+              return (
+                <div className="lg:col-span-3" style={{ background: "white", border: "1px solid #E4E6EA", borderRadius: 12, overflow: "hidden", boxShadow: "0 2px 8px rgba(3,29,56,.06)" }}>
+                  <div style={{ padding: "14px 18px 10px", borderBottom: "1px solid #F0F5FF", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div>
+                      <p style={{ fontSize: 16, fontWeight: 700, color: "#0F172A", margin: 0, ...U }}>Comunicados</p>
+                      <p style={{ fontSize: 12, color: "#94A3B8", margin: 0, ...U }}>Publicação mais recente</p>
+                    </div>
+                    <Link to="/app/comunicados" style={{ fontSize: 12, color: "#3B82F6", textDecoration: "none", fontWeight: 600, ...U }}>Ver todos →</Link>
+                  </div>
+                  <div style={{ display: "flex", gap: 0 }}>
+                    <div style={{ flex: "0 0 42%", maxHeight: 260, overflow: "hidden" }}>
+                      {comunicadoRecente.coverUrl ? (
+                        <img src={comunicadoRecente.coverUrl} alt={comunicadoRecente.titulo}
+                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                      ) : (
+                        <div style={{ width: "100%", height: "100%", minHeight: 200, background: "linear-gradient(135deg,#031D38,#3B82F6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <span style={{ fontSize: 48, opacity: 0.25 }}>📢</span>
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ flex: 1, padding: "16px 18px", display: "flex", flexDirection: "column", gap: 10 }}>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: TIPO_COR.bg, color: TIPO_COR.hex, border: `1px solid ${TIPO_COR.border}`, ...U }}>{TIPO_COR.label}</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: "#EFF6FF", color: "#3B82F6", border: "1px solid #BFDBFE", ...U }}>Interno</span>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <div style={{ width: 24, height: 24, borderRadius: 6, background: "linear-gradient(135deg,#031D38,#3B82F6)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: 9, fontWeight: 700, flexShrink: 0, ...U }}>
+                          {comunicadoRecente.iniciais}
+                        </div>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: "#374151", flex: 1, ...U }}>{comunicadoRecente.autor}</span>
+                        <span style={{ fontSize: 11, color: "#94A3B8", ...U }}>{comunicadoRecente.data}</span>
+                      </div>
+                      <p style={{ fontSize: 15, fontWeight: 800, color: "#0F172A", margin: 0, lineHeight: 1.3, ...U }}>{comunicadoRecente.titulo}</p>
+                      <p style={{ fontSize: 13, color: "#64748B", margin: 0, lineHeight: 1.55, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical" as never, overflow: "hidden", ...U }}>{comunicadoRecente.corpo}</p>
+                      <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: "auto", paddingTop: 8, borderTop: "1px solid #F0F5FF" }}>
+                        {Object.entries(comunicadoRecente.reacoes).map(([emoji, count]) => (
+                          <span key={emoji} style={{ display: "flex", alignItems: "center", gap: 3, padding: "2px 8px", borderRadius: 20, border: "1px solid #E4E6EA", background: "white", fontSize: 12, color: "#64748B", ...U }}>
+                            <span style={{ fontSize: 13 }}>{emoji}</span>{count}
+                          </span>
+                        ))}
+                        <span style={{ display: "flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 20, border: "1px solid #E4E6EA", background: "white", fontSize: 12, color: "#94A3B8", marginLeft: "auto", ...U }}>
+                          💬 {comunicadoRecente.comentarios} · 👁 {comunicadoRecente.leitores}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => navigate("/app/horas")}
-                  className="text-xs text-primary hover:underline font-medium"
-                >
-                  Ver tudo
-                </button>
-              </div>
-              {ATIVIDADES.length === 0 ? (
-                <EmptyState
-                  icon={Clock}
-                  title="Sem atividades recentes"
-                  description="As últimas atualizações da operação aparecerão aqui."
-                />
-              ) : (
-                <ul className="space-y-3">
-                  {ATIVIDADES.map((a) => {
-                    const meta = ATIVIDADE_META[a.icon];
-                    const Icon = meta.Icon;
-                    return (
-                      <li key={a.id} className="flex items-start gap-3">
-                        <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center shrink-0", meta.cls)}>
-                          <Icon className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0 flex-1 pt-1">
-                          <p className="text-sm leading-snug">{a.texto}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">{a.quando}</p>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </Card>
+              );
+            })()}
 
             <Card className="lg:col-span-2 p-5">
               <div className="flex items-center justify-between mb-4">
@@ -457,6 +480,38 @@ function AdminDashboard() {
                   })}
                 </TableBody>
               </Table>
+            )}
+          </Card>
+
+          {/* Últimas atualizações — movido para baixo */}
+          <Card className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="font-display text-lg font-semibold">Últimas atualizações</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">Movimentações recentes da operação</p>
+              </div>
+              <button type="button" onClick={() => navigate("/app/horas")} className="text-xs text-primary hover:underline font-medium">Ver tudo</button>
+            </div>
+            {ATIVIDADES.length === 0 ? (
+              <EmptyState icon={Clock} title="Sem atividades recentes" description="As últimas atualizações da operação aparecerão aqui." />
+            ) : (
+              <ul className="space-y-3">
+                {ATIVIDADES.map((a) => {
+                  const meta = ATIVIDADE_META[a.icon];
+                  const Icon = meta.Icon;
+                  return (
+                    <li key={a.id} className="flex items-start gap-3">
+                      <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center shrink-0", meta.cls)}>
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 flex-1 pt-1">
+                        <p className="text-sm leading-snug">{a.texto}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{a.quando}</p>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
           </Card>
 
