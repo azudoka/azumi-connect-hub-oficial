@@ -646,18 +646,6 @@ export default function ReportDocumentView({ report, taskRows, solicitationRows,
             </div>
           </DocSection>
 
-          {/* 11. Protocolo */}
-          <div style={{ textAlign: "center", marginTop: 24, marginBottom: 8 }}>
-            <span style={{
-              display: "inline-block",
-              background: "#F3F4F6", border: "1px solid #E5E7EB",
-              borderRadius: 99, padding: "5px 18px",
-              fontSize: 11, color: "#6B7280",
-              fontFamily: "JetBrains Mono, monospace", letterSpacing: "0.05em"
-            }}>
-              {protocolo(report)}
-            </span>
-          </div>
 
           {/* 12. Ciência do cliente */}
           {isClient && report.status === "published" && (
