@@ -37,6 +37,7 @@ interface Documento {
   ciencias: number;
   visualizacoes: number;
   publicado_de_entregavel: boolean;
+  capa_url: string | null;
 }
 
 const mockEmpresas = [
@@ -45,11 +46,11 @@ const mockEmpresas = [
 ];
 
 const initialDocs: Documento[] = [
-  { id: "doc-001", empresa: "Kentaki Foods", empresa_id: "emp-001", titulo: "Política de Cargos e Salários", categoria: "Políticas", tipo: "PDF", status: "publicado", versao: "v1.0", created_at: "2026-04-15", file_url: "https://example.com/politica-cargos.pdf", ciencias: 3, visualizacoes: 7, publicado_de_entregavel: true },
-  { id: "doc-002", empresa: "Kentaki Foods", empresa_id: "emp-001", titulo: "Manual de Integração de Colaboradores", categoria: "Manuais", tipo: "PDF", status: "publicado", versao: "v2.1", created_at: "2026-03-20", file_url: "https://example.com/manual-integracao.pdf", ciencias: 12, visualizacoes: 18, publicado_de_entregavel: false },
-  { id: "doc-003", empresa: "Kentaki Foods", empresa_id: "emp-001", titulo: "Fluxo de Solicitação de Férias", categoria: "Fluxos", tipo: "PDF", status: "rascunho", versao: "v1.0", created_at: "2026-05-01", file_url: null, ciencias: 0, visualizacoes: 0, publicado_de_entregavel: false },
-  { id: "doc-004", empresa: "Tech Corp", empresa_id: "emp-002", titulo: "Guia de Boas Práticas — Trabalho Remoto", categoria: "Guias", tipo: "PDF", status: "publicado", versao: "v1.2", created_at: "2026-02-10", file_url: "https://example.com/guia-remoto.pdf", ciencias: 8, visualizacoes: 24, publicado_de_entregavel: true },
-  { id: "doc-005", empresa: "Tech Corp", empresa_id: "emp-002", titulo: "Política de Uso de Equipamentos", categoria: "Políticas", tipo: "PDF", status: "publicado", versao: "v1.0", created_at: "2026-01-15", file_url: "https://example.com/politica-equipamentos.pdf", ciencias: 5, visualizacoes: 11, publicado_de_entregavel: false },
+  { id: "doc-001", empresa: "Kentaki Foods", empresa_id: "emp-001", titulo: "Política de Cargos e Salários", categoria: "Políticas", tipo: "PDF", status: "publicado", versao: "v1.0", created_at: "2026-04-15", file_url: "https://example.com/politica-cargos.pdf", ciencias: 3, visualizacoes: 7, publicado_de_entregavel: true, capa_url: "https://images.unsplash.com/photo-1568992688065-536aad8a12f6?w=600&q=80" },
+  { id: "doc-002", empresa: "Kentaki Foods", empresa_id: "emp-001", titulo: "Manual de Integração de Colaboradores", categoria: "Manuais", tipo: "PDF", status: "publicado", versao: "v2.1", created_at: "2026-03-20", file_url: "https://example.com/manual-integracao.pdf", ciencias: 12, visualizacoes: 18, publicado_de_entregavel: false, capa_url: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600&q=80" },
+  { id: "doc-003", empresa: "Kentaki Foods", empresa_id: "emp-001", titulo: "Fluxo de Solicitação de Férias", categoria: "Fluxos", tipo: "PDF", status: "rascunho", versao: "v1.0", created_at: "2026-05-01", file_url: null, ciencias: 0, visualizacoes: 0, publicado_de_entregavel: false, capa_url: null },
+  { id: "doc-004", empresa: "Tech Corp", empresa_id: "emp-002", titulo: "Guia de Boas Práticas — Trabalho Remoto", categoria: "Guias", tipo: "PDF", status: "publicado", versao: "v1.2", created_at: "2026-02-10", file_url: "https://example.com/guia-remoto.pdf", ciencias: 8, visualizacoes: 24, publicado_de_entregavel: true, capa_url: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=600&q=80" },
+  { id: "doc-005", empresa: "Tech Corp", empresa_id: "emp-002", titulo: "Política de Uso de Equipamentos", categoria: "Políticas", tipo: "PDF", status: "publicado", versao: "v1.0", created_at: "2026-01-15", file_url: "https://example.com/politica-equipamentos.pdf", ciencias: 5, visualizacoes: 11, publicado_de_entregavel: false, capa_url: null },
 ];
 
 const categoriaConfig: Record<Categoria, { topo: string; chip: string; icon: typeof FileText }> = {
@@ -74,6 +75,7 @@ interface FormState {
   versao: string;
   status: Status;
   file_url: string;
+  capa_url: string;
 }
 
 const emptyForm: FormState = {
@@ -83,6 +85,7 @@ const emptyForm: FormState = {
   versao: "v1.0",
   status: "rascunho",
   file_url: "",
+  capa_url: "",
 };
 
 export default function DocumentosPage() {
@@ -128,6 +131,7 @@ export default function DocumentosPage() {
       versao: doc.versao,
       status: doc.status,
       file_url: doc.file_url ?? "",
+      capa_url: doc.capa_url ?? "",
     });
     setModalOpen(true);
   }
@@ -145,6 +149,7 @@ export default function DocumentosPage() {
         versao: form.versao,
         status: form.status,
         file_url: form.file_url || null,
+        capa_url: form.capa_url || null,
       } : d));
     } else {
       const novo: Documento = {
@@ -161,6 +166,7 @@ export default function DocumentosPage() {
         ciencias: 0,
         visualizacoes: 0,
         publicado_de_entregavel: false,
+        capa_url: form.capa_url || null,
       };
       setDocs((prev) => [novo, ...prev]);
     }
@@ -223,7 +229,19 @@ export default function DocumentosPage() {
           const Icon = cfg.icon;
           return (
             <div key={doc.id} className="bg-card border border-border rounded-2xl shadow-card overflow-hidden flex flex-col">
-              <div className="h-1.5" style={{ background: cfg.topo }} />
+              {doc.capa_url ? (
+                <>
+                  <img
+                    src={doc.capa_url}
+                    alt=""
+                    style={{ height: 110, width: "100%", objectFit: "cover", display: "block" }}
+                    onError={(e) => (e.currentTarget.style.display = "none")}
+                  />
+                  <div className="h-[3px]" style={{ background: cfg.topo }} />
+                </>
+              ) : (
+                <div className="h-1.5" style={{ background: cfg.topo }} />
+              )}
               <div className="p-5 flex flex-col gap-3 flex-1">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium border", cfg.chip)}>
@@ -337,6 +355,24 @@ export default function DocumentosPage() {
             <div className="space-y-1.5">
               <Label>URL do arquivo</Label>
               <Input value={form.file_url} onChange={(e) => setForm((f) => ({ ...f, file_url: e.target.value }))} placeholder="https://..." />
+            </div>
+            <div className="space-y-1.5">
+              <Label>URL da capa (imagem)</Label>
+              <Input
+                value={form.capa_url}
+                onChange={(e) => setForm((f) => ({ ...f, capa_url: e.target.value }))}
+                placeholder="https://imagem.com/capa.jpg"
+              />
+              {form.capa_url && (
+                <div className="mt-2 rounded-lg overflow-hidden h-24 border border-border">
+                  <img
+                    src={form.capa_url}
+                    alt="preview"
+                    className="w-full h-full object-cover"
+                    onError={(e) => (e.currentTarget.style.display = "none")}
+                  />
+                </div>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label>Upload de arquivo</Label>
