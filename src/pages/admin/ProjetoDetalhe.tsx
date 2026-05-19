@@ -229,6 +229,11 @@ export default function ProjetoDetalhe() {
   }>({ open: false, entId: null, targetStatus: null });
   const [npsOpen, setNpsOpen] = useState<{ open: boolean; entId: string | null }>({ open: false, entId: null });
   const [docsOficiaisOpen, setDocsOficiaisOpen] = useState<{ open: boolean; entId: string | null }>({ open: false, entId: null });
+  const [publicarDocsOpen, setPublicarDocsOpen] = useState(false);
+  const [pubEntId, setPubEntId] = useState<string | null>(null);
+  const [pubCategoria, setPubCategoria] = useState<"Políticas"|"Manuais"|"Fluxos"|"Guias"|"Outro">("Políticas");
+  const [pubVersao, setPubVersao] = useState("v1.0");
+  const [pubFileUrl, setPubFileUrl] = useState("");
 
   // KPIs
   const kpis = useMemo(() => ({
