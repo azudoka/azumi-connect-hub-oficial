@@ -1,4 +1,4 @@
-import { Bell, Search, ChevronDown, AlertTriangle, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { Bell, Search, ChevronDown, AlertTriangle, ArrowRight, Eye, EyeOff, LogOut, User, Users, Settings } from "lucide-react";
 import { useFinanceiro } from "@/context/FinanceiroContext";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
@@ -6,6 +6,14 @@ import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
 import { consumoNotificacoes } from "@/data/mock";
 import { useAuth } from "@/context/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 interface HeaderProps {
   showSwitcher?: boolean;
@@ -14,19 +22,17 @@ interface HeaderProps {
 
 export function Header({ showSwitcher = true, context = "connect" }: HeaderProps) {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { visivel, toggle } = useFinanceiro();
   const [openNotif, setOpenNotif] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
 
   function switchContext() {
     if (context === "connect") {
-      // Cliente ADM: por enquanto, não tem Hub liberado (mock).
       if (user?.papel === "cliente") {
         navigate("/cliente/hub-indisponivel");
         return;
       }
-      // Roteamento por papel para perfis com Hub.
       const hubHomeByRole: Record<string, string> = {
         ceo: "/hub/ceo/dashboard",
         lider: "/hub/lider/painel",
@@ -40,7 +46,11 @@ export function Header({ showSwitcher = true, context = "connect" }: HeaderProps
     }
   }
 
-  // fecha ao clicar fora
+  function handleLogout() {
+    logout();
+    navigate("/login");
+  }
+
   useEffect(() => {
     function onDoc(e: MouseEvent) {
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
@@ -51,7 +61,6 @@ export function Header({ showSwitcher = true, context = "connect" }: HeaderProps
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
 
-  // B08: link contextual conforme o tipo de usuário (admin/cliente)
   const isCliente = typeof window !== "undefined" && window.location.pathname.startsWith("/cliente");
   const linkFor = (empresaId: string) =>
     isCliente ? "/cliente/gestao-conta" : `/app/empresas/${empresaId}`;
@@ -93,7 +102,18 @@ export function Header({ showSwitcher = true, context = "connect" }: HeaderProps
             </button>
           )}
 
-          {/* B08: Sino com dropdown de notificações de consumo */}
+          {/* Sair — portinha de saída da plataforma */}
+          <button
+            type="button"
+            onClick={handleLogout}
+            title="Sair da plataforma"
+            aria-label="Sair da plataforma"
+            className="h-9 w-9 rounded-lg hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
+
+          {/* Sino de notificações */}
           <div className="relative" ref={notifRef}>
             <button
               onClick={() => setOpenNotif((v) => !v)}
@@ -189,14 +209,36 @@ export function Header({ showSwitcher = true, context = "connect" }: HeaderProps
             {visivel ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
           </button>
 
-          <button className="flex items-center gap-2 h-9 px-2 pr-3 rounded-lg hover:bg-secondary">
-            <div className="h-7 w-7 rounded-full bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white">VC</div>
-            <div className="text-left hidden sm:block">
-              <div className="text-xs font-medium leading-tight">Você</div>
-              <div className="text-[10px] text-muted-foreground leading-tight">Admin Azumi</div>
-            </div>
-            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-          </button>
+          {/* User dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-2 h-11 px-2 pr-3 rounded-lg hover:bg-secondary">
+                <div className="h-9 w-9 rounded-lg bg-gradient-brand flex items-center justify-center text-xs font-semibold text-white">VC</div>
+                <div className="text-left hidden sm:block">
+                  <div className="text-xs font-medium leading-tight">Você</div>
+                  <div className="text-[10px] text-muted-foreground leading-tight">Admin Azumi</div>
+                </div>
+                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Configurações</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate("/app/configuracoes?tab=perfil")}>
+                <User className="h-4 w-4 mr-2" /> Meu perfil
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/app/configuracoes?tab=equipe")}>
+                <Users className="h-4 w-4 mr-2" /> Equipe
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/app/configuracoes?tab=sistema")}>
+                <Settings className="h-4 w-4 mr-2" /> Sistema
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+                <LogOut className="h-4 w-4 mr-2" /> Sair
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>
