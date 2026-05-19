@@ -265,7 +265,7 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
             {user?.papel === "cliente" && (
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  <div className="h-9 w-9 rounded-full bg-gradient-brand flex items-center justify-center text-xs font-semibold text-white">
+                  <div className="h-9 w-9 rounded-lg bg-gradient-brand flex items-center justify-center text-xs font-semibold text-white">
                     AB
                   </div>
                   <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-success ring-2 ring-card animate-soft-pulse" />
@@ -277,7 +277,7 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
               </div>
             )}
             <div className={cn("flex items-center gap-2", user?.papel === "cliente" && "mt-3")}>
-              {user?.papel === "cliente" ? (
+              {user?.papel === "cliente" && (
                 <button
                   type="button"
                   onClick={() => setConsultorOpen(true)}
@@ -285,10 +285,6 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
                 >
                   <Mail className="h-3.5 w-3.5" /> Falar com consultor
                 </button>
-              ) : (
-                <NavLink to="/app/configuracoes" className="flex-1 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 px-2 py-1.5 rounded-md hover:bg-secondary">
-                  <Settings className="h-3.5 w-3.5" /> Config.
-                </NavLink>
               )}
               <button
                 type="button"
