@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { mockRelatorios, addMockRelatorio, updateMockRelatorio, deleteMockRelatorio } from "@/data/relatoriosMock";
 import { PageHeader } from "@/components/PageHeader";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -52,7 +53,7 @@ const STATUS_COLORS: Record<ReportStatus, string> = {
 
 type Company = { id: string; nome: string; logo_url?: string | null; monthly_hours?: number | null };
 
-type ReportRow = Report & {
+export type ReportRow = Report & {
   empresa_id?: string;
   client_opened_at?: string | null;
   boleto_url?: string | null;
@@ -161,7 +162,7 @@ export default function RelatoriosPage() {
   const isClient = ["cliente", "gestor_cliente"].includes(usuario?.role ?? "");
   const canCreate = isAdmin || isConsultant;
 
-  const [reports, setReports] = useState<ReportRow[]>(MOCK_REPORTS);
+  const [reports, setReports] = useState<ReportRow[]>(() => [...mockRelatorios]);
   const [companies] = useState<Company[]>(MOCK_COMPANIES);
   const loading = false;
 
@@ -274,22 +275,21 @@ export default function RelatoriosPage() {
 
   function handleStatusChange(id: string, newStatus: ReportStatus) {
     const now = new Date().toISOString();
-    setReports((prev) => prev.map((r) => {
-      if (r.id !== id) return r;
-      const updates: Partial<ReportRow> = { status: newStatus };
-      if (newStatus === "approved") {
-        updates.admin_approved_at = now;
-        updates.admin_name = usuario?.nome ?? "Admin";
-      }
-      if (newStatus === "published") {
-        updates.published_at = now;
-      }
-      return { ...r, ...updates };
-    }));
+    const updates: Partial<ReportRow> = { status: newStatus };
+    if (newStatus === "approved") {
+      updates.admin_approved_at = now;
+      updates.admin_name = usuario?.nome ?? "Admin";
+    }
+    if (newStatus === "published") {
+      updates.published_at = now;
+    }
+    updateMockRelatorio(id, updates);
+    setReports((prev) => prev.map((r) => r.id === id ? { ...r, ...updates } : r));
     toast.success(newStatus === "published" ? "Relatório publicado." : "Status atualizado.");
   }
 
   function handleDelete(id: string) {
+    deleteMockRelatorio(id);
     setReports((prev) => prev.filter((r) => r.id !== id));
     toast.success("Relatório excluído.");
     setDeleteId(null);
@@ -398,6 +398,7 @@ export default function RelatoriosPage() {
       comprovante_uploaded_at: null,
     } as unknown as ReportRow;
 
+    addMockRelatorio(novoRelatorio);
     setReports((prev) => [novoRelatorio, ...prev]);
     setFormSaving(false);
     toast.success("Relatório criado como rascunho.");

@@ -1,20 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { getMockRelatorio, updateMockRelatorio } from "@/data/relatoriosMock";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft, Printer, Send, CheckCircle, ExternalLink } from "lucide-react";
 import ReportDocumentView from "@/components/relatorios/ReportDocumentView";
 import type { Report, TaskRow, SolRow, ReportStatus } from "@/components/relatorios/ReportDocumentView";
-
-const REPORT_SELECT = `
-  id, title, status, month_ref, summary_text, risks_text, next_steps_text,
-  total_hours_minutes, hours_deliverables_minutes, hours_solicitations_minutes,
-  reference_start, reference_end, consultant_name, consultant_job_title, empresa_id,
-  admin_approved_at, admin_name, published_at, client_signed_at, report_type,
-  template_data,
-  company:empresas(nome, logo_url, monthly_hours)
-`.trim();
 
 const STATUS_LABELS: Record<ReportStatus, string> = {
   draft: "Rascunho",
@@ -28,117 +19,57 @@ export default function RelatorioDocumentoPage() {
   const navigate = useNavigate();
   const { usuario } = useAuth();
 
-  const isAdmin = usuario?.role === "admin";
+  const isAdmin = ["admin", "admin_azumi"].includes(usuario?.role ?? "");
   const isConsultant = usuario?.role === "consultor";
-  const isClient = usuario?.role === "cliente";
+  const isClient = ["cliente", "gestor_cliente"].includes(usuario?.role ?? "");
   const isInternal = isAdmin || isConsultant;
   const canCreate = isAdmin || isConsultant;
 
   const [report, setReport] = useState<Report | null>(null);
-  const [taskRows, setTaskRows] = useState<TaskRow[]>([]);
-  const [solRows, setSolRows] = useState<SolRow[]>([]);
+  const [taskRows] = useState<TaskRow[]>([]);
+  const [solRows] = useState<SolRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [actioning, setActioning] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
 
   useEffect(() => {
     if (!id) return;
-
-    async function load() {
-      setLoading(true);
-      try {
-        const { data: rep, error } = await supabase
-          .from("monthly_reports")
-          .select(REPORT_SELECT)
-          .eq("id", id)
-          .single();
-
-        if (error || !rep) {
-          toast.error("Relatório não encontrado.");
-          navigate(-1);
-          return;
-        }
-
-        const r = rep as unknown as Report & { empresa_id?: string };
-        setReport(r);
-        setAcknowledged(!!r.client_signed_at);
-
-        // Register client_opened_at if client and not yet registered
-        if (isClient && !((rep as { client_opened_at?: string }).client_opened_at)) {
-          await supabase
-            .from("monthly_reports")
-            .update({ client_opened_at: new Date().toISOString() })
-            .eq("id", id);
-        }
-
-        // time_entries será implementado quando tabela existir
-        setTaskRows([]);
-        // solicitations será implementado quando tabela existir
-        setSolRows([]);
-      } catch (err) {
-        console.error(err);
-        toast.error("Erro ao carregar relatório.");
-      } finally {
-        setLoading(false);
-      }
+    const r = getMockRelatorio(id);
+    if (!r) {
+      toast.error("Relatório não encontrado.");
+      navigate(-1);
+      return;
     }
+    setReport(r as unknown as Report);
+    setAcknowledged(!!r.client_signed_at);
+    setLoading(false);
+  }, [id, navigate]);
 
-    load();
-  }, [id, isClient, navigate]);
-
-  async function handleStatusChange(newStatus: ReportStatus) {
+  function handleStatusChange(newStatus: ReportStatus) {
     if (!id || !report) return;
     setActioning(true);
-    const updates: Record<string, unknown> = { status: newStatus };
+    const now = new Date().toISOString();
+    const updates: Partial<Report> = { status: newStatus };
     if (newStatus === "approved") {
-      updates.admin_approved_at = new Date().toISOString();
+      updates.admin_approved_at = now;
       updates.admin_name = usuario?.nome ?? "Admin";
     }
     if (newStatus === "published") {
-      updates.published_at = new Date().toISOString();
+      updates.published_at = now;
     }
-    const { error } = await supabase.from("monthly_reports").update(updates).eq("id", id);
-    if (error) {
-      toast.error("Erro ao atualizar status.");
-      setActioning(false);
-      return;
-    }
-
-    if (newStatus === "published") {
-      const empresaId = (report as Report & { empresa_id?: string }).empresa_id;
-      if (empresaId) {
-        const { data: users } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("empresa_id", empresaId)
-          .eq("role", "cliente_user");
-        if (users?.length) {
-          await supabase.from("app_notifications").insert(
-            (users as { id: string }[]).map((u) => ({
-              user_id: u.id,
-              title: "Novo relatório disponível",
-              body: `O relatório "${report.title ?? report.month_ref}" foi publicado.`,
-              link: `/app/relatorios/${id}/documento`,
-            }))
-          );
-        }
-      }
-      toast.success("Relatório publicado e clientes notificados.");
-    } else {
-      toast.success(`Status atualizado para "${STATUS_LABELS[newStatus]}".`);
-    }
-
+    updateMockRelatorio(id, updates as Parameters<typeof updateMockRelatorio>[1]);
     setReport((prev) => prev ? { ...prev, status: newStatus, ...updates } as Report : prev);
+    toast.success(
+      newStatus === "published"
+        ? "Relatório publicado."
+        : `Status atualizado para "${STATUS_LABELS[newStatus]}".`
+    );
     setActioning(false);
   }
 
-  async function handleAcknowledge(reportId: string) {
+  function handleAcknowledge(reportId: string) {
     const now = new Date().toISOString();
-    const { error } = await supabase
-      .from("monthly_reports")
-      .update({ client_signed_at: now })
-      .eq("id", reportId);
-    if (error) { toast.error("Erro ao registrar ciência."); return; }
+    updateMockRelatorio(reportId, { client_signed_at: now } as Parameters<typeof updateMockRelatorio>[1]);
     setAcknowledged(true);
     setReport((prev) => prev ? { ...prev, client_signed_at: now } : prev);
     toast.success("Ciência registrada com sucesso.");
