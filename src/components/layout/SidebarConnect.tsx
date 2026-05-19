@@ -263,8 +263,11 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
               className="flex items-center justify-center w-full py-2.5 hover:bg-[#DDD6FE] transition-colors rounded-none"
               activeClassName="!bg-[#C4B5FD]"
             >
-              <span title="Configurações">
+              <span className="relative group/tip flex items-center justify-center">
                 <Settings className="h-4 w-4 shrink-0 text-[#8B5CF6]" />
+                <span className="pointer-events-none absolute left-full ml-2 z-50 px-2.5 py-1 rounded-md bg-[#EDE9FE] text-[#031D38] text-xs font-medium whitespace-nowrap border border-[#DDD6FE] shadow-sm opacity-0 group-hover/tip:opacity-100 transition-none" style={{ fontFamily: "'Urbanist',sans-serif" }}>
+                  Configurações
+                </span>
               </span>
             </NavLink>
           ) : (
