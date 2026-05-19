@@ -1205,7 +1205,7 @@ export default function RelatoriosPage() {
                   <input
                     type="file"
                     accept="application/pdf"
-                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                     onChange={async (e) => {
                       const f = e.target.files?.[0];
                       if (!f) return;
@@ -1214,7 +1214,9 @@ export default function RelatoriosPage() {
                     }}
                   />
                   {parsindoBoleto ? (
-                    <span className="text-xs text-muted-foreground">Extraindo dados do PDF...</span>
+                    <span className="text-xs text-muted-foreground flex items-center justify-center gap-2">
+                      <Loader2 className="h-3 w-3 animate-spin" /> Extraindo dados do PDF...
+                    </span>
                   ) : formBoletoFile ? (
                     <span className="text-xs text-emerald-600 font-medium">✓ {formBoletoFile.name}</span>
                   ) : (
