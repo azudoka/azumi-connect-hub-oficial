@@ -72,7 +72,7 @@ function calcularAtraso(invoice: Invoice): { diasAtraso: number; totalDevido: nu
 
 export default function GestaoConta() {
   const { usuario } = useAuth();
-  const navigate = useNavigate();
+  
   const isAdmin = ["admin", "admin_azumi"].includes(usuario?.role ?? "");
 
   const [tab, setTab] = useState<typeof tabs[number]>("Boletos");
