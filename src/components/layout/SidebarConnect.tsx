@@ -4,20 +4,17 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Building2, Users, Briefcase, Clock, MessagesSquare, Target,
   BarChart3, CreditCard, Receipt, FileText, ShieldCheck, Calendar, Megaphone, BookOpen,
-  Settings, LogOut,
-  ExternalLink, Mail, Phone
+  Settings, LogOut, ExternalLink, Mail, Phone
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { usePermissao, type Permissao } from "@/config/permissoes";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
-
 interface SidebarConnectProps {
   variant?: "admin" | "cliente";
 }
 
-// Mapa de permissões exigidas por rota. Itens sem entrada aqui ficam sempre visíveis.
 const PERMISSAO_POR_ROTA: Record<string, Permissao> = {
   "/app/financeiro": "financeiro.ver_valores",
   "/app/gestao-de-conta": "gestao_conta.relatorio",
@@ -103,26 +100,56 @@ const clienteGroups = [
   },
 ];
 
+/* ─── Tooltip roxo para modo retraído ─── */
+function NavTooltip({ label, children }: { label: string; children: React.ReactNode }) {
+  const [show, setShow] = useState(false);
+  return (
+    <div
+      style={{ position: "relative", width: "100%" }}
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
+      {children}
+      {show && (
+        <div
+          style={{
+            position: "absolute",
+            left: "calc(100% + 8px)",
+            top: "50%",
+            transform: "translateY(-50%)",
+            background: "#1E1B4B",
+            color: "white",
+            fontSize: 12,
+            fontWeight: 500,
+            padding: "6px 10px",
+            borderRadius: 8,
+            whiteSpace: "nowrap",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            fontFamily: "'Urbanist',sans-serif",
+            zIndex: 50,
+            pointerEvents: "none",
+          }}
+        >
+          {label}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const { logout, user } = useAuth();
   const { pode } = usePermissao();
-  const papelLabel =
-    user?.papel === "admin"
-      ? "Administrador"
-      : user?.papel === "consultor"
-      ? "Consultor"
-      : user?.papel === "cliente"
-      ? "Cliente"
-      : "";
+  const [consultorOpen, setConsultorOpen] = useState(false);
+
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
-  const [consultorOpen, setConsultorOpen] = useState(false);
+
   const groupsBase = variant === "admin" ? adminGroups : clienteGroups;
-  // Filtra itens cuja rota exige permissão que o usuário não possui.
   const groups = groupsBase
     .map((g) => ({
       ...g,
@@ -133,6 +160,7 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
     }))
     .filter((g) => g.items.length > 0);
 
+  /* Auto-colapso após 10s de inatividade */
   const inactivityRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const resetInactivity = () => {
     if (inactivityRef.current) clearTimeout(inactivityRef.current);
@@ -147,18 +175,31 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
       window.removeEventListener("mousemove", resetInactivity);
       window.removeEventListener("keydown", resetInactivity);
     };
-  }, [collapsed]);
+  }, []);
+
+  const configHref = variant === "cliente" ? "/cliente/gestao-conta" : "/app/configuracoes";
 
   return (
     <aside
-      className={cn(
-        "flex flex-col shrink-0 border-r border-sidebar-border transition-all duration-300",
-        collapsed ? "w-16 bg-[#EDE9FE]" : "w-60 bg-gradient-sidebar"
-      )}
+      onClick={() => { if (collapsed) setCollapsed(false); }}
+      className={cn(collapsed ? "" : "bg-gradient-sidebar")}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        flexShrink: 0,
+        width: collapsed ? 64 : 240,
+        transition: "width 0.3s ease",
+        borderRight: "1px solid hsl(var(--sidebar-border))",
+        background: collapsed ? "#EDE9FE" : undefined,
+        cursor: collapsed ? "pointer" : "default",
+        height: "100svh",
+        position: "sticky",
+        top: 0,
+      }}
       aria-label="Navegação principal"
     >
       {/* Logo */}
-      <div className="h-16 flex items-center px-4 border-b border-sidebar-border/60">
+      <div style={{ height: 64, display: "flex", alignItems: "center", padding: "0 16px", borderBottom: "1px solid hsl(var(--sidebar-border) / 0.6)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: collapsed ? 0 : 8 }}>
           <div style={{ width: 28, height: 28, borderRadius: 8, background: "linear-gradient(135deg,#031D38,#8B5CF6)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <span style={{ color: "white", fontSize: 13, fontWeight: 800, fontFamily: "'Urbanist',sans-serif" }}>A</span>
@@ -183,102 +224,96 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
             <ul className="space-y-0.5">
               {g.items.map((it) => (
                 <li key={it.to}>
-                  <NavLink
-                    to={it.to}
-                    className={cn(
-                      "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground transition-colors",
-                      collapsed ? "justify-center px-2 py-2.5 hover:bg-[#DDD6FE]" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                    )}
-                    activeClassName="!bg-primary/15 !text-foreground border-l-[3px] border-primary rounded-l-none ml-[3px]"
-                  >
-                    {collapsed ? (
-                      <div className="relative group/tip flex items-center justify-center">
-                        <it.icon className="h-5 w-5 shrink-0 text-[#8B5CF6]" />
-                        <div className="absolute left-full ml-2 z-50 hidden group-hover/tip:flex items-center">
-                          <div className="bg-[#1E1B4B] text-white text-xs font-medium px-2.5 py-1.5 rounded-lg whitespace-nowrap shadow-lg" style={{ fontFamily: "'Urbanist',sans-serif" }}>
-                            {it.label}
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <it.icon className="h-4 w-4 shrink-0 text-[#8B5CF6]" />
-                        <span className="truncate" style={{ fontFamily: "'Urbanist',sans-serif" }}>{it.label}</span>
-                      </>
-                    )}
-                  </NavLink>
+                  {collapsed ? (
+                    <NavTooltip label={it.label}>
+                      <NavLink
+                        to={it.to}
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", padding: "10px 0", borderRadius: 8, color: "#8B5CF6", transition: "background 0.15s" }}
+                        className="hover:bg-[#DDD6FE]"
+                        activeClassName="!bg-[#C4B5FD]"
+                      >
+                        <it.icon className="h-5 w-5 shrink-0" />
+                      </NavLink>
+                    </NavTooltip>
+                  ) : (
+                    <NavLink
+                      to={it.to}
+                      className="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                      activeClassName="!bg-primary/15 !text-foreground border-l-[3px] border-primary rounded-l-none ml-[3px]"
+                    >
+                      <it.icon className="h-4 w-4 shrink-0 text-[#8B5CF6]" />
+                      <span className="truncate" style={{ fontFamily: "'Urbanist',sans-serif" }}>{it.label}</span>
+                    </NavLink>
+                  )}
                 </li>
               ))}
             </ul>
           </div>
         ))}
 
-
-
-        {/* Configurações — sempre no final */}
+        {/* Configurações */}
         <div className="pt-2 mt-2 border-t border-sidebar-border/60">
-          {(() => {
-            const configHref = variant === "cliente" ? "/cliente/gestao-conta" : "/app/configuracoes";
-            return (
+          {collapsed ? (
+            <NavTooltip label="Configurações">
               <NavLink
                 to={configHref}
-                className={cn(
-                  "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground transition-colors",
-                  collapsed ? "justify-center px-2 py-2.5 hover:bg-[#DDD6FE]" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                )}
-                activeClassName="!bg-primary/15 !text-foreground"
+                onClick={(e) => e.stopPropagation()}
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", padding: "10px 0", borderRadius: 8, color: "#8B5CF6", transition: "background 0.15s" }}
+                className="hover:bg-[#DDD6FE]"
+                activeClassName="!bg-[#C4B5FD]"
               >
-                {collapsed ? (
-                  <div className="relative group/tip flex items-center justify-center">
-                    <Settings className="h-5 w-5 shrink-0 text-[#8B5CF6]" />
-                    <div className="absolute left-full ml-2 z-50 hidden group-hover/tip:flex items-center">
-                      <div className="bg-[#1E1B4B] text-white text-xs font-medium px-2.5 py-1.5 rounded-lg whitespace-nowrap shadow-lg" style={{ fontFamily: "'Urbanist',sans-serif" }}>
-                        Configurações
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <Settings className="h-4 w-4 shrink-0 text-[#8B5CF6]" />
-                    <span className="truncate" style={{ fontFamily: "'Urbanist',sans-serif" }}>Configurações</span>
-                  </>
-                )}
+                <Settings className="h-5 w-5 shrink-0" />
               </NavLink>
-            );
-          })()}
+            </NavTooltip>
+          ) : (
+            <NavLink
+              to={configHref}
+              className="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              activeClassName="!bg-primary/15 !text-foreground"
+            >
+              <Settings className="h-4 w-4 shrink-0 text-[#8B5CF6]" />
+              <span className="truncate" style={{ fontFamily: "'Urbanist',sans-serif" }}>Configurações</span>
+            </NavLink>
+          )}
 
           {pode("portal_cliente.acessar") && (
             <>
               <div className="my-2 h-px bg-sidebar-border/60" />
-              <button
-                type="button"
-                onClick={() => navigate("/portal")}
-                className={cn(
-                  "group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors",
-                  collapsed ? "justify-center px-0" : "text-xs text-muted-foreground"
-                )}
-                aria-label="Acessar Portal do Cliente"
-              >
-                <ExternalLink className="h-4 w-4 shrink-0 text-[#8B5CF6]" />
-                {!collapsed && (
+              {collapsed ? (
+                <NavTooltip label="Acessar Portal do Cliente">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); navigate("/portal"); }}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", padding: "10px 0", borderRadius: 8, color: "#8B5CF6", background: "none", border: "none", cursor: "pointer", transition: "background 0.15s" }}
+                    className="hover:bg-[#DDD6FE]"
+                  >
+                    <ExternalLink className="h-5 w-5 shrink-0" />
+                  </button>
+                </NavTooltip>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => navigate("/portal")}
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-xs text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
+                >
+                  <ExternalLink className="h-4 w-4 shrink-0 text-[#8B5CF6]" />
                   <span className="truncate">Acessar Portal do Cliente</span>
-                )}
-              </button>
+                </button>
+              )}
             </>
           )}
         </div>
       </nav>
 
-      {/* Footer card */}
-      <div className="p-3 border-t border-sidebar-border/60">
-        {!collapsed ? (
+      {/* Footer */}
+      {!collapsed && (
+        <div className="p-3 border-t border-sidebar-border/60">
           <div className="bg-card/60 backdrop-blur rounded-xl p-3 border border-border/60">
             {user?.papel === "cliente" && (
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  <div className="h-9 w-9 rounded-lg bg-gradient-brand flex items-center justify-center text-xs font-semibold text-white">
-                    AB
-                  </div>
+                  <div className="h-9 w-9 rounded-lg bg-gradient-brand flex items-center justify-center text-xs font-semibold text-white">AB</div>
                   <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-success ring-2 ring-card animate-soft-pulse" />
                 </div>
                 <div className="min-w-0">
@@ -306,25 +341,8 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
               </button>
             </div>
           </div>
-        ) : (
-          <div className="flex flex-col items-center gap-2">
-            {user?.papel === "cliente" && (
-              <div className="relative">
-                <div className="h-8 w-8 rounded-lg bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white">AB</div>
-                <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-success ring-2 ring-sidebar" />
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={handleLogout}
-              aria-label="Sair"
-              className="text-muted-foreground hover:text-destructive"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       <Dialog open={consultorOpen} onOpenChange={setConsultorOpen}>
         <DialogContent>
