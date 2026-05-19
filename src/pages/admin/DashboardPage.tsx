@@ -483,6 +483,38 @@ function AdminDashboard() {
             )}
           </Card>
 
+          {/* Últimas atualizações — movido para baixo */}
+          <Card className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="font-display text-lg font-semibold">Últimas atualizações</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">Movimentações recentes da operação</p>
+              </div>
+              <button type="button" onClick={() => navigate("/app/horas")} className="text-xs text-primary hover:underline font-medium">Ver tudo</button>
+            </div>
+            {ATIVIDADES.length === 0 ? (
+              <EmptyState icon={Clock} title="Sem atividades recentes" description="As últimas atualizações da operação aparecerão aqui." />
+            ) : (
+              <ul className="space-y-3">
+                {ATIVIDADES.map((a) => {
+                  const meta = ATIVIDADE_META[a.icon];
+                  const Icon = meta.Icon;
+                  return (
+                    <li key={a.id} className="flex items-start gap-3">
+                      <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center shrink-0", meta.cls)}>
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 flex-1 pt-1">
+                        <p className="text-sm leading-snug">{a.texto}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{a.quando}</p>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </Card>
+
           {/* 4. Resumo financeiro */}
           <div>
             <div className="flex items-center justify-between mb-3">
