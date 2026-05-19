@@ -348,24 +348,6 @@ export default function GestaoConta() {
         </div>
       )}
 
-      {/* ── Aba Relatórios Mensais ────────────────────────────────────── */}
-      {tab === "Relatórios Mensais" && (
-        <div className="bg-card border border-border rounded-xl p-10 flex flex-col items-center text-center gap-4">
-          <FileText className="h-8 w-8 text-muted-foreground" />
-          <div>
-            <p className="font-medium text-sm">Os relatórios mensais são gerenciados na página de Relatórios</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Crie, aprove, publique e acompanhe a ciência do cliente em um só lugar.
-            </p>
-          </div>
-          <button
-            onClick={() => navigate("/app/relatorios")}
-            className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center gap-1.5"
-          >
-            <FileText className="h-4 w-4" /> Ir para Relatórios
-          </button>
-        </div>
-      )}
 
       {/* ── Modal Detalhes ────────────────────────────────────────────── */}
       {detalhesOpen && detalhesInvoice && (
