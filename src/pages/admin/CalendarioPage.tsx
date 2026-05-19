@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import {
   ChevronLeft, ChevronRight, Plus, X, MapPin, Clock, Users,
-  Calendar, Download, ExternalLink, StickyNote,
+  Download, ExternalLink, StickyNote,
 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 
