@@ -299,7 +299,7 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
           <div className="flex flex-col items-center gap-2">
             {user?.papel === "cliente" && (
               <div className="relative">
-                <div className="h-8 w-8 rounded-full bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white">AB</div>
+                <div className="h-8 w-8 rounded-lg bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white">AB</div>
                 <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-success ring-2 ring-sidebar" />
               </div>
             )}
