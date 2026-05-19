@@ -29,6 +29,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { adicionarDocumento, type DocumentoMock } from "@/data/documentosMock";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
@@ -229,6 +230,11 @@ export default function ProjetoDetalhe() {
   }>({ open: false, entId: null, targetStatus: null });
   const [npsOpen, setNpsOpen] = useState<{ open: boolean; entId: string | null }>({ open: false, entId: null });
   const [docsOficiaisOpen, setDocsOficiaisOpen] = useState<{ open: boolean; entId: string | null }>({ open: false, entId: null });
+  const [publicarDocsOpen, setPublicarDocsOpen] = useState(false);
+  const [pubEntId, setPubEntId] = useState<string | null>(null);
+  const [pubCategoria, setPubCategoria] = useState<"Políticas"|"Manuais"|"Fluxos"|"Guias"|"Outro">("Políticas");
+  const [pubVersao, setPubVersao] = useState("v1.0");
+  const [pubFileUrl, setPubFileUrl] = useState("");
 
   // KPIs
   const kpis = useMemo(() => ({
@@ -893,6 +899,7 @@ export default function ProjetoDetalhe() {
             description: comentario ? `"${comentario}"` : undefined,
           });
           if (ent?.tipoDocumento) {
+            setPubEntId(entId);
             setDocsOficiaisOpen({ open: true, entId });
           }
         }}
@@ -934,12 +941,81 @@ export default function ProjetoDetalhe() {
               className="flex-1"
               onClick={() => {
                 setDocsOficiaisOpen({ open: false, entId: null });
-                toast.success("Documento vinculado aos Docs Oficiais.", {
-                  description: "Disponível em /app/documentos para ciência do cliente.",
-                });
+                setPublicarDocsOpen(true);
               }}
             >
               Sim, vincular
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─────────── Dialog: Publicar em Documentos ─────────── */}
+      <Dialog open={publicarDocsOpen} onOpenChange={(o) => !o && setPublicarDocsOpen(false)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              Publicar em Documentos
+            </DialogTitle>
+            <DialogDescription>
+              Preencha os dados para publicar este entregável na biblioteca de documentos.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label>Categoria</Label>
+              <Select value={pubCategoria} onValueChange={(v) => setPubCategoria(v as "Políticas"|"Manuais"|"Fluxos"|"Guias"|"Outro")}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {["Políticas","Manuais","Fluxos","Guias","Outro"].map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Versão</Label>
+              <Input value={pubVersao} onChange={(e) => setPubVersao(e.target.value)} placeholder="v1.0" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>URL do arquivo (PDF)</Label>
+              <Input value={pubFileUrl} onChange={(e) => setPubFileUrl(e.target.value)} placeholder="https://..." />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPublicarDocsOpen(false)}>Cancelar</Button>
+            <Button onClick={() => {
+              const ent = pubEntId
+                ? entregaveis.find((e) => e.id === pubEntId)
+                : entregaveis.find((e) => e.status === "aprovado_cliente" && e.tipoDocumento);
+              const novoDoc: DocumentoMock = {
+                id: "doc-" + Date.now(),
+                empresa: "Kentaki Foods",
+                empresa_id: "emp-001",
+                titulo: ent?.nome ?? "Documento sem título",
+                categoria: pubCategoria,
+                tipo: "PDF",
+                status: "publicado",
+                versao: pubVersao,
+                created_at: new Date().toISOString().slice(0, 10),
+                file_url: pubFileUrl || null,
+                capa_url: null,
+                ciencias: 0,
+                visualizacoes: 0,
+                publicado_de_entregavel: true,
+              };
+              adicionarDocumento(novoDoc);
+              setPublicarDocsOpen(false);
+              setPubEntId(null);
+              setPubCategoria("Políticas");
+              setPubVersao("v1.0");
+              setPubFileUrl("");
+              toast.success("Documento publicado na biblioteca.", {
+                description: "Acesse /app/documentos para visualizar.",
+              });
+            }}>
+              Publicar
             </Button>
           </DialogFooter>
         </DialogContent>
