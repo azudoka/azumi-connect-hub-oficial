@@ -1193,6 +1193,99 @@ export default function RelatoriosPage() {
               <Label>Considerações finais / Próximos passos</Label>
               <Textarea value={formNextSteps} onChange={(e) => setFormNextSteps(e.target.value)} rows={2} className="mt-1.5" />
             </div>
+
+            <div className="rounded-lg border border-border bg-secondary/20 p-4 space-y-3">
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                Boleto (opcional)
+              </div>
+              <div>
+                <Label>Upload do boleto (PDF)</Label>
+                <div className="mt-1.5 border-2 border-dashed border-border rounded-lg p-4 text-center cursor-pointer relative">
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    onChange={async (e) => {
+                      const f = e.target.files?.[0];
+                      if (!f) return;
+                      setFormBoletoFile(f);
+                      await parseBoleto(f);
+                    }}
+                  />
+                  {parsindoBoleto ? (
+                    <span className="text-xs text-muted-foreground">Extraindo dados do PDF...</span>
+                  ) : formBoletoFile ? (
+                    <span className="text-xs text-emerald-600 font-medium">✓ {formBoletoFile.name}</span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">
+                      Clique para selecionar o PDF do boleto — dados extraídos automaticamente
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Valor (R$)</Label>
+                  <Input
+                    type="number"
+                    value={formBoletoValor}
+                    onChange={(e) => setFormBoletoValor(e.target.value)}
+                    placeholder="3000.00"
+                    className="mt-1.5 font-mono"
+                  />
+                </div>
+                <div>
+                  <Label>Vencimento</Label>
+                  <Input
+                    type="date"
+                    value={formBoletoVencimento}
+                    onChange={(e) => setFormBoletoVencimento(e.target.value)}
+                    className="mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label>Data limite de pagamento</Label>
+                  <Input
+                    type="date"
+                    value={formBoletoDataLimite}
+                    onChange={(e) => setFormBoletoDataLimite(e.target.value)}
+                    className="mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label>Multa (%)</Label>
+                  <Input
+                    value={formBoletoMulta}
+                    onChange={(e) => setFormBoletoMulta(e.target.value)}
+                    placeholder="2"
+                    className="mt-1.5 font-mono"
+                  />
+                </div>
+                <div>
+                  <Label>Mora diária (%)</Label>
+                  <Input
+                    value={formBoletoMora}
+                    onChange={(e) => setFormBoletoMora(e.target.value)}
+                    placeholder="1"
+                    className="mt-1.5 font-mono"
+                  />
+                </div>
+                <div>
+                  <Label>URL do boleto</Label>
+                  <Input
+                    value={formBoletoUrl}
+                    onChange={(e) => setFormBoletoUrl(e.target.value)}
+                    placeholder="https://..."
+                    className="mt-1.5"
+                  />
+                </div>
+              </div>
+              {(formBoletoValor || formBoletoVencimento) && (
+                <div className="text-xs text-muted-foreground bg-secondary rounded p-2">
+                  💡 Dados extraídos do PDF. Confira e ajuste se necessário antes de salvar.
+                </div>
+              )}
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancelar</Button>
