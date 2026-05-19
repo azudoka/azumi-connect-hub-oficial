@@ -463,6 +463,7 @@ export default function RelatoriosPage() {
     setFormBoletoMulta("");
     setFormBoletoMora("");
     setFormBoletoDataLimite("");
+    setParsindoBoleto(false);
   }
 
 
