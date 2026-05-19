@@ -205,6 +205,50 @@ export default function RelatoriosPage() {
   const [formHorasSolicitacoes, setFormHorasSolicitacoes] = useState("");
   const [formSaving, setFormSaving] = useState(false);
 
+  const [formBoletoFile, setFormBoletoFile] = useState<File | null>(null);
+  const [formBoletoUrl, setFormBoletoUrl] = useState("");
+  const [formBoletoVencimento, setFormBoletoVencimento] = useState("");
+  const [formBoletoValor, setFormBoletoValor] = useState("");
+  const [formBoletoMulta, setFormBoletoMulta] = useState("");
+  const [formBoletoMora, setFormBoletoMora] = useState("");
+  const [formBoletoDataLimite, setFormBoletoDataLimite] = useState("");
+  const [parsindoBoleto, setParsindoBoleto] = useState(false);
+
+  async function parseBoleto(file: File) {
+    setParsindoBoleto(true);
+    try {
+      const text = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve((e.target?.result as string) ?? "");
+        reader.readAsText(file, "utf-8");
+      });
+
+      const valorMatch = text.match(/R\$\s*([\d.,]+)/);
+      if (valorMatch) {
+        const valor = valorMatch[1].replace(/\./g, "").replace(",", ".");
+        setFormBoletoValor(valor);
+      }
+      const vencMatch = text.match(/[Vv]encimento[:\s]*(\d{2}\/\d{2}\/\d{4})/);
+      if (vencMatch) {
+        const [d, m, y] = vencMatch[1].split("/");
+        setFormBoletoVencimento(`${y}-${m}-${d}`);
+      }
+      const limiteMatch = text.match(/[Ll]imite[^:]*:\s*(\d{2}\/\d{2}\/\d{4})/);
+      if (limiteMatch) {
+        const [d, m, y] = limiteMatch[1].split("/");
+        setFormBoletoDataLimite(`${y}-${m}-${d}`);
+      }
+      const multaMatch = text.match(/MULTA DE ([\d,]+)%/i);
+      if (multaMatch) setFormBoletoMulta(multaMatch[1].replace(",", "."));
+      const moraMatch = text.match(/MORA DE ([\d,]+)%/i);
+      if (moraMatch) setFormBoletoMora(moraMatch[1].replace(",", "."));
+    } catch (e) {
+      console.error("Erro ao parsear boleto:", e);
+    } finally {
+      setParsindoBoleto(false);
+    }
+  }
+
   const [contextoRelatorios, setContextoRelatorios] = useState<{ month_ref: string; total_hours_minutes: number | null }[]>([]);
   const [contextoEmpresaHoras, setContextoEmpresaHoras] = useState(0);
   const [atracaoVagas] = useState<{ id: string; titulo: string; status: string }[]>([]);
@@ -391,12 +435,19 @@ export default function RelatoriosPage() {
         ? { nome: empresa.nome, logo_url: empresa.logo_url ?? null, monthly_hours: empresa.monthly_hours ?? null }
         : null,
       client_opened_at: null,
-      boleto_url: null,
-      boleto_vencimento: null,
-      boleto_valor: null,
+      boleto_url: formBoletoUrl || null,
+      boleto_vencimento: formBoletoVencimento || null,
+      boleto_valor: formBoletoValor ? parseFloat(formBoletoValor) : null,
       comprovante_url: null,
       comprovante_uploaded_at: null,
     } as unknown as ReportRow;
+
+    (novoRelatorio.template_data as Record<string, unknown>) = {
+      ...(novoRelatorio.template_data as Record<string, unknown>),
+      boleto_multa_percent: formBoletoMulta ? parseFloat(formBoletoMulta) : null,
+      boleto_mora_percent: formBoletoMora ? parseFloat(formBoletoMora) : null,
+      boleto_data_limite: formBoletoDataLimite || null,
+    };
 
     addMockRelatorio(novoRelatorio);
     setReports((prev) => [novoRelatorio, ...prev]);
@@ -405,6 +456,13 @@ export default function RelatoriosPage() {
     setCreateOpen(false);
     setFormHorasEntregaveis("");
     setFormHorasSolicitacoes("");
+    setFormBoletoFile(null);
+    setFormBoletoUrl("");
+    setFormBoletoVencimento("");
+    setFormBoletoValor("");
+    setFormBoletoMulta("");
+    setFormBoletoMora("");
+    setFormBoletoDataLimite("");
   }
 
 
@@ -1134,6 +1192,99 @@ export default function RelatoriosPage() {
             <div>
               <Label>Considerações finais / Próximos passos</Label>
               <Textarea value={formNextSteps} onChange={(e) => setFormNextSteps(e.target.value)} rows={2} className="mt-1.5" />
+            </div>
+
+            <div className="rounded-lg border border-border bg-secondary/20 p-4 space-y-3">
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                Boleto (opcional)
+              </div>
+              <div>
+                <Label>Upload do boleto (PDF)</Label>
+                <div className="mt-1.5 border-2 border-dashed border-border rounded-lg p-4 text-center cursor-pointer relative">
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    onChange={async (e) => {
+                      const f = e.target.files?.[0];
+                      if (!f) return;
+                      setFormBoletoFile(f);
+                      await parseBoleto(f);
+                    }}
+                  />
+                  {parsindoBoleto ? (
+                    <span className="text-xs text-muted-foreground">Extraindo dados do PDF...</span>
+                  ) : formBoletoFile ? (
+                    <span className="text-xs text-emerald-600 font-medium">✓ {formBoletoFile.name}</span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">
+                      Clique para selecionar o PDF do boleto — dados extraídos automaticamente
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Valor (R$)</Label>
+                  <Input
+                    type="number"
+                    value={formBoletoValor}
+                    onChange={(e) => setFormBoletoValor(e.target.value)}
+                    placeholder="3000.00"
+                    className="mt-1.5 font-mono"
+                  />
+                </div>
+                <div>
+                  <Label>Vencimento</Label>
+                  <Input
+                    type="date"
+                    value={formBoletoVencimento}
+                    onChange={(e) => setFormBoletoVencimento(e.target.value)}
+                    className="mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label>Data limite de pagamento</Label>
+                  <Input
+                    type="date"
+                    value={formBoletoDataLimite}
+                    onChange={(e) => setFormBoletoDataLimite(e.target.value)}
+                    className="mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label>Multa (%)</Label>
+                  <Input
+                    value={formBoletoMulta}
+                    onChange={(e) => setFormBoletoMulta(e.target.value)}
+                    placeholder="2"
+                    className="mt-1.5 font-mono"
+                  />
+                </div>
+                <div>
+                  <Label>Mora diária (%)</Label>
+                  <Input
+                    value={formBoletoMora}
+                    onChange={(e) => setFormBoletoMora(e.target.value)}
+                    placeholder="1"
+                    className="mt-1.5 font-mono"
+                  />
+                </div>
+                <div>
+                  <Label>URL do boleto</Label>
+                  <Input
+                    value={formBoletoUrl}
+                    onChange={(e) => setFormBoletoUrl(e.target.value)}
+                    placeholder="https://..."
+                    className="mt-1.5"
+                  />
+                </div>
+              </div>
+              {(formBoletoValor || formBoletoVencimento) && (
+                <div className="text-xs text-muted-foreground bg-secondary rounded p-2">
+                  💡 Dados extraídos do PDF. Confira e ajuste se necessário antes de salvar.
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter>
