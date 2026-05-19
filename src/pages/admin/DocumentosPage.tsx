@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
 import {
-  Plus, Upload, Eye, Download, Link2, FileText, ChevronDown, Search, Check,
+  FileText, FileCheck, BookOpen, Workflow, ExternalLink, Plus, Pencil,
+  Trash2, HardDrive, Eye, Check,
 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
+import { KpiCard } from "@/components/KpiCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,203 +12,360 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
+type Categoria = "Políticas" | "Manuais" | "Fluxos" | "Guias" | "Outro";
+type Status = "publicado" | "rascunho";
+
 interface Documento {
   id: string;
-  nome: string;
-  tipo: "Contrato" | "Relatório" | "Boleto" | "Proposta" | "Anexo";
   empresa: string;
-  uploadEm: string;
-  entregavel?: boolean;
+  empresa_id: string;
+  titulo: string;
+  categoria: Categoria;
+  tipo: string;
+  status: Status;
+  versao: string;
+  created_at: string;
+  file_url: string | null;
+  ciencias: number;
+  visualizacoes: number;
+  publicado_de_entregavel: boolean;
 }
 
-const MOCK: Documento[] = [
-  { id: "D-001", nome: "Contrato_2026.pdf",       tipo: "Contrato",  empresa: "Empresa X",  uploadEm: "20/04/2026", entregavel: true  },
-  { id: "D-002", nome: "Relatorio_Mensal_03.pdf", tipo: "Relatório", empresa: "Empresa X",  uploadEm: "31/03/2026", entregavel: true  },
-  { id: "D-003", nome: "Boleto_Abril.pdf",        tipo: "Boleto",    empresa: "Empresa X",  uploadEm: "01/04/2026"                    },
-  { id: "D-004", nome: "Proposta_RH.docx",        tipo: "Proposta",  empresa: "Startup Y",  uploadEm: "15/04/2026"                    },
-  { id: "D-005", nome: "Contrato_StartupY.pdf",   tipo: "Contrato",  empresa: "Startup Y",  uploadEm: "10/03/2026", entregavel: true  },
-  { id: "D-006", nome: "Anexo_DiagDISC.pdf",      tipo: "Anexo",     empresa: "Grupo Zeta", uploadEm: "22/04/2026"                    },
-  { id: "D-007", nome: "Relatorio_Q1.pdf",        tipo: "Relatório", empresa: "Grupo Zeta", uploadEm: "05/04/2026", entregavel: true  },
-  { id: "D-008", nome: "Boleto_Marco.pdf",        tipo: "Boleto",    empresa: "Nuvem Corp", uploadEm: "01/03/2026"                    },
+const mockEmpresas = [
+  { id: "emp-001", nome: "Kentaki Foods" },
+  { id: "emp-002", nome: "Tech Corp" },
 ];
 
-function CopyLinkBtn({ value }: { value: string }) {
-  const [done, setDone] = useState(false);
-  return (
-    <button
-      type="button"
-      onClick={() => { navigator.clipboard.writeText(value); setDone(true); setTimeout(() => setDone(false), 1200); }}
-      className="h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
-      title="Copiar link"
-    >
-      {done ? <Check className="h-3.5 w-3.5" /> : <Link2 className="h-3.5 w-3.5" />}
-    </button>
-  );
+const initialDocs: Documento[] = [
+  { id: "doc-001", empresa: "Kentaki Foods", empresa_id: "emp-001", titulo: "Política de Cargos e Salários", categoria: "Políticas", tipo: "PDF", status: "publicado", versao: "v1.0", created_at: "2026-04-15", file_url: "https://example.com/politica-cargos.pdf", ciencias: 3, visualizacoes: 7, publicado_de_entregavel: true },
+  { id: "doc-002", empresa: "Kentaki Foods", empresa_id: "emp-001", titulo: "Manual de Integração de Colaboradores", categoria: "Manuais", tipo: "PDF", status: "publicado", versao: "v2.1", created_at: "2026-03-20", file_url: "https://example.com/manual-integracao.pdf", ciencias: 12, visualizacoes: 18, publicado_de_entregavel: false },
+  { id: "doc-003", empresa: "Kentaki Foods", empresa_id: "emp-001", titulo: "Fluxo de Solicitação de Férias", categoria: "Fluxos", tipo: "PDF", status: "rascunho", versao: "v1.0", created_at: "2026-05-01", file_url: null, ciencias: 0, visualizacoes: 0, publicado_de_entregavel: false },
+  { id: "doc-004", empresa: "Tech Corp", empresa_id: "emp-002", titulo: "Guia de Boas Práticas — Trabalho Remoto", categoria: "Guias", tipo: "PDF", status: "publicado", versao: "v1.2", created_at: "2026-02-10", file_url: "https://example.com/guia-remoto.pdf", ciencias: 8, visualizacoes: 24, publicado_de_entregavel: true },
+  { id: "doc-005", empresa: "Tech Corp", empresa_id: "emp-002", titulo: "Política de Uso de Equipamentos", categoria: "Políticas", tipo: "PDF", status: "publicado", versao: "v1.0", created_at: "2026-01-15", file_url: "https://example.com/politica-equipamentos.pdf", ciencias: 5, visualizacoes: 11, publicado_de_entregavel: false },
+];
+
+const categoriaConfig: Record<Categoria, { topo: string; chip: string; icon: typeof FileText }> = {
+  "Políticas": { topo: "#7C3AED", chip: "bg-[#7C3AED]/15 text-[#7C3AED] border-[#7C3AED]/30", icon: FileCheck },
+  "Manuais":   { topo: "#034C8B", chip: "bg-[#034C8B]/15 text-[#034C8B] border-[#034C8B]/30", icon: BookOpen },
+  "Fluxos":    { topo: "#0D9488", chip: "bg-[#0D9488]/15 text-[#0D9488] border-[#0D9488]/30", icon: Workflow },
+  "Guias":     { topo: "#D97706", chip: "bg-[#D97706]/15 text-[#D97706] border-[#D97706]/30", icon: BookOpen },
+  "Outro":     { topo: "#6B7280", chip: "bg-muted text-muted-foreground border-border", icon: FileText },
+};
+
+const categorias: Categoria[] = ["Políticas", "Manuais", "Fluxos", "Guias", "Outro"];
+
+function formatarData(iso: string): string {
+  const [a, m, d] = iso.split("-");
+  return `${d}/${m}/${a}`;
 }
 
-export default function DocumentosPage() {
-  const [busca, setBusca]       = useState("");
-  const [tipo, setTipo]         = useState<string>("all");
-  const [uploadOpen, setUploadOpen] = useState(false);
-  const [opened, setOpened] = useState<Record<string, boolean>>(() => {
-    const empresas = Array.from(new Set(MOCK.map((d) => d.empresa)));
-    return Object.fromEntries(empresas.map((e) => [e, true]));
-  });
+interface FormState {
+  empresa_id: string;
+  titulo: string;
+  categoria: Categoria;
+  versao: string;
+  status: Status;
+  file_url: string;
+}
 
-  const grupos = useMemo(() => {
-    const filtrados = MOCK.filter((d) => {
-      if (tipo !== "all" && d.tipo !== tipo) return false;
-      if (busca && !`${d.nome} ${d.empresa} ${d.tipo}`.toLowerCase().includes(busca.toLowerCase())) return false;
-      return true;
+const emptyForm: FormState = {
+  empresa_id: mockEmpresas[0].id,
+  titulo: "",
+  categoria: "Políticas",
+  versao: "v1.0",
+  status: "rascunho",
+  file_url: "",
+};
+
+export default function DocumentosPage() {
+  const [docs, setDocs] = useState<Documento[]>(initialDocs);
+  const [filtroEmpresa, setFiltroEmpresa] = useState("all");
+  const [filtroCategoria, setFiltroCategoria] = useState("all");
+  const [filtroStatus, setFiltroStatus] = useState("all");
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [form, setForm] = useState<FormState>(emptyForm);
+  const [excluirId, setExcluirId] = useState<string | null>(null);
+
+  const filtrados = useMemo(() => docs.filter((d) => {
+    if (filtroEmpresa !== "all" && d.empresa_id !== filtroEmpresa) return false;
+    if (filtroCategoria !== "all" && d.categoria !== filtroCategoria) return false;
+    if (filtroStatus !== "all" && d.status !== filtroStatus) return false;
+    return true;
+  }), [docs, filtroEmpresa, filtroCategoria, filtroStatus]);
+
+  const kpis = useMemo(() => {
+    const total = docs.length;
+    const publicados = docs.filter((d) => d.status === "publicado").length;
+    const cienciasPendentes = docs.filter(
+      (d) => d.status === "publicado" && d.visualizacoes > 0 && d.ciencias < d.visualizacoes,
+    ).length;
+    const deEntregavel = docs.filter((d) => d.publicado_de_entregavel).length;
+    return { total, publicados, cienciasPendentes, deEntregavel };
+  }, [docs]);
+
+  function abrirNovo() {
+    setEditId(null);
+    setForm(emptyForm);
+    setModalOpen(true);
+  }
+
+  function abrirEditar(doc: Documento) {
+    setEditId(doc.id);
+    setForm({
+      empresa_id: doc.empresa_id,
+      titulo: doc.titulo,
+      categoria: doc.categoria,
+      versao: doc.versao,
+      status: doc.status,
+      file_url: doc.file_url ?? "",
     });
-    const map = new Map<string, Documento[]>();
-    for (const d of filtrados) {
-      const arr = map.get(d.empresa) ?? [];
-      arr.push(d);
-      map.set(d.empresa, arr);
+    setModalOpen(true);
+  }
+
+  function salvar() {
+    if (!form.titulo.trim()) return;
+    const empresa = mockEmpresas.find((e) => e.id === form.empresa_id)?.nome ?? "";
+    if (editId) {
+      setDocs((prev) => prev.map((d) => d.id === editId ? {
+        ...d,
+        empresa,
+        empresa_id: form.empresa_id,
+        titulo: form.titulo,
+        categoria: form.categoria,
+        versao: form.versao,
+        status: form.status,
+        file_url: form.file_url || null,
+      } : d));
+    } else {
+      const novo: Documento = {
+        id: `doc-${Date.now()}`,
+        empresa,
+        empresa_id: form.empresa_id,
+        titulo: form.titulo,
+        categoria: form.categoria,
+        tipo: "PDF",
+        status: form.status,
+        versao: form.versao,
+        created_at: new Date().toISOString().slice(0, 10),
+        file_url: form.file_url || null,
+        ciencias: 0,
+        visualizacoes: 0,
+        publicado_de_entregavel: false,
+      };
+      setDocs((prev) => [novo, ...prev]);
     }
-    return Array.from(map.entries());
-  }, [busca, tipo]);
+    setModalOpen(false);
+  }
+
+  function excluir() {
+    if (!excluirId) return;
+    setDocs((prev) => prev.filter((d) => d.id !== excluirId));
+    setExcluirId(null);
+  }
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Documentos"
-        subtitle="Biblioteca de documentos por empresa"
+        subtitle="Biblioteca de documentos publicados para os clientes."
         actions={
-          <Button onClick={() => setUploadOpen(true)} className="rounded-[100px] bg-[#3B82F6] hover:bg-[#3B82F6]/90 text-white">
-            <Upload className="h-4 w-4" /> Upload
+          <Button onClick={abrirNovo} className="rounded-[100px] bg-[#3B82F6] hover:bg-[#3B82F6]/90 text-white">
+            <Plus className="h-4 w-4" /> Inserir documento
           </Button>
         }
       />
 
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <KpiCard label="Total de documentos" value={kpis.total} icon={FileText} />
+        <KpiCard label="Publicados" value={kpis.publicados} icon={Check} />
+        <KpiCard label="Ciências pendentes" value={kpis.cienciasPendentes} icon={Eye} />
+        <KpiCard label="Publicados de entregáveis" value={kpis.deEntregavel} icon={FileCheck} />
+      </div>
+
       <div className="flex flex-col md:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar documento, empresa ou tipo…" className="pl-9 rounded-[100px]" />
-        </div>
-        <Select value={tipo} onValueChange={setTipo}>
-          <SelectTrigger className="w-full md:w-64 rounded-[100px]"><SelectValue placeholder="Tipo" /></SelectTrigger>
+        <Select value={filtroEmpresa} onValueChange={setFiltroEmpresa}>
+          <SelectTrigger className="md:w-56 rounded-[100px]"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos os tipos</SelectItem>
-            <SelectItem value="Contrato">Contrato</SelectItem>
-            <SelectItem value="Relatório">Relatório</SelectItem>
-            <SelectItem value="Boleto">Boleto</SelectItem>
-            <SelectItem value="Proposta">Proposta</SelectItem>
-            <SelectItem value="Anexo">Anexo</SelectItem>
+            <SelectItem value="all">Todas as empresas</SelectItem>
+            {mockEmpresas.map((e) => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={filtroCategoria} onValueChange={setFiltroCategoria}>
+          <SelectTrigger className="md:w-56 rounded-[100px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas as categorias</SelectItem>
+            {categorias.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={filtroStatus} onValueChange={setFiltroStatus}>
+          <SelectTrigger className="md:w-56 rounded-[100px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os status</SelectItem>
+            <SelectItem value="publicado">Publicado</SelectItem>
+            <SelectItem value="rascunho">Rascunho</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      <div className="space-y-3">
-        {grupos.map(([empresa, docs]) => {
-          const isOpen = opened[empresa] ?? true;
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {filtrados.map((doc) => {
+          const cfg = categoriaConfig[doc.categoria];
+          const Icon = cfg.icon;
           return (
-            <div key={empresa} className="rounded-xl border border-border bg-card overflow-hidden">
-              <button
-                onClick={() => setOpened((s) => ({ ...s, [empresa]: !isOpen }))}
-                className="w-full flex items-center justify-between px-5 py-3 hover:bg-muted/40 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-md bg-[#034C8B] text-white flex items-center justify-center text-xs font-semibold">
-                    {empresa.split(" ").map((p) => p[0]).slice(0, 2).join("")}
-                  </div>
-                  <span className="font-medium">{empresa}</span>
-                  <span className="text-xs text-muted-foreground">{docs.length} documento{docs.length !== 1 ? "s" : ""}</span>
+            <div key={doc.id} className="bg-card border border-border rounded-2xl shadow-card overflow-hidden flex flex-col">
+              <div className="h-1.5" style={{ background: cfg.topo }} />
+              <div className="p-5 flex flex-col gap-3 flex-1">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium border", cfg.chip)}>
+                    <Icon className="h-3 w-3" /> {doc.categoria}
+                  </span>
+                  {doc.status === "publicado" ? (
+                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border bg-emerald-500/15 text-emerald-600 border-emerald-500/30">Publicado</span>
+                  ) : (
+                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border bg-muted text-muted-foreground border-border">Rascunho</span>
+                  )}
+                  {doc.publicado_de_entregavel && (
+                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border bg-sky-500/15 text-sky-600 border-sky-500/30">
+                      📋 De entregável
+                    </span>
+                  )}
                 </div>
-                <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", isOpen && "rotate-180")} />
-              </button>
 
-              {isOpen && (
-                <div className="border-t border-border divide-y divide-border">
-                  {docs.map((d) => (
-                    <div key={d.id} className="grid grid-cols-12 items-center px-5 py-3 gap-3 hover:bg-muted/30 transition-colors">
-                      <div className="col-span-12 md:col-span-5 flex items-center gap-3 min-w-0">
-                        <div className="h-9 w-9 rounded-md bg-[#3B82F6]/10 text-[#3B82F6] flex items-center justify-center shrink-0">
-                          <FileText className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="font-medium truncate">{d.nome}</div>
-                          <div className="text-xs text-muted-foreground">ID {d.id}</div>
-                        </div>
-                      </div>
-                      <div className="col-span-4 md:col-span-2">
-                        <span className="badge-pill bg-[#8B5CF6]/15 text-[#8B5CF6] border-[#8B5CF6]/30">{d.tipo}</span>
-                      </div>
-                      <div className="col-span-4 md:col-span-2">
-                        {d.entregavel && (
-                          <span className="badge-pill bg-emerald-500/15 text-emerald-500 border-emerald-500/30">Entregável</span>
-                        )}
-                      </div>
-                      <div className="col-span-2 md:col-span-2 text-xs text-muted-foreground">{d.uploadEm}</div>
-                      <div className="col-span-2 md:col-span-1 flex items-center justify-end gap-0.5">
-                        <button className="h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground hover:text-foreground" title="Visualizar">
-                          <Eye className="h-3.5 w-3.5" />
-                        </button>
-                        <button className="h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground hover:text-foreground" title="Download">
-                          <Download className="h-3.5 w-3.5" />
-                        </button>
-                        <CopyLinkBtn value={`https://app.azumi.com.br/docs/${d.id}`} />
-                      </div>
-                    </div>
-                  ))}
+                <div>
+                  <h3 className="font-semibold leading-snug">{doc.titulo}</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">{doc.empresa}</p>
                 </div>
-              )}
+
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  <span className="font-mono">{doc.versao}</span>
+                  <span>·</span>
+                  <span className="font-data">{formatarData(doc.created_at)}</span>
+                </div>
+
+                <div className="text-xs text-muted-foreground">
+                  <span className="font-data">👁 {doc.visualizacoes}</span> visualizações
+                  <span className="mx-1">·</span>
+                  <span className="font-data">✍ {doc.ciencias}</span> ciências
+                </div>
+
+                <div className="flex items-center gap-1.5 pt-1 mt-auto">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="rounded-[100px] flex-1"
+                    disabled={!doc.file_url}
+                    onClick={() => doc.file_url && window.open(doc.file_url, "_blank")}
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" /> Abrir
+                  </Button>
+                  <Button size="sm" variant="outline" className="rounded-[100px]" onClick={() => abrirEditar(doc)} title="Editar">
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button size="sm" variant="outline" className="rounded-[100px]" disabled title="Integração Google Drive em breve">
+                    <HardDrive className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button size="sm" variant="outline" className="rounded-[100px] text-destructive hover:text-destructive" onClick={() => setExcluirId(doc.id)} title="Excluir">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
             </div>
           );
         })}
 
-        {grupos.length === 0 && (
-          <div className="rounded-xl border border-border bg-card p-12 text-center text-muted-foreground">
+        {filtrados.length === 0 && (
+          <div className="col-span-full rounded-2xl border border-border bg-card p-12 text-center text-muted-foreground">
             Nenhum documento encontrado.
           </div>
         )}
       </div>
 
-      <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
-        <DialogContent className="sm:max-w-md rounded-xl">
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent className="sm:max-w-lg rounded-2xl">
           <DialogHeader>
-            <DialogTitle>Upload de documento</DialogTitle>
+            <DialogTitle>{editId ? "Editar documento" : "Inserir documento"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <Label htmlFor="doc-nome">Nome</Label>
-              <Input id="doc-nome" placeholder="Nome do documento" />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="doc-empresa">Empresa</Label>
-              <Input id="doc-empresa" placeholder="Empresa vinculada" />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Tipo</Label>
-              <Select>
-                <SelectTrigger><SelectValue placeholder="Selecione o tipo" /></SelectTrigger>
+              <Label>Empresa</Label>
+              <Select value={form.empresa_id} onValueChange={(v) => setForm((f) => ({ ...f, empresa_id: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Contrato">Contrato</SelectItem>
-                  <SelectItem value="Relatório">Relatório</SelectItem>
-                  <SelectItem value="Boleto">Boleto</SelectItem>
-                  <SelectItem value="Proposta">Proposta</SelectItem>
-                  <SelectItem value="Anexo">Anexo</SelectItem>
+                  {mockEmpresas.map((e) => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="doc-file">Arquivo</Label>
-              <Input id="doc-file" type="file" />
+              <Label>Título *</Label>
+              <Input value={form.titulo} onChange={(e) => setForm((f) => ({ ...f, titulo: e.target.value }))} placeholder="Título do documento" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Categoria</Label>
+                <Select value={form.categoria} onValueChange={(v) => setForm((f) => ({ ...f, categoria: v as Categoria }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {categorias.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Versão</Label>
+                <Input value={form.versao} onChange={(e) => setForm((f) => ({ ...f, versao: e.target.value }))} placeholder="v1.0" />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Status</Label>
+              <Select value={form.status} onValueChange={(v) => setForm((f) => ({ ...f, status: v as Status }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="rascunho">Rascunho</SelectItem>
+                  <SelectItem value="publicado">Publicado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>URL do arquivo</Label>
+              <Input value={form.file_url} onChange={(e) => setForm((f) => ({ ...f, file_url: e.target.value }))} placeholder="https://..." />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Upload de arquivo</Label>
+              <Input type="file" accept="application/pdf" />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setUploadOpen(false)} className="rounded-[100px]">Cancelar</Button>
-            <Button onClick={() => setUploadOpen(false)} className="rounded-[100px] bg-[#3B82F6] hover:bg-[#3B82F6]/90 text-white">
-              <Plus className="h-4 w-4" /> Enviar
-            </Button>
+            <Button variant="outline" onClick={() => setModalOpen(false)} className="rounded-[100px]">Cancelar</Button>
+            <Button onClick={salvar} className="rounded-[100px] bg-[#3B82F6] hover:bg-[#3B82F6]/90 text-white">Salvar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!excluirId} onOpenChange={(o) => !o && setExcluirId(null)}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir documento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. O documento será removido da biblioteca.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-[100px]">Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={excluir} className="rounded-[100px] bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
