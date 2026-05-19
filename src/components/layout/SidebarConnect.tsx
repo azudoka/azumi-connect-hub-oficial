@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Building2, Users, Briefcase, Clock, MessagesSquare, Target,
   BarChart3, CreditCard, Receipt, FileText, ShieldCheck, Calendar, Megaphone, BookOpen,
-  Settings, LogOut, ExternalLink, Mail, Phone
+  Settings, ExternalLink, Mail, Phone
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
@@ -153,14 +153,10 @@ function NavTooltip({ label, children }: { label: string; children: React.ReactN
 export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
-  const { logout, user } = useAuth();
+  const { user } = useAuth();
   const { pode } = usePermissao();
   const [consultorOpen, setConsultorOpen] = useState(false);
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
 
   const groupsBase = variant === "admin" ? adminGroups : clienteGroups;
   const groups = groupsBase
@@ -342,13 +338,6 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
                   <Mail className="h-3.5 w-3.5" /> Falar com consultor
                 </button>
               )}
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="text-xs text-muted-foreground hover:text-destructive flex items-center gap-1.5 px-2 py-1.5 rounded-md hover:bg-secondary"
-              >
-                <LogOut className="h-3.5 w-3.5" /> Sair
-              </button>
             </div>
           </div>
         </div>
