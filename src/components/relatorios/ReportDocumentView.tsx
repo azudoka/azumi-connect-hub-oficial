@@ -316,25 +316,53 @@ export default function ReportDocumentView({ report, taskRows, solicitationRows,
         </div>
 
         {/* ── 2. Ficha de identificação ────────────────────────────────── */}
-        <div style={{
-          background: "#031D38",
-          display: "grid", gridTemplateColumns: "repeat(4, 1fr)",
-          borderBottom: "3px solid " + typeColor
-        }}>
-          <FCell label="Mês de referência" value={fmtMonthRef(report.month_ref)} mono />
-          <FCell
-            label="Período apurado"
-            value={report.reference_start && report.reference_end
-              ? `${fmtDate(report.reference_start)} → ${fmtDate(report.reference_end)}`
-              : "—"}
-            mono
-          />
-          <FCell label="Status" value={STATUS_LABELS[report.status]} />
-          <FCell label="Data de emissão" value={fmtDate(report.published_at ?? new Date().toISOString())} mono />
+        {(() => {
+          const showPacote = type === "hraas_operacao_continua";
+          const monthlyH = report.company?.monthly_hours ?? null;
+          const pacoteLabel = (() => {
+            if (monthlyH == null || monthlyH === 0) return "—";
+            if (monthlyH === 15) return "Start";
+            if (monthlyH === 25) return "Ongoing";
+            if (monthlyH === 40) return "Growth";
+            return "Personalizado";
+          })();
+          const cols = 5 + (showPacote ? 1 : 0);
+          return (
+            <div style={{
+              background: "#031D38",
+              display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`,
+              borderBottom: "3px solid " + typeColor
+            }}>
+              <FCell label="Mês de referência" value={fmtMonthRef(report.month_ref)} mono />
+              <FCell
+                label="Período apurado"
+                value={report.reference_start && report.reference_end
+                  ? `${fmtDate(report.reference_start)} → ${fmtDate(report.reference_end)}`
+                  : "—"}
+                mono
+              />
+              <FCell label="Status" value={STATUS_LABELS[report.status]} />
+              <FCell label="Data de emissão" value={fmtDate(report.published_at ?? new Date().toISOString())} mono />
+              {showPacote && <FCell label="Pacote" value={pacoteLabel} />}
+              <div style={{ padding: "10px 14px" }}>
+                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.65)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 3 }}>Protocolo</div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: "#fff", fontFamily: "JetBrains Mono, monospace" }}>{protocolo(report)}</div>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* ── Aviso de confidencialidade ────────────────────────────────── */}
+        <div style={{ padding: "8px 40px", background: "#F8FAFC", borderBottom: "1px solid #E5E7EB", display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 13 }}>🔒</span>
+          <span style={{ fontSize: 11, color: "#6B7280", lineHeight: 1.5 }}>
+            Documento confidencial — uso exclusivo de {report.company?.nome ?? "contratante"}. Protegido pela Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018). Vedada a reprodução ou compartilhamento sem autorização da Azumi RH.
+          </span>
         </div>
 
         {/* ── Conteúdo do documento ─────────────────────────────────────── */}
         <div style={{ padding: "32px 40px" }}>
+
 
           {/* 3. Síntese executiva */}
           {report.summary_text && (
