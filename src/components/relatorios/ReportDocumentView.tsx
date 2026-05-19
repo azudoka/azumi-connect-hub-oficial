@@ -286,32 +286,8 @@ export default function ReportDocumentView({ report, taskRows, solicitationRows,
                 Relatório de Prestação de Serviços
               </span>
             </div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: "#fff", lineHeight: 1.25, marginBottom: 14 }}>
+            <div style={{ fontSize: 22, fontWeight: 800, color: "#fff", lineHeight: 1.25 }}>
               {report.title ?? `Relatório — ${fmtMonthRef(report.month_ref)}`}
-            </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-              {type && (
-                <span style={{
-                  background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)",
-                  borderRadius: 20, padding: "3px 12px", fontSize: 11, color: "#fff", fontWeight: 600,
-                }}>
-                  {TYPE_LABELS[type]}
-                </span>
-              )}
-              <span style={{
-                background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)",
-                borderRadius: 20, padding: "3px 12px", fontSize: 11, color: "rgba(255,255,255,0.85)",
-                fontFamily: "JetBrains Mono, monospace"
-              }}>
-                {fmtMonthRef(report.month_ref)}
-              </span>
-              <span style={{
-                background: STATUS_COLORS[report.status] + "33",
-                border: `1px solid ${STATUS_COLORS[report.status]}66`,
-                borderRadius: 20, padding: "3px 12px", fontSize: 11, color: "#fff", fontWeight: 600,
-              }}>
-                {STATUS_LABELS[report.status]}
-              </span>
             </div>
           </div>
           {/* Logo do cliente */}
@@ -340,25 +316,53 @@ export default function ReportDocumentView({ report, taskRows, solicitationRows,
         </div>
 
         {/* ── 2. Ficha de identificação ────────────────────────────────── */}
-        <div style={{
-          background: "#031D38",
-          display: "grid", gridTemplateColumns: "repeat(4, 1fr)",
-          borderBottom: "3px solid " + typeColor
-        }}>
-          <FCell label="Mês de referência" value={fmtMonthRef(report.month_ref)} mono />
-          <FCell
-            label="Período apurado"
-            value={report.reference_start && report.reference_end
-              ? `${fmtDate(report.reference_start)} → ${fmtDate(report.reference_end)}`
-              : "—"}
-            mono
-          />
-          <FCell label="Status" value={STATUS_LABELS[report.status]} />
-          <FCell label="Data de emissão" value={fmtDate(report.published_at ?? new Date().toISOString())} mono />
+        {(() => {
+          const showPacote = type === "hraas_operacao_continua";
+          const monthlyH = report.company?.monthly_hours ?? null;
+          const pacoteLabel = (() => {
+            if (monthlyH == null || monthlyH === 0) return "—";
+            if (monthlyH === 15) return "Start";
+            if (monthlyH === 25) return "Ongoing";
+            if (monthlyH === 40) return "Growth";
+            return "Personalizado";
+          })();
+          const cols = 5 + (showPacote ? 1 : 0);
+          return (
+            <div style={{
+              background: "#031D38",
+              display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`,
+              borderBottom: "3px solid " + typeColor
+            }}>
+              <FCell label="Mês de referência" value={fmtMonthRef(report.month_ref)} mono />
+              <FCell
+                label="Período apurado"
+                value={report.reference_start && report.reference_end
+                  ? `${fmtDate(report.reference_start)} → ${fmtDate(report.reference_end)}`
+                  : "—"}
+                mono
+              />
+              <FCell label="Status" value={STATUS_LABELS[report.status]} />
+              <FCell label="Data de emissão" value={fmtDate(report.published_at ?? new Date().toISOString())} mono />
+              {showPacote && <FCell label="Pacote" value={pacoteLabel} />}
+              <div style={{ padding: "10px 14px" }}>
+                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.65)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 3 }}>Protocolo</div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: "#fff", fontFamily: "JetBrains Mono, monospace" }}>{protocolo(report)}</div>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* ── Aviso de confidencialidade ────────────────────────────────── */}
+        <div style={{ padding: "8px 40px", background: "#F8FAFC", borderBottom: "1px solid #E5E7EB", display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 13 }}>🔒</span>
+          <span style={{ fontSize: 11, color: "#6B7280", lineHeight: 1.5 }}>
+            Documento confidencial — uso exclusivo de {report.company?.nome ?? "contratante"}. Protegido pela Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018). Vedada a reprodução ou compartilhamento sem autorização da Azumi RH.
+          </span>
         </div>
 
         {/* ── Conteúdo do documento ─────────────────────────────────────── */}
         <div style={{ padding: "32px 40px" }}>
+
 
           {/* 3. Síntese executiva */}
           {report.summary_text && (
@@ -642,18 +646,6 @@ export default function ReportDocumentView({ report, taskRows, solicitationRows,
             </div>
           </DocSection>
 
-          {/* 11. Protocolo */}
-          <div style={{ textAlign: "center", marginTop: 24, marginBottom: 8 }}>
-            <span style={{
-              display: "inline-block",
-              background: "#F3F4F6", border: "1px solid #E5E7EB",
-              borderRadius: 99, padding: "5px 18px",
-              fontSize: 11, color: "#6B7280",
-              fontFamily: "JetBrains Mono, monospace", letterSpacing: "0.05em"
-            }}>
-              {protocolo(report)}
-            </span>
-          </div>
 
           {/* 12. Ciência do cliente */}
           {isClient && report.status === "published" && (
