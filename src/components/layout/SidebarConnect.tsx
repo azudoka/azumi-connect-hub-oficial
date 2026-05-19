@@ -342,13 +342,6 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
                   <Mail className="h-3.5 w-3.5" /> Falar com consultor
                 </button>
               )}
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="text-xs text-muted-foreground hover:text-destructive flex items-center gap-1.5 px-2 py-1.5 rounded-md hover:bg-secondary"
-              >
-                <LogOut className="h-3.5 w-3.5" /> Sair
-              </button>
             </div>
           </div>
         </div>
