@@ -1,7 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -51,16 +50,6 @@ const STATUS_COLORS: Record<ReportStatus, string> = {
   published: "bg-emerald-500/15 text-emerald-600 border-emerald-400/30",
 };
 
-const REPORT_SELECT = `
-  id, title, status, month_ref, summary_text, risks_text, next_steps_text,
-  total_hours_minutes, hours_deliverables_minutes, hours_solicitations_minutes,
-  reference_start, reference_end, consultant_name, consultant_job_title, empresa_id,
-  created_by_user_id, admin_approved_at, admin_name, client_opened_at, published_at,
-  report_type, template_data, client_signed_at,
-  boleto_url, boleto_vencimento, boleto_valor, comprovante_url, comprovante_uploaded_at,
-  company:empresas(nome, logo_url, monthly_hours)
-`.trim();
-
 type Company = { id: string; nome: string; logo_url?: string | null; monthly_hours?: number | null };
 
 type ReportRow = Report & {
@@ -93,6 +82,76 @@ function fmtMonthRef(ref: string): string {
   return `${months[idx] ?? m}/${y}`;
 }
 
+// ─── Mock data ────────────────────────────────────────────────────────────────
+
+const MOCK_COMPANIES: Company[] = [
+  { id: "emp-001", nome: "Kentaki Foods" },
+  { id: "emp-002", nome: "Tech Corp" },
+];
+
+const MOCK_REPORTS: ReportRow[] = [
+  {
+    id: "rel-001",
+    title: "Relatório HRaaS — Kentaki Foods — Abril/2026",
+    status: "published",
+    month_ref: "2026-04",
+    report_type: "hraas_operacao_continua",
+    total_hours_minutes: 960,
+    hours_deliverables_minutes: 600,
+    hours_solicitations_minutes: 360,
+    reference_start: "2026-04-01",
+    reference_end: "2026-04-30",
+    summary_text: "Mês de alta produtividade com foco em processos de R&S.",
+    risks_text: null,
+    next_steps_text: "Iniciar mapeamento de cargos em maio.",
+    consultant_name: "Ana Beatriz",
+    consultant_job_title: "Consultora Sênior",
+    admin_approved_at: "2026-05-01T10:00:00Z",
+    admin_name: "Patricia Lima",
+    published_at: "2026-05-02T09:00:00Z",
+    client_signed_at: null,
+    template_data: {
+      objectives: ["Mapear processos internos", "Apoiar recrutamento de 3 vagas"],
+      deliveries: ["Processo seletivo Dev Pleno concluído", "Treinamento onboarding realizado"],
+      pendencies: ["Revisão da política de férias pendente"],
+    },
+    empresa_id: "emp-001",
+    company: { nome: "Kentaki Foods", logo_url: null, monthly_hours: 25 },
+    client_opened_at: null,
+    boleto_url: null, boleto_vencimento: null, boleto_valor: null,
+    comprovante_url: null, comprovante_uploaded_at: null,
+  },
+  {
+    id: "rel-002",
+    title: "Relatório HRaaS — Kentaki Foods — Maio/2026",
+    status: "draft",
+    month_ref: "2026-05",
+    report_type: "hraas_operacao_continua",
+    total_hours_minutes: 0,
+    hours_deliverables_minutes: 0,
+    hours_solicitations_minutes: 0,
+    reference_start: "2026-05-01",
+    reference_end: "2026-05-31",
+    summary_text: null,
+    risks_text: null,
+    next_steps_text: null,
+    consultant_name: "Ana Beatriz",
+    consultant_job_title: "Consultora Sênior",
+    admin_approved_at: null,
+    admin_name: null,
+    published_at: null,
+    client_signed_at: null,
+    template_data: {},
+    empresa_id: "emp-001",
+    company: { nome: "Kentaki Foods", logo_url: null, monthly_hours: 25 },
+    client_opened_at: null,
+    boleto_url: null, boleto_vencimento: null, boleto_valor: null,
+    comprovante_url: null, comprovante_uploaded_at: null,
+  },
+] as unknown as ReportRow[];
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function RelatoriosPage() {
   const { usuario } = useAuth();
   const navigate = useNavigate();
@@ -102,10 +161,9 @@ export default function RelatoriosPage() {
   const isClient = ["cliente", "gestor_cliente"].includes(usuario?.role ?? "");
   const canCreate = isAdmin || isConsultant;
 
-  const [reports, setReports] = useState<ReportRow[]>([]);
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [clientCompanyId, setClientCompanyId] = useState<string | null>(null);
+  const [reports, setReports] = useState<ReportRow[]>(MOCK_REPORTS);
+  const [companies] = useState<Company[]>(MOCK_COMPANIES);
+  const loading = false;
 
   const [filterCompany, setFilterCompany] = useState("");
   const [filterMonth, setFilterMonth] = useState("");
@@ -148,67 +206,34 @@ export default function RelatoriosPage() {
 
   const [contextoRelatorios, setContextoRelatorios] = useState<{ month_ref: string; total_hours_minutes: number | null }[]>([]);
   const [contextoEmpresaHoras, setContextoEmpresaHoras] = useState(0);
-  const [atracaoVagas, setAtracaoVagas] = useState<{ id: string; titulo: string; status: string }[]>([]);
-  const [atracaoCandidatos, setAtracaoCandidatos] = useState<{ id: string; nome: string; status: string }[]>([]);
+  const [atracaoVagas] = useState<{ id: string; titulo: string; status: string }[]>([]);
+  const [atracaoCandidatos] = useState<{ id: string; nome: string; status: string }[]>([]);
 
-  // Resolve empresa_id para usuário cliente (campo nome, não name)
+  // Deriva contexto do período a partir dos relatórios locais — sem Supabase
   useEffect(() => {
-    if (!isClient || !usuario?.empresaNome) return;
-    supabase
-      .from("empresas")
-      .select("id")
-      .ilike("nome", usuario.empresaNome)
-      .maybeSingle()
-      .then(({ data, error }) => {
-        if (error) { console.error("empresas ilike error:", error); return; }
-        if (data) setClientCompanyId((data as { id: string }).id);
-        // se retornar null (empresa não encontrada), clientCompanyId permanece null — tratado em fetchReports
-      });
-  }, [isClient, usuario?.empresaNome]);
-
-  // Carrega lista de empresas para admin/consultor — roda ao montar e ao mudar role
-  // Usa apenas id e nome para garantir compatibilidade com qualquer schema
-  useEffect(() => {
-    const role = usuario?.role ?? "";
-    if (!["admin", "admin_azumi", "consultor"].includes(role)) return;
-    supabase
-      .from("empresas")
-      .select("id, nome")
-      .order("nome")
-      .then(({ data, error }) => {
-        if (error) { console.error("empresas load error:", error); }
-        if (data && data.length > 0) {
-          setCompanies(data as Company[]);
-        } else {
-          // Fallback para teste quando RLS bloqueia ou banco não tem dados
-          setCompanies([{ id: "11111111-1111-1111-1111-111111111111", nome: "Kentaki Foods" }]);
-        }
-      });
-  }, [usuario?.role]);
-
-  const fetchReports = useCallback(async () => {
-    setLoading(true);
-    try {
-      let query = supabase.from("monthly_reports").select(REPORT_SELECT);
-      if (isClient) {
-        if (!clientCompanyId) { setLoading(false); return; }
-        query = query.eq("empresa_id", clientCompanyId).eq("status", "published");
-      }
-      const { data, error } = await query.order("month_ref", { ascending: false });
-      if (error) throw error;
-      setReports((data ?? []) as unknown as ReportRow[]);
-    } catch (err) {
-      console.error(err);
-      toast.error("Erro ao carregar relatórios.");
-    } finally {
-      setLoading(false);
+    if (!createOpen) {
+      setContextoRelatorios([]);
+      setContextoEmpresaHoras(0);
+      return;
     }
-  }, [isClient, clientCompanyId]);
+    if (!formEmpresa) return;
 
-  useEffect(() => {
-    if (isClient && !clientCompanyId) return;
-    fetchReports();
-  }, [fetchReports, isClient, clientCompanyId]);
+    setAutoLoading(true);
+    const timer = setTimeout(() => {
+      const empReports = reports
+        .filter((r) => r.empresa_id === formEmpresa && r.status === "published")
+        .sort((a, b) => (b.month_ref ?? "").localeCompare(a.month_ref ?? ""))
+        .slice(0, 3);
+      setContextoRelatorios(empReports.map((r) => ({
+        month_ref: r.month_ref ?? "",
+        total_hours_minutes: r.total_hours_minutes ?? 0,
+      })));
+      const comp = (empReports[0]?.company as { monthly_hours?: number | null } | null);
+      setContextoEmpresaHoras(comp?.monthly_hours ?? 0);
+      setAutoLoading(false);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [createOpen, formEmpresa, formTipo, reports]);
 
   const filtered = reports.filter((r) => {
     if (filterCompany && (r.company as { nome: string } | null)?.nome !== filterCompany) return false;
@@ -247,144 +272,54 @@ export default function RelatoriosPage() {
       }));
   })();
 
-  async function handleStatusChange(id: string, newStatus: ReportStatus) {
-    const updates: Record<string, unknown> = { status: newStatus };
-    if (newStatus === "approved") {
-      updates.admin_approved_at = new Date().toISOString();
-      updates.admin_name = usuario?.nome ?? "Admin";
-    }
-    if (newStatus === "published") {
-      updates.published_at = new Date().toISOString();
-    }
-    const { error } = await supabase.from("monthly_reports").update(updates).eq("id", id);
-    if (error) { toast.error("Erro ao atualizar status."); return; }
-    if (newStatus === "published") {
-      const rep = reports.find((r) => r.id === id);
-      if (rep?.empresa_id) {
-        const { data: users } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("empresa_id", rep.empresa_id)
-          .eq("role", "cliente_user");
-        if (users?.length) {
-          await supabase.from("app_notifications").insert(
-            (users as { id: string }[]).map((u) => ({
-              user_id: u.id,
-              title: "Novo relatório disponível",
-              body: `O relatório "${rep.title ?? rep.month_ref}" foi publicado.`,
-              link: `/app/relatorios/${id}/documento`,
-            }))
-          );
-        }
+  function handleStatusChange(id: string, newStatus: ReportStatus) {
+    const now = new Date().toISOString();
+    setReports((prev) => prev.map((r) => {
+      if (r.id !== id) return r;
+      const updates: Partial<ReportRow> = { status: newStatus };
+      if (newStatus === "approved") {
+        updates.admin_approved_at = now;
+        updates.admin_name = usuario?.nome ?? "Admin";
       }
-      toast.success("Relatório publicado.");
-    } else {
-      toast.success("Status atualizado.");
-    }
-    fetchReports();
+      if (newStatus === "published") {
+        updates.published_at = now;
+      }
+      return { ...r, ...updates };
+    }));
+    toast.success(newStatus === "published" ? "Relatório publicado." : "Status atualizado.");
   }
 
-  async function handleDelete(id: string) {
-    const { error } = await supabase.from("monthly_reports").delete().eq("id", id);
-    if (error) { toast.error("Erro ao excluir."); return; }
+  function handleDelete(id: string) {
+    setReports((prev) => prev.filter((r) => r.id !== id));
     toast.success("Relatório excluído.");
     setDeleteId(null);
-    fetchReports();
   }
 
-  async function handleSaveBoleto() {
+  function handleSaveBoleto() {
     if (!boletoReportId) return;
-    const { error } = await supabase.from("monthly_reports").update({
-      boleto_url: boletoUrl || null,
-      boleto_vencimento: boletoVenc || null,
-      boleto_valor: boletoValor ? parseFloat(boletoValor) : null,
-    }).eq("id", boletoReportId);
-    if (error) { toast.error("Erro ao salvar boleto."); return; }
+    setReports((prev) => prev.map((r) =>
+      r.id === boletoReportId
+        ? {
+            ...r,
+            boleto_url: boletoUrl || null,
+            boleto_vencimento: boletoVenc || null,
+            boleto_valor: boletoValor ? parseFloat(boletoValor) : null,
+          }
+        : r
+    ));
     toast.success("Boleto salvo.");
     setBoletoOpen(false);
-    fetchReports();
   }
 
-  async function handleUploadComprovante(reportId: string, file: File, companyId: string) {
+  function handleUploadComprovante(reportId: string, _file: File, _companyId: string) {
     setUploading(reportId);
-    const ts = Date.now();
-    const path = `comprovantes/${companyId}/${reportId}_${ts}_${file.name}`;
-    const { error: upErr } = await supabase.storage.from("job-docs").upload(path, file);
-    if (upErr) { toast.error("Erro ao enviar comprovante."); setUploading(null); return; }
-    const { data: urlData } = supabase.storage.from("job-docs").getPublicUrl(path);
-    await supabase.from("monthly_reports").update({
-      comprovante_url: urlData.publicUrl,
-      comprovante_uploaded_at: new Date().toISOString(),
-    }).eq("id", reportId);
-    toast.success("Comprovante enviado.");
-    setUploading(null);
-    fetchReports();
+    setTimeout(() => {
+      setUploading(null);
+      toast.success("Comprovante enviado (modo demo).");
+    }, 800);
   }
 
-  async function fetchAutoPreview() {
-    if (!formEmpresa || !formStart || !formEnd) return;
-    setAutoLoading(true);
-    try {
-      // Busca monthly_hours diretamente para não depender da query de listagem
-      const { data: empDetail } = await supabase
-        .from("empresas")
-        .select("monthly_hours")
-        .eq("id", formEmpresa)
-        .maybeSingle();
-      const monthlyHours = (empDetail as { monthly_hours?: number | null } | null)?.monthly_hours ?? 0;
-      setContextoEmpresaHoras(monthlyHours);
-
-      // Relatórios anteriores para contexto de horas
-      const { data: prevReps } = await supabase
-        .from("monthly_reports")
-        .select("month_ref, total_hours_minutes")
-        .eq("empresa_id", formEmpresa)
-        .eq("status", "published")
-        .order("month_ref", { ascending: false })
-        .limit(3);
-      setContextoRelatorios((prevReps ?? []) as { month_ref: string; total_hours_minutes: number | null }[]);
-
-      // Dados de atração — vagas e candidatos no período
-      if (formTipo === "atracao" || formTipo === "encerramento_vaga") {
-        const { data: vagas } = await supabase
-          .from("vagas")
-          .select("id, titulo, status, created_at")
-          .eq("empresa_id", formEmpresa)
-          .gte("created_at", formStart)
-          .lte("created_at", formEnd + "T23:59:59");
-        const vagasArr = (vagas ?? []) as { id: string; titulo: string; status: string; created_at: string }[];
-        setAtracaoVagas(vagasArr);
-        if (vagasArr.length > 0) {
-          const vagasIds = vagasArr.map((v) => v.id);
-          const { data: cands } = await supabase
-            .from("candidatos")
-            .select("id, nome, status, vaga_id")
-            .in("vaga_id", vagasIds);
-          setAtracaoCandidatos((cands ?? []) as { id: string; nome: string; status: string }[]);
-        } else {
-          setAtracaoCandidatos([]);
-        }
-      }
-    } finally {
-      setAutoLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    if (!createOpen) {
-      setContextoRelatorios([]);
-      setContextoEmpresaHoras(0);
-      setAtracaoVagas([]);
-      setAtracaoCandidatos([]);
-      return;
-    }
-    if (formEmpresa && formStart && formEnd) {
-      fetchAutoPreview();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [createOpen, formEmpresa, formStart, formEnd, formTipo]);
-
-  async function handleCreate() {
+  function handleCreate() {
     if (!formEmpresa || !formTipo || !formTitulo || !formMonthRef) {
       toast.error("Preencha os campos obrigatórios."); return;
     }
@@ -428,31 +363,47 @@ export default function RelatoriosPage() {
       };
     }
 
-    const { error } = await supabase.from("monthly_reports").insert({
-      empresa_id: formEmpresa,
-      report_type: formTipo,
+    const empresa = companies.find((c) => c.id === formEmpresa);
+
+    const novoRelatorio = {
+      id: "rel-" + Date.now(),
       title: formTitulo,
+      status: "draft" as ReportStatus,
       month_ref: formMonthRef,
+      report_type: formTipo,
+      total_hours_minutes: totalMins || null,
+      hours_deliverables_minutes: delivMins || null,
+      hours_solicitations_minutes: solMins || null,
       reference_start: formStart || null,
       reference_end: formEnd || null,
       summary_text: formSummary || null,
       risks_text: formRisks || null,
       next_steps_text: formNextSteps || null,
-      template_data,
-      status: "draft",
       consultant_name: usuario?.nome ?? null,
-      total_hours_minutes: totalMins || null,
-      hours_deliverables_minutes: delivMins || null,
-      hours_solicitations_minutes: solMins || null,
-    });
+      consultant_job_title: null,
+      admin_approved_at: null,
+      admin_name: null,
+      published_at: null,
+      client_signed_at: null,
+      template_data,
+      empresa_id: formEmpresa,
+      company: empresa
+        ? { nome: empresa.nome, logo_url: empresa.logo_url ?? null, monthly_hours: empresa.monthly_hours ?? null }
+        : null,
+      client_opened_at: null,
+      boleto_url: null,
+      boleto_vencimento: null,
+      boleto_valor: null,
+      comprovante_url: null,
+      comprovante_uploaded_at: null,
+    } as unknown as ReportRow;
 
+    setReports((prev) => [novoRelatorio, ...prev]);
     setFormSaving(false);
-    if (error) { toast.error("Erro ao criar relatório."); return; }
     toast.success("Relatório criado como rascunho.");
     setCreateOpen(false);
     setFormHorasEntregaveis("");
     setFormHorasSolicitacoes("");
-    fetchReports();
   }
 
 
@@ -546,10 +497,12 @@ export default function RelatoriosPage() {
                     </button>
                     {!r.client_signed_at && (
                       <button
-                        onClick={async () => {
-                          await supabase.from("monthly_reports").update({ client_signed_at: new Date().toISOString() }).eq("id", r.id);
+                        onClick={() => {
+                          const now = new Date().toISOString();
+                          setReports((prev) => prev.map((rep) =>
+                            rep.id === r.id ? { ...rep, client_signed_at: now } : rep
+                          ));
                           toast.success("Ciência registrada.");
-                          fetchReports();
                         }}
                         className="h-8 px-3 rounded-md border border-border text-xs font-medium hover:bg-secondary flex items-center gap-1"
                       >
@@ -979,11 +932,11 @@ export default function RelatoriosPage() {
               </div>
               <div>
                 <Label>Período início</Label>
-                <Input type="date" value={formStart} onChange={(e) => { setFormStart(e.target.value); setAutoPreview(null); }} className="mt-1.5" />
+                <Input type="date" value={formStart} onChange={(e) => setFormStart(e.target.value)} className="mt-1.5" />
               </div>
               <div>
                 <Label>Período fim</Label>
-                <Input type="date" value={formEnd} onChange={(e) => { setFormEnd(e.target.value); setAutoPreview(null); }} className="mt-1.5" />
+                <Input type="date" value={formEnd} onChange={(e) => setFormEnd(e.target.value)} className="mt-1.5" />
               </div>
             </div>
             <div>
@@ -999,7 +952,7 @@ export default function RelatoriosPage() {
                     <Loader2 className="h-3.5 w-3.5 animate-spin" /> Carregando contexto…
                   </div>
                 )}
-                {!autoLoading && (formEmpresa && formStart && formEnd) && (
+                {!autoLoading && formEmpresa && (
                   <div className="rounded-lg border border-border bg-secondary/30 p-4 space-y-3">
                     <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Contexto do período</div>
                     {contextoEmpresaHoras > 0 && (
@@ -1102,52 +1055,10 @@ export default function RelatoriosPage() {
 
             {(formTipo === "atracao" || formTipo === "encerramento_vaga") && (
               <>
-                {/* Dados automáticos de atração */}
-                {autoLoading && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> Buscando dados do período…
-                  </div>
-                )}
-                {!autoLoading && formEmpresa && formStart && formEnd && (
-                  <div className="rounded-lg border border-border bg-secondary/30 p-4 space-y-3">
-                    <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Dados automáticos do período</div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="rounded-md bg-card border border-border p-3 text-center">
-                        <div className="text-2xl font-bold font-data text-primary">{atracaoVagas.length}</div>
-                        <div className="text-xs text-muted-foreground">Vagas no período</div>
-                      </div>
-                      <div className="rounded-md bg-card border border-border p-3 text-center">
-                        <div className="text-2xl font-bold font-data text-primary">{atracaoCandidatos.length}</div>
-                        <div className="text-xs text-muted-foreground">Total de candidatos</div>
-                      </div>
-                    </div>
-                    {atracaoCandidatos.length > 0 && (() => {
-                      const porStatus = atracaoCandidatos.reduce<Record<string, number>>((acc, c) => {
-                        acc[c.status] = (acc[c.status] ?? 0) + 1;
-                        return acc;
-                      }, {});
-                      return (
-                        <div className="flex flex-wrap gap-2">
-                          {Object.entries(porStatus).map(([status, count]) => (
-                            <span key={status} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-card border border-border">
-                              <span className="font-data font-semibold">{count}</span>
-                              <span className="text-muted-foreground">{status}</span>
-                            </span>
-                          ))}
-                        </div>
-                      );
-                    })()}
-                    {atracaoVagas.length === 0 && (
-                      <p className="text-xs text-muted-foreground">Nenhuma vaga encontrada no período selecionado.</p>
-                    )}
-                  </div>
-                )}
-                {!autoLoading && !(formEmpresa && formStart && formEnd) && (
-                  <div className="rounded-md bg-secondary p-3 flex items-start gap-2 text-xs text-muted-foreground">
-                    <Info className="h-4 w-4 mt-0.5 shrink-0" />
-                    <span>Selecione empresa e período para carregar dados automáticos.</span>
-                  </div>
-                )}
+                <div className="rounded-md bg-secondary p-3 flex items-start gap-2 text-xs text-muted-foreground">
+                  <Info className="h-4 w-4 mt-0.5 shrink-0" />
+                  <span>Preencha os dados manualmente abaixo. Dados automáticos estarão disponíveis quando o banco estiver conectado.</span>
+                </div>
                 <div>
                   <Label>Síntese do pipeline</Label>
                   <Textarea value={formPipeline} onChange={(e) => setFormPipeline(e.target.value)} rows={2} className="mt-1.5" />
