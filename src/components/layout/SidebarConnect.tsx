@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Building2, Users, Briefcase, Clock, MessagesSquare, Target,
   BarChart3, CreditCard, Receipt, FileText, ShieldCheck, Calendar, Megaphone, BookOpen,
-  Settings, LogOut, ChevronLeft,
+  Settings, LogOut,
   ExternalLink, Mail, Phone
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
