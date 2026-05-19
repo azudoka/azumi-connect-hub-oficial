@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Building2, Users, Briefcase, Clock, MessagesSquare, Target,
   BarChart3, CreditCard, Receipt, FileText, ShieldCheck, Calendar, Megaphone, BookOpen,
-  Settings, LogOut, ChevronLeft,
+  Settings, LogOut,
   ExternalLink, Mail, Phone
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
@@ -153,7 +153,7 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
     <aside
       className={cn(
         "flex flex-col shrink-0 border-r border-sidebar-border transition-all duration-300",
-        collapsed ? "w-16 bg-[#F5F3FF]" : "w-60 bg-gradient-sidebar"
+        collapsed ? "w-16 bg-[#EDE9FE]" : "w-60 bg-gradient-sidebar"
       )}
       aria-label="Navegação principal"
     >
@@ -164,18 +164,11 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
             <span style={{ color: "white", fontSize: 13, fontWeight: 800, fontFamily: "'Urbanist',sans-serif" }}>A</span>
           </div>
           {!collapsed && (
-            <span style={{ fontSize: 15, fontWeight: 800, color: "#0F172A", fontFamily: "'Urbanist',sans-serif", letterSpacing: "-0.02em" }}>
+            <span style={{ fontSize: 16, fontWeight: 800, color: "#031D38", fontFamily: "'Urbanist',sans-serif", letterSpacing: "-0.03em" }}>
               Connect
             </span>
           )}
         </div>
-        <button
-          onClick={() => setCollapsed((c) => !c)}
-          className="ml-auto h-7 w-7 rounded-md hover:bg-sidebar-accent flex items-center justify-center text-muted-foreground"
-          aria-label={collapsed ? "Expandir" : "Colapsar"}
-        >
-          <ChevronLeft className={cn("h-4 w-4 transition-transform", collapsed && "rotate-180")} />
-        </button>
       </div>
 
       {/* Nav */}
@@ -193,19 +186,24 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
                   <NavLink
                     to={it.to}
                     className={cn(
-                      "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors",
-                      collapsed && "justify-center px-0 bg-[#8B5CF6]/10"
+                      "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground transition-colors",
+                      collapsed ? "justify-center px-2 py-2.5 hover:bg-[#DDD6FE]" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                     )}
                     activeClassName="!bg-primary/15 !text-foreground border-l-[3px] border-primary rounded-l-none ml-[3px]"
                   >
                     {collapsed ? (
-                      <span title={it.label}>
-                        <it.icon className="h-5 w-5 shrink-0" />
-                      </span>
+                      <div className="relative group/tip flex items-center justify-center">
+                        <it.icon className="h-5 w-5 shrink-0 text-[#8B5CF6]" />
+                        <div className="absolute left-full ml-2 z-50 hidden group-hover/tip:flex items-center">
+                          <div className="bg-[#1E1B4B] text-white text-xs font-medium px-2.5 py-1.5 rounded-lg whitespace-nowrap shadow-lg" style={{ fontFamily: "'Urbanist',sans-serif" }}>
+                            {it.label}
+                          </div>
+                        </div>
+                      </div>
                     ) : (
                       <>
                         <it.icon className="h-4 w-4 shrink-0 text-[#8B5CF6]" />
-                        <span className="truncate">{it.label}</span>
+                        <span className="truncate" style={{ fontFamily: "'Urbanist',sans-serif" }}>{it.label}</span>
                       </>
                     )}
                   </NavLink>
@@ -225,13 +223,26 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
               <NavLink
                 to={configHref}
                 className={cn(
-                  "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors",
-                  collapsed && "justify-center px-0"
+                  "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground transition-colors",
+                  collapsed ? "justify-center px-2 py-2.5 hover:bg-[#DDD6FE]" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 )}
                 activeClassName="!bg-primary/15 !text-foreground"
               >
-                <Settings className="h-4 w-4 shrink-0 text-[#8B5CF6]" />
-                {!collapsed && <span className="truncate">Configurações</span>}
+                {collapsed ? (
+                  <div className="relative group/tip flex items-center justify-center">
+                    <Settings className="h-5 w-5 shrink-0 text-[#8B5CF6]" />
+                    <div className="absolute left-full ml-2 z-50 hidden group-hover/tip:flex items-center">
+                      <div className="bg-[#1E1B4B] text-white text-xs font-medium px-2.5 py-1.5 rounded-lg whitespace-nowrap shadow-lg" style={{ fontFamily: "'Urbanist',sans-serif" }}>
+                        Configurações
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <Settings className="h-4 w-4 shrink-0 text-[#8B5CF6]" />
+                    <span className="truncate" style={{ fontFamily: "'Urbanist',sans-serif" }}>Configurações</span>
+                  </>
+                )}
               </NavLink>
             );
           })()}
