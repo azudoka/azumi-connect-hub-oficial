@@ -373,6 +373,7 @@ export default function DocumentosPage() {
                   />
                 </div>
               )}
+            </div>
             <div className="space-y-1.5">
               <Label>Upload de arquivo</Label>
               <Input type="file" accept="application/pdf" />
