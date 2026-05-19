@@ -72,7 +72,7 @@ const emptyForm: FormState = {
 };
 
 export default function DocumentosPage() {
-  const [docs, setDocs] = useState<Documento[]>(initialDocs);
+  const [docs, setDocs] = useState<Documento[]>(() => [...documentosMock]);
   const [filtroEmpresa, setFiltroEmpresa] = useState("all");
   const [filtroCategoria, setFiltroCategoria] = useState("all");
   const [filtroStatus, setFiltroStatus] = useState("all");
