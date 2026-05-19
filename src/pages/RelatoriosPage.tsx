@@ -435,12 +435,19 @@ export default function RelatoriosPage() {
         ? { nome: empresa.nome, logo_url: empresa.logo_url ?? null, monthly_hours: empresa.monthly_hours ?? null }
         : null,
       client_opened_at: null,
-      boleto_url: null,
-      boleto_vencimento: null,
-      boleto_valor: null,
+      boleto_url: formBoletoUrl || null,
+      boleto_vencimento: formBoletoVencimento || null,
+      boleto_valor: formBoletoValor ? parseFloat(formBoletoValor) : null,
       comprovante_url: null,
       comprovante_uploaded_at: null,
     } as unknown as ReportRow;
+
+    (novoRelatorio.template_data as Record<string, unknown>) = {
+      ...(novoRelatorio.template_data as Record<string, unknown>),
+      boleto_multa_percent: formBoletoMulta ? parseFloat(formBoletoMulta) : null,
+      boleto_mora_percent: formBoletoMora ? parseFloat(formBoletoMora) : null,
+      boleto_data_limite: formBoletoDataLimite || null,
+    };
 
     addMockRelatorio(novoRelatorio);
     setReports((prev) => [novoRelatorio, ...prev]);
@@ -449,6 +456,13 @@ export default function RelatoriosPage() {
     setCreateOpen(false);
     setFormHorasEntregaveis("");
     setFormHorasSolicitacoes("");
+    setFormBoletoFile(null);
+    setFormBoletoUrl("");
+    setFormBoletoVencimento("");
+    setFormBoletoValor("");
+    setFormBoletoMulta("");
+    setFormBoletoMora("");
+    setFormBoletoDataLimite("");
   }
 
 
