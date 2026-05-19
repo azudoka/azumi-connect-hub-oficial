@@ -75,6 +75,7 @@ interface FormState {
   versao: string;
   status: Status;
   file_url: string;
+  capa_url: string;
 }
 
 const emptyForm: FormState = {
@@ -84,6 +85,7 @@ const emptyForm: FormState = {
   versao: "v1.0",
   status: "rascunho",
   file_url: "",
+  capa_url: "",
 };
 
 export default function DocumentosPage() {
