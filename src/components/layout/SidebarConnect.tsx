@@ -7,6 +7,7 @@ import {
   Settings, LogOut, ExternalLink, Mail, Phone
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useAuth } from "@/context/AuthContext";
 import { usePermissao, type Permissao } from "@/config/permissoes";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -100,42 +101,54 @@ const clienteGroups = [
   },
 ];
 
-/* ─── Tooltip roxo para modo retraído ─── */
+/* ─── Tooltip com position:fixed via portal — escapa de overflow:auto ─── */
 function NavTooltip({ label, children }: { label: string; children: React.ReactNode }) {
-  const [show, setShow] = useState(false);
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const ref = useRef<HTMLSpanElement | null>(null);
+  const show = () => {
+    const r = ref.current?.getBoundingClientRect();
+    if (r) setPos({ x: r.right + 8, y: r.top + r.height / 2 });
+  };
+  const hide = () => setPos(null);
   return (
-    <div
-      style={{ position: "relative", width: "100%" }}
-      onMouseEnter={() => setShow(true)}
-      onMouseLeave={() => setShow(false)}
-    >
-      {children}
-      {show && (
+    <>
+      <span
+        ref={ref}
+        onMouseEnter={show}
+        onMouseLeave={hide}
+        style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}
+      >
+        {children}
+      </span>
+      {pos && createPortal(
         <div
           style={{
-            position: "absolute",
-            left: "calc(100% + 8px)",
-            top: "50%",
+            position: "fixed",
+            left: pos.x,
+            top: pos.y,
             transform: "translateY(-50%)",
-            background: "#1E1B4B",
-            color: "white",
+            background: "#EDE9FE",
+            color: "#031D38",
             fontSize: 12,
             fontWeight: 500,
-            padding: "6px 10px",
-            borderRadius: 8,
+            padding: "4px 10px",
+            borderRadius: 6,
             whiteSpace: "nowrap",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            border: "1px solid #DDD6FE",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
             fontFamily: "'Urbanist',sans-serif",
-            zIndex: 50,
+            zIndex: 9999,
             pointerEvents: "none",
           }}
         >
           {label}
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 }
+
 
 export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
   const [collapsed, setCollapsed] = useState(false);
@@ -231,12 +244,9 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
                       className="flex items-center justify-center w-full py-2.5 hover:bg-[#DDD6FE] transition-colors rounded-none"
                       activeClassName="!bg-[#C4B5FD]"
                     >
-                      <span className="relative group/tip flex items-center justify-center">
+                      <NavTooltip label={it.label}>
                         <it.icon className="h-4 w-4 shrink-0 text-[#8B5CF6]" />
-                        <span className="pointer-events-none absolute left-full ml-2 z-50 px-2.5 py-1 rounded-md bg-[#EDE9FE] text-[#031D38] text-xs font-medium whitespace-nowrap border border-[#DDD6FE] shadow-sm opacity-0 group-hover/tip:opacity-100 transition-none" style={{ fontFamily: "'Urbanist',sans-serif" }}>
-                          {it.label}
-                        </span>
-                      </span>
+                      </NavTooltip>
                     </NavLink>
                   ) : (
                     <NavLink
@@ -263,12 +273,9 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
               className="flex items-center justify-center w-full py-2.5 hover:bg-[#DDD6FE] transition-colors rounded-none"
               activeClassName="!bg-[#C4B5FD]"
             >
-              <span className="relative group/tip flex items-center justify-center">
+              <NavTooltip label="Configurações">
                 <Settings className="h-4 w-4 shrink-0 text-[#8B5CF6]" />
-                <span className="pointer-events-none absolute left-full ml-2 z-50 px-2.5 py-1 rounded-md bg-[#EDE9FE] text-[#031D38] text-xs font-medium whitespace-nowrap border border-[#DDD6FE] shadow-sm opacity-0 group-hover/tip:opacity-100 transition-none" style={{ fontFamily: "'Urbanist',sans-serif" }}>
-                  Configurações
-                </span>
-              </span>
+              </NavTooltip>
             </NavLink>
           ) : (
             <NavLink
@@ -290,12 +297,9 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
                   onClick={(e) => { e.stopPropagation(); navigate("/portal"); }}
                   className="flex items-center justify-center w-full py-2.5 hover:bg-[#DDD6FE] transition-colors rounded-none border-0 bg-transparent cursor-pointer"
                 >
-                  <span className="relative group/tip flex items-center justify-center">
+                  <NavTooltip label="Portal do Cliente">
                     <ExternalLink className="h-4 w-4 shrink-0 text-[#8B5CF6]" />
-                    <span className="pointer-events-none absolute left-full ml-2 z-50 px-2.5 py-1 rounded-md bg-[#EDE9FE] text-[#031D38] text-xs font-medium whitespace-nowrap border border-[#DDD6FE] shadow-sm opacity-0 group-hover/tip:opacity-100 transition-none" style={{ fontFamily: "'Urbanist',sans-serif" }}>
-                      Portal do Cliente
-                    </span>
-                  </span>
+                  </NavTooltip>
                 </button>
               ) : (
                 <button
