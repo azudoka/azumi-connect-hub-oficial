@@ -232,6 +232,12 @@ export default function AtracaoLista() {
               <Filter className="h-4 w-4" /> Filtros
             </button>
             <button
+              onClick={() => setBancoOpen(true)}
+              className="h-9 px-3 rounded-lg border border-border hover:bg-secondary text-sm font-medium flex items-center gap-1.5"
+            >
+              <Users className="h-4 w-4" /> Banco de Talentos
+            </button>
+            <button
               onClick={() => setNovaVagaOpen(true)}
               className="h-9 px-3 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center gap-1.5"
             >
