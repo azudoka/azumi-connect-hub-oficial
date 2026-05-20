@@ -1,4 +1,4 @@
-import { Bell, Search, ChevronDown, AlertTriangle, ArrowRight, Eye, EyeOff, LogOut, User, Users, Settings, Sparkles, ArrowUp } from "lucide-react";
+import { Bell, Search, ChevronDown, AlertTriangle, ArrowRight, Eye, EyeOff, LogOut, User, Users, Settings, Sparkles, ArrowUp, Wrench } from "lucide-react";
 import { useFinanceiro } from "@/context/FinanceiroContext";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
@@ -103,6 +103,17 @@ export function Header({ showSwitcher = true, context = "connect" }: HeaderProps
                 context === "hub" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
               )}>Hub</span>
             </button>
+          )}
+
+          {(usuario?.role === "admin" || usuario?.role === "consultor") && (
+            <a
+              href="https://tools.azumirh.com.br/"
+              target="_blank"
+              rel="noreferrer"
+              style={{ display: "flex", alignItems: "center", gap: 5, height: 32, padding: "0 12px", borderRadius: 8, border: "1px solid #E4E6EA", background: "white", fontSize: 13, fontWeight: 600, color: "#374151", textDecoration: "none", fontFamily: "'Urbanist',sans-serif" }}
+            >
+              <Wrench size={13} /> Tools
+            </a>
           )}
 
           {/* Sair — portinha de saída da plataforma */}
