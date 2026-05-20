@@ -52,7 +52,6 @@ import { cn } from "@/lib/utils";
 // ============================================================================
 type TipoSolicitacao =
   | "reuniao"
-  | "rs"
   | "hunting"
   | "treinamento"
   | "programa_lideres"
@@ -60,8 +59,7 @@ type TipoSolicitacao =
   | "visita"
   | "novo_usuario"
   | "duvida"
-  | "nr_compliance"
-  | "horas_avulsas";
+  | "nr_compliance";
 
 type Urgencia = "alta" | "media" | "baixa";
 type StatusSolicitacao =
@@ -125,17 +123,6 @@ const TIPOS: TipoConfig[] = [
     descricao: "Agendar conversa com sua consultora",
     icon: CalendarClock,
     cota: { start: 1, ongoing: 2, growth: -1 },
-  },
-  {
-    key: "rs",
-    nome: "Processo Seletivo (R&S)",
-    descricao: "Abrir vaga para recrutamento e seleção",
-    icon: Users,
-    cota: { start: 1, ongoing: 2, growth: 3 },
-    termoExtra: {
-      texto:
-        "Estou ciente de que esta vaga excede a cota inclusa no meu pacote e gerará cobrança adicional conforme tabela vigente.",
-    },
   },
   {
     key: "hunting",
@@ -220,18 +207,6 @@ const TIPOS: TipoConfig[] = [
     icon: ShieldCheck,
     cota: { start: -1, ongoing: -1, growth: -1 },
   },
-  {
-    key: "horas_avulsas",
-    nome: "Horas Avulsas",
-    descricao: "Aprovar horas excedentes proativamente",
-    icon: TimerIcon,
-    cota: { start: 0, ongoing: 0, growth: 0 },
-    sempreExtra: true,
-    termoSempre: {
-      texto:
-        "Estou ciente de que horas avulsas geram cobrança adicional conforme tabela vigente e que a execução só ocorrerá após aprovação registrada.",
-    },
-  },
 ];
 
 const TIPO_BY_KEY: Record<TipoSolicitacao, TipoConfig> = TIPOS.reduce(
@@ -289,13 +264,13 @@ const URGENCIA_DOT: Record<Urgencia, string> = {
 // ============================================================================
 const MOCK: Solicitacao[] = [
   {
-    id: "s-71", codigo: "SOL-2026-0071", tipo: "rs",
-    titulo: "Vaga: Analista de Marketing Pleno",
-    descricao: "Abertura de vaga para reforço do time de marketing.",
+    id: "s-71", codigo: "SOL-2026-0071", tipo: "hunting",
+    titulo: "Hunting: Head de Marketing",
+    descricao: "Busca estratégica para liderar a área de marketing.",
     urgencia: "alta", status: "andamento", empresaId: "kentaki",
     consultor: "Ana Beatriz", criadaEm: "2026-04-18T14:20:00Z",
     historico: [
-      { autor: "Ana Beatriz", texto: "Recebido. Iniciamos a triagem.", data: "2026-04-19T09:10:00Z" },
+      { autor: "Ana Beatriz", texto: "Recebido. Iniciamos o mapeamento.", data: "2026-04-19T09:10:00Z" },
     ],
   },
   {
@@ -842,7 +817,7 @@ function FormularioTipo({
   const [aceiteTermo, setAceiteTermo] = useState(false);
   const termo = tipo.termoSempre ?? (statusCota.geraCusto ? tipo.termoExtra : undefined);
   const precisaAceite = !!termo;
-  const sla = slaTexto(pacote, form.urgencia);
+  
 
   function setExtra(k: string, v: string) {
     setForm((f) => ({ ...f, extras: { ...f.extras, [k]: v } }));
@@ -911,7 +886,7 @@ function FormularioTipo({
             </div>
             <div className="text-xs text-muted-foreground flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5" />
-              Tempo de resposta estimado: <strong className="text-foreground">{sla}</strong>
+              O tempo de resposta segue o SLA do seu pacote.
             </div>
           </div>
         )}
@@ -991,26 +966,6 @@ function CamposPorTipo({
     );
   }
 
-  if (t === "rs") {
-    return (
-      <>
-        <FieldText label="Cargo" required value={form.titulo} onChange={(v) => setForm((f) => ({ ...f, titulo: v }))} />
-        <div className="grid grid-cols-2 gap-2">
-          <FieldText label="Área/Departamento" required value={get("area")} onChange={(v) => setExtra("area", v)} />
-          <FieldSelect label="Nível" value={get("nivel")} onChange={(v) => setExtra("nivel", v)}
-            options={["Estágio", "Júnior", "Pleno", "Sênior", "Especialista", "Liderança"]} />
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <FieldSelect label="Regime" value={get("regime")} onChange={(v) => setExtra("regime", v)}
-            options={["CLT", "PJ", "Estágio", "Temporário"]} />
-          <FieldText label="Nº de vagas" value={get("qtd")} onChange={(v) => setExtra("qtd", v)} type="number" />
-        </div>
-        <FieldText label="Faixa salarial (opcional)" value={get("faixa")} onChange={(v) => setExtra("faixa", v)} />
-        <FieldText label="Descrição da vaga" required multiline rows={3} value={form.descricao}
-          onChange={(v) => setForm((f) => ({ ...f, descricao: v }))} />
-      </>
-    );
-  }
 
   if (t === "hunting") {
     return (
@@ -1150,16 +1105,6 @@ function CamposPorTipo({
     );
   }
 
-  if (t === "horas_avulsas") {
-    return (
-      <>
-        <FieldText label="Quantidade estimada de horas" required type="number" value={get("horas")} onChange={(v) => setExtra("horas", v)} />
-        <FieldText label="Frente/área para aplicação" required value={form.titulo} onChange={(v) => setForm((f) => ({ ...f, titulo: v }))} />
-        <FieldText label="Justificativa" required multiline rows={3} value={form.descricao}
-          onChange={(v) => setForm((f) => ({ ...f, descricao: v }))} />
-      </>
-    );
-  }
 
   return null;
 }
