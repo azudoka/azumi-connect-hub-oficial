@@ -79,7 +79,18 @@ const PERMISSOES_POR_PAPEL: Record<Papel, Permissao[]> = {
   dp: ["dashboard.ver", "perfil.editar_proprio"],
   contador: ["dashboard.ver", "perfil.editar_proprio"],
   juridico: ["dashboard.ver", "perfil.editar_proprio"],
+  trial: [
+    "dashboard.ver",
+    "solicitacoes.ver", "solicitacoes.criar",
+    "vagas.ver",
+    "candidatos.ver",
+    "documentos.ver",
+    "calendario.ver",
+    "comunicados.ver",
+    "perfil.editar_proprio",
+  ],
 };
+
 
 export function temPermissao(papel: Papel, permissao: Permissao): boolean {
   if (papel === "admin") return true;
