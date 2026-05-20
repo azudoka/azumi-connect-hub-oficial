@@ -6,6 +6,8 @@ import { useAuth } from "@/context/AuthContext";
 import { TimerFlutuante } from "@/components/TimerFlutuante";
 import { useTimerGlobal } from "@/context/TimerContext";
 import { TrialGuard } from "@/components/TrialGuard";
+import { MockDataBanner } from "@/components/MockDataBanner";
+import { algumaEmpresaIsMock } from "@/data/mockEmpresas";
 
 interface AppLayoutProps {
   /**
