@@ -27,7 +27,7 @@ import {
   type DocumentoMock,
 } from "@/data/documentosMock";
 
-type Categoria = "Políticas" | "Manuais" | "Fluxos" | "Guias" | "Outro";
+type Categoria = "Políticas" | "Manuais" | "Fluxos" | "Guias" | "Relatórios" | "Onboarding" | "Outro";
 type Status = "publicado" | "rascunho";
 type Documento = DocumentoMock;
 
@@ -41,10 +41,12 @@ const categoriaConfig: Record<Categoria, { topo: string; chip: string; icon: typ
   "Manuais":   { topo: "#034C8B", chip: "bg-[#034C8B]/15 text-[#034C8B] border-[#034C8B]/30", icon: BookOpen },
   "Fluxos":    { topo: "#0D9488", chip: "bg-[#0D9488]/15 text-[#0D9488] border-[#0D9488]/30", icon: Workflow },
   "Guias":     { topo: "#D97706", chip: "bg-[#D97706]/15 text-[#D97706] border-[#D97706]/30", icon: BookOpen },
+  "Relatórios": { topo: "#0EA5E9", chip: "bg-[#0EA5E9]/15 text-[#0EA5E9] border-[#0EA5E9]/30", icon: FileText },
+  "Onboarding": { topo: "#16A34A", chip: "bg-[#16A34A]/15 text-[#16A34A] border-[#16A34A]/30", icon: BookOpen },
   "Outro":     { topo: "#6B7280", chip: "bg-muted text-muted-foreground border-border", icon: FileText },
 };
 
-const categorias: Categoria[] = ["Políticas", "Manuais", "Fluxos", "Guias", "Outro"];
+const categorias: Categoria[] = ["Políticas", "Manuais", "Fluxos", "Guias", "Relatórios", "Onboarding", "Outro"];
 
 function formatarData(iso: string): string {
   const [a, m, d] = iso.split("-");

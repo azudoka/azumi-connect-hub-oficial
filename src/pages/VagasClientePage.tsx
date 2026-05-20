@@ -2,6 +2,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { DiscBars } from "@/components/DiscBars";
 import {
   Briefcase,
   Calendar,
@@ -53,17 +54,17 @@ interface CandidatoEnviado {
   id: string;
   vagaId: string;
   nome: string;
+  cargo: string;
   parecer: string;
   enviado: boolean;
+  disc: { D: number; I: number; S: number; C: number };
 }
 
 const CANDIDATOS_MOCK: CandidatoEnviado[] = [
-  { id: "ca-01", vagaId: "v-01", nome: "Marina Souza", parecer: "Forte experiência em RH estratégico, perfil analítico e bom fit cultural.", enviado: true },
-  { id: "ca-02", vagaId: "v-01", nome: "Rafael Tavares", parecer: "Background sólido em recrutamento técnico, comunicação excelente.", enviado: true },
-  { id: "ca-03", vagaId: "v-01", nome: "Juliana Pires", parecer: "Perfil generalista de RH com experiência em multinacionais.", enviado: true },
-  { id: "ca-04", vagaId: "v-02", nome: "Carlos Mendes", parecer: "Coordenador financeiro com experiência em FP&A e fechamento contábil.", enviado: true },
-  { id: "ca-05", vagaId: "v-02", nome: "Patrícia Lima", parecer: "Forte em controladoria e gestão de equipes financeiras.", enviado: true },
-  { id: "ca-06", vagaId: "v-03", nome: "Diego Almeida", parecer: "Full Stack sênior, React/Node, contratado pelo cliente.", enviado: true },
+  { id: "ca-01", vagaId: "v-01", nome: "Marina Souza", cargo: "Gerente de TI", parecer: "Liderança técnica sólida em times de infra. Perfil executivo, comunica bem com áreas de negócio.", enviado: true, disc: { D: 78, I: 52, S: 38, C: 64 } },
+  { id: "ca-02", vagaId: "v-01", nome: "Rafael Tavares", cargo: "Gerente de TI", parecer: "Background em arquitetura cloud e governança. Forte em planejamento estratégico de TI.", enviado: true, disc: { D: 62, I: 44, S: 55, C: 82 } },
+  { id: "ca-03", vagaId: "v-01", nome: "Juliana Pires", cargo: "Gerente de TI", parecer: "Experiência em multinacionais com squads multidisciplinares. Excelente articuladora.", enviado: true, disc: { D: 55, I: 72, S: 60, C: 50 } },
+  { id: "ca-04", vagaId: "v-02", nome: "Patrícia Lima", cargo: "Analista de Marketing", parecer: "Contratada — campanhas de performance e branding integrado.", enviado: true, disc: { D: 48, I: 80, S: 58, C: 45 } },
 ];
 
 const FEEDBACK_LABEL: Record<FeedbackAcao, string> = {
@@ -122,10 +123,8 @@ const STATUS_ORDER: Record<string, number> = {
 };
 
 const MOCK: VagaMock[] = [
-  { id: "v-01", cargo: "Analista de RH Sênior", departamento: "Recursos Humanos", status: "em_andamento", totalCandidatos: 12, aprovados: 3, criadaEm: "2026-04-10T09:00:00Z", empresaId: "kentaki" },
-  { id: "v-02", cargo: "Coordenador Financeiro", departamento: "Financeiro", status: "aguardando_cliente", totalCandidatos: 8, aprovados: 2, criadaEm: "2026-03-28T11:30:00Z", empresaId: "kentaki" },
-  { id: "v-03", cargo: "Desenvolvedor Full Stack", departamento: "TI", status: "finalizada", totalCandidatos: 22, aprovados: 1, criadaEm: "2026-02-15T14:45:00Z", empresaId: "kentaki" },
-  { id: "v-04", cargo: "Assistente Administrativo", departamento: "Administrativo", status: "aberta", totalCandidatos: 5, aprovados: 0, criadaEm: "2026-04-20T10:15:00Z", empresaId: "kentaki" },
+  { id: "v-01", cargo: "Gerente de TI", departamento: "Tecnologia", status: "em_andamento", totalCandidatos: 18, aprovados: 3, criadaEm: "2026-04-10T09:00:00Z", empresaId: "kentaki" },
+  { id: "v-02", cargo: "Analista de Marketing", departamento: "Marketing", status: "finalizada", totalCandidatos: 11, aprovados: 1, criadaEm: "2026-02-15T14:45:00Z", empresaId: "kentaki" },
 ];
 
 function statusClasses(s: StatusVaga) {
@@ -434,11 +433,21 @@ export default function VagasClientePage() {
                       <div className="flex items-start justify-between gap-3 flex-wrap">
                         <div className="min-w-0">
                           <div className="font-medium text-sm">{c.nome}</div>
-                          <p className="text-xs text-muted-foreground mt-1">{c.parecer}</p>
+                          <div className="text-xs text-muted-foreground">{c.cargo}</div>
+                          <p className="text-xs text-muted-foreground mt-1.5">{c.parecer}</p>
                         </div>
                         {fb && <span className={cn(PILL_BASE, FEEDBACK_BADGE[fb])}>{FEEDBACK_LABEL[fb]}</span>}
                       </div>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="rounded-lg bg-secondary/40 p-3">
+                        <DiscBars values={c.disc} compact />
+                      </div>
+                      <div className="flex flex-wrap gap-2 items-center">
+                        <Button size="sm" variant="outline"
+                          className="rounded-full gap-1.5"
+                          onClick={() => setVagaSelecionadaId(v.id)}>
+                          Ver candidato
+                        </Button>
+                        <span className="flex-1" />
                         <Button size="sm" variant="outline" disabled={!!fb}
                           className="rounded-full gap-1.5 border-success/40 text-success hover:bg-success/10 hover:text-success disabled:opacity-50"
                           onClick={() => setConfirmacao({ candidatoId: c.id, nome: c.nome, acao: "aprovado" })}>
