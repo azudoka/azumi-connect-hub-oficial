@@ -340,6 +340,24 @@ export default function VagasClientePage() {
       posicoes: Number(form.posicoes) || 1,
       beneficios: form.beneficios,
       descricao: form.descricao.trim(),
+      // TODO: conectar Supabase — colunas de publicação na vaga
+      publicacao: form.pubPublicar
+        ? {
+            publicar: form.pubPublicar,
+            confidencial: form.pubConfidencial,
+            local: form.pubLocal.trim(),
+            modalidade: form.pubModalidade,
+            nivel: form.pubNivel,
+            turno: form.pubTurno,
+            contrato: form.pubContrato,
+            carga_horaria: form.pubCarga.trim(),
+            salario_a_combinar: form.pubACombinar,
+            salario_de: form.pubACombinar ? null : Number(form.pubSalDe) || null,
+            salario_ate: form.pubACombinar ? null : Number(form.pubSalAte) || null,
+            descricao_site: form.pubDescricao.trim(),
+            publicada: false, // só publica via botão "Publicar no site" na tela interna
+          }
+        : null,
     };
 
     const novaVaga: VagaMock = {
