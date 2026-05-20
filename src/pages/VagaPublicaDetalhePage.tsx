@@ -122,13 +122,6 @@ export default function VagaPublicaDetalhePage() {
             </div>
           </div>
 
-          {vaga.descricao && (
-            <section className="rounded-xl border border-slate-200 bg-white p-6">
-              <h2 className="mb-3 text-lg font-semibold text-slate-900">Sobre a vaga</h2>
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{vaga.descricao}</p>
-            </section>
-          )}
-
           <section className="rounded-xl border border-slate-200 bg-white p-6">
             <h2 className="mb-4 text-lg font-semibold text-slate-900">Detalhes da vaga</h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -144,24 +137,28 @@ export default function VagaPublicaDetalhePage() {
             </div>
           </section>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-6 text-center">
-            <p className="text-sm text-slate-600">Interessado nesta vaga?</p>
-            <button
-              onClick={() => setModalOpen(true)}
-              className="mt-3 h-12 rounded-lg px-8 text-sm font-semibold text-white"
-              style={{ background: BLUE }}
-            >
-              Quero me candidatar →
-            </button>
-          </div>
+          {vaga.descricao && (
+            <section className="rounded-xl border border-slate-200 bg-white p-6">
+              <h2 className="mb-3 text-lg font-semibold text-slate-900">Sobre a vaga</h2>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{vaga.descricao}</p>
+            </section>
+          )}
 
-          {/* CTA secundário banco de talentos */}
-          <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/60 p-5 text-center">
+          {/* CTA banco de talentos */}
+          <div
+            className="rounded-xl px-6 py-12 text-center text-white"
+            style={{ background: NAVY }}
+          >
+            <h3 className="text-2xl font-semibold">Não encontrou a vaga ideal?</h3>
+            <p className="mx-auto mt-3 max-w-xl text-sm text-white/80">
+              Cadastre-se no nosso banco de talentos e entraremos em contato quando surgir uma oportunidade para o seu perfil.
+            </p>
             <button
               onClick={() => setModalBanco(true)}
-              className="text-sm font-medium text-slate-700 underline-offset-4 hover:underline"
+              className="mt-6 h-12 rounded-lg bg-white px-8 text-sm font-semibold shadow-sm transition hover:bg-white/90"
+              style={{ color: BLUE }}
             >
-              Não é essa vaga? Cadastre-se no banco de talentos →
+              Quero entrar no banco de talentos →
             </button>
           </div>
         </div>
