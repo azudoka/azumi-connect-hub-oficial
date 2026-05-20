@@ -264,13 +264,13 @@ const URGENCIA_DOT: Record<Urgencia, string> = {
 // ============================================================================
 const MOCK: Solicitacao[] = [
   {
-    id: "s-71", codigo: "SOL-2026-0071", tipo: "rs",
-    titulo: "Vaga: Analista de Marketing Pleno",
-    descricao: "Abertura de vaga para reforço do time de marketing.",
+    id: "s-71", codigo: "SOL-2026-0071", tipo: "hunting",
+    titulo: "Hunting: Head de Marketing",
+    descricao: "Busca estratégica para liderar a área de marketing.",
     urgencia: "alta", status: "andamento", empresaId: "kentaki",
     consultor: "Ana Beatriz", criadaEm: "2026-04-18T14:20:00Z",
     historico: [
-      { autor: "Ana Beatriz", texto: "Recebido. Iniciamos a triagem.", data: "2026-04-19T09:10:00Z" },
+      { autor: "Ana Beatriz", texto: "Recebido. Iniciamos o mapeamento.", data: "2026-04-19T09:10:00Z" },
     ],
   },
   {
