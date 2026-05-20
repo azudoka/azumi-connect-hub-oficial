@@ -64,6 +64,8 @@ import ClienteGestaoContaPage from "./pages/cliente/ClienteGestaoContaPage";
 import ClienteHubIndisponivelPage from "./pages/cliente/ClienteHubIndisponivelPage";
 import VagaDetalheCliente from "./pages/cliente/VagaDetalheCliente";
 import ConfirmarEntrevistaPage from "./pages/public/ConfirmarEntrevistaPage";
+import VagasPublicasPage from "./pages/VagasPublicasPage";
+import VagaPublicaDetalhePage from "./pages/VagaPublicaDetalhePage";
 
 import LiderPainelPage from "./pages/hub/lider/LiderPainelPage";
 import MeuTimePage from "./pages/hub/lider/MeuTimePage";
@@ -158,6 +160,8 @@ const AppRoutes = () => (
     <Route path="/login" element={<Login />} />
     <Route path="/selecao-perfil" element={<SelecaoPerfil />} />
     <Route path="/confirmar-entrevista/:agendamentoId" element={<ConfirmarEntrevistaPage />} />
+    <Route path="/vagas" element={<VagasPublicasPage />} />
+    <Route path="/vagas/:id" element={<VagaPublicaDetalhePage />} />
 
     {/* Admin / Consultor */}
     <Route
