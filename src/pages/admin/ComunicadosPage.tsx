@@ -277,8 +277,10 @@ function DetalheModal({ c, onClose, onReagir, onAddComentario }: {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
+
 }
 
 function CriarModal({ onClose, onCreate }: { onClose: () => void; onCreate: (c: Omit<Comunicado, "id" | "leitores" | "comentarios" | "reacoes" | "minhasReacoes">) => void }) {
