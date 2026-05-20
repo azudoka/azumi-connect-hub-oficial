@@ -28,12 +28,14 @@ import {
   MessageSquareQuote,
   CalendarDays,
   GitBranch,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 import { StatusBadge } from "@/components/StatusBadge";
 import { SectionDivider } from "@/components/SectionDivider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar } from "@/components/ui/calendar";
+// Calendar do shadcn removido — substituído por MiniCalendario inline neste arquivo.
 import { Progress } from "@/components/ui/progress";
 import {
   Accordion,
@@ -138,6 +140,99 @@ const iconTone = {
   horas:    "bg-emerald-500/15 text-emerald-600",
 };
 
+function MiniCalendario({ eventos }: { eventos: Date[] }) {
+  const hoje = new Date();
+  const [mes, setMes] = useState(new Date(hoje.getFullYear(), hoje.getMonth(), 1));
+
+  const diasSem = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+  const primeiroDia = new Date(mes.getFullYear(), mes.getMonth(), 1);
+  const ultimoDia = new Date(mes.getFullYear(), mes.getMonth() + 1, 0);
+  const offsetInicio = primeiroDia.getDay();
+
+  const totalCelulas = Math.ceil((ultimoDia.getDate() + offsetInicio) / 7) * 7;
+  const celulas = Array.from({ length: totalCelulas }, (_, i) => {
+    const dia = i - offsetInicio + 1;
+    return dia >= 1 && dia <= ultimoDia.getDate() ? dia : null;
+  });
+
+  const temEvento = (dia: number | null) => {
+    if (!dia) return false;
+    return eventos.some(
+      (e) =>
+        e.getFullYear() === mes.getFullYear() &&
+        e.getMonth() === mes.getMonth() &&
+        e.getDate() === dia,
+    );
+  };
+
+  const ehHoje = (dia: number | null) => {
+    if (!dia) return false;
+    return (
+      hoje.getFullYear() === mes.getFullYear() &&
+      hoje.getMonth() === mes.getMonth() &&
+      hoje.getDate() === dia
+    );
+  };
+
+  const nomeMes = mes.toLocaleString("pt-BR", { month: "long", year: "numeric" });
+
+  return (
+    <div className="w-full flex flex-col gap-2">
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => setMes(new Date(mes.getFullYear(), mes.getMonth() - 1, 1))}
+          className="h-7 w-7 rounded-full border border-border flex items-center justify-center hover:bg-secondary"
+        >
+          <ChevronLeft className="h-3.5 w-3.5" />
+        </button>
+        <span className="text-xs font-semibold capitalize">{nomeMes}</span>
+        <button
+          type="button"
+          onClick={() => setMes(new Date(mes.getFullYear(), mes.getMonth() + 1, 1))}
+          className="h-7 w-7 rounded-full border border-border flex items-center justify-center hover:bg-secondary"
+        >
+          <ChevronRight className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-7 gap-0">
+        {diasSem.map((d) => (
+          <div
+            key={d}
+            className="text-center text-[10px] font-semibold text-muted-foreground uppercase py-1"
+          >
+            {d[0]}
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-7 gap-0">
+        {celulas.map((dia, i) => (
+          <div
+            key={i}
+            className={cn(
+              "relative flex items-center justify-center aspect-square text-xs rounded-md",
+              !dia && "invisible",
+              ehHoje(dia) && "bg-primary text-primary-foreground font-bold",
+              !ehHoje(dia) && dia && "hover:bg-secondary cursor-default",
+              temEvento(dia) && !ehHoje(dia) && "bg-primary/15 text-primary font-semibold",
+            )}
+          >
+            {dia}
+            {temEvento(dia) && !ehHoje(dia) && (
+              <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-primary" />
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const REACOES = ["❤️", "👍", "🎉", "🔥", "😂"] as const;
+
 export default function ClienteDashboard() {
   const { usuario } = useAuth();
   const isTrial = usuario?.role === "trial";
@@ -149,6 +244,23 @@ export default function ClienteDashboard() {
   const projetosKentaki = projetos.filter((p) => p.empresaId === "kentaki" && p.status === "andamento").length + 1;
 
   const [comunicadoOpen, setComunicadoOpen] = useState(false);
+  const [minhasReacoes, setMinhasReacoes] = useState<string[]>([]);
+  const [contagemReacoes, setContagemReacoes] = useState<Record<string, number>>({
+    "❤️": 5,
+    "👍": 3,
+    "🎉": 2,
+    "🔥": 1,
+    "😂": 0,
+  });
+
+  function toggleReacao(emoji: string) {
+    const jaReagiu = minhasReacoes.includes(emoji);
+    setMinhasReacoes((prev) => (jaReagiu ? prev.filter((e) => e !== emoji) : [...prev, emoji]));
+    setContagemReacoes((prev) => ({
+      ...prev,
+      [emoji]: Math.max(0, (prev[emoji] ?? 0) + (jaReagiu ? -1 : 1)),
+    }));
+  }
 
   const vagasCliente = useMemo(
     () => (isTrial ? [] : vagas.filter((v) => v.empresaId === "kentaki")),
@@ -292,6 +404,31 @@ export default function ClienteDashboard() {
                   </p>
                 </div>
               </button>
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {REACOES.map((emoji) => {
+                  const ativo = minhasReacoes.includes(emoji);
+                  const count = contagemReacoes[emoji] ?? 0;
+                  return (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleReacao(emoji);
+                      }}
+                      className={cn(
+                        "inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs transition-colors",
+                        ativo
+                          ? "border-primary bg-primary/10 text-primary font-semibold"
+                          : "border-border bg-background hover:bg-secondary text-muted-foreground",
+                      )}
+                    >
+                      {emoji}
+                      {count > 0 && <span className="text-[11px]">{count}</span>}
+                    </button>
+                  );
+                })}
+              </div>
               <div className="mt-auto pt-3">
                 <Link
                   to="/cliente/comunicados"
@@ -303,28 +440,23 @@ export default function ClienteDashboard() {
             </div>
 
             {/* Coluna 3 — Agenda */}
-            <div className="bg-white border border-gray-200 rounded-xl p-4 min-h-[420px] flex flex-col">
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">
-                Agenda
-              </p>
-              <div className="w-full overflow-hidden">
-                <Calendar
-                  mode="single"
-                  modifiers={{ evento: eventosAgendados }}
-                  modifiersClassNames={{
-                    evento: "bg-primary/20 text-primary font-semibold rounded-md",
-                  }}
-                  className="w-full rounded-md border-0 p-0"
-                />
+            <div className="bg-card border border-border rounded-xl p-4 flex flex-col gap-3 min-h-[420px]">
+              <div className="flex items-center gap-2">
+                <CalendarDays className="h-4 w-4 text-primary" />
+                <h3 className="font-display font-semibold text-sm">Agenda</h3>
               </div>
-              <ul className="mt-3 space-y-1 text-xs text-muted-foreground">
-                {eventosAgendados.slice(0, 2).map((d, i) => (
-                  <li key={i} className="flex items-center gap-2">
-                    <CalendarDays className="h-3 w-3 text-primary" />
-                    {d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
-                  </li>
-                ))}
-              </ul>
+              <MiniCalendario eventos={eventosAgendados} />
+              <div className="space-y-1 mt-1">
+                {eventosAgendados
+                  .filter((e) => e >= new Date())
+                  .slice(0, 3)
+                  .map((e, i) => (
+                    <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <CalendarDays className="h-3 w-3 text-primary shrink-0" />
+                      <span>{e.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}</span>
+                    </div>
+                  ))}
+              </div>
             </div>
           </div>
 
