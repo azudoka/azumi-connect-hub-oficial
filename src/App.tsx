@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import type { ReactElement } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -14,12 +14,9 @@ import type { ReactNode } from "react";
 
 import { AppLayout } from "@/components/layout/AppLayout";
 import { HubLayout } from "@/components/layout/HubLayout";
-import PortalLayout from "@/layouts/PortalLayout";
 
-import PortalDashboard from "./pages/portal/PortalDashboard";
-// PortalProjetos, PortalProjetoDetalhe e PortalFinanceiro foram descontinuados
-// como rotas — os arquivos permanecem no disco. As rotas /portal/* equivalentes
-// agora redirecionam para /cliente/* (caminho canônico do cliente).
+// Rotas /portal/* foram removidas — arquivos em src/pages/portal/ e src/layouts/PortalLayout.tsx
+// permanecem no disco mas não são mais montados em nenhuma rota.
 
 import Login from "./pages/auth/Login";
 import SelecaoPerfil from "./pages/auth/SelecaoPerfil";
@@ -115,7 +112,7 @@ function PrivateRoute({
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
   if (!allowed.includes(user.papel)) {
-    const home = user.papel === "cliente" ? "/portal" : "/app/dashboard";
+    const home = user.papel === "cliente" ? "/cliente/dashboard" : "/app/dashboard";
     return <Navigate to={home} replace />;
   }
   return children;
@@ -135,7 +132,7 @@ function RootRedirect() {
     consultor:     "/app/dashboard",
     rh:            "/app/dashboard",
     rh_operacional:"/app/dashboard",
-    cliente:       "/portal",
+    cliente:       "/cliente/dashboard",
     trial:         "/cliente/dashboard",
     colaborador:   "/hub/colaborador/inicio",
     lider:         "/hub/lider/painel",
@@ -148,11 +145,6 @@ function RootRedirect() {
 }
 
 
-// Redireciona /portal/projetos/:id → /cliente/projetos/:id preservando o id
-function PortalProjetoRedirect() {
-  const { id } = useParams<{ id: string }>();
-  return <Navigate to={`/cliente/projetos/${id ?? ""}`} replace />;
-}
 
 const AppRoutes = () => (
   <Routes>
@@ -339,19 +331,7 @@ const AppRoutes = () => (
       <Route path="/app/relatorios/:id/documento" element={<RelatorioDocumentoPage />} />
     </Route>
 
-    {/* Portal do Cliente */}
-    <Route
-      element={
-        <PrivateRoute allowed={["cliente", "admin"]}>
-          <PortalLayout />
-        </PrivateRoute>
-      }
-    >
-      <Route path="/portal" element={<PortalDashboard />} />
-      <Route path="/portal/projetos" element={<Navigate to="/cliente/projetos" replace />} />
-      <Route path="/portal/projetos/:id" element={<PortalProjetoRedirect />} />
-      <Route path="/portal/financeiro" element={<Navigate to="/cliente/gestao-conta" replace />} />
-    </Route>
+    {/* Rotas /portal/* foram descontinuadas — todo cliente usa /cliente/* */}
 
     <Route path="*" element={<NotFound />} />
   </Routes>

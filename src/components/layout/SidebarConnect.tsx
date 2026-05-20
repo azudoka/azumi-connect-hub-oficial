@@ -290,7 +290,7 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
               {collapsed ? (
                 <button
                   type="button"
-                  onClick={(e) => { e.stopPropagation(); navigate("/portal"); }}
+                  onClick={(e) => { e.stopPropagation(); navigate("/cliente/dashboard"); }}
                   className="flex items-center justify-center w-full py-2.5 hover:bg-[#DDD6FE] transition-colors rounded-none border-0 bg-transparent cursor-pointer"
                 >
                   <NavTooltip label="Portal do Cliente">
@@ -300,7 +300,7 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
               ) : (
                 <button
                   type="button"
-                  onClick={() => navigate("/portal")}
+                  onClick={() => navigate("/cliente/dashboard")}
                   className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-xs text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
                 >
                   <ExternalLink className="h-4 w-4 shrink-0 text-[#8B5CF6]" />
