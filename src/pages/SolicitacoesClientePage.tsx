@@ -219,15 +219,15 @@ function slaTexto(pacote: PacoteKey, urgencia: Urgencia): string {
 const URGENCIA_LABEL: Record<Urgencia, string> = { alta: "Alta", media: "Média", baixa: "Baixa" };
 const STATUS_LABEL: Record<StatusSolicitacao, string> = {
   aberta: "Aberta", andamento: "Em andamento",
-  aguardando_cliente: "Aguardando você", finalizada: "Finalizada", cancelada: "Cancelada",
+  aguardando_cliente: "Aguardando você", finalizada: "Concluída", cancelada: "Cancelada",
 };
 
 type CardKey = "aberta" | "andamento" | "aguardando_cliente" | "finalizada";
 const CHIPS: { key: CardKey; label: string; icon: typeof MessageSquare; cls: string }[] = [
   { key: "aberta", label: "Abertas", icon: MessageSquare, cls: "bg-info/10 text-info border-info/30" },
-  { key: "andamento", label: "Em andamento", icon: Clock, cls: "bg-success/10 text-success border-success/30" },
+  { key: "andamento", label: "Em andamento", icon: Clock, cls: "bg-info/10 text-info border-info/30" },
   { key: "aguardando_cliente", label: "Aguardando", icon: AlertCircle, cls: "bg-warning/10 text-warning border-warning/30" },
-  { key: "finalizada", label: "Finalizadas", icon: CheckCircle2, cls: "bg-muted text-muted-foreground border-border" },
+  { key: "finalizada", label: "Concluídas", icon: CheckCircle2, cls: "bg-success/10 text-success border-success/30" },
 ];
 
 const PILL_BASE =
@@ -240,9 +240,10 @@ function urgenciaPill(u: Urgencia) {
 }
 function statusPill(s: StatusSolicitacao) {
   if (s === "aberta") return "bg-info/15 text-info border-info/30";
-  if (s === "andamento") return "bg-success/15 text-success border-success/30";
+  if (s === "andamento") return "bg-info/15 text-info border-info/30";
   if (s === "aguardando_cliente") return "bg-warning/15 text-warning border-warning/30";
-  if (s === "cancelada") return "bg-muted text-muted-foreground border-border line-through";
+  if (s === "finalizada") return "bg-success/15 text-success border-success/30";
+  if (s === "cancelada") return "bg-muted text-muted-foreground border-border";
   return "bg-muted text-muted-foreground border-border";
 }
 const URGENCIA_DOT: Record<Urgencia, string> = {
@@ -299,9 +300,11 @@ export default function SolicitacoesClientePage() {
   const empresaId = user?.empresaId ?? "";
   const pacote = planoToPacote(usuario?.plano);
 
-  const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>(() =>
-    MOCK.filter((s) => (empresaId ? s.empresaId === empresaId : true)),
-  );
+  const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>(() => {
+    const filtradas = MOCK.filter((s) => (empresaId ? s.empresaId === empresaId : true));
+    // Fallback demo: garante que mocks apareçam mesmo quando empresaId não bate
+    return filtradas.length > 0 ? filtradas : MOCK;
+  });
   const [filtro, setFiltro] = useState<"todos" | StatusSolicitacao>("todos");
   const [filtroTipo, setFiltroTipo] = useState<"todos" | TipoSolicitacao>("todos");
   const [expandidos, setExpandidos] = useState<Record<string, boolean>>({});
