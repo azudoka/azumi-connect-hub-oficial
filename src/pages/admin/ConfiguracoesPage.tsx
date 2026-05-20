@@ -1003,3 +1003,201 @@ function EncerrarContaDialog({
     </Dialog>
   );
 }
+
+// =====================================================================
+// Dialog: Convidar usuário
+// =====================================================================
+
+function ConvidarUsuarioDialog({
+  open,
+  onOpenChange,
+  onSave,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onSave: (u: Omit<Usuario, "id" | "permissoes">) => void;
+}) {
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<RoleUsuario>("cliente_recorrente");
+  const [empresa, setEmpresa] = useState<string>("");
+  const [trialExpira, setTrialExpira] = useState("");
+  const [modulosTrial, setModulosTrial] = useState<string[]>([]);
+
+  const isTrial = role === "trial";
+  const MODULOS_TRIAL = ["Atração & Hunting", "Relatórios", "Documentos", "Calendário", "Comunicados"];
+
+  const reset = () => {
+    setNome(""); setEmail(""); setRole("cliente_recorrente");
+    setEmpresa(""); setTrialExpira(""); setModulosTrial([]);
+  };
+
+  const handleSave = () => {
+    if (!nome.trim() || !email.trim()) {
+      toast.error("Nome e e-mail obrigatórios.");
+      return;
+    }
+    if (isTrial && !trialExpira) {
+      toast.error("Defina a data de expiração do trial.");
+      return;
+    }
+    onSave({
+      nome: nome.trim(),
+      email: email.trim(),
+      role,
+      status: isTrial ? "trial" : "pendente",
+      empresa: empresa || undefined,
+      trialExpira: trialExpira || undefined,
+    });
+    reset();
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) reset(); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Convidar usuário</DialogTitle>
+          <DialogDescription>O usuário receberá um convite por e-mail.</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>Nome <span className="text-destructive">*</span></Label>
+              <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome completo" />
+            </div>
+            <div className="space-y-2">
+              <Label>E-mail <span className="text-destructive">*</span></Label>
+              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@empresa.com" />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Role</Label>
+            <Select value={role} onValueChange={(v) => setRole(v as RoleUsuario)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {(Object.keys(ROLE_LABEL) as RoleUsuario[])
+                  .filter((r) => r !== "admin")
+                  .map((r) => (
+                    <SelectItem key={r} value={r}>{ROLE_LABEL[r]}</SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Empresa</Label>
+            <Select value={empresa} onValueChange={setEmpresa}>
+              <SelectTrigger><SelectValue placeholder="Selecione a empresa" /></SelectTrigger>
+              <SelectContent>
+                {EMPRESAS_MOCK.map((e) => (
+                  <SelectItem key={e} value={e}>{e}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {isTrial && (
+            <>
+              <div className="space-y-2">
+                <Label>Expiração do trial <span className="text-destructive">*</span></Label>
+                <Input type="date" value={trialExpira} onChange={(e) => setTrialExpira(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Módulos liberados no trial</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {MODULOS_TRIAL.map((m) => (
+                    <label key={m} className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={modulosTrial.includes(m)}
+                        onChange={(e) =>
+                          setModulosTrial((prev) =>
+                            e.target.checked ? [...prev, m] : prev.filter((x) => x !== m)
+                          )
+                        }
+                        className="rounded"
+                      />
+                      {m}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button onClick={handleSave}>Enviar convite</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// =====================================================================
+// Dialog: Permissões granulares
+// =====================================================================
+
+function PermissoesDialog({
+  usuario,
+  onClose,
+  onSave,
+}: {
+  usuario: Usuario;
+  onClose: () => void;
+  onSave: (id: string, perms: string[]) => void;
+}) {
+  const [perms, setPerms] = useState<string[]>(usuario.permissoes);
+  const grupos = Array.from(new Set(TODAS_PERMISSOES.map((p) => p.grupo)));
+
+  const toggle = (key: string) =>
+    setPerms((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+
+  const resetParaPadrao = () => setPerms(PERMISSOES_PADRAO[usuario.role] ?? []);
+
+  return (
+    <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Permissões — {usuario.nome}</DialogTitle>
+          <DialogDescription>
+            {ROLE_LABEL[usuario.role]} · {usuario.email}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-5 max-h-[60vh] overflow-y-auto pr-1">
+          {grupos.map((grupo) => (
+            <div key={grupo}>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                {grupo}
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {TODAS_PERMISSOES.filter((p) => p.grupo === grupo).map((p) => (
+                  <label key={p.key} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={perms.includes(p.key)}
+                      onChange={() => toggle(p.key)}
+                      className="rounded"
+                    />
+                    {p.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={resetParaPadrao}>Restaurar padrão</Button>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={() => onSave(usuario.id, perms)}>Salvar permissões</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
