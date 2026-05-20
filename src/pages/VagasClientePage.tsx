@@ -262,7 +262,11 @@ export default function VagasClientePage() {
 
   function abrirForm(tipo: SolicitacaoTipo) {
     setIntroTipo(null);
-    setForm(FORM_INIT);
+    setForm({
+      ...FORM_INIT,
+      empresa: usuario?.empresaNome ?? "",
+      tipo: tipo === "hunting" ? "hunting" : "operacional",
+    });
     setFormTipo(tipo);
   }
 
@@ -271,50 +275,50 @@ export default function VagasClientePage() {
     window.open(WHATSAPP_CONSULTOR, "_blank", "noopener,noreferrer");
   }
 
+  function toggleBeneficio(v: string) {
+    setForm((f) => ({
+      ...f,
+      beneficios: f.beneficios.includes(v)
+        ? f.beneficios.filter((x) => x !== v)
+        : [...f.beneficios, v],
+    }));
+  }
+
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!formTipo) return;
-    if (!form.cargo.trim()) {
-      toast.error("Informe o cargo.");
+    if (!form.titulo.trim()) {
+      toast.error("Informe o título da vaga.");
       return;
     }
-    if (!form.quantidade || Number(form.quantidade) < 1) {
-      toast.error("Informe a quantidade de vagas.");
+    if (!form.empresa.trim()) {
+      toast.error("Informe a empresa.");
       return;
     }
-    if (formTipo === "hunting") {
-      if (!form.perfil.trim()) {
-        toast.error("Descreva o perfil desejado.");
-        return;
-      }
-      if (!form.ciente) {
-        toast.error("Você precisa confirmar o aviso sobre custo adicional.");
-        return;
-      }
+    if (formTipo === "hunting" && !form.ciente) {
+      toast.error("Você precisa confirmar o aviso sobre custo adicional.");
+      return;
     }
 
-    // Objeto enviado (compatível com job_solicitations / tabela atual)
+    // Payload no mesmo modelo do admin /app/atracao
+    // + pré-preenchidos do cliente: company_id, solicitado_por
     const payload = {
       company_id: empresaId || "kentaki",
-      solicitado_por: "cliente",
-      tipo: formTipo,
-      cargo: form.cargo.trim(),
-      area: form.area.trim(),
-      nivel: form.nivel,
-      regime: form.regime,
-      quantidade: Number(form.quantidade),
+      solicitado_por: "cliente" as const,
+      tipo_vaga: formTipo === "hunting" ? "hunting" : form.tipo,
+      titulo: form.titulo.trim(),
+      empresa: form.empresa.trim(),
+      filial: form.filial.trim(),
+      modalidade: form.modalidade,
+      posicoes: Number(form.posicoes) || 1,
+      beneficios: form.beneficios,
       descricao: form.descricao.trim(),
-      perfil: form.perfil.trim(),
-      faixa_salarial: form.faixa.trim(),
-      urgencia: form.urgencia,
-      observacoes: form.observacoes.trim(),
     };
 
-    // Acrescenta no mock local para a UI
     const novaVaga: VagaMock = {
       id: `v-${Date.now()}`,
-      cargo: payload.cargo,
-      departamento: payload.area || (formTipo === "hunting" ? "Hunting" : "—"),
+      cargo: payload.titulo,
+      departamento: payload.filial || (formTipo === "hunting" ? "Hunting" : "—"),
       status: "aguardando_cliente",
       totalCandidatos: 0,
       aprovados: 0,
@@ -330,6 +334,7 @@ export default function VagasClientePage() {
     setForm(FORM_INIT);
     toast.success("Solicitação enviada! Nossa equipe entrará em contato em breve.");
   }
+
 
   // ---------- Modo detalhe (inalterado) ----------
   if (vagaSelecionada) {
