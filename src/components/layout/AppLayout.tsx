@@ -21,7 +21,6 @@ export function AppLayout({ variant: variantOverride }: AppLayoutProps) {
 
   const timerCtx = useTimerGlobal();
   const navigate = useNavigate();
-  const [openUpgrade, setOpenUpgrade] = useState(false);
   const isTrial = usuario?.role === "trial";
 
   return (
