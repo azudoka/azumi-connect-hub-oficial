@@ -339,19 +339,7 @@ const AppRoutes = () => (
       <Route path="/app/relatorios/:id/documento" element={<RelatorioDocumentoPage />} />
     </Route>
 
-    {/* Portal do Cliente */}
-    <Route
-      element={
-        <PrivateRoute allowed={["cliente", "admin"]}>
-          <PortalLayout />
-        </PrivateRoute>
-      }
-    >
-      <Route path="/portal" element={<PortalDashboard />} />
-      <Route path="/portal/projetos" element={<Navigate to="/cliente/projetos" replace />} />
-      <Route path="/portal/projetos/:id" element={<PortalProjetoRedirect />} />
-      <Route path="/portal/financeiro" element={<Navigate to="/cliente/gestao-conta" replace />} />
-    </Route>
+    {/* Rotas /portal/* foram descontinuadas — todo cliente usa /cliente/* */}
 
     <Route path="*" element={<NotFound />} />
   </Routes>
