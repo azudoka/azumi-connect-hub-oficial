@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Building2, Heart, MapPin, Clock, DollarSign, Search, X, Upload } from "lucide-react";
+import { Building2, Heart, MapPin, Clock, DollarSign, Search } from "lucide-react";
 import {
   VAGAS_MOCK,
   NIVEL_LABEL,
@@ -9,6 +9,7 @@ import {
   formatSalario,
   diasAtras,
 } from "@/data/vagasPublicasMock";
+import CandidaturaModal from "@/components/candidatura/CandidaturaModal";
 
 const NAVY = "#031D38";
 const BLUE = "#034C8B";
