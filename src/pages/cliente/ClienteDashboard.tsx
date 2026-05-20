@@ -404,6 +404,31 @@ export default function ClienteDashboard() {
                   </p>
                 </div>
               </button>
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {REACOES.map((emoji) => {
+                  const ativo = minhasReacoes.includes(emoji);
+                  const count = contagemReacoes[emoji] ?? 0;
+                  return (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleReacao(emoji);
+                      }}
+                      className={cn(
+                        "inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs transition-colors",
+                        ativo
+                          ? "border-primary bg-primary/10 text-primary font-semibold"
+                          : "border-border bg-background hover:bg-secondary text-muted-foreground",
+                      )}
+                    >
+                      {emoji}
+                      {count > 0 && <span className="text-[11px]">{count}</span>}
+                    </button>
+                  );
+                })}
+              </div>
               <div className="mt-auto pt-3">
                 <Link
                   to="/cliente/comunicados"
