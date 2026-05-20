@@ -17,7 +17,20 @@ import {
   Star,
   MapPin,
   Video,
+  Pencil,
+  Copy,
+  ExternalLink,
+  Briefcase,
+  DollarSign,
+  Gift,
+  Layers,
 } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/PageHeader";
