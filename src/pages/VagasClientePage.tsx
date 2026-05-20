@@ -195,6 +195,20 @@ interface FormState {
   beneficios: string[];
   descricao: string;
   ciente: boolean;
+  // Publicação no site
+  pubAberto: boolean;
+  pubPublicar: boolean;
+  pubConfidencial: boolean;
+  pubLocal: string;
+  pubModalidade: string;
+  pubNivel: string;
+  pubTurno: string;
+  pubContrato: string;
+  pubCarga: string;
+  pubSalDe: string;
+  pubSalAte: string;
+  pubACombinar: boolean;
+  pubDescricao: string;
 }
 const FORM_INIT: FormState = {
   titulo: "",
@@ -206,6 +220,19 @@ const FORM_INIT: FormState = {
   beneficios: [],
   descricao: "",
   ciente: false,
+  pubAberto: false,
+  pubPublicar: false,
+  pubConfidencial: false,
+  pubLocal: "",
+  pubModalidade: "presencial",
+  pubNivel: "pleno",
+  pubTurno: "integral",
+  pubContrato: "clt",
+  pubCarga: "",
+  pubSalDe: "",
+  pubSalAte: "",
+  pubACombinar: false,
+  pubDescricao: "",
 };
 
 
@@ -313,6 +340,24 @@ export default function VagasClientePage() {
       posicoes: Number(form.posicoes) || 1,
       beneficios: form.beneficios,
       descricao: form.descricao.trim(),
+      // TODO: conectar Supabase — colunas de publicação na vaga
+      publicacao: form.pubPublicar
+        ? {
+            publicar: form.pubPublicar,
+            confidencial: form.pubConfidencial,
+            local: form.pubLocal.trim(),
+            modalidade: form.pubModalidade,
+            nivel: form.pubNivel,
+            turno: form.pubTurno,
+            contrato: form.pubContrato,
+            carga_horaria: form.pubCarga.trim(),
+            salario_a_combinar: form.pubACombinar,
+            salario_de: form.pubACombinar ? null : Number(form.pubSalDe) || null,
+            salario_ate: form.pubACombinar ? null : Number(form.pubSalAte) || null,
+            descricao_site: form.pubDescricao.trim(),
+            publicada: false, // só publica via botão "Publicar no site" na tela interna
+          }
+        : null,
     };
 
     const novaVaga: VagaMock = {
@@ -800,6 +845,167 @@ export default function VagasClientePage() {
                 onChange={(e) => setForm({ ...form, descricao: e.target.value })}
                 placeholder="Descreva o perfil desejado, requisitos obrigatórios e diferenciais."
               />
+            </div>
+
+            {/* Publicação no site */}
+            <div className="rounded-lg border border-border">
+              <button
+                type="button"
+                onClick={() => setForm((f) => ({ ...f, pubAberto: !f.pubAberto }))}
+                className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium hover:bg-muted/30"
+              >
+                <span>📢 Informações para publicação no site</span>
+                <span className="text-xs text-muted-foreground">{form.pubAberto ? "Ocultar" : "Expandir"}</span>
+              </button>
+              {form.pubAberto && (
+                <div className="space-y-4 border-t border-border px-4 py-4">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={form.pubPublicar}
+                      onChange={(e) => setForm((f) => ({ ...f, pubPublicar: e.target.checked }))}
+                      className="mt-0.5 h-4 w-4 rounded"
+                    />
+                    <div className="flex-1">
+                      <span className="text-sm font-medium">Preparar para publicação</span>
+                      <p className="text-xs text-muted-foreground">
+                        Preencher estes campos NÃO publica automaticamente. A vaga só fica pública quando o consultor clicar em "Publicar no site" na tela interna.
+                      </p>
+                    </div>
+                  </label>
+
+                  {form.pubPublicar && (
+                    <div className="space-y-4 border-l-2 border-primary/30 pl-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={form.pubConfidencial}
+                          onChange={(e) => setForm((f) => ({ ...f, pubConfidencial: e.target.checked }))}
+                          className="h-4 w-4 rounded"
+                        />
+                        <span className="text-sm">Vaga confidencial (oculta nome e logo da empresa)</span>
+                      </label>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label>Local de trabalho</Label>
+                          <Input
+                            value={form.pubLocal}
+                            onChange={(e) => setForm((f) => ({ ...f, pubLocal: e.target.value }))}
+                            placeholder="Cidade, UF"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Modalidade</Label>
+                          <Select value={form.pubModalidade} onValueChange={(v) => setForm((f) => ({ ...f, pubModalidade: v }))}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="presencial">Presencial</SelectItem>
+                              <SelectItem value="hibrido">Híbrido</SelectItem>
+                              <SelectItem value="remoto">Remoto</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label>Nível de senioridade</Label>
+                          <Select value={form.pubNivel} onValueChange={(v) => setForm((f) => ({ ...f, pubNivel: v }))}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="estagio">Estágio</SelectItem>
+                              <SelectItem value="junior">Júnior</SelectItem>
+                              <SelectItem value="pleno">Pleno</SelectItem>
+                              <SelectItem value="senior">Sênior</SelectItem>
+                              <SelectItem value="especialista">Especialista</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Turno</Label>
+                          <Select value={form.pubTurno} onValueChange={(v) => setForm((f) => ({ ...f, pubTurno: v }))}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="integral">Integral</SelectItem>
+                              <SelectItem value="manha">Manhã</SelectItem>
+                              <SelectItem value="tarde">Tarde</SelectItem>
+                              <SelectItem value="noturno">Noturno</SelectItem>
+                              <SelectItem value="a_combinar">A combinar</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label>Tipo de contrato</Label>
+                          <Select value={form.pubContrato} onValueChange={(v) => setForm((f) => ({ ...f, pubContrato: v }))}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="clt">CLT</SelectItem>
+                              <SelectItem value="pj">PJ</SelectItem>
+                              <SelectItem value="estagio">Estágio</SelectItem>
+                              <SelectItem value="temporario">Temporário</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Carga horária</Label>
+                          <Input
+                            value={form.pubCarga}
+                            onChange={(e) => setForm((f) => ({ ...f, pubCarga: e.target.value }))}
+                            placeholder="44h semanais"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Salário</Label>
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={form.pubACombinar}
+                            onChange={(e) => setForm((f) => ({ ...f, pubACombinar: e.target.checked }))}
+                            className="h-4 w-4 rounded"
+                          />
+                          A combinar
+                        </label>
+                        {!form.pubACombinar && (
+                          <div className="grid grid-cols-2 gap-3">
+                            <Input
+                              type="number"
+                              value={form.pubSalDe}
+                              onChange={(e) => setForm((f) => ({ ...f, pubSalDe: e.target.value }))}
+                              placeholder="De R$"
+                            />
+                            <Input
+                              type="number"
+                              value={form.pubSalAte}
+                              onChange={(e) => setForm((f) => ({ ...f, pubSalAte: e.target.value }))}
+                              placeholder="Até R$"
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Descrição da vaga para o site</Label>
+                        <Textarea
+                          value={form.pubDescricao}
+                          onChange={(e) => setForm((f) => ({ ...f, pubDescricao: e.target.value }))}
+                          placeholder="O que o candidato verá na página pública da vaga."
+                          rows={4}
+                        />
+                      </div>
+
+                      <div className="rounded-md bg-muted/40 border border-border px-3 py-2 text-xs text-muted-foreground">
+                        ℹ️ Status inicial: <strong>Não publicada</strong>. A publicação só ocorre quando o consultor clicar em "Publicar no site" na tela interna da vaga.
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {formTipo === "hunting" && (
