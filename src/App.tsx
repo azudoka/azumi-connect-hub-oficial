@@ -145,11 +145,6 @@ function RootRedirect() {
 }
 
 
-// Redireciona /portal/projetos/:id → /cliente/projetos/:id preservando o id
-function PortalProjetoRedirect() {
-  const { id } = useParams<{ id: string }>();
-  return <Navigate to={`/cliente/projetos/${id ?? ""}`} replace />;
-}
 
 const AppRoutes = () => (
   <Routes>
