@@ -145,6 +145,8 @@ interface MockCred {
   nome: string;
   role: UserRole;
   empresaNome: string;
+  plano?: Plano | null;
+  trialExpiraEm?: string | null;
 }
 
 const MOCK_USUARIOS: MockCred[] = [
@@ -157,7 +159,8 @@ const MOCK_USUARIOS: MockCred[] = [
   { email: "juridico@empresa.com", senha: "123", id: "u-jur", nome: "Dr. Marcos Ribeiro", role: "juridico", empresaNome: "Azumi" },
   { email: "admin@empresa.com", senha: "123", id: "u-adm", nome: "Administrador", role: "admin", empresaNome: "Azumi" },
   { email: "consultor@azumi.com", senha: "123", id: "ab", nome: "Ana Beatriz", role: "consultor", empresaNome: "Azumi" },
-  { email: "cliente@kentaki.com", senha: "123", id: "u-cli-kentaki", nome: "Admin Kentaki", role: "cliente", empresaNome: "Kentaki Foods" },
+  { email: "cliente@kentaki.com", senha: "123", id: "u-cli-kentaki", nome: "Admin Kentaki", role: "cliente", empresaNome: "Kentaki Foods", plano: "ongoing" },
+  { email: "demo@azumirh.com.br", senha: "demo2026", id: "u-trial-demo", nome: "Carlos Demo", role: "trial", empresaNome: "Empresa Demo", plano: "trial", trialExpiraEm: "2026-06-30" },
 ];
 
 function buildUsuario(cred: MockCred): Usuario {
@@ -170,8 +173,11 @@ function buildUsuario(cred: MockCred): Usuario {
     modulos: PERMISSOES_POR_ROLE[cred.role] ?? [],
     isDemo: false,
     auditoria: ROLES_COM_AUDITORIA.includes(cred.role),
+    plano: cred.plano ?? null,
+    trialExpiraEm: cred.trialExpiraEm ?? null,
   };
 }
+
 
 // ---------------------------------------------------------------------------
 // Context
