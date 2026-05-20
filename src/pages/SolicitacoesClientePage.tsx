@@ -886,7 +886,7 @@ function FormularioTipo({
             </div>
             <div className="text-xs text-muted-foreground flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5" />
-              Tempo de resposta estimado: <strong className="text-foreground">{sla}</strong>
+              O tempo de resposta segue o SLA do seu pacote.
             </div>
           </div>
         )}
