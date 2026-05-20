@@ -1,7 +1,18 @@
 import { useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
-import { BookOpen, ChevronDown } from "lucide-react";
+import {
+  BookOpen,
+  ChevronDown,
+  Users,
+  Sparkles,
+  UserPlus,
+  Clock,
+  CheckCircle2,
+  Briefcase,
+  Headphones,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface FaqItem {
@@ -9,6 +20,7 @@ interface FaqItem {
   pergunta: string;
   resposta: string;
   categoria: string;
+  icon: LucideIcon;
 }
 
 const faqMock: FaqItem[] = [
