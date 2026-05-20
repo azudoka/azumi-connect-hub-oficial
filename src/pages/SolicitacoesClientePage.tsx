@@ -124,18 +124,8 @@ const TIPOS: TipoConfig[] = [
     icon: CalendarClock,
     cota: { start: 1, ongoing: 2, growth: -1 },
   },
-  {
-    key: "hunting",
-    nome: "Hunting",
-    descricao: "Recrutamento estratégico para posições executivas",
-    icon: UserSearch,
-    cota: { start: 0, ongoing: 0, growth: 1 },
-    termoSempre: {
-      texto:
-        "Estou ciente de que o processo de Hunting para posições estratégicas possui SLA e condições específicas, podendo gerar custo adicional conforme pacote contratado. Ao confirmar, minha solicitação será encaminhada ao consultor responsável para análise e envio de proposta.",
-      link: "#politica-hunting",
-    },
-  },
+  // Hunting removido — agora vive no módulo Atração.
+
   {
     key: "treinamento",
     nome: "Treinamento In Company",
