@@ -254,30 +254,37 @@ const URGENCIA_DOT: Record<Urgencia, string> = {
 // ============================================================================
 const MOCK: Solicitacao[] = [
   {
-    id: "s-71", codigo: "SOL-2026-0071", tipo: "hunting",
-    titulo: "Hunting: Head de Marketing",
-    descricao: "Busca estratégica para liderar a área de marketing.",
-    urgencia: "alta", status: "andamento", empresaId: "kentaki",
-    consultor: "Ana Beatriz", criadaEm: "2026-04-18T14:20:00Z",
+    id: "s-91", codigo: "SOL-2026-0091", tipo: "duvida",
+    titulo: "Revisão de política de home office",
+    descricao: "Atualizar dias permitidos e elegibilidade por área.",
+    urgencia: "media", status: "andamento", empresaId: "kentaki",
+    consultor: "Ana Beatriz", criadaEm: "2026-05-05T09:30:00Z",
     historico: [
-      { autor: "Ana Beatriz", texto: "Recebido. Iniciamos o mapeamento.", data: "2026-04-19T09:10:00Z" },
+      { autor: "Ana Beatriz", texto: "Estou consolidando o draft atualizado para sua revisão.", data: "2026-05-08T14:10:00Z" },
     ],
   },
   {
-    id: "s-68", codigo: "SOL-2026-0068", tipo: "reuniao",
-    titulo: "Alinhamento mensal de abril",
-    descricao: "Sugerir 3 horários para a reunião mensal.",
-    urgencia: "media", status: "aguardando_cliente", empresaId: "kentaki",
-    consultor: "Ana Beatriz", criadaEm: "2026-04-15T10:05:00Z",
-    historico: [{ autor: "Ana Beatriz", texto: "Mandei 3 opções no e-mail.", data: "2026-04-16T15:22:00Z" }],
+    id: "s-82", codigo: "SOL-2026-0082", tipo: "duvida",
+    titulo: "Mapeamento de cargos Q1",
+    descricao: "Mapear cargos e responsabilidades das áreas Comercial e Operações.",
+    urgencia: "media", status: "finalizada", empresaId: "kentaki",
+    consultor: "Ana Beatriz", criadaEm: "2026-01-20T10:00:00Z",
+    historico: [
+      { autor: "Ana Beatriz", texto: "Entregue. Documento disponível em Documentos.", data: "2026-03-30T16:45:00Z" },
+    ],
   },
   {
-    id: "s-59", codigo: "SOL-2026-0059", tipo: "duvida",
-    titulo: "Erro ao baixar boleto", descricao: "Botão retorna 404.",
-    urgencia: "baixa", status: "finalizada", empresaId: "kentaki",
-    consultor: "Suporte Azumi", criadaEm: "2026-03-28T16:45:00Z",
+    id: "s-77", codigo: "SOL-2026-0077", tipo: "endomarketing",
+    titulo: "Pesquisa de clima — pausada",
+    descricao: "Pesquisa de clima Q2 cancelada a pedido do cliente.",
+    urgencia: "baixa", status: "cancelada", empresaId: "kentaki",
+    consultor: "Ana Beatriz", criadaEm: "2026-04-02T11:15:00Z",
+    historico: [
+      { autor: "Cliente", texto: "Vamos pausar e retomar no próximo trimestre.", data: "2026-04-10T09:00:00Z" },
+    ],
   },
 ];
+
 
 // ============================================================================
 // Componente principal
