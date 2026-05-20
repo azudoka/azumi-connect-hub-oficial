@@ -157,25 +157,57 @@ const ATRACAO_BULLETS: Record<PacoteKey, string[]> = {
 const WHATSAPP_CONSULTOR = "https://wa.me/5541999999999";
 
 // ---------- Form types ----------
+// ---------- Form types (mesmo modelo do admin /app/atracao) ----------
 type SolicitacaoTipo = "atracao" | "hunting";
+type TipoVaga = "operacional" | "tatico" | "gestao" | "hunting";
+
+const TIPOS_VAGA: { value: TipoVaga; label: string }[] = [
+  { value: "operacional", label: "Operacional" },
+  { value: "tatico", label: "Tático" },
+  { value: "gestao", label: "Gestão" },
+  { value: "hunting", label: "Hunt Executivo" },
+];
+
+const MODALIDADES = [
+  { value: "presencial", label: "Presencial" },
+  { value: "hibrido", label: "Híbrido" },
+  { value: "remoto", label: "Remoto" },
+] as const;
+
+const BENEFICIOS_OPCOES = [
+  { value: "vale_transporte", label: "Vale-transporte" },
+  { value: "vale_alimentacao", label: "Vale-alimentação" },
+  { value: "plano_saude", label: "Plano de saúde" },
+  { value: "plano_odontologico", label: "Plano odontológico" },
+  { value: "gympass", label: "Gympass" },
+  { value: "home_office", label: "Home office" },
+  { value: "bonus", label: "Bônus" },
+  { value: "seguro_vida", label: "Seguro de vida" },
+] as const;
+
 interface FormState {
-  cargo: string;
-  area: string;
-  nivel: string;
-  regime: string;
-  quantidade: string;
+  titulo: string;
+  empresa: string;
+  filial: string;
+  tipo: TipoVaga;
+  modalidade: string;
+  posicoes: string;
+  beneficios: string[];
   descricao: string;
-  faixa: string;
-  urgencia: string;
-  observacoes: string;
-  perfil: string;
   ciente: boolean;
 }
 const FORM_INIT: FormState = {
-  cargo: "", area: "", nivel: "", regime: "",
-  quantidade: "1", descricao: "", faixa: "",
-  urgencia: "media", observacoes: "", perfil: "", ciente: false,
+  titulo: "",
+  empresa: "",
+  filial: "",
+  tipo: "operacional",
+  modalidade: "presencial",
+  posicoes: "1",
+  beneficios: [],
+  descricao: "",
+  ciente: false,
 };
+
 
 export default function VagasClientePage() {
   const { user, usuario } = useAuth();
@@ -230,7 +262,11 @@ export default function VagasClientePage() {
 
   function abrirForm(tipo: SolicitacaoTipo) {
     setIntroTipo(null);
-    setForm(FORM_INIT);
+    setForm({
+      ...FORM_INIT,
+      empresa: usuario?.empresaNome ?? "",
+      tipo: tipo === "hunting" ? "hunting" : "operacional",
+    });
     setFormTipo(tipo);
   }
 
@@ -239,50 +275,50 @@ export default function VagasClientePage() {
     window.open(WHATSAPP_CONSULTOR, "_blank", "noopener,noreferrer");
   }
 
+  function toggleBeneficio(v: string) {
+    setForm((f) => ({
+      ...f,
+      beneficios: f.beneficios.includes(v)
+        ? f.beneficios.filter((x) => x !== v)
+        : [...f.beneficios, v],
+    }));
+  }
+
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!formTipo) return;
-    if (!form.cargo.trim()) {
-      toast.error("Informe o cargo.");
+    if (!form.titulo.trim()) {
+      toast.error("Informe o título da vaga.");
       return;
     }
-    if (!form.quantidade || Number(form.quantidade) < 1) {
-      toast.error("Informe a quantidade de vagas.");
+    if (!form.empresa.trim()) {
+      toast.error("Informe a empresa.");
       return;
     }
-    if (formTipo === "hunting") {
-      if (!form.perfil.trim()) {
-        toast.error("Descreva o perfil desejado.");
-        return;
-      }
-      if (!form.ciente) {
-        toast.error("Você precisa confirmar o aviso sobre custo adicional.");
-        return;
-      }
+    if (formTipo === "hunting" && !form.ciente) {
+      toast.error("Você precisa confirmar o aviso sobre custo adicional.");
+      return;
     }
 
-    // Objeto enviado (compatível com job_solicitations / tabela atual)
+    // Payload no mesmo modelo do admin /app/atracao
+    // + pré-preenchidos do cliente: company_id, solicitado_por
     const payload = {
       company_id: empresaId || "kentaki",
-      solicitado_por: "cliente",
-      tipo: formTipo,
-      cargo: form.cargo.trim(),
-      area: form.area.trim(),
-      nivel: form.nivel,
-      regime: form.regime,
-      quantidade: Number(form.quantidade),
+      solicitado_por: "cliente" as const,
+      tipo_vaga: formTipo === "hunting" ? "hunting" : form.tipo,
+      titulo: form.titulo.trim(),
+      empresa: form.empresa.trim(),
+      filial: form.filial.trim(),
+      modalidade: form.modalidade,
+      posicoes: Number(form.posicoes) || 1,
+      beneficios: form.beneficios,
       descricao: form.descricao.trim(),
-      perfil: form.perfil.trim(),
-      faixa_salarial: form.faixa.trim(),
-      urgencia: form.urgencia,
-      observacoes: form.observacoes.trim(),
     };
 
-    // Acrescenta no mock local para a UI
     const novaVaga: VagaMock = {
       id: `v-${Date.now()}`,
-      cargo: payload.cargo,
-      departamento: payload.area || (formTipo === "hunting" ? "Hunting" : "—"),
+      cargo: payload.titulo,
+      departamento: payload.filial || (formTipo === "hunting" ? "Hunting" : "—"),
       status: "aguardando_cliente",
       totalCandidatos: 0,
       aprovados: 0,
@@ -298,6 +334,7 @@ export default function VagasClientePage() {
     setForm(FORM_INIT);
     toast.success("Solicitação enviada! Nossa equipe entrará em contato em breve.");
   }
+
 
   // ---------- Modo detalhe (inalterado) ----------
   if (vagaSelecionada) {
@@ -648,100 +685,125 @@ export default function VagasClientePage() {
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="md:col-span-2 flex flex-col gap-1.5">
-              <Label htmlFor="cargo">Cargo <span className="text-destructive">*</span></Label>
-              <Input id="cargo" value={form.cargo} onChange={(e) => setForm({ ...form, cargo: e.target.value })} required />
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Título */}
+            <div className="space-y-2">
+              <Label htmlFor="nTitulo">Título da vaga *</Label>
+              <Input
+                id="nTitulo"
+                value={form.titulo}
+                onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+                placeholder="Ex.: Gerente de TI Sênior"
+                required
+              />
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="area">Área / Departamento</Label>
-              <Input id="area" value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label>Nível</Label>
-              <Select value={form.nivel} onValueChange={(v) => setForm({ ...form, nivel: v })}>
-                <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
-                <SelectContent>
-                  {formTipo === "hunting" ? (
-                    <>
-                      <SelectItem value="pleno">Pleno</SelectItem>
-                      <SelectItem value="senior">Sênior</SelectItem>
-                      <SelectItem value="especialista">Especialista</SelectItem>
-                      <SelectItem value="lideranca">Liderança</SelectItem>
-                      <SelectItem value="c_level">C-Level</SelectItem>
-                    </>
-                  ) : (
-                    <>
-                      <SelectItem value="estagio">Estágio</SelectItem>
-                      <SelectItem value="junior">Júnior</SelectItem>
-                      <SelectItem value="pleno">Pleno</SelectItem>
-                      <SelectItem value="senior">Sênior</SelectItem>
-                      <SelectItem value="especialista">Especialista</SelectItem>
-                      <SelectItem value="lideranca">Liderança</SelectItem>
-                    </>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label>Regime</Label>
-              <Select value={form.regime} onValueChange={(v) => setForm({ ...form, regime: v })}>
-                <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="clt">CLT</SelectItem>
-                  <SelectItem value="pj">PJ</SelectItem>
-                  {formTipo === "atracao" && <SelectItem value="estagio">Estágio</SelectItem>}
-                  {formTipo === "atracao" && <SelectItem value="temporario">Temporário</SelectItem>}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="qtd">Quantidade de vagas <span className="text-destructive">*</span></Label>
-              <Input id="qtd" type="number" min={1} value={form.quantidade} onChange={(e) => setForm({ ...form, quantidade: e.target.value })} required />
-            </div>
-
-            {formTipo === "atracao" && (
-              <div className="md:col-span-2 flex flex-col gap-1.5">
-                <Label htmlFor="desc">Descrição e requisitos da vaga</Label>
-                <Textarea id="desc" rows={4} value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} />
+            {/* Empresa e Filial */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="nEmpresa">Empresa *</Label>
+                <Input
+                  id="nEmpresa"
+                  value={form.empresa}
+                  readOnly
+                  className="bg-muted/40"
+                />
               </div>
-            )}
+              <div className="space-y-2">
+                <Label htmlFor="nFilial">Filial</Label>
+                <Input
+                  id="nFilial"
+                  value={form.filial}
+                  onChange={(e) => setForm({ ...form, filial: e.target.value })}
+                  placeholder="SP, RJ, BH..."
+                />
+              </div>
+            </div>
+
+            {/* Tipo + Modalidade */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Tipo *</Label>
+                {formTipo === "hunting" ? (
+                  <Input value="Hunt Executivo" readOnly className="bg-muted/40" />
+                ) : (
+                  <Select
+                    value={form.tipo}
+                    onValueChange={(v) => setForm({ ...form, tipo: v as TipoVaga })}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {TIPOS_VAGA.filter((t) => t.value !== "hunting").map((t) => (
+                        <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label>Modalidade</Label>
+                <Select value={form.modalidade} onValueChange={(v) => setForm({ ...form, modalidade: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {MODALIDADES.map((m) => (
+                      <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Posições */}
+            <div className="space-y-2">
+              <Label htmlFor="nPosicoes">Número de posições abertas</Label>
+              <Input
+                id="nPosicoes"
+                type="number"
+                min={1}
+                value={form.posicoes}
+                onChange={(e) => setForm({ ...form, posicoes: e.target.value })}
+                className="w-24"
+              />
+            </div>
+
+            {/* Benefícios */}
+            <div className="space-y-2">
+              <Label>Benefícios</Label>
+              <div className="flex flex-wrap gap-2">
+                {BENEFICIOS_OPCOES.map((b) => {
+                  const sel = form.beneficios.includes(b.value);
+                  return (
+                    <button
+                      key={b.value}
+                      type="button"
+                      onClick={() => toggleBeneficio(b.value)}
+                      className={cn(
+                        "rounded-full border px-3 py-1 text-xs transition-colors",
+                        sel
+                          ? "border-primary bg-primary/10 text-primary font-medium"
+                          : "border-border hover:bg-muted/40",
+                      )}
+                    >
+                      {b.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Descrição */}
+            <div className="space-y-2">
+              <Label htmlFor="nDescricao">Descrição e requisitos</Label>
+              <Textarea
+                id="nDescricao"
+                value={form.descricao}
+                onChange={(e) => setForm({ ...form, descricao: e.target.value })}
+                placeholder="Descreva o perfil desejado, requisitos obrigatórios e diferenciais."
+              />
+            </div>
 
             {formTipo === "hunting" && (
-              <div className="md:col-span-2 flex flex-col gap-1.5">
-                <Label htmlFor="perfil">Perfil desejado <span className="text-destructive">*</span></Label>
-                <Textarea id="perfil" rows={4} value={form.perfil} onChange={(e) => setForm({ ...form, perfil: e.target.value })} required />
-              </div>
-            )}
-
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="faixa">Faixa salarial (opcional)</Label>
-              <Input id="faixa" value={form.faixa} onChange={(e) => setForm({ ...form, faixa: e.target.value })} placeholder="Ex: R$ 8.000 a R$ 12.000" />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label>Urgência {formTipo === "hunting" && <span className="text-destructive">*</span>}</Label>
-              <Select value={form.urgencia} onValueChange={(v) => setForm({ ...form, urgencia: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="alta">Alta</SelectItem>
-                  <SelectItem value="media">Média</SelectItem>
-                  <SelectItem value="baixa">Baixa</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="md:col-span-2 flex flex-col gap-1.5">
-              <Label htmlFor="obs">Observações (opcional)</Label>
-              <Textarea id="obs" rows={3} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
-            </div>
-
-            {formTipo === "hunting" && (
-              <div className="md:col-span-2 flex items-start gap-2 rounded-lg border p-3" style={{ background: "#FFFBEB", borderColor: "#FDE68A" }}>
+              <div className="flex items-start gap-2 rounded-lg border p-3" style={{ background: "#FFFBEB", borderColor: "#FDE68A" }}>
                 <Checkbox id="ciente" checked={form.ciente} onCheckedChange={(c) => setForm({ ...form, ciente: !!c })} />
                 <Label htmlFor="ciente" className="text-xs leading-relaxed cursor-pointer" style={{ color: "#92400E" }}>
                   Estou ciente de que o Hunting pode gerar custo adicional e que a Azumi entrará em contato para confirmar a proposta antes de iniciar.
@@ -749,7 +811,8 @@ export default function VagasClientePage() {
               </div>
             )}
 
-            <DialogFooter className="md:col-span-2">
+
+            <DialogFooter>
               <Button type="button" variant="outline" onClick={() => { setFormTipo(null); setForm(FORM_INIT); }}>
                 Cancelar
               </Button>
