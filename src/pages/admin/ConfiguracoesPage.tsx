@@ -214,7 +214,6 @@ const getAvatarTone = (nome: string) => {
 // =====================================================================
 
 export default function ConfiguracoesPage() {
-  const { usuario: _authUsuario } = useAuth();
   const { usuario } = useAuth();
   const isAdmin = usuario?.role === "admin";
   const [tab, setTab] = useState("perfil");
