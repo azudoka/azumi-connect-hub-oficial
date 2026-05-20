@@ -154,6 +154,16 @@ export default function VagaPublicaDetalhePage() {
               Quero me candidatar →
             </button>
           </div>
+
+          {/* CTA secundário banco de talentos */}
+          <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/60 p-5 text-center">
+            <button
+              onClick={() => setModalBanco(true)}
+              className="text-sm font-medium text-slate-700 underline-offset-4 hover:underline"
+            >
+              Não é essa vaga? Cadastre-se no banco de talentos →
+            </button>
+          </div>
         </div>
       </div>
 
@@ -165,6 +175,11 @@ export default function VagaPublicaDetalhePage() {
         modo="vaga"
         vagaId={vaga.id}
         vagaTitulo={vaga.titulo}
+      />
+      <CandidaturaModal
+        open={modalBanco}
+        onClose={() => setModalBanco(false)}
+        modo="banco"
       />
     </div>
   );
