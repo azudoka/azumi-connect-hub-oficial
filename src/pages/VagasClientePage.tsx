@@ -433,11 +433,21 @@ export default function VagasClientePage() {
                       <div className="flex items-start justify-between gap-3 flex-wrap">
                         <div className="min-w-0">
                           <div className="font-medium text-sm">{c.nome}</div>
-                          <p className="text-xs text-muted-foreground mt-1">{c.parecer}</p>
+                          <div className="text-xs text-muted-foreground">{c.cargo}</div>
+                          <p className="text-xs text-muted-foreground mt-1.5">{c.parecer}</p>
                         </div>
                         {fb && <span className={cn(PILL_BASE, FEEDBACK_BADGE[fb])}>{FEEDBACK_LABEL[fb]}</span>}
                       </div>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="rounded-lg bg-secondary/40 p-3">
+                        <DiscBars values={c.disc} compact />
+                      </div>
+                      <div className="flex flex-wrap gap-2 items-center">
+                        <Button size="sm" variant="outline"
+                          className="rounded-full gap-1.5"
+                          onClick={() => setVagaSelecionadaId(v.id)}>
+                          Ver candidato
+                        </Button>
+                        <span className="flex-1" />
                         <Button size="sm" variant="outline" disabled={!!fb}
                           className="rounded-full gap-1.5 border-success/40 text-success hover:bg-success/10 hover:text-success disabled:opacity-50"
                           onClick={() => setConfirmacao({ candidatoId: c.id, nome: c.nome, acao: "aprovado" })}>
