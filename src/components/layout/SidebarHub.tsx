@@ -203,14 +203,14 @@ function NavTooltip({ label, children }: { label: string; children: React.ReactN
             left: pos.x,
             top: pos.y,
             transform: "translateY(-50%)",
-            background: "#EDE9FE",
+            background: "#DBEAFE",
             color: "#031D38",
             fontSize: 12,
             fontWeight: 500,
             padding: "4px 10px",
             borderRadius: 6,
             whiteSpace: "nowrap",
-            border: "1px solid #DDD6FE",
+            border: "1px solid #BFDBFE",
             boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
             fontFamily: "'Urbanist',sans-serif",
             zIndex: 9999,
@@ -225,7 +225,7 @@ function NavTooltip({ label, children }: { label: string; children: React.ReactN
   );
 }
 
-const ICON_COLOR = "#8B5CF6";
+const ICON_COLOR = "#3B82F6";
 
 export function SidebarHub({ profile }: { profile: HubProfile }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -262,8 +262,8 @@ export function SidebarHub({ profile }: { profile: HubProfile }) {
         <NavLink
           to={it.to}
           onClick={(e) => e.stopPropagation()}
-          className="flex items-center justify-center w-full py-2.5 hover:bg-[#DDD6FE] transition-colors rounded-none"
-          activeClassName="!bg-[#C4B5FD]"
+          className="flex items-center justify-center w-full py-2.5 hover:bg-[#BFDBFE] transition-colors rounded-none"
+          activeClassName="!bg-[#93C5FD]"
         >
           <NavTooltip label={it.label}>
             <it.icon className="h-4 w-4 shrink-0" style={{ color: ICON_COLOR }} />
@@ -294,7 +294,7 @@ export function SidebarHub({ profile }: { profile: HubProfile }) {
         width: collapsed ? 64 : 240,
         transition: "width 0.3s ease",
         borderRight: "1px solid hsl(var(--sidebar-border))",
-        background: collapsed ? "#EDE9FE" : undefined,
+        background: collapsed ? "#DBEAFE" : undefined,
         cursor: collapsed ? "pointer" : "default",
         height: "100svh",
         position: "sticky",
@@ -305,7 +305,7 @@ export function SidebarHub({ profile }: { profile: HubProfile }) {
       {/* Logo */}
       <div style={{ height: 64, display: "flex", alignItems: "center", padding: "0 16px", borderBottom: "1px solid hsl(var(--sidebar-border) / 0.6)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: collapsed ? 0 : 8 }}>
-          <div style={{ width: 28, height: 28, borderRadius: 8, background: "linear-gradient(135deg,#8B5CF6,#031D38)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <div style={{ width: 28, height: 28, borderRadius: 8, background: "linear-gradient(135deg,#3B82F6,#031D38)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <span style={{ color: "white", fontSize: 13, fontWeight: 800, fontFamily: "'Urbanist',sans-serif" }}>A</span>
           </div>
           {!collapsed && (
