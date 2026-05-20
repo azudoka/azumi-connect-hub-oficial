@@ -151,53 +151,89 @@ export function calcularScores(answers: Record<number, DiscAnswer>): DiscScores 
 export interface PerfilInfo {
   dim: DiscDim;
   nome: string;
+  apelido: string;
   descricao: string;
+  adjetivos: [string, string, string];
+  fraseImpacto: string;
   pontosFortes: string[];
+  comoSairBem: string[];
 }
 
 export const PERFIS: Record<DiscDim, PerfilInfo> = {
   D: {
     dim: "D",
-    nome: "Realizador (D)",
+    nome: "Executor (D)",
+    apelido: "Executor",
     descricao:
       "Pessoa orientada a resultados, decidida e direta. Toma iniciativa, gosta de desafios e busca eficiência.",
+    adjetivos: ["decidida", "objetiva", "competitiva"],
+    fraseImpacto: "Você lidera pela ação e transforma decisões em resultado rapidamente.",
     pontosFortes: [
       "Toma decisões rápidas sob pressão",
       "Foco intenso em resultados e metas",
       "Iniciativa e capacidade de liderar",
     ],
+    comoSairBem: [
+      "Use sua autonomia para entregar metas claras com prazo curto.",
+      "Cuidado com o excesso de pressa: ouça o time antes de decidir sozinho.",
+      "Mostre resultados objetivos com números — é assim que você brilha.",
+    ],
   },
   I: {
     dim: "I",
     nome: "Comunicador (I)",
+    apelido: "Comunicador",
     descricao:
       "Pessoa sociável, otimista e persuasiva. Inspira times, comunica com clareza e cria conexões facilmente.",
+    adjetivos: ["sociável", "otimista", "persuasiva"],
+    fraseImpacto: "Você engaja pessoas pela energia e abre portas com facilidade.",
     pontosFortes: [
       "Comunicação envolvente e clara",
       "Cria boas relações interpessoais",
       "Motiva e engaja pessoas ao redor",
     ],
+    comoSairBem: [
+      "Aposte em apresentações, networking e papéis de relacionamento.",
+      "Atenção aos detalhes e prazos — feche o que começa.",
+      "Equilibre entusiasmo com escuta ativa para não dominar a conversa.",
+    ],
   },
   S: {
     dim: "S",
     nome: "Planejador (S)",
+    apelido: "Planejador",
     descricao:
       "Pessoa calma, leal e consistente. Valoriza estabilidade, mantém o ritmo do time e apoia os colegas.",
+    adjetivos: ["paciente", "leal", "colaborativa"],
+    fraseImpacto: "Você é o ponto de equilíbrio que mantém o time coeso e produtivo.",
     pontosFortes: [
       "Constância e confiabilidade",
       "Boa escuta e empatia",
       "Mantém o time coeso e funcional",
     ],
+    comoSairBem: [
+      "Brilha em funções que exigem consistência, escuta e relacionamento.",
+      "Pratique dizer 'não' quando a demanda exceder sua capacidade.",
+      "Use sua estabilidade para conduzir mudanças sem ruído.",
+    ],
   },
   C: {
     dim: "C",
     nome: "Analista (C)",
+    apelido: "Analista",
     descricao:
       "Pessoa detalhista, organizada e analítica. Busca qualidade, segue processos e fundamenta decisões em dados.",
+    adjetivos: ["analítica", "criteriosa", "organizada"],
+    fraseImpacto: "Você entrega qualidade alta porque pensa antes, mede e refina.",
     pontosFortes: [
       "Atenção a detalhes e qualidade",
       "Análise estruturada e crítica",
       "Disciplina com processos e padrões",
+    ],
+    comoSairBem: [
+      "Prefira papéis técnicos, analíticos ou que exijam precisão.",
+      "Cuidado com o perfeccionismo: defina um 'bom o suficiente'.",
+      "Compartilhe seus critérios — o time aprende com sua estrutura.",
     ],
   },
 };
