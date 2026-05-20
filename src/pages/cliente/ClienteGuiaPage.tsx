@@ -80,22 +80,28 @@ export default function ClienteGuiaPage() {
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{cat}</span>
               </div>
               <ul className="divide-y divide-border">
-                {faqMock.filter((f) => f.categoria === cat).map((f) => (
-                  <li key={f.id}>
-                    <button
-                      onClick={() => toggle(f.id)}
-                      className="w-full flex items-center justify-between gap-3 px-5 py-4 text-left hover:bg-secondary/20 transition-colors"
-                    >
-                      <span className="text-sm font-medium">{f.pergunta}</span>
-                      <ChevronDown className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform", abertos[f.id] && "rotate-180")} />
-                    </button>
-                    {abertos[f.id] && (
-                      <div className="px-5 pb-4">
-                        <p className="text-sm text-muted-foreground leading-relaxed">{f.resposta}</p>
-                      </div>
-                    )}
-                  </li>
-                ))}
+                {faqMock.filter((f) => f.categoria === cat).map((f) => {
+                  const Icon = f.icon;
+                  return (
+                    <li key={f.id}>
+                      <button
+                        onClick={() => toggle(f.id)}
+                        className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-secondary/20 transition-colors"
+                      >
+                        <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <span className="flex-1 text-sm font-medium">{f.pergunta}</span>
+                        <ChevronDown className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform", abertos[f.id] && "rotate-180")} />
+                      </button>
+                      {abertos[f.id] && (
+                        <div className="px-5 pb-4 pl-16">
+                          <p className="text-sm text-muted-foreground leading-relaxed">{f.resposta}</p>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ))}
