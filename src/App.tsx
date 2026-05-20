@@ -112,7 +112,7 @@ function PrivateRoute({
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
   if (!allowed.includes(user.papel)) {
-    const home = user.papel === "cliente" ? "/portal" : "/app/dashboard";
+    const home = user.papel === "cliente" ? "/cliente/dashboard" : "/app/dashboard";
     return <Navigate to={home} replace />;
   }
   return children;
