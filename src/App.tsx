@@ -197,7 +197,7 @@ const AppRoutes = () => (
     {/* Cliente ADM (mantido) */}
     <Route
       element={
-        <PrivateRoute allowed={["cliente"]}>
+        <PrivateRoute allowed={["cliente", "trial"]}>
           <AppLayout />
         </PrivateRoute>
       }
