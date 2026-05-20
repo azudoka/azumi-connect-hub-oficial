@@ -542,6 +542,163 @@ export default function AtracaoLista() {
                 placeholder="Descreva o perfil desejado, requisitos obrigatórios e diferenciais."
               />
             </div>
+
+            {/* Publicação no site */}
+            <div className="rounded-lg border border-border">
+              <button
+                type="button"
+                onClick={() => setPubAberto((x) => !x)}
+                className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium hover:bg-muted/30"
+              >
+                <span>📢 Informações para publicação no site</span>
+                <span className="text-xs text-muted-foreground">{pubAberto ? "Ocultar" : "Expandir"}</span>
+              </button>
+              {pubAberto && (
+                <div className="space-y-4 border-t border-border px-4 py-4">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={pubPublicar}
+                      onChange={(e) => setPubPublicar(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 rounded"
+                    />
+                    <div className="flex-1">
+                      <span className="text-sm font-medium">Preparar para publicação</span>
+                      <p className="text-xs text-muted-foreground">
+                        Preencher estes campos NÃO publica automaticamente. A vaga fica como
+                        "Não publicada" até clicar em "Publicar no site" na tela da vaga.
+                      </p>
+                    </div>
+                  </label>
+
+                  {pubPublicar && (
+                    <div className="space-y-4 border-l-2 border-primary/30 pl-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={pubConfidencial}
+                          onChange={(e) => setPubConfidencial(e.target.checked)}
+                          className="h-4 w-4 rounded"
+                        />
+                        <span className="text-sm">Empresa confidencial (oculta nome e logo na página pública)</span>
+                      </label>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label>Local de trabalho</Label>
+                          <Input value={pubLocal} onChange={(e) => setPubLocal(e.target.value)} placeholder="Cidade, UF" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Modalidade</Label>
+                          <Select value={pubModalidade} onValueChange={setPubModalidade}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="presencial">Presencial</SelectItem>
+                              <SelectItem value="hibrido">Híbrido</SelectItem>
+                              <SelectItem value="remoto">Remoto</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label>Nível de senioridade</Label>
+                          <Select value={pubNivel} onValueChange={setPubNivel}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="estagio">Estágio</SelectItem>
+                              <SelectItem value="junior">Júnior</SelectItem>
+                              <SelectItem value="pleno">Pleno</SelectItem>
+                              <SelectItem value="senior">Sênior</SelectItem>
+                              <SelectItem value="especialista">Especialista</SelectItem>
+                              <SelectItem value="gerencia">Gerência</SelectItem>
+                              <SelectItem value="diretoria">Diretoria</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Turno</Label>
+                          <Select value={pubTurno} onValueChange={setPubTurno}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="integral">Integral</SelectItem>
+                              <SelectItem value="manha">Manhã</SelectItem>
+                              <SelectItem value="tarde">Tarde</SelectItem>
+                              <SelectItem value="flexivel">Flexível</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label>Tipo de contrato</Label>
+                          <Select value={pubContrato} onValueChange={setPubContrato}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="clt">CLT</SelectItem>
+                              <SelectItem value="pj">PJ</SelectItem>
+                              <SelectItem value="estagio">Estágio</SelectItem>
+                              <SelectItem value="temporario">Temporário</SelectItem>
+                              <SelectItem value="freelance">Freelance</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Carga horária</Label>
+                          <Input value={pubCarga} onChange={(e) => setPubCarga(e.target.value)} placeholder="44h semanais" />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Salário</Label>
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={pubACombinar}
+                            onChange={(e) => setPubACombinar(e.target.checked)}
+                            className="h-4 w-4 rounded"
+                          />
+                          A combinar
+                        </label>
+                        {!pubACombinar && (
+                          <div className="grid grid-cols-2 gap-3">
+                            <Input
+                              type="number"
+                              value={pubSalDe}
+                              onChange={(e) => setPubSalDe(e.target.value)}
+                              placeholder="De R$"
+                            />
+                            <Input
+                              type="number"
+                              value={pubSalAte}
+                              onChange={(e) => setPubSalAte(e.target.value)}
+                              placeholder="Até R$"
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Descrição da vaga para o site *</Label>
+                        <Textarea
+                          value={pubDescricao}
+                          onChange={(e) => setPubDescricao(e.target.value)}
+                          placeholder="O que o candidato verá na página pública da vaga."
+                          rows={4}
+                        />
+                      </div>
+
+                      <div className="rounded-md bg-info/10 border border-info/20 px-3 py-2 text-xs text-info">
+                        ℹ️ Status inicial: <strong>Não publicada</strong>. Para tornar pública, use o botão
+                        "Publicar no site" na tela interna da vaga.
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
           <SheetFooter className="border-t pt-4 flex-row gap-2 sm:justify-end">
             <Button variant="outline" className="rounded-full"
