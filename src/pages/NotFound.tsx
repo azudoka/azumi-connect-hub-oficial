@@ -28,7 +28,7 @@ const NotFound = () => {
         <Button onClick={() => navigate("/app/dashboard")}>
           Voltar ao Dashboard
         </Button>
-        <Button variant="outline" onClick={() => navigate("/portal")}>
+        <Button variant="outline" onClick={() => navigate("/cliente/dashboard")}>
           Ir para o Portal
         </Button>
       </div>
