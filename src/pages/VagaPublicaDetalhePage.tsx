@@ -64,6 +64,7 @@ export default function VagaPublicaDetalhePage() {
   const { id } = useParams<{ id: string }>();
   const vaga = VAGAS_MOCK.find((v) => v.id === id);
   const [modalOpen, setModalOpen] = useState(false);
+  const [modalBanco, setModalBanco] = useState(false);
 
   if (!vaga) return <NotFound />;
 
