@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { Plus, X, Send, Eye, Upload, Link2 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 
@@ -184,11 +185,12 @@ function DetalheModal({ c, onClose, onReagir, onAddComentario }: {
     setNovoComent("");
   };
 
-  return (
+  const isNarrow = typeof window !== "undefined" && window.innerWidth < 820;
+  return createPortal(
     <div onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-      style={{ position: "fixed", inset: 0, background: "rgba(3,29,56,.6)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <div style={{ background: "white", borderRadius: 14, width: "100%", maxWidth: 900, maxHeight: "90vh", display: "grid", gridTemplateColumns: "1fr 380px", overflow: "hidden" }}>
-        <div style={{ background: GRAD[c.tipo], display: "flex", alignItems: "center", justifyContent: "center" }}>
+      style={{ position: "fixed", inset: 0, background: "rgba(3,29,56,.6)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, overflowY: "auto" }}>
+      <div style={{ background: "white", borderRadius: 14, width: "100%", maxWidth: 720, maxHeight: "90vh", display: "grid", gridTemplateColumns: isNarrow ? "1fr" : "1fr 340px", overflow: "hidden", boxShadow: "0 20px 50px rgba(0,0,0,.25)" }}>
+        <div style={{ background: GRAD[c.tipo], display: "flex", alignItems: "center", justifyContent: "center", minHeight: isNarrow ? 180 : "auto" }}>
           {c.coverUrl ? (
             <img src={c.coverUrl} alt={c.titulo} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           ) : (
@@ -196,7 +198,7 @@ function DetalheModal({ c, onClose, onReagir, onAddComentario }: {
           )}
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", height: "90vh", maxHeight: "90vh" }}>
+        <div style={{ display: "flex", flexDirection: "column", maxHeight: isNarrow ? "60vh" : "90vh" }}>
           <div style={{ padding: 16, borderBottom: "1px solid #F0F5FF", display: "flex", gap: 10 }}>
             <Av ini={c.iniciais} size={36} />
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -275,8 +277,10 @@ function DetalheModal({ c, onClose, onReagir, onAddComentario }: {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
+
 }
 
 function CriarModal({ onClose, onCreate }: { onClose: () => void; onCreate: (c: Omit<Comunicado, "id" | "leitores" | "comentarios" | "reacoes" | "minhasReacoes">) => void }) {

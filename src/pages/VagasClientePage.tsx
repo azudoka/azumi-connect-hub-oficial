@@ -509,9 +509,6 @@ export default function VagasClientePage() {
         ))}
       </div>
 
-      {/* Card destaque: vaga demo com perfis enviados (novo fluxo cliente) */}
-      <DemoVagaDestaque />
-
       {lista.length === 0 ? (
         <EmptyState
           icon={Inbox}
@@ -519,6 +516,9 @@ export default function VagasClientePage() {
           description="Nenhuma vaga encontrada para este filtro."
         />
       ) : (
+        <>
+          {/* Card destaque: vaga demo (só aparece quando há vagas reais) */}
+          <DemoVagaDestaque />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {lista.map((v) => (
             <article
@@ -563,9 +563,11 @@ export default function VagasClientePage() {
               </Button>
             </article>
           ))}
-        </div>
+          </div>
+        </>
       )}
     </>
+
   );
 }
 
