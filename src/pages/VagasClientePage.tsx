@@ -122,10 +122,8 @@ const STATUS_ORDER: Record<string, number> = {
 };
 
 const MOCK: VagaMock[] = [
-  { id: "v-01", cargo: "Analista de RH Sênior", departamento: "Recursos Humanos", status: "em_andamento", totalCandidatos: 12, aprovados: 3, criadaEm: "2026-04-10T09:00:00Z", empresaId: "kentaki" },
-  { id: "v-02", cargo: "Coordenador Financeiro", departamento: "Financeiro", status: "aguardando_cliente", totalCandidatos: 8, aprovados: 2, criadaEm: "2026-03-28T11:30:00Z", empresaId: "kentaki" },
-  { id: "v-03", cargo: "Desenvolvedor Full Stack", departamento: "TI", status: "finalizada", totalCandidatos: 22, aprovados: 1, criadaEm: "2026-02-15T14:45:00Z", empresaId: "kentaki" },
-  { id: "v-04", cargo: "Assistente Administrativo", departamento: "Administrativo", status: "aberta", totalCandidatos: 5, aprovados: 0, criadaEm: "2026-04-20T10:15:00Z", empresaId: "kentaki" },
+  { id: "v-01", cargo: "Gerente de TI", departamento: "Tecnologia", status: "em_andamento", totalCandidatos: 18, aprovados: 3, criadaEm: "2026-04-10T09:00:00Z", empresaId: "kentaki" },
+  { id: "v-02", cargo: "Analista de Marketing", departamento: "Marketing", status: "finalizada", totalCandidatos: 11, aprovados: 1, criadaEm: "2026-02-15T14:45:00Z", empresaId: "kentaki" },
 ];
 
 function statusClasses(s: StatusVaga) {
