@@ -209,18 +209,6 @@ const TIPOS: TipoConfig[] = [
     icon: ShieldCheck,
     cota: { start: -1, ongoing: -1, growth: -1 },
   },
-  {
-    key: "horas_avulsas",
-    nome: "Horas Avulsas",
-    descricao: "Aprovar horas excedentes proativamente",
-    icon: TimerIcon,
-    cota: { start: 0, ongoing: 0, growth: 0 },
-    sempreExtra: true,
-    termoSempre: {
-      texto:
-        "Estou ciente de que horas avulsas geram cobrança adicional conforme tabela vigente e que a execução só ocorrerá após aprovação registrada.",
-    },
-  },
 ];
 
 const TIPO_BY_KEY: Record<TipoSolicitacao, TipoConfig> = TIPOS.reduce(
