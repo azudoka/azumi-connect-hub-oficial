@@ -195,6 +195,20 @@ interface FormState {
   beneficios: string[];
   descricao: string;
   ciente: boolean;
+  // Publicação no site
+  pubAberto: boolean;
+  pubPublicar: boolean;
+  pubConfidencial: boolean;
+  pubLocal: string;
+  pubModalidade: string;
+  pubNivel: string;
+  pubTurno: string;
+  pubContrato: string;
+  pubCarga: string;
+  pubSalDe: string;
+  pubSalAte: string;
+  pubACombinar: boolean;
+  pubDescricao: string;
 }
 const FORM_INIT: FormState = {
   titulo: "",
@@ -206,6 +220,19 @@ const FORM_INIT: FormState = {
   beneficios: [],
   descricao: "",
   ciente: false,
+  pubAberto: false,
+  pubPublicar: false,
+  pubConfidencial: false,
+  pubLocal: "",
+  pubModalidade: "presencial",
+  pubNivel: "pleno",
+  pubTurno: "integral",
+  pubContrato: "clt",
+  pubCarga: "",
+  pubSalDe: "",
+  pubSalAte: "",
+  pubACombinar: false,
+  pubDescricao: "",
 };
 
 
