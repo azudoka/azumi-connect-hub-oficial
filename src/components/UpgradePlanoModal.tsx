@@ -1,126 +1,203 @@
 import { useMemo } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Sparkles, ArrowUp, Clock, Briefcase, Zap, Users, Check } from "lucide-react";
-import { toast } from "sonner";
+import { Sparkles, Check, Star } from "lucide-react";
 import type { Plano } from "@/context/AuthContext";
 
 interface UpgradePlanoModalProps {
   open: boolean;
   onClose: () => void;
-  /** Plano atual do usuário; "trial" mostra fluxo de contratação inicial. */
   planoAtual: Plano | null | undefined;
 }
 
-interface PlanoInfo {
-  titulo: string;
-  subtitulo: string;
-  proximoPlano: string;
-  beneficios: { icon: typeof Clock; label: string; valor: string }[];
+type PlanoKey = "start" | "ongoing" | "growth";
+
+interface PlanoDef {
+  key: PlanoKey;
+  nome: string;
+  tagline: string;
+  features: string[];
+  porte: string;
 }
 
-const INFO_POR_PLANO: Record<"trial" | "start" | "ongoing", PlanoInfo> = {
-  trial: {
-    titulo: "Bem-vindo à Azumi Connect",
-    subtitulo: "Explore e depois contrate o plano ideal para você",
-    proximoPlano: "plano completo",
-    beneficios: [
-      { icon: Clock, label: "Horas de consultoria", valor: "A partir de 20h/mês" },
-      { icon: Briefcase, label: "Vagas simultâneas", valor: "Até 5 em paralelo" },
-      { icon: Zap, label: "Prioridade no atendimento", valor: "SLA dedicado" },
-      { icon: Users, label: "Business Partner", valor: "Consultor sênior" },
+const PLANOS: PlanoDef[] = [
+  {
+    key: "start",
+    nome: "Start",
+    tagline: "Para começar a estruturar seu RH",
+    features: [
+      "15 horas/mês",
+      "Até 2 frentes ativas",
+      "Diagnóstico de Maturidade (Raio-X)",
+      "Gestão de vagas (até 1/mês)",
+      "Padronização de processos e documentos",
+      "Onboarding estruturado",
+      "SLA de resposta: 48h úteis",
+      "2 usuários Azumi Connect",
     ],
+    porte: "15–45 colaboradores · 1 unidade",
   },
-  start: {
-    titulo: "Evolua sua Operação",
-    subtitulo: "Expanda sua capacidade com o plano Ongoing",
-    proximoPlano: "Ongoing",
-    beneficios: [
-      { icon: Clock, label: "Horas Start → Ongoing", valor: "20h → 60h /mês" },
-      { icon: Briefcase, label: "Vagas simultâneas", valor: "3 → 8 vagas" },
-      { icon: Zap, label: "Prioridade", valor: "Padrão → Alta" },
-      { icon: Users, label: "Business Partner", valor: "Compartilhado → Dedicado" },
+  {
+    key: "ongoing",
+    nome: "Ongoing",
+    tagline: "O mais escolhido por empresas em crescimento",
+    features: [
+      "25 horas/mês",
+      "Até 3 frentes ativas",
+      "Tudo do Start +",
+      "Atração e seleção (até 2 vagas/mês)",
+      "Avaliação de Desempenho",
+      "People Analytics básico",
+      "Reuniões quinzenais de alinhamento",
+      "1 visita presencial/mês",
+      "SLA de resposta: 24h úteis",
+      "3 usuários Azumi Connect",
     ],
+    porte: "40–120 colaboradores · até 2 unidades",
   },
-  ongoing: {
-    titulo: "Evolua sua Operação",
-    subtitulo: "Maximize com o plano Growth",
-    proximoPlano: "Growth",
-    beneficios: [
-      { icon: Clock, label: "Horas Ongoing → Growth", valor: "60h → 160h /mês" },
-      { icon: Briefcase, label: "Vagas simultâneas", valor: "8 → ilimitadas" },
-      { icon: Zap, label: "Prioridade", valor: "Alta → Máxima" },
-      { icon: Users, label: "Business Partner", valor: "Dedicado + squad executivo" },
+  {
+    key: "growth",
+    nome: "Growth",
+    tagline: "Para operações maduras e escaláveis",
+    features: [
+      "40 horas/mês",
+      "Até 5 frentes ativas",
+      "Tudo do Ongoing +",
+      "Business Partner dedicado",
+      "Arquitetura de Cargos e Salários",
+      "Programa de Líderes (PDL)",
+      "Consultoria de Cultura e Employer Branding",
+      "Até 2 visitas presenciais/mês",
+      "SLA de resposta: 12h úteis",
+      "4 usuários Azumi Connect",
     ],
+    porte: "100–250 colaboradores · até 4 unidades",
   },
-};
+];
+
+const WHATSAPP = "5541999999999";
+
+function whatsappUrl(nome: string) {
+  const texto = `Olá! Tenho interesse no plano ${nome} da Azumi Connect.`;
+  return `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(texto)}`;
+}
 
 export function UpgradePlanoModal({ open, onClose, planoAtual }: UpgradePlanoModalProps) {
-  const key: "trial" | "start" | "ongoing" =
-    planoAtual === "start" ? "start" : planoAtual === "ongoing" ? "ongoing" : "trial";
-  const info = useMemo(() => INFO_POR_PLANO[key], [key]);
-  const ctaLabel = key === "trial" ? "Falar com a Azumi" : `Solicitar ${info.proximoPlano}`;
+  const planosVisiveis = useMemo(() => {
+    if (planoAtual === "ongoing") return PLANOS.filter((p) => p.key === "growth");
+    if (planoAtual === "start") return PLANOS.filter((p) => p.key === "ongoing" || p.key === "growth");
+    return PLANOS;
+  }, [planoAtual]);
 
-  function handleSolicitar() {
-    toast.success("Solicitação enviada!", {
-      description: "Nossa equipe entrará em contato em breve.",
-    });
-    onClose();
-  }
+  const titulo =
+    planoAtual === "ongoing"
+      ? "Evolua para o Growth"
+      : planoAtual === "start"
+      ? "Faça upgrade do seu plano"
+      : "Conheça os planos Azumi Connect";
+
+  const subtitulo =
+    planoAtual === "trial" || !planoAtual
+      ? "Escolha o plano ideal para o momento da sua empresa"
+      : "Expanda sua operação com mais horas, frentes e benefícios";
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent
-        className="max-w-2xl p-0 overflow-hidden gap-0 border-0"
+        className="max-w-5xl p-0 overflow-hidden gap-0 border-0 max-h-[90vh] overflow-y-auto"
         style={{ fontFamily: "'Urbanist', sans-serif" }}
       >
         {/* Header escuro */}
-        <div className="px-7 py-6" style={{ background: "#031D38", color: "white" }}>
+        <div className="px-8 py-7" style={{ background: "#031D38", color: "white" }}>
           <div className="flex items-center gap-2 mb-2 text-xs uppercase tracking-widest opacity-70">
             <Sparkles className="h-3.5 w-3.5" /> Azumi Connect
           </div>
-          <h2 className="text-2xl font-bold leading-tight">{info.titulo}</h2>
-          <p className="text-sm opacity-80 mt-1">{info.subtitulo}</p>
+          <h2 className="text-2xl md:text-3xl font-bold leading-tight">{titulo}</h2>
+          <p className="text-sm opacity-80 mt-1.5">{subtitulo}</p>
         </div>
 
-        {/* Benefícios 2x2 */}
-        <div className="p-7 grid grid-cols-2 gap-3 bg-background">
-          {info.beneficios.map((b) => (
-            <div
-              key={b.label}
-              className="rounded-xl border border-border bg-card p-4 flex gap-3 items-start"
-            >
-              <div className="h-9 w-9 rounded-lg bg-[#EDE9FE] flex items-center justify-center shrink-0">
-                <b.icon className="h-4 w-4 text-[#8B5CF6]" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
-                  {b.label}
-                </div>
-                <div className="text-sm font-semibold text-foreground mt-0.5">{b.valor}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Ações */}
-        <div className="px-7 pb-6 pt-1 bg-background">
-          <button
-            type="button"
-            onClick={handleSolicitar}
-            className="w-full h-11 rounded-lg flex items-center justify-center gap-2 text-sm font-semibold text-white hover:opacity-95 transition-opacity"
-            style={{ background: "#031D38" }}
+        {/* Cards de planos */}
+        <div className="p-6 md:p-8 bg-background">
+          <div
+            className={`grid gap-5 ${
+              planosVisiveis.length === 1
+                ? "grid-cols-1 max-w-md mx-auto"
+                : planosVisiveis.length === 2
+                ? "grid-cols-1 md:grid-cols-2"
+                : "grid-cols-1 md:grid-cols-3"
+            }`}
           >
-            <Check className="h-4 w-4" /> {ctaLabel} →
-          </button>
+            {planosVisiveis.map((p) => {
+              const destaque = p.key === "ongoing";
+              return (
+                <div
+                  key={p.key}
+                  className={`relative rounded-2xl bg-card p-6 flex flex-col ${
+                    destaque
+                      ? "border-2 shadow-lg md:-mt-2 md:mb-2"
+                      : "border border-border"
+                  }`}
+                  style={destaque ? { borderColor: "#8B5CF6" } : undefined}
+                >
+                  {destaque && (
+                    <div
+                      className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-white flex items-center gap-1"
+                      style={{ background: "#8B5CF6" }}
+                    >
+                      <Star className="h-3 w-3 fill-white" /> Mais escolhido
+                    </div>
+                  )}
+
+                  <div className="mb-4">
+                    <div
+                      className="text-xs font-bold uppercase tracking-widest mb-1"
+                      style={{ color: destaque ? "#8B5CF6" : "#3B82F6" }}
+                    >
+                      Plano
+                    </div>
+                    <h3 className="text-2xl font-bold text-foreground">{p.nome}</h3>
+                    <p className="text-xs text-muted-foreground mt-1">{p.tagline}</p>
+                  </div>
+
+                  <ul className="space-y-2 mb-5 flex-1">
+                    {p.features.map((f) => (
+                      <li key={f} className="flex items-start gap-2 text-sm text-foreground/90">
+                        <Check
+                          className="h-4 w-4 shrink-0 mt-0.5"
+                          style={{ color: destaque ? "#8B5CF6" : "#3B82F6" }}
+                        />
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="text-[11px] text-muted-foreground border-t border-border pt-3 mb-4">
+                    {p.porte}
+                  </div>
+
+                  <a
+                    href={whatsappUrl(p.nome)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={onClose}
+                    className="w-full h-11 rounded-lg flex items-center justify-center gap-2 text-sm font-semibold text-white hover:opacity-95 transition-opacity"
+                    style={{ background: destaque ? "#8B5CF6" : "#031D38" }}
+                  >
+                    Contratar {p.nome} →
+                  </a>
+                </div>
+              );
+            })}
+          </div>
+
           <button
             type="button"
             onClick={onClose}
-            className="w-full h-10 mt-2 rounded-lg text-sm text-muted-foreground hover:bg-secondary transition-colors"
+            className="w-full h-10 mt-6 rounded-lg text-sm text-muted-foreground hover:bg-secondary transition-colors"
           >
-            Cancelar
+            Fechar
           </button>
-          <p className="text-[11px] text-center text-muted-foreground mt-3">
-            Nossa equipe entrará em contato para confirmar a mudança.
+          <p className="text-[11px] text-center text-muted-foreground mt-2">
+            Ao contratar, nossa equipe entrará em contato pelo WhatsApp para confirmar os detalhes.
           </p>
         </div>
       </DialogContent>

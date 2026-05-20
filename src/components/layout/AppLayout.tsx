@@ -1,5 +1,4 @@
 import { Outlet, useNavigate } from "react-router-dom";
-import { useState } from "react";
 import { Sparkles } from "lucide-react";
 import { SidebarConnect } from "./SidebarConnect";
 import { Header } from "./Header";
@@ -7,7 +6,6 @@ import { useAuth } from "@/context/AuthContext";
 import { TimerFlutuante } from "@/components/TimerFlutuante";
 import { useTimerGlobal } from "@/context/TimerContext";
 import { TrialGuard } from "@/components/TrialGuard";
-import { UpgradePlanoModal } from "@/components/UpgradePlanoModal";
 
 interface AppLayoutProps {
   /**
@@ -23,7 +21,6 @@ export function AppLayout({ variant: variantOverride }: AppLayoutProps) {
 
   const timerCtx = useTimerGlobal();
   const navigate = useNavigate();
-  const [openUpgrade, setOpenUpgrade] = useState(false);
   const isTrial = usuario?.role === "trial";
 
   return (
@@ -40,13 +37,6 @@ export function AppLayout({ variant: variantOverride }: AppLayoutProps) {
             <span className="text-[#031D38]">
               Você está em <strong>modo trial</strong> — explore a plataforma e fale com nossa equipe para contratar.
             </span>
-            <button
-              type="button"
-              onClick={() => setOpenUpgrade(true)}
-              className="ml-auto text-xs font-semibold text-[#8B5CF6] hover:underline"
-            >
-              Conheça os planos →
-            </button>
           </div>
         )}
         <main className="flex-1 overflow-y-auto">
@@ -70,11 +60,6 @@ export function AppLayout({ variant: variantOverride }: AppLayoutProps) {
           timerCtx.encerrar();
           navigate("/app/horas");
         }}
-      />
-      <UpgradePlanoModal
-        open={openUpgrade}
-        onClose={() => setOpenUpgrade(false)}
-        planoAtual={usuario?.plano ?? "trial"}
       />
     </div>
   );
