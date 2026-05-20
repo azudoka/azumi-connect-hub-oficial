@@ -390,13 +390,9 @@ export default function ClienteDashboard() {
                 onClick={() => setComunicadoOpen(true)}
                 className="rounded-lg overflow-hidden border border-gray-100 text-left hover:opacity-95 transition"
               >
-                {comunicadoRecente.capa ? (
-                  <img src={comunicadoRecente.capa} alt="" className="w-full aspect-video object-cover" />
-                ) : (
-                  <div className="w-full aspect-video bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
-                    <Megaphone className="h-8 w-8 text-primary/60" />
-                  </div>
-                )}
+                <div className="w-full aspect-video bg-gradient-to-br from-violet-500/20 to-blue-500/20 flex items-center justify-center">
+                  <Megaphone className="h-8 w-8 text-primary/40" />
+                </div>
                 <div className="p-3">
                   <div className="font-semibold text-sm leading-snug">{comunicadoRecente.titulo}</div>
                   <p className="text-xs text-muted-foreground mt-1">
