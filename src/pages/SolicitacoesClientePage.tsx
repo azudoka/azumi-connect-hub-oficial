@@ -1,9 +1,8 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import {
-  Plus,
   Inbox,
   ChevronDown,
   MessageSquare,
@@ -14,9 +13,21 @@ import {
   Send,
   Pencil,
   Trash2,
+  CalendarClock,
+  Users,
+  UserSearch,
+  GraduationCap,
+  Compass,
+  Palette,
+  MapPin,
+  UserPlus,
+  HelpCircle,
+  ShieldCheck,
+  Timer as TimerIcon,
+  Sparkles,
 } from "lucide-react";
 
-import { useAuth } from "@/context/AuthContext";
+import { useAuth, type Plano } from "@/context/AuthContext";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
@@ -24,48 +35,41 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
+  Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle,
 } from "@/components/ui/sheet";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
-// ---------- Types ----------
+// ============================================================================
+// Tipos
+// ============================================================================
 type TipoSolicitacao =
-  | "duvida"
   | "reuniao"
-  | "suporte"
-  | "ajuste_projeto"
+  | "rs"
+  | "hunting"
+  | "treinamento"
+  | "programa_lideres"
+  | "endomarketing"
+  | "visita"
   | "novo_usuario"
-  | "outro";
+  | "duvida"
+  | "nr_compliance"
+  | "horas_avulsas";
+
 type Urgencia = "alta" | "media" | "baixa";
 type StatusSolicitacao =
-  | "aberta"
-  | "andamento"
-  | "aguardando_cliente"
-  | "finalizada"
-  | "cancelada";
+  | "aberta" | "andamento" | "aguardando_cliente" | "finalizada" | "cancelada";
 
 interface MensagemHistorico {
-  autor: string;
-  texto: string;
-  data: string; // ISO
-  enviadoEm?: number;
-  editadoEm?: string;
+  autor: string; texto: string; data: string;
+  enviadoEm?: number; editadoEm?: string;
 }
 
 interface Solicitacao {
@@ -78,136 +82,192 @@ interface Solicitacao {
   status: StatusSolicitacao;
   empresaId: string;
   consultor?: string;
-  criadaEm: string; // ISO
+  criadaEm: string;
+  temCustoAdicional?: boolean;
+  payload?: Record<string, unknown>;
   historico?: MensagemHistorico[];
 }
 
-// ---------- Labels ----------
-const TIPO_LABEL: Record<TipoSolicitacao, string> = {
-  duvida: "Dúvida",
-  reuniao: "Solicitação de reunião",
-  suporte: "Suporte técnico",
-  ajuste_projeto: "Ajuste em projeto/entregável",
-  novo_usuario: "Solicitar novo usuário",
-  outro: "Outro",
+type PacoteKey = "start" | "ongoing" | "growth";
+
+function planoToPacote(p?: Plano | null): PacoteKey {
+  if (p === "ongoing") return "ongoing";
+  if (p === "growth") return "growth";
+  return "start"; // start, trial e null caem como start
+}
+
+const PACOTE_LABEL: Record<PacoteKey, string> = {
+  start: "START", ongoing: "ONGOING", growth: "GROWTH",
 };
 
-const URGENCIA_LABEL: Record<Urgencia, string> = {
-  alta: "Alta",
-  media: "Média",
-  baixa: "Baixa",
-};
+// ============================================================================
+// Config por tipo de solicitação
+// ============================================================================
+interface TipoConfig {
+  key: TipoSolicitacao;
+  nome: string;
+  descricao: string;
+  icon: typeof MessageSquare;
+  /** -1 = ilimitado, 0 = não incluso */
+  cota: Record<PacoteKey, number>;
+  /** Termo obrigatório sempre, mesmo dentro da cota */
+  termoSempre?: { texto: string; link?: string };
+  /** Termo obrigatório apenas quando gera custo extra (fora da cota / não incluso) */
+  termoExtra?: { texto: string };
+  /** Nunca incluso: sempre gera custo */
+  sempreExtra?: boolean;
+}
 
+const TIPOS: TipoConfig[] = [
+  {
+    key: "reuniao",
+    nome: "Reunião de Alinhamento",
+    descricao: "Agendar conversa com sua consultora",
+    icon: CalendarClock,
+    cota: { start: 1, ongoing: 2, growth: -1 },
+  },
+  {
+    key: "rs",
+    nome: "Processo Seletivo (R&S)",
+    descricao: "Abrir vaga para recrutamento e seleção",
+    icon: Users,
+    cota: { start: 1, ongoing: 2, growth: 3 },
+    termoExtra: {
+      texto:
+        "Estou ciente de que esta vaga excede a cota inclusa no meu pacote e gerará cobrança adicional conforme tabela vigente.",
+    },
+  },
+  {
+    key: "hunting",
+    nome: "Hunting",
+    descricao: "Recrutamento estratégico para posições executivas",
+    icon: UserSearch,
+    cota: { start: 0, ongoing: 0, growth: 1 },
+    termoSempre: {
+      texto:
+        "Estou ciente de que o processo de Hunting para posições estratégicas possui SLA e condições específicas, podendo gerar custo adicional conforme pacote contratado. Ao confirmar, minha solicitação será encaminhada ao consultor responsável para análise e envio de proposta.",
+      link: "#politica-hunting",
+    },
+  },
+  {
+    key: "treinamento",
+    nome: "Treinamento In Company",
+    descricao: "Workshop ou capacitação pontual",
+    icon: GraduationCap,
+    cota: { start: 0, ongoing: 0, growth: 0 },
+    sempreExtra: true,
+    termoSempre: {
+      texto:
+        "Estou ciente de que Treinamentos In Company não estão inclusos no meu pacote e que esta solicitação gerará uma proposta comercial específica com custo adicional. A execução só ocorrerá após aprovação formal da proposta.",
+    },
+  },
+  {
+    key: "programa_lideres",
+    nome: "Programa de Líderes",
+    descricao: "Trilha estruturada e contínua de desenvolvimento",
+    icon: Compass,
+    cota: { start: 0, ongoing: 0, growth: -1 },
+    termoExtra: {
+      texto:
+        "Estou ciente de que o Programa de Líderes não está incluso no meu pacote atual e que esta solicitação gerará uma proposta comercial com custo adicional.",
+    },
+  },
+  {
+    key: "endomarketing",
+    nome: "Material de Endomarketing",
+    descricao: "Produção de cartaz, folder, apresentação, post",
+    icon: Palette,
+    cota: { start: 0, ongoing: 0, growth: 0 },
+    sempreExtra: true,
+    termoSempre: {
+      texto:
+        "Estou ciente de que materiais de design não estão inclusos no meu pacote e que esta solicitação gerará uma proposta comercial com custo adicional.",
+    },
+  },
+  {
+    key: "visita",
+    nome: "Visita Presencial",
+    descricao: "Visita técnica em Curitiba/RMC",
+    icon: MapPin,
+    cota: { start: 0, ongoing: 1, growth: 2 },
+    termoExtra: {
+      texto:
+        "Estou ciente de que esta visita excede o incluso no meu pacote e/ou pode gerar custos de logística (fora de Curitiba/RMC).",
+    },
+  },
+  {
+    key: "novo_usuario",
+    nome: "Novo Usuário",
+    descricao: "Adicionar acesso à plataforma",
+    icon: UserPlus,
+    cota: { start: 2, ongoing: 3, growth: 4 },
+    termoExtra: {
+      texto:
+        "Estou ciente de que meu pacote inclui um limite de acessos e que este usuário adicional gerará cobrança conforme tabela vigente. A Azumi entrará em contato para formalizar o aditivo.",
+    },
+  },
+  {
+    key: "duvida",
+    nome: "Dúvida / Suporte",
+    descricao: "Tirar dúvidas ou abrir chamado de suporte",
+    icon: HelpCircle,
+    cota: { start: -1, ongoing: -1, growth: -1 },
+  },
+  {
+    key: "nr_compliance",
+    nome: "NR / Conformidade",
+    descricao: "Conformidade trabalhista e normas regulamentadoras",
+    icon: ShieldCheck,
+    cota: { start: -1, ongoing: -1, growth: -1 },
+  },
+  {
+    key: "horas_avulsas",
+    nome: "Horas Avulsas",
+    descricao: "Aprovar horas excedentes proativamente",
+    icon: TimerIcon,
+    cota: { start: 0, ongoing: 0, growth: 0 },
+    sempreExtra: true,
+    termoSempre: {
+      texto:
+        "Estou ciente de que horas avulsas geram cobrança adicional conforme tabela vigente e que a execução só ocorrerá após aprovação registrada.",
+    },
+  },
+];
+
+const TIPO_BY_KEY: Record<TipoSolicitacao, TipoConfig> = TIPOS.reduce(
+  (acc, t) => ({ ...acc, [t.key]: t }),
+  {} as Record<TipoSolicitacao, TipoConfig>,
+);
+
+// ============================================================================
+// SLA
+// ============================================================================
+function slaTexto(pacote: PacoteKey, urgencia: Urgencia): string {
+  if (pacote === "growth") return urgencia === "alta" ? "2h úteis" : "12h úteis";
+  if (pacote === "ongoing") return urgencia === "alta" ? "4h úteis" : "24h úteis";
+  return urgencia === "alta" ? "Avaliação caso a caso" : "48h úteis";
+}
+
+// ============================================================================
+// Status / labels
+// ============================================================================
+const URGENCIA_LABEL: Record<Urgencia, string> = { alta: "Alta", media: "Média", baixa: "Baixa" };
 const STATUS_LABEL: Record<StatusSolicitacao, string> = {
-  aberta: "Aberta",
-  andamento: "Em andamento",
-  aguardando_cliente: "Aguardando você",
-  finalizada: "Finalizada",
-  cancelada: "Cancelada",
+  aberta: "Aberta", andamento: "Em andamento",
+  aguardando_cliente: "Aguardando você", finalizada: "Finalizada", cancelada: "Cancelada",
 };
 
-// Status agrupados nos 4 cards (cancelada vive escondida e só aparece quando filtrar)
 type CardKey = "aberta" | "andamento" | "aguardando_cliente" | "finalizada";
-
-const CARDS: { key: CardKey; label: string; icon: typeof MessageSquare; tone: string }[] = [
-  { key: "aberta", label: "Abertas", icon: MessageSquare, tone: "info" },
-  { key: "andamento", label: "Em andamento", icon: Clock, tone: "success" },
-  { key: "aguardando_cliente", label: "Aguardando", icon: AlertCircle, tone: "warning" },
-  { key: "finalizada", label: "Finalizadas", icon: CheckCircle2, tone: "muted" },
+const CHIPS: { key: CardKey; label: string; icon: typeof MessageSquare; cls: string }[] = [
+  { key: "aberta", label: "Abertas", icon: MessageSquare, cls: "bg-info/10 text-info border-info/30" },
+  { key: "andamento", label: "Em andamento", icon: Clock, cls: "bg-success/10 text-success border-success/30" },
+  { key: "aguardando_cliente", label: "Aguardando", icon: AlertCircle, cls: "bg-warning/10 text-warning border-warning/30" },
+  { key: "finalizada", label: "Finalizadas", icon: CheckCircle2, cls: "bg-muted text-muted-foreground border-border" },
 ];
 
-// ---------- Mock ----------
-const MOCK: Solicitacao[] = [
-  {
-    id: "s-71",
-    codigo: "SOL-2026-0071",
-    tipo: "ajuste_projeto",
-    titulo: "Revisar escopo do entregável Mapa de Cargos",
-    descricao:
-      "Precisamos rever a estrutura do nível 3 — gerentes de área. A consultora ficou de propor nova matriz na próxima reunião.",
-    urgencia: "alta",
-    status: "andamento",
-    empresaId: "kentaki",
-    consultor: "Ana Beatriz",
-    criadaEm: "2026-04-18T14:20:00Z",
-    historico: [
-      {
-        autor: "Ana Beatriz",
-        texto: "Recebido. Vou trazer a proposta na quinta.",
-        data: "2026-04-19T09:10:00Z",
-      },
-      {
-        autor: "Você",
-        texto: "Perfeito, obrigada!",
-        data: "2026-04-19T09:32:00Z",
-      },
-    ],
-  },
-  {
-    id: "s-68",
-    codigo: "SOL-2026-0068",
-    tipo: "reuniao",
-    titulo: "Agendar alinhamento mensal com a consultora",
-    descricao: "Sugerir 3 horários na semana que vem para alinhamento mensal.",
-    urgencia: "media",
-    status: "aguardando_cliente",
-    empresaId: "kentaki",
-    consultor: "Ana Beatriz",
-    criadaEm: "2026-04-15T10:05:00Z",
-    historico: [
-      {
-        autor: "Ana Beatriz",
-        texto: "Mandei 3 opções no e-mail, pode me confirmar?",
-        data: "2026-04-16T15:22:00Z",
-      },
-    ],
-  },
-  {
-    id: "s-64",
-    codigo: "SOL-2026-0064",
-    tipo: "novo_usuario",
-    titulo: "Adicionar acesso para Joana — RH",
-    descricao:
-      "Joana Martins · joana.martins@kentaki.com · Analista de RH. Precisa acessar Projetos e Solicitações.",
-    urgencia: "media",
-    status: "aberta",
-    empresaId: "kentaki",
-    criadaEm: "2026-04-12T09:30:00Z",
-  },
-  {
-    id: "s-59",
-    codigo: "SOL-2026-0059",
-    tipo: "suporte",
-    titulo: "Erro ao baixar boleto de fevereiro",
-    descricao:
-      "Ao clicar em baixar, retorna 404. Já tentei outro navegador e o erro continua.",
-    urgencia: "baixa",
-    status: "finalizada",
-    empresaId: "kentaki",
-    consultor: "Suporte Azumi",
-    criadaEm: "2026-03-28T16:45:00Z",
-    historico: [
-      {
-        autor: "Suporte Azumi",
-        texto: "Boleto reenviado, link funcionando agora.",
-        data: "2026-03-29T11:08:00Z",
-      },
-    ],
-  },
-  {
-    id: "s-50",
-    codigo: "SOL-2026-0050",
-    tipo: "duvida",
-    titulo: "Como funcionam os relatórios de Gestão de Conta?",
-    descricao: "Cancelado — encontramos a resposta no FAQ.",
-    urgencia: "baixa",
-    status: "cancelada",
-    empresaId: "kentaki",
-    criadaEm: "2026-03-12T11:15:00Z",
-  },
-];
+const PILL_BASE =
+  "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap";
 
-// ---------- Helpers ----------
 function urgenciaPill(u: Urgencia) {
   if (u === "alta") return "bg-destructive/15 text-destructive border-destructive/30";
   if (u === "media") return "bg-warning/15 text-warning border-warning/30";
@@ -217,404 +277,492 @@ function statusPill(s: StatusSolicitacao) {
   if (s === "aberta") return "bg-info/15 text-info border-info/30";
   if (s === "andamento") return "bg-success/15 text-success border-success/30";
   if (s === "aguardando_cliente") return "bg-warning/15 text-warning border-warning/30";
-  if (s === "cancelada")
-    return "bg-muted text-muted-foreground border-border line-through";
+  if (s === "cancelada") return "bg-muted text-muted-foreground border-border line-through";
   return "bg-muted text-muted-foreground border-border";
 }
-const PILL_BASE =
-  "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap";
-
-const TONE_CARD: Record<string, { ring: string; bg: string; text: string; icon: string }> = {
-  info: {
-    ring: "ring-info/30",
-    bg: "bg-info/10",
-    text: "text-info",
-    icon: "text-info",
-  },
-  success: {
-    ring: "ring-success/30",
-    bg: "bg-success/10",
-    text: "text-success",
-    icon: "text-success",
-  },
-  warning: {
-    ring: "ring-warning/30",
-    bg: "bg-warning/10",
-    text: "text-warning",
-    icon: "text-warning",
-  },
-  muted: {
-    ring: "ring-border",
-    bg: "bg-muted/40",
-    text: "text-muted-foreground",
-    icon: "text-muted-foreground",
-  },
-};
-
 const URGENCIA_DOT: Record<Urgencia, string> = {
-  alta: "bg-destructive",
-  media: "bg-warning",
-  baixa: "bg-muted-foreground/40",
+  alta: "bg-destructive", media: "bg-warning", baixa: "bg-muted-foreground/40",
 };
 
-const FORM_INICIAL = {
-  tipo: "duvida" as TipoSolicitacao,
-  titulo: "",
-  urgencia: "media" as Urgencia,
-  descricao: "",
+// ============================================================================
+// Mock inicial
+// ============================================================================
+const MOCK: Solicitacao[] = [
+  {
+    id: "s-71", codigo: "SOL-2026-0071", tipo: "rs",
+    titulo: "Vaga: Analista de Marketing Pleno",
+    descricao: "Abertura de vaga para reforço do time de marketing.",
+    urgencia: "alta", status: "andamento", empresaId: "kentaki",
+    consultor: "Ana Beatriz", criadaEm: "2026-04-18T14:20:00Z",
+    historico: [
+      { autor: "Ana Beatriz", texto: "Recebido. Iniciamos a triagem.", data: "2026-04-19T09:10:00Z" },
+    ],
+  },
+  {
+    id: "s-68", codigo: "SOL-2026-0068", tipo: "reuniao",
+    titulo: "Alinhamento mensal de abril",
+    descricao: "Sugerir 3 horários para a reunião mensal.",
+    urgencia: "media", status: "aguardando_cliente", empresaId: "kentaki",
+    consultor: "Ana Beatriz", criadaEm: "2026-04-15T10:05:00Z",
+    historico: [{ autor: "Ana Beatriz", texto: "Mandei 3 opções no e-mail.", data: "2026-04-16T15:22:00Z" }],
+  },
+  {
+    id: "s-59", codigo: "SOL-2026-0059", tipo: "duvida",
+    titulo: "Erro ao baixar boleto", descricao: "Botão retorna 404.",
+    urgencia: "baixa", status: "finalizada", empresaId: "kentaki",
+    consultor: "Suporte Azumi", criadaEm: "2026-03-28T16:45:00Z",
+  },
+];
+
+// ============================================================================
+// Componente principal
+// ============================================================================
+const FORM_BASE = {
+  titulo: "", descricao: "", urgencia: "media" as Urgencia,
+  extras: {} as Record<string, string>,
 };
 
 export default function SolicitacoesClientePage() {
-  const { user } = useAuth();
+  const { user, usuario } = useAuth();
   const empresaId = user?.empresaId ?? "";
+  const pacote = planoToPacote(usuario?.plano);
 
   const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>(() =>
-    MOCK.filter((s) => (empresaId ? s.empresaId === empresaId : true))
+    MOCK.filter((s) => (empresaId ? s.empresaId === empresaId : true)),
   );
   const [filtro, setFiltro] = useState<"todos" | StatusSolicitacao>("todos");
-  const [sheetAberto, setSheetAberto] = useState(false);
-  const [form, setForm] = useState(FORM_INICIAL);
+  const [filtroTipo, setFiltroTipo] = useState<"todos" | TipoSolicitacao>("todos");
   const [expandidos, setExpandidos] = useState<Record<string, boolean>>({});
   const [conversaAberta, setConversaAberta] = useState<Solicitacao | null>(null);
   const [cancelarSol, setCancelarSol] = useState<Solicitacao | null>(null);
 
-  const lista = useMemo(() => {
-    const base =
-      filtro === "todos"
-        ? solicitacoes
-        : solicitacoes.filter((s) => s.status === filtro);
-    return [...base].sort(
-      (a, b) => new Date(b.criadaEm).getTime() - new Date(a.criadaEm).getTime()
-    );
-  }, [solicitacoes, filtro]);
+  // Fluxo: tipo escolhido -> formulário -> (modal de custo) -> enviado
+  const [tipoForm, setTipoForm] = useState<TipoSolicitacao | null>(null);
+  const [form, setForm] = useState(FORM_BASE);
+  const [confirmCusto, setConfirmCusto] = useState<null | {
+    tipo: TipoSolicitacao;
+    cienteCusto: boolean;
+    payload: Solicitacao;
+  }>(null);
 
+  // ----- contagens de status -----
   const contagens = useMemo(() => {
-    const mapa: Record<CardKey | "todos" | "cancelada", number> = {
-      todos: solicitacoes.length,
-      aberta: 0,
-      andamento: 0,
-      aguardando_cliente: 0,
-      finalizada: 0,
-      cancelada: 0,
+    const m: Record<CardKey | "todos" | "cancelada", number> = {
+      todos: solicitacoes.length, aberta: 0, andamento: 0,
+      aguardando_cliente: 0, finalizada: 0, cancelada: 0,
     };
-    for (const s of solicitacoes) mapa[s.status] += 1;
-    return mapa;
+    for (const s of solicitacoes) m[s.status] += 1;
+    return m;
   }, [solicitacoes]);
 
-  function resetForm() {
-    setForm(FORM_INICIAL);
-  }
+  // ----- consumo de cota por tipo no mês atual -----
+  const consumoMes = useMemo(() => {
+    const agora = new Date();
+    const mesIni = new Date(agora.getFullYear(), agora.getMonth(), 1).getTime();
+    const map: Partial<Record<TipoSolicitacao, number>> = {};
+    for (const s of solicitacoes) {
+      if (new Date(s.criadaEm).getTime() >= mesIni && s.status !== "cancelada") {
+        map[s.tipo] = (map[s.tipo] ?? 0) + 1;
+      }
+    }
+    return map;
+  }, [solicitacoes]);
+
+  // ----- lista filtrada -----
+  const lista = useMemo(() => {
+    let base = filtro === "todos" ? solicitacoes : solicitacoes.filter((s) => s.status === filtro);
+    if (filtroTipo !== "todos") base = base.filter((s) => s.tipo === filtroTipo);
+    return [...base].sort((a, b) => new Date(b.criadaEm).getTime() - new Date(a.criadaEm).getTime());
+  }, [solicitacoes, filtro, filtroTipo]);
 
   function toggleExpand(id: string) {
-    setExpandidos((prev) => ({ ...prev, [id]: !prev[id] }));
+    setExpandidos((p) => ({ ...p, [id]: !p[id] }));
   }
 
-  function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!form.titulo.trim() || !form.descricao.trim()) {
-      toast.error("Preencha todos os campos obrigatórios");
-      return;
+  function statusCota(tipo: TipoConfig): {
+    label: string; tone: "ok" | "parcial" | "extra";
+    geraCusto: boolean; cotaTotal: number; usados: number;
+  } {
+    const total = tipo.cota[pacote];
+    const usados = consumoMes[tipo.key] ?? 0;
+    if (tipo.sempreExtra || total === 0) {
+      return { label: "Custo adicional", tone: "extra", geraCusto: true, cotaTotal: 0, usados };
     }
+    if (total === -1) {
+      return { label: "Incluso no seu pacote", tone: "ok", geraCusto: false, cotaTotal: -1, usados };
+    }
+    if (usados >= total) {
+      return { label: "Cota atingida — custo adicional", tone: "extra", geraCusto: true, cotaTotal: total, usados };
+    }
+    if (usados > 0) {
+      return { label: `${usados} de ${total} utilizados este mês`, tone: "parcial", geraCusto: false, cotaTotal: total, usados };
+    }
+    return { label: "Incluso no seu pacote", tone: "ok", geraCusto: false, cotaTotal: total, usados };
+  }
+
+  function abrirFormulario(key: TipoSolicitacao) {
+    setForm(FORM_BASE);
+    setTipoForm(key);
+  }
+
+  function buildSolicitacao(tipo: TipoConfig, geraCusto: boolean): Solicitacao {
     const ano = new Date().getFullYear();
     const sufixo = String(Math.floor(Math.random() * 9000) + 1000);
-    const codigo = `SOL-${ano}-${sufixo}`;
-    const nova: Solicitacao = {
+    return {
       id: `s-${sufixo}-${Date.now()}`,
-      codigo,
-      tipo: form.tipo,
-      titulo: form.titulo.trim(),
+      codigo: `SOL-${ano}-${sufixo}`,
+      tipo: tipo.key,
+      titulo: form.titulo.trim() || tipo.nome,
       descricao: form.descricao.trim(),
       urgencia: form.urgencia,
       status: "aberta",
       empresaId: empresaId || "kentaki",
       criadaEm: new Date().toISOString(),
+      temCustoAdicional: geraCusto,
+      payload: { ...form.extras },
     };
-    setSolicitacoes((prev) => [nova, ...prev]);
-    setSheetAberto(false);
-    resetForm();
-    toast.success(`Solicitação criada — protocolo ${codigo}`);
+  }
+
+  function handleSubmitForm(e: FormEvent) {
+    e.preventDefault();
+    if (!tipoForm) return;
+    const tipo = TIPO_BY_KEY[tipoForm];
+    if (!form.descricao.trim()) {
+      toast.error("Preencha a descrição / detalhes.");
+      return;
+    }
+    const status = statusCota(tipo);
+    const nova = buildSolicitacao(tipo, status.geraCusto);
+    if (status.geraCusto) {
+      setConfirmCusto({ tipo: tipoForm, cienteCusto: false, payload: nova });
+    } else {
+      setSolicitacoes((p) => [nova, ...p]);
+      setTipoForm(null);
+      setForm(FORM_BASE);
+      toast.success(`Solicitação criada — protocolo ${nova.codigo}`);
+    }
+  }
+
+  function confirmarComCusto() {
+    if (!confirmCusto || !confirmCusto.cienteCusto) return;
+    setSolicitacoes((p) => [confirmCusto.payload, ...p]);
+    toast.success(`Solicitação enviada — protocolo ${confirmCusto.payload.codigo}`, {
+      description: "Você será contatado para alinhar o custo adicional.",
+    });
+    setConfirmCusto(null);
+    setTipoForm(null);
+    setForm(FORM_BASE);
   }
 
   return (
     <>
       <PageHeader
-        title="Minhas Solicitações"
-        subtitle="Acompanhe e abra novos pedidos para sua consultora."
+        title="Solicitações"
+        subtitle="Faça uma nova solicitação ou acompanhe o status das existentes"
         actions={
-          <Button
-            size="sm"
-            className="rounded-full"
-            onClick={() => setSheetAberto(true)}
-          >
-            <Plus className="h-4 w-4" />
-            Nova solicitação
-          </Button>
+          <span className={cn(PILL_BASE, "bg-primary/10 text-primary border-primary/30")}>
+            <Sparkles className="h-3.5 w-3.5" /> Pacote {PACOTE_LABEL[pacote]}
+          </span>
         }
       />
 
-      {/* Pill "Todas" — reset do filtro */}
-      <div className="mb-4">
-        <Button
-          size="sm"
-          variant={filtro === "todos" ? "default" : "outline"}
-          className="rounded-full"
+      {/* Chips compactos de status */}
+      <div className="flex flex-wrap items-center gap-2 mb-6">
+        <button
+          type="button"
           onClick={() => setFiltro("todos")}
+          className={cn(
+            PILL_BASE, "cursor-pointer",
+            filtro === "todos"
+              ? "bg-primary text-primary-foreground border-primary"
+              : "bg-card border-border hover:bg-muted/40",
+          )}
         >
-          Todas ({contagens.todos})
-        </Button>
-      </div>
-
-      {/* 4 cards de contagem clicáveis */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        {CARDS.map(({ key, label, icon: Icon, tone }) => {
+          Todas <span className="font-data tabular-nums">{contagens.todos}</span>
+        </button>
+        {CHIPS.map(({ key, label, icon: Icon, cls }) => {
           const ativo = filtro === key;
-          const t = TONE_CARD[tone];
           return (
             <button
-              key={key}
-              type="button"
-              onClick={() => setFiltro(key)}
+              key={key} type="button" onClick={() => setFiltro(key)}
               className={cn(
-                "rounded-2xl border bg-card p-4 text-left transition-all",
-                "hover:border-primary/40 hover:shadow-card",
-                ativo && "border-primary ring-1 ring-primary"
+                PILL_BASE, "cursor-pointer",
+                ativo ? "ring-2 ring-primary/40" : "",
+                cls,
               )}
             >
-              <div className="flex items-center justify-between">
-                <span
-                  className={cn(
-                    "h-9 w-9 rounded-xl flex items-center justify-center",
-                    t.bg
-                  )}
-                >
-                  <Icon className={cn("h-4.5 w-4.5", t.icon)} size={18} />
-                </span>
-                <span className="font-display text-2xl font-semibold tabular-nums">
-                  {contagens[key]}
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground mt-2">{label}</p>
+              <Icon className="h-3.5 w-3.5" /> {label}
+              <span className="font-data tabular-nums">{contagens[key]}</span>
             </button>
           );
         })}
       </div>
 
-      {/* Lista */}
-      <div className="space-y-3">
-        {lista.length === 0 ? (
-          <Card className="glass">
-            <CardContent className="p-0">
-              <EmptyState
-                icon={Inbox}
-                title="Nenhuma solicitação por aqui"
-                description={
-                  filtro === "todos"
-                    ? "Quando você abrir um pedido para sua consultora, ele aparece aqui."
-                    : "Nenhuma solicitação neste status. Tente outro filtro."
-                }
-              />
-            </CardContent>
-          </Card>
-        ) : (
-          lista.map((s) => {
-            const aberto = !!expandidos[s.id];
-            const cancelada = s.status === "cancelada";
-            const ultimas = (s.historico ?? []).slice(-2);
+      {/* Cards de tipos de solicitação */}
+      <section className="mb-8">
+        <h2 className="text-sm font-semibold text-foreground mb-3">
+          Abrir nova solicitação
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          {TIPOS.map((t) => {
+            const Icon = t.icon;
+            const s = statusCota(t);
+            const toneBadge =
+              s.tone === "ok"
+                ? "bg-success/10 text-success border-success/30"
+                : s.tone === "parcial"
+                  ? "bg-warning/10 text-warning border-warning/30"
+                  : "bg-orange-500/10 text-orange-600 border-orange-500/30 dark:text-orange-400";
             return (
-              <Card
-                key={s.id}
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => abrirFormulario(t.key)}
                 className={cn(
-                  "transition-shadow",
-                  aberto ? "shadow-card" : "hover:shadow-card"
+                  "group relative text-left rounded-2xl border bg-card p-4 transition-all",
+                  "hover:-translate-y-0.5 hover:shadow-card hover:border-primary/40",
+                  "focus:outline-none focus:ring-2 focus:ring-primary/40",
                 )}
               >
-                <CardContent className="p-0">
-                  {/* Linha principal */}
-                  <button
-                    type="button"
-                    onClick={() => toggleExpand(s.id)}
-                    className="w-full text-left p-4 flex items-start gap-3"
-                    aria-expanded={aberto}
-                  >
-                    <div className="flex-1 min-w-0 space-y-2">
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                        <span className="font-data text-xs text-muted-foreground">
-                          {s.codigo}
+                <div className="flex items-start gap-3">
+                  <span className={cn(
+                    "h-10 w-10 rounded-xl flex items-center justify-center shrink-0",
+                    "bg-gradient-brand text-white transition-transform",
+                    "group-hover:scale-110 group-hover:rotate-3",
+                  )}>
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-semibold text-sm leading-tight">{t.nome}</div>
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                      {t.descricao}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center justify-between gap-2">
+                  <span className={cn(PILL_BASE, toneBadge, "text-[10.5px]")}>{s.label}</span>
+                  <span className="text-xs font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                    Solicitar →
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Filtro de tipo + Lista */}
+      <section>
+        <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
+          <h2 className="text-sm font-semibold text-foreground">Minhas solicitações</h2>
+          <div className="flex items-center gap-2">
+            <Label className="text-xs text-muted-foreground">Tipo:</Label>
+            <Select value={filtroTipo} onValueChange={(v) => setFiltroTipo(v as typeof filtroTipo)}>
+              <SelectTrigger className="h-8 w-[200px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os tipos</SelectItem>
+                {TIPOS.map((t) => (
+                  <SelectItem key={t.key} value={t.key}>{t.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {lista.length === 0 ? (
+            <Card>
+              <CardContent className="p-0">
+                <EmptyState
+                  icon={Inbox}
+                  title="Nenhuma solicitação por aqui"
+                  description="Use os cards acima para abrir um pedido para sua consultora."
+                />
+              </CardContent>
+            </Card>
+          ) : (
+            lista.map((s) => {
+              const aberto = !!expandidos[s.id];
+              const cancelada = s.status === "cancelada";
+              const ultimas = (s.historico ?? []).slice(-2);
+              const cfg = TIPO_BY_KEY[s.tipo];
+              return (
+                <Card key={s.id} className={cn("transition-shadow", aberto ? "shadow-card" : "hover:shadow-card")}>
+                  <CardContent className="p-0">
+                    <button
+                      type="button"
+                      onClick={() => toggleExpand(s.id)}
+                      className="w-full text-left p-4 flex items-start gap-3"
+                      aria-expanded={aberto}
+                    >
+                      {cfg && (
+                        <span className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                          <cfg.icon className="h-4 w-4" />
                         </span>
-                        <span
-                          className={cn(
-                            "text-sm font-semibold truncate",
-                            cancelada && "line-through text-muted-foreground"
+                      )}
+                      <div className="flex-1 min-w-0 space-y-2">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                          <span className="font-data text-xs text-muted-foreground">{s.codigo}</span>
+                          <span className={cn("text-sm font-semibold truncate", cancelada && "line-through text-muted-foreground")}>
+                            {s.titulo}
+                          </span>
+                          <span className={cn(PILL_BASE, statusPill(s.status))}>{STATUS_LABEL[s.status]}</span>
+                          <span className={cn(PILL_BASE, urgenciaPill(s.urgencia))}>
+                            <span className={cn("h-1.5 w-1.5 rounded-full", URGENCIA_DOT[s.urgencia])} />
+                            {URGENCIA_LABEL[s.urgencia]}
+                          </span>
+                          {s.temCustoAdicional && (
+                            <span className={cn(PILL_BASE, "bg-orange-500/10 text-orange-600 border-orange-500/30 dark:text-orange-400")}>
+                              Custo adicional
+                            </span>
                           )}
-                        >
-                          {s.titulo}
-                        </span>
-                        <span className={cn(PILL_BASE, statusPill(s.status))}>
-                          {STATUS_LABEL[s.status]}
-                        </span>
-                        <span className={cn(PILL_BASE, urgenciaPill(s.urgencia))}>
-                          <span
-                            className={cn("h-1.5 w-1.5 rounded-full", URGENCIA_DOT[s.urgencia])}
-                          />
-                          {URGENCIA_LABEL[s.urgencia]}
-                        </span>
-                      </div>
-                      <div className="text-xs text-muted-foreground flex items-center gap-2">
-                        <span>{TIPO_LABEL[s.tipo]}</span>
-                        <span>·</span>
-                        <span>
-                          {format(new Date(s.criadaEm), "dd/MM/yyyy", { locale: ptBR })}
-                        </span>
-                      </div>
-                    </div>
-                    <ChevronDown
-                      className={cn(
-                        "h-4 w-4 text-muted-foreground transition-transform shrink-0 mt-1",
-                        aberto && "rotate-180"
-                      )}
-                    />
-                  </button>
-
-                  {/* Painel expandido */}
-                  <div
-                    className={cn(
-                      "overflow-hidden transition-all duration-200 ease-out",
-                      aberto ? "max-h-[28rem]" : "max-h-0"
-                    )}
-                  >
-                    <div className="px-4 pb-4 pt-0 border-t border-border/60 space-y-4">
-                      <div>
-                        <p className="text-xs font-medium text-muted-foreground mb-1">
-                          Descrição
-                        </p>
-                        <p className="text-sm text-foreground/90 whitespace-pre-line">
-                          {s.descricao}
-                        </p>
-                      </div>
-
-                      {s.consultor && (
-                        <div className="text-xs text-muted-foreground">
-                          Consultor responsável:{" "}
-                          <span className="text-foreground font-medium">{s.consultor}</span>
                         </div>
-                      )}
+                        <div className="text-xs text-muted-foreground flex items-center gap-2">
+                          <span>{cfg?.nome ?? s.tipo}</span>
+                          <span>·</span>
+                          <span>{format(new Date(s.criadaEm), "dd/MM/yyyy", { locale: ptBR })}</span>
+                        </div>
+                      </div>
+                      <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform shrink-0 mt-1", aberto && "rotate-180")} />
+                    </button>
 
-                      {ultimas.length > 0 && (
+                    <div className={cn("overflow-hidden transition-all duration-200 ease-out", aberto ? "max-h-[28rem]" : "max-h-0")}>
+                      <div className="px-4 pb-4 pt-0 border-t border-border/60 space-y-4">
                         <div>
-                          <p className="text-xs font-medium text-muted-foreground mb-2">
-                            Últimas mensagens
-                          </p>
-                          <div className="space-y-2">
-                            {ultimas.map((m, i) => {
-                              const isMe = m.autor === "Você";
-                              return (
-                                <div key={i}
-                                  className={cn("flex gap-2 items-end",
-                                    isMe && "flex-row-reverse")}>
-                                  {!isMe && (
-                                    <div className="h-6 w-6 rounded-md bg-gradient-brand flex items-center justify-center text-[9px] font-semibold text-white shrink-0">
-                                      {m.autor.charAt(0)}
-                                    </div>
-                                  )}
-                                  <div className={cn(
-                                    "max-w-[80%] rounded-xl px-3 py-2 text-xs",
-                                    isMe
-                                      ? "bg-primary text-primary-foreground rounded-br-sm"
-                                      : "bg-muted text-foreground rounded-bl-sm"
-                                  )}>
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Descrição</p>
+                          <p className="text-sm text-foreground/90 whitespace-pre-line">{s.descricao}</p>
+                        </div>
+                        {s.consultor && (
+                          <div className="text-xs text-muted-foreground">
+                            Consultor responsável: <span className="text-foreground font-medium">{s.consultor}</span>
+                          </div>
+                        )}
+                        {ultimas.length > 0 && (
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground mb-2">Últimas mensagens</p>
+                            <div className="space-y-2">
+                              {ultimas.map((m, i) => {
+                                const isMe = m.autor === "Você";
+                                return (
+                                  <div key={i} className={cn("flex gap-2 items-end", isMe && "flex-row-reverse")}>
                                     {!isMe && (
-                                      <div className="font-semibold mb-0.5 opacity-70">
-                                        {m.autor}
+                                      <div className="h-6 w-6 rounded-md bg-gradient-brand flex items-center justify-center text-[9px] font-semibold text-white shrink-0">
+                                        {m.autor.charAt(0)}
                                       </div>
                                     )}
-                                    <p>{m.texto}</p>
+                                    <div className={cn(
+                                      "max-w-[80%] rounded-xl px-3 py-2 text-xs",
+                                      isMe ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-muted text-foreground rounded-bl-sm",
+                                    )}>
+                                      {!isMe && <div className="font-semibold mb-0.5 opacity-70">{m.autor}</div>}
+                                      <p>{m.texto}</p>
+                                    </div>
                                   </div>
-                                </div>
-                              );
-                            })}
+                                );
+                              })}
+                            </div>
                           </div>
-                        </div>
-                      )}
-
-                      <div className="pt-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="rounded-full text-primary hover:text-primary"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setConversaAberta(s);
-                          }}
-                        >
-                          Ver conversa completa
-                          <ArrowRight className="h-3.5 w-3.5" />
-                        </Button>
-                        {(s.status === "aberta" || s.status === "aguardando_cliente") && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="rounded-full text-destructive hover:text-destructive hover:bg-destructive/10 ml-2"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setCancelarSol(s);
-                            }}
-                          >
-                            Cancelar solicitação
-                          </Button>
                         )}
+                        <div className="pt-1">
+                          <Button
+                            size="sm" variant="ghost"
+                            className="rounded-full text-primary hover:text-primary"
+                            onClick={(e) => { e.stopPropagation(); setConversaAberta(s); }}
+                          >
+                            Ver conversa completa <ArrowRight className="h-3.5 w-3.5" />
+                          </Button>
+                          {(s.status === "aberta" || s.status === "aguardando_cliente") && (
+                            <Button
+                              size="sm" variant="ghost"
+                              className="rounded-full text-destructive hover:text-destructive hover:bg-destructive/10 ml-2"
+                              onClick={(e) => { e.stopPropagation(); setCancelarSol(s); }}
+                            >
+                              Cancelar solicitação
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })
-        )}
-      </div>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
+        </div>
+      </section>
+
+      {/* Sheet — Formulário dinâmico */}
+      <Sheet open={!!tipoForm} onOpenChange={(o) => { if (!o) { setTipoForm(null); setForm(FORM_BASE); } }}>
+        <SheetContent className="sm:max-w-lg w-full overflow-y-auto">
+          {tipoForm && (
+            <FormularioTipo
+              tipo={TIPO_BY_KEY[tipoForm]}
+              pacote={pacote}
+              statusCota={statusCota(TIPO_BY_KEY[tipoForm])}
+              form={form}
+              setForm={setForm}
+              onCancel={() => { setTipoForm(null); setForm(FORM_BASE); }}
+              onSubmit={handleSubmitForm}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {/* Dialog — Confirmação de custo adicional */}
+      <Dialog open={!!confirmCusto} onOpenChange={(o) => { if (!o) setConfirmCusto(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-orange-600 dark:text-orange-400">
+              <AlertCircle className="h-5 w-5" />
+              Atenção — Esta solicitação gera custo adicional
+            </DialogTitle>
+            <DialogDescription className="pt-1">
+              {confirmCusto && TIPO_BY_KEY[confirmCusto.tipo].termoSempre?.texto}
+              {confirmCusto && !TIPO_BY_KEY[confirmCusto.tipo].termoSempre && TIPO_BY_KEY[confirmCusto.tipo].termoExtra?.texto}
+            </DialogDescription>
+          </DialogHeader>
+          <label className="flex items-start gap-2 cursor-pointer text-sm">
+            <Checkbox
+              checked={confirmCusto?.cienteCusto ?? false}
+              onCheckedChange={(v) =>
+                setConfirmCusto((p) => (p ? { ...p, cienteCusto: v === true } : p))
+              }
+            />
+            <span>Estou ciente e desejo prosseguir</span>
+          </label>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmCusto(null)}>Cancelar</Button>
+            <Button disabled={!confirmCusto?.cienteCusto} onClick={confirmarComCusto}>
+              Confirmar e enviar solicitação
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog — Cancelar solicitação */}
-      <Dialog
-        open={!!cancelarSol}
-        onOpenChange={(o) => !o && setCancelarSol(null)}
-      >
+      <Dialog open={!!cancelarSol} onOpenChange={(o) => !o && setCancelarSol(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive">
-              <AlertCircle className="h-5 w-5" />
-              Cancelar solicitação?
+              <AlertCircle className="h-5 w-5" /> Cancelar solicitação?
             </DialogTitle>
-            <DialogDescription className="pt-1 space-y-2">
-              <span className="block">
-                Você está cancelando{" "}
-                <strong className="text-foreground">{cancelarSol?.titulo}</strong>.
-              </span>
-              <span className="block text-warning font-medium text-sm">
-                Atenção: as horas já trabalhadas nesta solicitação não serão devolvidas ao seu pacote.
-              </span>
-              <span className="block text-muted-foreground text-xs">
-                Se preferir, entre em contato com sua consultora antes de cancelar.
-              </span>
+            <DialogDescription className="pt-1">
+              Você está cancelando <strong className="text-foreground">{cancelarSol?.titulo}</strong>.
+              As horas já trabalhadas não serão devolvidas ao seu pacote.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCancelarSol(null)}>
-              Voltar
-            </Button>
+            <Button variant="outline" onClick={() => setCancelarSol(null)}>Voltar</Button>
             <Button
               variant="destructive"
               onClick={() => {
                 if (!cancelarSol) return;
                 setSolicitacoes((prev) =>
-                  prev.map((s) =>
-                    s.id === cancelarSol.id
-                      ? { ...s, status: "cancelada" as StatusSolicitacao }
-                      : s
-                  )
+                  prev.map((s) => s.id === cancelarSol.id ? { ...s, status: "cancelada" as StatusSolicitacao } : s),
                 );
-                toast.warning("Solicitação cancelada.", {
-                  description:
-                    "As horas já trabalhadas não foram devolvidas ao seu pacote.",
-                });
+                toast.warning("Solicitação cancelada.");
                 setCancelarSol(null);
               }}
             >
@@ -624,129 +772,8 @@ export default function SolicitacoesClientePage() {
         </DialogContent>
       </Dialog>
 
-      {/* Sheet — Nova solicitação */}
-      <Sheet
-        open={sheetAberto}
-        onOpenChange={(open) => {
-          setSheetAberto(open);
-          if (!open) resetForm();
-        }}
-      >
-        <SheetContent className="sm:max-w-md w-full overflow-y-auto">
-          <form onSubmit={handleSubmit} className="flex flex-col h-full">
-            <SheetHeader>
-              <SheetTitle>Nova solicitação</SheetTitle>
-              <SheetDescription>
-                Sua consultora receberá o pedido e dará retorno por aqui.
-              </SheetDescription>
-            </SheetHeader>
-
-            <div className="space-y-4 py-4 flex-1">
-              <div className="space-y-2">
-                <Label htmlFor="tipo">Tipo</Label>
-                <Select
-                  value={form.tipo}
-                  onValueChange={(v) =>
-                    setForm((f) => ({ ...f, tipo: v as TipoSolicitacao }))
-                  }
-                >
-                  <SelectTrigger id="tipo">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(Object.keys(TIPO_LABEL) as TipoSolicitacao[]).map((t) => (
-                      <SelectItem key={t} value={t}>
-                        {TIPO_LABEL[t]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {form.tipo === "novo_usuario" && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Informe nome completo, e-mail e cargo do novo usuário no campo
-                    Descrição.
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="titulo">Título</Label>
-                <Input
-                  id="titulo"
-                  value={form.titulo}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, titulo: e.target.value }))
-                  }
-                  placeholder="Resumo da solicitação"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Urgência</Label>
-                <div className="grid grid-cols-3 gap-2">
-                  {(Object.keys(URGENCIA_LABEL) as Urgencia[]).map((u) => {
-                    const ativo = form.urgencia === u;
-                    return (
-                      <button
-                        key={u}
-                        type="button"
-                        onClick={() => setForm((f) => ({ ...f, urgencia: u }))}
-                        className={cn(
-                          "rounded-full border px-3 py-2 flex items-center justify-center gap-2 text-sm transition-colors",
-                          ativo
-                            ? "border-primary bg-primary/10 text-foreground"
-                            : "border-border hover:bg-muted/40"
-                        )}
-                        aria-pressed={ativo}
-                      >
-                        <span className={cn("h-2.5 w-2.5 rounded-full", URGENCIA_DOT[u])} />
-                        {URGENCIA_LABEL[u]}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="descricao">Descrição</Label>
-                <Textarea
-                  id="descricao"
-                  rows={4}
-                  className="resize-none"
-                  value={form.descricao}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, descricao: e.target.value }))
-                  }
-                  placeholder="Conte com detalhes o que você precisa."
-                />
-              </div>
-            </div>
-
-            <SheetFooter className="flex-row sm:justify-end gap-2 pt-2 border-t">
-              <Button
-                type="button"
-                variant="outline"
-                className="rounded-full"
-                onClick={() => {
-                  setSheetAberto(false);
-                  resetForm();
-                }}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit" className="rounded-full">
-                Criar solicitação
-              </Button>
-            </SheetFooter>
-          </form>
-        </SheetContent>
-      </Sheet>
-
       {/* Sheet — Conversa completa */}
-      <Sheet
-        open={!!conversaAberta}
-        onOpenChange={(o) => !o && setConversaAberta(null)}
-      >
+      <Sheet open={!!conversaAberta} onOpenChange={(o) => !o && setConversaAberta(null)}>
         <SheetContent className="sm:max-w-md w-full flex flex-col">
           <SheetHeader>
             <SheetTitle>{conversaAberta?.titulo}</SheetTitle>
@@ -754,117 +781,448 @@ export default function SolicitacoesClientePage() {
               {conversaAberta?.codigo} · {conversaAberta?.consultor ?? "Azumi RH"}
             </SheetDescription>
           </SheetHeader>
-
           <div className="flex-1 overflow-y-auto space-y-2 py-4 pr-1">
             {(conversaAberta?.historico ?? []).length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-6">
-                Nenhuma mensagem ainda.
-              </p>
+              <p className="text-sm text-muted-foreground text-center py-6">Nenhuma mensagem ainda.</p>
             )}
             {(conversaAberta?.historico ?? []).map((m, i) => (
               <MensagemChatCliente
-                key={i}
-                mensagem={m}
-                index={i}
+                key={i} mensagem={m} index={i}
                 onEditar={(idx, texto, editadoEm) => {
                   const atualizado = (conversaAberta?.historico ?? []).map((msg, j) =>
-                    j === idx ? { ...msg, texto, editadoEm } : msg
-                  );
-                  setConversaAberta((prev) =>
-                    prev ? { ...prev, historico: atualizado } : prev
-                  );
-                  setSolicitacoes((prev) =>
-                    prev.map((s) =>
-                      s.id === conversaAberta?.id ? { ...s, historico: atualizado } : s
-                    )
-                  );
+                    j === idx ? { ...msg, texto, editadoEm } : msg);
+                  setConversaAberta((prev) => prev ? { ...prev, historico: atualizado } : prev);
+                  setSolicitacoes((prev) => prev.map((s) =>
+                    s.id === conversaAberta?.id ? { ...s, historico: atualizado } : s));
                 }}
                 onExcluir={(idx) => {
-                  const atualizado = (conversaAberta?.historico ?? []).filter(
-                    (_, j) => j !== idx
-                  );
-                  setConversaAberta((prev) =>
-                    prev ? { ...prev, historico: atualizado } : prev
-                  );
-                  setSolicitacoes((prev) =>
-                    prev.map((s) =>
-                      s.id === conversaAberta?.id ? { ...s, historico: atualizado } : s
-                    )
-                  );
+                  const atualizado = (conversaAberta?.historico ?? []).filter((_, j) => j !== idx);
+                  setConversaAberta((prev) => prev ? { ...prev, historico: atualizado } : prev);
+                  setSolicitacoes((prev) => prev.map((s) =>
+                    s.id === conversaAberta?.id ? { ...s, historico: atualizado } : s));
                 }}
               />
             ))}
           </div>
-
-          {conversaAberta &&
-            conversaAberta.status !== "finalizada" &&
-            conversaAberta.status !== "cancelada" && (
-              <ClienteRespostaInput
-                onEnviar={(texto) => {
-                  const nova: MensagemHistorico = {
-                    autor: "Você",
-                    texto,
-                    data: new Date().toISOString(),
-                    enviadoEm: Date.now(),
-                  };
-                  setSolicitacoes((prev) =>
-                    prev.map((s) =>
-                      s.id === conversaAberta.id
-                        ? { ...s, historico: [...(s.historico ?? []), nova] }
-                        : s
-                    )
-                  );
-                  setConversaAberta((prev) =>
-                    prev ? {
-                      ...prev,
-                      historico: [...(prev.historico ?? []), nova],
-                    } : prev
-                  );
-                  toast.success("Mensagem enviada.");
-                }}
-              />
-            )}
+          {conversaAberta && conversaAberta.status !== "finalizada" && conversaAberta.status !== "cancelada" && (
+            <ClienteRespostaInput
+              onEnviar={(texto) => {
+                const nova: MensagemHistorico = {
+                  autor: "Você", texto, data: new Date().toISOString(), enviadoEm: Date.now(),
+                };
+                setSolicitacoes((prev) => prev.map((s) =>
+                  s.id === conversaAberta.id ? { ...s, historico: [...(s.historico ?? []), nova] } : s));
+                setConversaAberta((prev) => prev ? { ...prev, historico: [...(prev.historico ?? []), nova] } : prev);
+                toast.success("Mensagem enviada.");
+              }}
+            />
+          )}
         </SheetContent>
       </Sheet>
     </>
   );
 }
 
-function ClienteRespostaInput({
-  onEnviar,
+// ============================================================================
+// Formulário dinâmico por tipo
+// ============================================================================
+type FormState = typeof FORM_BASE;
+
+function FormularioTipo({
+  tipo, pacote, statusCota, form, setForm, onCancel, onSubmit,
 }: {
-  onEnviar: (texto: string) => void;
+  tipo: TipoConfig;
+  pacote: PacoteKey;
+  statusCota: { label: string; tone: "ok" | "parcial" | "extra"; geraCusto: boolean; cotaTotal: number; usados: number };
+  form: FormState;
+  setForm: React.Dispatch<React.SetStateAction<FormState>>;
+  onCancel: () => void;
+  onSubmit: (e: FormEvent) => void;
 }) {
+  const [aceiteTermo, setAceiteTermo] = useState(false);
+  const termo = tipo.termoSempre ?? (statusCota.geraCusto ? tipo.termoExtra : undefined);
+  const precisaAceite = !!termo;
+  const sla = slaTexto(pacote, form.urgencia);
+
+  function setExtra(k: string, v: string) {
+    setForm((f) => ({ ...f, extras: { ...f.extras, [k]: v } }));
+  }
+
+  return (
+    <form onSubmit={(e) => {
+      if (precisaAceite && !aceiteTermo) {
+        e.preventDefault();
+        toast.error("É necessário aceitar o termo para prosseguir.");
+        return;
+      }
+      onSubmit(e);
+    }} className="flex flex-col h-full">
+      <SheetHeader>
+        <SheetTitle className="flex items-center gap-2">
+          <span className="h-8 w-8 rounded-lg bg-gradient-brand text-white flex items-center justify-center">
+            <tipo.icon className="h-4 w-4" />
+          </span>
+          {tipo.nome}
+        </SheetTitle>
+        <SheetDescription>{tipo.descricao}</SheetDescription>
+      </SheetHeader>
+
+      <div className="space-y-4 py-4 flex-1">
+        {/* Aviso de cota */}
+        <div className={cn(
+          "rounded-lg border p-3 text-xs",
+          statusCota.tone === "ok" && "bg-success/10 border-success/30 text-success",
+          statusCota.tone === "parcial" && "bg-warning/10 border-warning/30 text-warning",
+          statusCota.tone === "extra" && "bg-orange-500/10 border-orange-500/30 text-orange-600 dark:text-orange-400",
+        )}>
+          {statusCota.label}
+        </div>
+
+        {/* Campos por tipo */}
+        <CamposPorTipo tipo={tipo} form={form} setForm={setForm} setExtra={setExtra} />
+
+        {/* Campo padrão: descrição/observações se ainda não preenchido */}
+        {!CAMPOS_SUBSTITUEM_DESC.has(tipo.key) && (
+          <FieldText label="Descrição" required value={form.descricao}
+            onChange={(v) => setForm((f) => ({ ...f, descricao: v }))}
+            placeholder="Conte com detalhes o que você precisa." multiline rows={4} />
+        )}
+
+        {/* Urgência (oculto para tipos onde não faz sentido) */}
+        {!SEM_URGENCIA.has(tipo.key) && (
+          <div className="space-y-2">
+            <Label>Urgência</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {(Object.keys(URGENCIA_LABEL) as Urgencia[]).map((u) => {
+                const ativo = form.urgencia === u;
+                return (
+                  <button key={u} type="button"
+                    onClick={() => setForm((f) => ({ ...f, urgencia: u }))}
+                    className={cn(
+                      "rounded-full border px-3 py-2 flex items-center justify-center gap-2 text-sm transition-colors",
+                      ativo ? "border-primary bg-primary/10" : "border-border hover:bg-muted/40",
+                    )}
+                  >
+                    <span className={cn("h-2.5 w-2.5 rounded-full", URGENCIA_DOT[u])} />
+                    {URGENCIA_LABEL[u]}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5" />
+              Tempo de resposta estimado: <strong className="text-foreground">{sla}</strong>
+            </div>
+          </div>
+        )}
+
+        {/* Avisos especiais */}
+        {tipo.key === "visita" && (
+          <div className="rounded-lg border border-warning/30 bg-warning/10 text-warning text-xs p-3">
+            Visitas fora de Curitiba/RMC têm logística por conta da sua empresa.
+          </div>
+        )}
+        {tipo.key === "nr_compliance" && (
+          <div className="rounded-lg border border-info/30 bg-info/10 text-info text-xs p-3">
+            Esta solicitação será avaliada pelo consultor. Dependendo da complexidade,
+            pode gerar horas excedentes ou proposta específica.
+          </div>
+        )}
+
+        {/* Termo de aceite */}
+        {precisaAceite && termo && (
+          <div className="rounded-lg border border-orange-500/30 bg-orange-500/5 p-3 space-y-2">
+            <p className="text-xs text-foreground/90">{termo.texto}</p>
+            <label className="flex items-start gap-2 cursor-pointer text-xs">
+              <Checkbox checked={aceiteTermo} onCheckedChange={(v) => setAceiteTermo(v === true)} />
+              <span>Li e concordo com os termos.</span>
+            </label>
+            {tipo.termoSempre?.link && (
+              <a href={tipo.termoSempre.link} target="_blank" rel="noreferrer"
+                className="text-xs text-primary hover:underline">
+                Ver política de {tipo.nome}
+              </a>
+            )}
+          </div>
+        )}
+      </div>
+
+      <SheetFooter className="flex-row sm:justify-end gap-2 pt-2 border-t">
+        <Button type="button" variant="outline" className="rounded-full" onClick={onCancel}>Cancelar</Button>
+        <Button type="submit" className="rounded-full" disabled={precisaAceite && !aceiteTermo}>
+          {statusCota.geraCusto ? "Continuar" : "Enviar solicitação"}
+        </Button>
+      </SheetFooter>
+    </form>
+  );
+}
+
+// Tipos cujos campos já cobrem "descrição"
+const CAMPOS_SUBSTITUEM_DESC = new Set<TipoSolicitacao>([
+  "reuniao", "visita", "novo_usuario",
+]);
+const SEM_URGENCIA = new Set<TipoSolicitacao>(["reuniao", "visita", "novo_usuario"]);
+
+function CamposPorTipo({
+  tipo, form, setForm, setExtra,
+}: {
+  tipo: TipoConfig;
+  form: FormState;
+  setForm: React.Dispatch<React.SetStateAction<FormState>>;
+  setExtra: (k: string, v: string) => void;
+}) {
+  const t = tipo.key;
+  const get = (k: string) => form.extras[k] ?? "";
+
+  if (t === "reuniao") {
+    return (
+      <>
+        <FieldText label="Assunto principal" required value={form.titulo}
+          onChange={(v) => setForm((f) => ({ ...f, titulo: v }))} />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <FieldText label="Opção 1 (data/hora)" value={get("opc1")} onChange={(v) => setExtra("opc1", v)} placeholder="ex: 12/05 14h" />
+          <FieldText label="Opção 2" value={get("opc2")} onChange={(v) => setExtra("opc2", v)} />
+          <FieldText label="Opção 3" value={get("opc3")} onChange={(v) => setExtra("opc3", v)} />
+        </div>
+        <FieldText label="Pauta" required multiline rows={3} value={form.descricao}
+          onChange={(v) => setForm((f) => ({ ...f, descricao: v }))} />
+        <FieldText label="Observações" value={get("obs")} onChange={(v) => setExtra("obs", v)} multiline rows={2} />
+      </>
+    );
+  }
+
+  if (t === "rs") {
+    return (
+      <>
+        <FieldText label="Cargo" required value={form.titulo} onChange={(v) => setForm((f) => ({ ...f, titulo: v }))} />
+        <div className="grid grid-cols-2 gap-2">
+          <FieldText label="Área/Departamento" required value={get("area")} onChange={(v) => setExtra("area", v)} />
+          <FieldSelect label="Nível" value={get("nivel")} onChange={(v) => setExtra("nivel", v)}
+            options={["Estágio", "Júnior", "Pleno", "Sênior", "Especialista", "Liderança"]} />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <FieldSelect label="Regime" value={get("regime")} onChange={(v) => setExtra("regime", v)}
+            options={["CLT", "PJ", "Estágio", "Temporário"]} />
+          <FieldText label="Nº de vagas" value={get("qtd")} onChange={(v) => setExtra("qtd", v)} type="number" />
+        </div>
+        <FieldText label="Faixa salarial (opcional)" value={get("faixa")} onChange={(v) => setExtra("faixa", v)} />
+        <FieldText label="Descrição da vaga" required multiline rows={3} value={form.descricao}
+          onChange={(v) => setForm((f) => ({ ...f, descricao: v }))} />
+      </>
+    );
+  }
+
+  if (t === "hunting") {
+    return (
+      <>
+        <FieldText label="Cargo" required value={form.titulo} onChange={(v) => setForm((f) => ({ ...f, titulo: v }))} />
+        <div className="grid grid-cols-2 gap-2">
+          <FieldText label="Área/Departamento" required value={get("area")} onChange={(v) => setExtra("area", v)} />
+          <FieldSelect label="Nível" value={get("nivel")} onChange={(v) => setExtra("nivel", v)}
+            options={["Pleno", "Sênior", "Especialista", "Liderança", "C-Level"]} />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <FieldSelect label="Regime" value={get("regime")} onChange={(v) => setExtra("regime", v)} options={["CLT", "PJ"]} />
+          <FieldText label="Qtd. vagas" value={get("qtd")} onChange={(v) => setExtra("qtd", v)} type="number" />
+        </div>
+        <FieldText label="Faixa salarial (opcional)" value={get("faixa")} onChange={(v) => setExtra("faixa", v)} />
+        <FieldText label="Perfil desejado" required multiline rows={3} value={form.descricao}
+          onChange={(v) => setForm((f) => ({ ...f, descricao: v }))} />
+      </>
+    );
+  }
+
+  if (t === "treinamento") {
+    return (
+      <>
+        <FieldText label="Tema do treinamento" required value={form.titulo} onChange={(v) => setForm((f) => ({ ...f, titulo: v }))} />
+        <div className="grid grid-cols-2 gap-2">
+          <FieldText label="Público-alvo" required value={get("publico")} onChange={(v) => setExtra("publico", v)} />
+          <FieldText label="Nº de participantes" value={get("qtd")} onChange={(v) => setExtra("qtd", v)} type="number" />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <FieldSelect label="Modalidade" value={get("modalidade")} onChange={(v) => setExtra("modalidade", v)}
+            options={["Presencial", "Remoto", "Híbrido"]} />
+          <FieldText label="Duração (horas)" value={get("duracao")} onChange={(v) => setExtra("duracao", v)} type="number" />
+        </div>
+        <FieldText label="Data desejada (aproximada)" value={get("data")} onChange={(v) => setExtra("data", v)} placeholder="ex: 2ª quinzena de jun" />
+        <FieldText label="Objetivo principal" required multiline rows={3} value={form.descricao}
+          onChange={(v) => setForm((f) => ({ ...f, descricao: v }))} />
+      </>
+    );
+  }
+
+  if (t === "programa_lideres") {
+    return (
+      <>
+        <FieldText label="Nº de líderes participantes" required value={get("qtd")} onChange={(v) => setExtra("qtd", v)} type="number" />
+        <FieldText label="Níveis hierárquicos envolvidos" value={get("niveis")} onChange={(v) => setExtra("niveis", v)}
+          placeholder="ex: Coordenadores, Gerentes" />
+        <FieldText label="Objetivo principal do programa" required value={form.titulo} onChange={(v) => setForm((f) => ({ ...f, titulo: v }))} />
+        <FieldText label="Desafios atuais de liderança" required multiline rows={3} value={form.descricao}
+          onChange={(v) => setForm((f) => ({ ...f, descricao: v }))} />
+        <div className="grid grid-cols-2 gap-2">
+          <FieldSelect label="Modalidade preferida" value={get("modalidade")} onChange={(v) => setExtra("modalidade", v)}
+            options={["Presencial", "Remoto", "Híbrido"]} />
+          <FieldText label="Prazo para início" value={get("prazo")} onChange={(v) => setExtra("prazo", v)} />
+        </div>
+      </>
+    );
+  }
+
+  if (t === "endomarketing") {
+    return (
+      <>
+        <FieldSelect label="Tipo de material" required value={get("tipo_material")} onChange={(v) => setExtra("tipo_material", v)}
+          options={["Cartaz", "Folder", "Apresentação", "Post para redes sociais", "Banner", "Botton", "Outro"]} />
+        <FieldText label="Objetivo / ocasião" required value={form.titulo} onChange={(v) => setForm((f) => ({ ...f, titulo: v }))} />
+        <div className="grid grid-cols-2 gap-2">
+          <FieldSelect label="Formato" value={get("formato")} onChange={(v) => setExtra("formato", v)}
+            options={["Digital", "Impresso", "Ambos"]} />
+          <FieldText label="Data de entrega" value={get("entrega")} onChange={(v) => setExtra("entrega", v)} />
+        </div>
+        <FieldText label="Referências / briefing" required multiline rows={3} value={form.descricao}
+          onChange={(v) => setForm((f) => ({ ...f, descricao: v }))} />
+      </>
+    );
+  }
+
+  if (t === "visita") {
+    return (
+      <>
+        <FieldText label="Objetivo da visita" required value={form.titulo} onChange={(v) => setForm((f) => ({ ...f, titulo: v }))} />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <FieldText label="Data opção 1" value={get("opc1")} onChange={(v) => setExtra("opc1", v)} />
+          <FieldText label="Data opção 2" value={get("opc2")} onChange={(v) => setExtra("opc2", v)} />
+          <FieldText label="Data opção 3" value={get("opc3")} onChange={(v) => setExtra("opc3", v)} />
+        </div>
+        <FieldText label="Endereço / unidade" required value={get("endereco")} onChange={(v) => setExtra("endereco", v)} />
+        <div className="grid grid-cols-2 gap-2">
+          <FieldText label="Duração estimada (horas)" value={get("duracao")} onChange={(v) => setExtra("duracao", v)} type="number" />
+          <FieldText label="Participantes esperados" value={get("participantes")} onChange={(v) => setExtra("participantes", v)} />
+        </div>
+        <FieldText label="Observações" multiline rows={3} value={form.descricao}
+          onChange={(v) => setForm((f) => ({ ...f, descricao: v }))} />
+      </>
+    );
+  }
+
+  if (t === "novo_usuario") {
+    return (
+      <>
+        <FieldText label="Nome completo" required value={form.titulo} onChange={(v) => setForm((f) => ({ ...f, titulo: v }))} />
+        <div className="grid grid-cols-2 gap-2">
+          <FieldText label="Cargo" required value={get("cargo")} onChange={(v) => setExtra("cargo", v)} />
+          <FieldText label="E-mail corporativo" required type="email" value={get("email")} onChange={(v) => setExtra("email", v)} />
+        </div>
+        <FieldSelect label="Perfil de acesso" value={get("perfil")} onChange={(v) => setExtra("perfil", v)}
+          options={["Cliente", "Cliente — leitura", "Outro"]} />
+        <FieldText label="Observações" multiline rows={2} value={form.descricao}
+          onChange={(v) => setForm((f) => ({ ...f, descricao: v }))} />
+      </>
+    );
+  }
+
+  if (t === "duvida") {
+    return (
+      <>
+        <FieldSelect label="Categoria" required value={get("categoria")} onChange={(v) => setExtra("categoria", v)}
+          options={[
+            "RH Operacional", "Recrutamento e Seleção", "Gestão de Pessoas",
+            "Plataforma Azumi Connect", "Contrato e Financeiro", "Outro",
+          ]} />
+        <FieldText label="Título / assunto" required value={form.titulo} onChange={(v) => setForm((f) => ({ ...f, titulo: v }))} />
+      </>
+    );
+  }
+
+  if (t === "nr_compliance") {
+    return (
+      <>
+        <FieldText label="Tipo de NR ou tema" required value={form.titulo} onChange={(v) => setForm((f) => ({ ...f, titulo: v }))} />
+        <div className="grid grid-cols-2 gap-2">
+          <FieldText label="Colaboradores afetados" value={get("qtd")} onChange={(v) => setExtra("qtd", v)} type="number" />
+          <FieldText label="Prazo necessário" value={get("prazo")} onChange={(v) => setExtra("prazo", v)} />
+        </div>
+        <FieldSelect label="Já existe processo iniciado?" value={get("iniciado")} onChange={(v) => setExtra("iniciado", v)}
+          options={["Não", "Sim"]} />
+      </>
+    );
+  }
+
+  if (t === "horas_avulsas") {
+    return (
+      <>
+        <FieldText label="Quantidade estimada de horas" required type="number" value={get("horas")} onChange={(v) => setExtra("horas", v)} />
+        <FieldText label="Frente/área para aplicação" required value={form.titulo} onChange={(v) => setForm((f) => ({ ...f, titulo: v }))} />
+        <FieldText label="Justificativa" required multiline rows={3} value={form.descricao}
+          onChange={(v) => setForm((f) => ({ ...f, descricao: v }))} />
+      </>
+    );
+  }
+
+  return null;
+}
+
+// ============================================================================
+// Field helpers
+// ============================================================================
+function FieldText({
+  label, value, onChange, placeholder, required, multiline, rows = 3, type = "text",
+}: {
+  label: string; value: string; onChange: (v: string) => void;
+  placeholder?: string; required?: boolean; multiline?: boolean; rows?: number; type?: string;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label>{label}{required && <span className="text-destructive ml-0.5">*</span>}</Label>
+      {multiline ? (
+        <Textarea rows={rows} className="resize-none" value={value}
+          onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
+      ) : (
+        <Input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
+      )}
+    </div>
+  );
+}
+
+function FieldSelect({
+  label, value, onChange, options, required,
+}: {
+  label: string; value: string; onChange: (v: string) => void;
+  options: string[]; required?: boolean;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label>{label}{required && <span className="text-destructive ml-0.5">*</span>}</Label>
+      <Select value={value || undefined} onValueChange={onChange}>
+        <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+        <SelectContent>
+          {options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+// ============================================================================
+// Conversa (mantido do arquivo anterior)
+// ============================================================================
+function ClienteRespostaInput({ onEnviar }: { onEnviar: (texto: string) => void }) {
   const [texto, setTexto] = useState("");
   return (
     <div className="flex gap-2 items-end border-t border-border pt-3">
-      <Textarea
-        rows={2}
-        placeholder="Escreva uma mensagem…"
-        value={texto}
+      <Textarea rows={2} placeholder="Escreva uma mensagem…" value={texto}
         onChange={(e) => setTexto(e.target.value)}
         className="resize-none flex-1 text-sm rounded-xl"
         onKeyDown={(e) => {
           if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
-            if (texto.trim()) {
-              onEnviar(texto.trim());
-              setTexto("");
-            }
+            if (texto.trim()) { onEnviar(texto.trim()); setTexto(""); }
           }
-        }}
-      />
-      <Button
-        size="sm"
-        disabled={!texto.trim()}
-        className="rounded-full gap-1.5 shrink-0"
-        onClick={() => {
-          if (texto.trim()) {
-            onEnviar(texto.trim());
-            setTexto("");
-          }
-        }}
-      >
+        }} />
+      <Button size="sm" disabled={!texto.trim()} className="rounded-full gap-1.5 shrink-0"
+        onClick={() => { if (texto.trim()) { onEnviar(texto.trim()); setTexto(""); } }}>
         <Send className="h-3.5 w-3.5" /> Enviar
       </Button>
     </div>
@@ -872,24 +1230,16 @@ function ClienteRespostaInput({
 }
 
 function MensagemChatCliente({
-  mensagem,
-  index,
-  onEditar,
-  onExcluir,
+  mensagem, index, onEditar, onExcluir,
 }: {
-  mensagem: MensagemHistorico;
-  index: number;
-  onEditar: (index: number, novoTexto: string, editadoEm: string) => void;
-  onExcluir: (index: number) => void;
+  mensagem: MensagemHistorico; index: number;
+  onEditar: (i: number, t: string, e: string) => void;
+  onExcluir: (i: number) => void;
 }) {
   const [editando, setEditando] = useState(false);
   const [textoEdit, setTextoEdit] = useState(mensagem.texto);
   const isMe = mensagem.autor === "Você";
-  const podeExcluir =
-    isMe &&
-    mensagem.enviadoEm !== undefined &&
-    Date.now() - mensagem.enviadoEm < 60_000;
-
+  const podeExcluir = isMe && mensagem.enviadoEm !== undefined && Date.now() - mensagem.enviadoEm < 60_000;
   return (
     <div className={cn("flex gap-2 items-end group", isMe && "flex-row-reverse")}>
       {!isMe && (
@@ -900,88 +1250,39 @@ function MensagemChatCliente({
       <div className="relative max-w-[80%]">
         {editando ? (
           <div className="space-y-1">
-            <textarea
-              className="text-sm rounded-xl px-3 py-2 bg-primary/10 border border-primary/30 resize-none w-full min-h-[60px] focus:outline-none"
-              value={textoEdit}
-              onChange={(e) => setTextoEdit(e.target.value)}
-              autoFocus
-            />
+            <textarea className="text-sm rounded-xl px-3 py-2 bg-primary/10 border border-primary/30 resize-none w-full min-h-[60px] focus:outline-none"
+              value={textoEdit} onChange={(e) => setTextoEdit(e.target.value)} autoFocus />
             <div className="flex gap-2 justify-end">
-              <button
-                type="button"
-                className="text-xs text-muted-foreground hover:text-foreground"
-                onClick={() => {
-                  setEditando(false);
-                  setTextoEdit(mensagem.texto);
-                }}
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                className="text-xs text-primary font-medium"
+              <button type="button" className="text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => { setEditando(false); setTextoEdit(mensagem.texto); }}>Cancelar</button>
+              <button type="button" className="text-xs text-primary font-medium"
                 onClick={() => {
                   if (!textoEdit.trim()) return;
-                  const agora = format(new Date(), "HH:mm");
-                  onEditar(index, textoEdit.trim(), agora);
+                  onEditar(index, textoEdit.trim(), format(new Date(), "HH:mm"));
                   setEditando(false);
-                }}
-              >
-                Salvar
-              </button>
+                }}>Salvar</button>
             </div>
           </div>
         ) : (
-          <div
-            className={cn(
-              "rounded-2xl px-3 py-2 text-sm shadow-sm",
-              isMe
-                ? "bg-primary text-primary-foreground rounded-br-sm"
-                : "bg-secondary text-foreground rounded-bl-sm border border-border"
-            )}
-          >
-            {!isMe && (
-              <div className="text-[10px] font-semibold mb-0.5 text-primary">
-                {mensagem.autor}
-              </div>
-            )}
+          <div className={cn("rounded-2xl px-3 py-2 text-sm shadow-sm",
+            isMe ? "bg-primary text-primary-foreground rounded-br-sm"
+                 : "bg-secondary text-foreground rounded-bl-sm border border-border")}>
+            {!isMe && <div className="text-[10px] font-semibold mb-0.5 text-primary">{mensagem.autor}</div>}
             <p className="break-words">{mensagem.texto}</p>
-            {mensagem.editadoEm && (
-              <span className="text-[9px] opacity-60 ml-1">
-                · editado {mensagem.editadoEm}
-              </span>
-            )}
-            <div
-              className={cn(
-                "text-[10px] font-data mt-1 text-right",
-                isMe ? "text-primary-foreground/70" : "text-muted-foreground"
-              )}
-            >
+            {mensagem.editadoEm && <span className="text-[9px] opacity-60 ml-1">· editado {mensagem.editadoEm}</span>}
+            <div className={cn("text-[10px] font-data mt-1 text-right",
+              isMe ? "text-primary-foreground/70" : "text-muted-foreground")}>
               {format(new Date(mensagem.data), "dd/MM HH:mm", { locale: ptBR })}
             </div>
           </div>
         )}
         {isMe && !editando && (
           <div className="absolute -top-6 right-0 hidden group-hover:flex items-center gap-1 bg-background border border-border rounded-md px-1.5 py-0.5 shadow-sm">
-            <button
-              type="button"
-              title="Editar"
-              onClick={() => setEditando(true)}
-              className="text-muted-foreground hover:text-foreground p-0.5"
-            >
-              <Pencil className="h-3 w-3" />
-            </button>
+            <button type="button" title="Editar" className="p-0.5 hover:text-primary"
+              onClick={() => setEditando(true)}><Pencil className="h-3 w-3" /></button>
             {podeExcluir && (
-              <button
-                type="button"
-                title="Excluir"
-                onClick={() => {
-                  if (confirm("Excluir esta mensagem?")) onExcluir(index);
-                }}
-                className="text-muted-foreground hover:text-destructive p-0.5"
-              >
-                <Trash2 className="h-3 w-3" />
-              </button>
+              <button type="button" title="Excluir" className="p-0.5 hover:text-destructive"
+                onClick={() => onExcluir(index)}><Trash2 className="h-3 w-3" /></button>
             )}
           </div>
         )}
