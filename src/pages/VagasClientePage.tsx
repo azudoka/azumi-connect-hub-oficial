@@ -240,11 +240,9 @@ export default function VagasClientePage() {
   const empresaId = user?.empresaId ?? "";
   const pacote = planoToPacote(usuario?.plano);
 
-  const [vagas, setVagas] = useState<VagaMock[]>(() => {
-    const filtradas = MOCK.filter((v) => (empresaId ? v.empresaId === empresaId : true));
-    // Fallback demo: garante que vagas mock apareçam mesmo no perfil trial
-    return filtradas.length > 0 ? filtradas : MOCK;
-  });
+  const [vagas, setVagas] = useState<VagaMock[]>(() =>
+    MOCK.filter((v) => (empresaId ? v.empresaId === empresaId : true)),
+  );
   const [filtro, setFiltro] = useState<StatusVaga | "todas">("todas");
   const [vagaSelecionadaId, setVagaSelecionadaId] = useState<string | null>(null);
   const [feedbacks, setFeedbacks] = useState<Record<string, FeedbackAcao>>({});
@@ -635,7 +633,33 @@ export default function VagasClientePage() {
             </Button>
           </div>
 
-          {/* Card de Hunting removido — Hunting agora é solicitado no módulo Atração via fluxo dedicado. */}
+          {/* Card 2 — Hunting */}
+          <div
+            className="rounded-2xl border p-5 flex flex-col gap-3"
+            style={{ background: "#FFFBEB", borderColor: "#FDE68A" }}
+          >
+            <div className="flex items-center gap-2">
+              <div className="h-9 w-9 rounded-lg flex items-center justify-center" style={{ background: "#FEF3C7", color: "#D97706" }}>
+                <Target size={18} />
+              </div>
+              <h3 className="font-semibold text-base" style={{ color: "#D97706" }}>Solicitar Hunting</h3>
+            </div>
+            <p className="text-xs text-slate-700">Para posições estratégicas e perfis especializados.</p>
+            <span
+              className="inline-flex items-center self-start rounded-full px-2 py-0.5 text-[11px] font-medium border"
+              style={{ background: "#FEF3C7", color: "#92400E", borderColor: "#FDE68A" }}
+            >
+              Posição estratégica
+            </span>
+            <p className="text-[11px] text-slate-600">Processo dedicado com abordagem ativa de mercado.</p>
+            <Button
+              className="w-full text-white"
+              style={{ background: "#D97706" }}
+              onClick={() => setIntroTipo("hunting")}
+            >
+              Solicitar Hunting <ArrowRight size={16} />
+            </Button>
+          </div>
         </aside>
       </div>
 
