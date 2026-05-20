@@ -132,7 +132,7 @@ function RootRedirect() {
     consultor:     "/app/dashboard",
     rh:            "/app/dashboard",
     rh_operacional:"/app/dashboard",
-    cliente:       "/portal",
+    cliente:       "/cliente/dashboard",
     trial:         "/cliente/dashboard",
     colaborador:   "/hub/colaborador/inicio",
     lider:         "/hub/lider/painel",
