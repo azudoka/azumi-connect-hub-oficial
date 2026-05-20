@@ -812,7 +812,7 @@ export default function VagasClientePage() {
             )}
 
 
-            <DialogFooter className="md:col-span-2">
+            <DialogFooter>
               <Button type="button" variant="outline" onClick={() => { setFormTipo(null); setForm(FORM_INIT); }}>
                 Cancelar
               </Button>
