@@ -412,6 +412,9 @@ export default function AtracaoLista() {
         </div>
       )}
 
+      <BancoTalentosDrawer open={bancoOpen} onClose={() => setBancoOpen(false)} />
+
+
       {/* Sheet de nova vaga */}
       <Sheet open={novaVagaOpen} onOpenChange={(o) => {
         setNovaVagaOpen(o);
