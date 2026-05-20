@@ -127,17 +127,6 @@ const TIPOS: TipoConfig[] = [
     cota: { start: 1, ongoing: 2, growth: -1 },
   },
   {
-    key: "rs",
-    nome: "Processo Seletivo (R&S)",
-    descricao: "Abrir vaga para recrutamento e seleção",
-    icon: Users,
-    cota: { start: 1, ongoing: 2, growth: 3 },
-    termoExtra: {
-      texto:
-        "Estou ciente de que esta vaga excede a cota inclusa no meu pacote e gerará cobrança adicional conforme tabela vigente.",
-    },
-  },
-  {
     key: "hunting",
     nome: "Hunting",
     descricao: "Recrutamento estratégico para posições executivas",
