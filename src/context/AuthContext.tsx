@@ -132,7 +132,9 @@ const PERMISSOES_POR_ROLE: Record<UserRole, ModuloPermissao[]> = {
   // legados — sem módulos do Hub
   consultor: [],
   cliente: [],
+  trial: [],
 };
+
 
 const ROLES_COM_AUDITORIA: UserRole[] = ["rh", "ceo", "admin"];
 
