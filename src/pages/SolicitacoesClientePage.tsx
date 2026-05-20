@@ -673,6 +673,59 @@ export default function SolicitacoesClientePage() {
         </div>
       </section>
 
+      {/* Dialog — Aviso/Intro antes de abrir o formulário */}
+      <Dialog open={!!tipoIntro} onOpenChange={(o) => { if (!o) setTipoIntro(null); }}>
+        <DialogContent className="max-w-md">
+          {tipoIntro && (() => {
+            const t = TIPO_BY_KEY[tipoIntro];
+            const s = statusCota(t);
+            const termo = t.termoSempre ?? (s.geraCusto ? t.termoExtra : undefined);
+            const toneBox =
+              s.tone === "ok"
+                ? "bg-success/10 border-success/30 text-success"
+                : s.tone === "parcial"
+                  ? "bg-warning/10 border-warning/30 text-warning"
+                  : "bg-orange-500/10 border-orange-500/30 text-orange-600 dark:text-orange-400";
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <span className="h-9 w-9 rounded-lg bg-gradient-brand text-white flex items-center justify-center">
+                      <t.icon className="h-4 w-4" />
+                    </span>
+                    {t.nome}
+                  </DialogTitle>
+                  <DialogDescription className="pt-1">{t.descricao}</DialogDescription>
+                </DialogHeader>
+
+                <div className={cn("rounded-lg border p-3 text-xs", toneBox)}>
+                  <div className="font-semibold mb-1">
+                    Pacote {PACOTE_LABEL[pacote]} — {s.label}
+                  </div>
+                  <div className="opacity-90">SLA estimado: {slaTexto(pacote, "media")} (urgência média)</div>
+                </div>
+
+                {termo && (
+                  <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground leading-relaxed">
+                    <div className="font-semibold text-foreground mb-1 flex items-center gap-1.5">
+                      <AlertCircle className="h-3.5 w-3.5" /> Antes de continuar
+                    </div>
+                    {termo.texto}
+                  </div>
+                )}
+
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setTipoIntro(null)}>Cancelar</Button>
+                  <Button onClick={continuarParaFormulario}>
+                    Continuar para o formulário <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                </DialogFooter>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
       {/* Sheet — Formulário dinâmico */}
       <Sheet open={!!tipoForm} onOpenChange={(o) => { if (!o) { setTipoForm(null); setForm(FORM_BASE); } }}>
         <SheetContent className="sm:max-w-lg w-full overflow-y-auto">
