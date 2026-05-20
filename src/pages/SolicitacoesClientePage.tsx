@@ -300,9 +300,11 @@ export default function SolicitacoesClientePage() {
   const empresaId = user?.empresaId ?? "";
   const pacote = planoToPacote(usuario?.plano);
 
-  const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>(() =>
-    MOCK.filter((s) => (empresaId ? s.empresaId === empresaId : true)),
-  );
+  const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>(() => {
+    const filtradas = MOCK.filter((s) => (empresaId ? s.empresaId === empresaId : true));
+    // Fallback demo: garante que mocks apareçam mesmo quando empresaId não bate
+    return filtradas.length > 0 ? filtradas : MOCK;
+  });
   const [filtro, setFiltro] = useState<"todos" | StatusSolicitacao>("todos");
   const [filtroTipo, setFiltroTipo] = useState<"todos" | TipoSolicitacao>("todos");
   const [expandidos, setExpandidos] = useState<Record<string, boolean>>({});
