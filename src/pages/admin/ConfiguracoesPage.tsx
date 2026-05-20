@@ -272,6 +272,7 @@ export default function ConfiguracoesPage() {
           <TabsTrigger value="perfil">Meu perfil</TabsTrigger>
           <TabsTrigger value="equipe">Equipe</TabsTrigger>
           <TabsTrigger value="sistema">Sistema</TabsTrigger>
+          {isAdmin && <TabsTrigger value="usuarios">Usuários</TabsTrigger>}
         </TabsList>
 
         {/* =================== PERFIL =================== */}
