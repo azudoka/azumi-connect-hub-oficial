@@ -52,7 +52,6 @@ import { cn } from "@/lib/utils";
 // ============================================================================
 type TipoSolicitacao =
   | "reuniao"
-  | "rs"
   | "hunting"
   | "treinamento"
   | "programa_lideres"
@@ -60,8 +59,7 @@ type TipoSolicitacao =
   | "visita"
   | "novo_usuario"
   | "duvida"
-  | "nr_compliance"
-  | "horas_avulsas";
+  | "nr_compliance";
 
 type Urgencia = "alta" | "media" | "baixa";
 type StatusSolicitacao =
