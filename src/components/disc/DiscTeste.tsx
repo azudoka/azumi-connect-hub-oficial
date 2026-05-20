@@ -58,6 +58,43 @@ export default function DiscTeste({ candidateName, onComplete }: Props) {
     });
   }
 
+  function ilustracaoSvgString(dim: DiscDim) {
+    const cor = COR[dim];
+    const tint = `${cor}22`;
+    const stroke = "#1f2937";
+    let extra = "";
+    if (dim === "D") {
+      extra = `
+        <rect x="74" y="22" width="8" height="32" rx="3" fill="${cor}" stroke="${stroke}" stroke-width="1.5"/>
+        <circle cx="78" cy="20" r="9" fill="#fde7d3" stroke="${stroke}" stroke-width="1.5"/>
+        <path d="M95 25 l8 -4 -5 8 6 2 -10 6" fill="none" stroke="${cor}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+    } else if (dim === "I") {
+      extra = `
+        <path d="M82 44 L102 36 L102 64 L82 56 Z" fill="${cor}" stroke="${stroke}" stroke-width="1.5" stroke-linejoin="round"/>
+        <rect x="74" y="46" width="10" height="8" fill="${cor}" stroke="${stroke}" stroke-width="1.5"/>
+        <path d="M106 42 q4 8 0 16 M110 38 q6 12 0 24" fill="none" stroke="${cor}" stroke-width="2" stroke-linecap="round"/>
+        <path d="M53 54 q7 6 14 0" fill="none" stroke="${stroke}" stroke-width="1.8" stroke-linecap="round"/>`;
+    } else if (dim === "S") {
+      extra = `
+        <path d="M60 78 c -8 -8 -16 -2 -16 6 c 0 8 16 16 16 16 c 0 0 16 -8 16 -16 c 0 -8 -8 -14 -16 -6 z" fill="${cor}" stroke="${stroke}" stroke-width="1.5"/>
+        <path d="M53 55 q7 4 14 0" fill="none" stroke="${stroke}" stroke-width="1.8" stroke-linecap="round"/>`;
+    } else {
+      extra = `
+        <circle cx="86" cy="46" r="10" fill="#fff" stroke="${cor}" stroke-width="3"/>
+        <line x1="94" y1="54" x2="104" y2="64" stroke="${cor}" stroke-width="3.5" stroke-linecap="round"/>
+        <circle cx="54" cy="50" r="4" fill="none" stroke="${stroke}" stroke-width="1.5"/>
+        <circle cx="66" cy="50" r="4" fill="none" stroke="${stroke}" stroke-width="1.5"/>
+        <line x1="58" y1="50" x2="62" y2="50" stroke="${stroke}" stroke-width="1.5"/>`;
+    }
+    return `<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="60" cy="60" r="58" fill="${tint}"/>
+      <path d="M30 110 C 30 86, 90 86, 90 110 Z" fill="${cor}"/>
+      <circle cx="60" cy="50" r="18" fill="#fde7d3" stroke="${stroke}" stroke-width="1.5"/>
+      <path d="M44 46 C 46 32, 74 32, 76 46 Z" fill="${stroke}"/>
+      ${extra}
+    </svg>`;
+  }
+
   function downloadRelatorio() {
     const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"/>
 <title>Relatório DISC — ${candidateName}</title>
@@ -72,6 +109,9 @@ export default function DiscTeste({ candidateName, onComplete }: Props) {
   .body{padding:28px 32px}
   h1{font-size:20px;margin-bottom:4px}
   .lead{color:#64748b;font-size:14px;margin-bottom:24px}
+  .hero{display:flex;align-items:center;gap:20px;margin-bottom:22px;padding:18px;border-radius:10px;background:#F8FAFC}
+  .hero .nome{font-size:26px;font-weight:700;color:${COR[perfil.dim]}}
+  .hero .frase{margin-top:6px;font-size:14px;color:#475569}
   .bar-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
   .bar-row .k{width:24px;font-weight:700}
   .bar-row .track{flex:1;height:14px;border-radius:7px;background:#e5e7eb;overflow:hidden}
@@ -82,6 +122,8 @@ export default function DiscTeste({ candidateName, onComplete }: Props) {
   .perfil p{font-size:14px;color:#475569}
   ul{margin-top:14px;padding-left:18px}
   ul li{font-size:14px;margin:4px 0;color:#334155}
+  .dicas{margin-top:18px;padding:18px;border-radius:10px;border:1px solid #E2E8F0}
+  .dicas h3{font-size:14px;margin-bottom:8px;color:${COR[perfil.dim]}}
   .aviso{margin-top:22px;padding:14px;border-left:4px solid #f59e0b;background:#FFF7ED;color:#92400e;font-size:13px;border-radius:6px}
   footer{padding:16px 32px;background:#F8FAFC;color:#64748b;font-size:12px;text-align:center;border-top:1px solid #E2E8F0}
   @media print{body{background:#fff;padding:0}.wrap{box-shadow:none;border-radius:0}}
@@ -96,6 +138,14 @@ export default function DiscTeste({ candidateName, onComplete }: Props) {
       <h1>${candidateName}</h1>
       <div class="lead">Resultado obtido em ${new Date().toLocaleDateString("pt-BR")}</div>
 
+      <div class="hero">
+        ${ilustracaoSvgString(perfil.dim)}
+        <div>
+          <div class="nome">${perfil.nome}</div>
+          <div class="frase">${perfil.fraseImpacto}</div>
+        </div>
+      </div>
+
       ${(["D", "I", "S", "C"] as DiscDim[])
         .map(
           (d) => `
@@ -109,8 +159,13 @@ export default function DiscTeste({ candidateName, onComplete }: Props) {
 
       <div class="perfil">
         <h2>${perfil.nome}</h2>
-        <p>${perfil.descricao}</p>
+        <p>Você é uma pessoa <strong>${perfil.adjetivos[0]}</strong>, <strong>${perfil.adjetivos[1]}</strong> e <strong>${perfil.adjetivos[2]}</strong>. ${perfil.descricao}</p>
         <ul>${perfil.pontosFortes.map((p) => `<li>${p}</li>`).join("")}</ul>
+      </div>
+
+      <div class="dicas">
+        <h3>Como se sair bem neste perfil</h3>
+        <ul>${perfil.comoSairBem.map((p) => `<li>${p}</li>`).join("")}</ul>
       </div>
 
       <div class="aviso">
@@ -129,11 +184,23 @@ export default function DiscTeste({ candidateName, onComplete }: Props) {
   }
 
   if (showResult) {
+    const corPerfil = COR[perfil.dim];
     return (
       <div className="space-y-5">
         <div>
           <h3 className="text-lg font-semibold text-slate-900">Seu perfil comportamental</h3>
           <p className="text-sm text-slate-500">Baseado nas 12 perguntas respondidas.</p>
+        </div>
+
+        <div className="flex items-center gap-5 rounded-xl border border-slate-200 bg-white p-5">
+          <PerfilIlustracao dim={perfil.dim} size={104} />
+          <div className="min-w-0">
+            <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Seu perfil</p>
+            <h2 className="text-2xl font-bold leading-tight" style={{ color: corPerfil }}>
+              {perfil.nome}
+            </h2>
+            <p className="mt-1 text-sm text-slate-600">{perfil.fraseImpacto}</p>
+          </div>
         </div>
 
         <div className="space-y-2.5 rounded-xl border border-slate-200 bg-white p-5">
@@ -153,9 +220,20 @@ export default function DiscTeste({ candidateName, onComplete }: Props) {
 
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
           <h4 className="text-base font-semibold text-slate-900">{perfil.nome}</h4>
-          <p className="mt-1 text-sm text-slate-600">{perfil.descricao}</p>
+          <p className="mt-1 text-sm text-slate-600">
+            Você é uma pessoa <strong>{perfil.adjetivos[0]}</strong>, <strong>{perfil.adjetivos[1]}</strong> e <strong>{perfil.adjetivos[2]}</strong>. {perfil.descricao}
+          </p>
           <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-700">
             {perfil.pontosFortes.map((p) => <li key={p}>{p}</li>)}
+          </ul>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 bg-white p-5">
+          <h4 className="flex items-center gap-2 text-sm font-semibold" style={{ color: corPerfil }}>
+            <Lightbulb className="h-4 w-4" /> Como se sair bem neste perfil
+          </h4>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+            {perfil.comoSairBem.map((p) => <li key={p}>{p}</li>)}
           </ul>
         </div>
 
