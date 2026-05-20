@@ -105,6 +105,17 @@ export function Header({ showSwitcher = true, context = "connect" }: HeaderProps
             </button>
           )}
 
+          {(usuario?.role === "admin" || usuario?.role === "consultor") && (
+            <a
+              href="https://tools.azumirh.com.br/"
+              target="_blank"
+              rel="noreferrer"
+              style={{ display: "flex", alignItems: "center", gap: 5, height: 32, padding: "0 12px", borderRadius: 8, border: "1px solid #E4E6EA", background: "white", fontSize: 13, fontWeight: 600, color: "#374151", textDecoration: "none", fontFamily: "'Urbanist',sans-serif" }}
+            >
+              <Wrench size={13} /> Tools
+            </a>
+          )}
+
           {/* Sair — portinha de saída da plataforma */}
           <button
             type="button"
