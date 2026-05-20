@@ -17,10 +17,23 @@ import {
   Star,
   MapPin,
   Video,
+  Pencil,
+  Copy,
+  ExternalLink,
+  Briefcase,
+  DollarSign,
+  Gift,
+  Layers,
 } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { toast } from "sonner";
 
-import { PageHeader } from "@/components/PageHeader";
+
 import { StatusBadge } from "@/components/StatusBadge";
 import { SectionDivider } from "@/components/SectionDivider";
 import { DiscBars } from "@/components/DiscBars";
@@ -148,6 +161,37 @@ export default function VagaDetalheCliente() {
     }
   }
 
+  // ── Modal de solicitação de alteração
+  const [alteracaoOpen, setAlteracaoOpen] = useState(false);
+
+  // TODO: conectar Supabase — dados reais de empresa.logo_url, consultor_responsavel e vaga.publicada
+  const empresaLogoUrl: string | undefined = undefined;
+  const consultoraNome = "Camila Torres";
+  const consultoraFoto: string | undefined = undefined;
+  const vagaPublicada = (vaga as any).publicada === true;
+  const linkPublico = `connect.azumirh.com.br/vagas/${vaga.id}`;
+
+  // Detalhes da vaga (mock complementar — dados reais quando o Supabase estiver pronto)
+  const detalhesVaga = {
+    salarioDe: (vaga as any).salarioDe ?? "R$ 8.000",
+    salarioAte: (vaga as any).salarioAte ?? "R$ 12.000",
+    local: vaga.filial,
+    modalidade: (vaga as any).modalidade ?? "Híbrido",
+    contrato: (vaga as any).contrato ?? "CLT",
+    senioridade: (vaga as any).senioridade ?? "Sênior",
+    beneficios:
+      (vaga as any).beneficios ?? [
+        "Vale refeição",
+        "Plano de saúde",
+        "Plano odontológico",
+        "Gympass",
+      ],
+  };
+
+  function consultoraIniciais() {
+    return consultoraNome.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase();
+  }
+
   return (
     <div>
       <Link
@@ -157,11 +201,79 @@ export default function VagaDetalheCliente() {
         <ArrowLeft className="h-3.5 w-3.5" /> Voltar para minhas vagas
       </Link>
 
-      <PageHeader
-        title={vaga.titulo}
-        subtitle={`${vaga.empresa} · ${vaga.filial} · Consultora Azumi: Camila Torres`}
-        actions={<StatusBadge status={vaga.status} />}
-      />
+      {/* Header customizado: logo empresa + título + consultora + ações */}
+      <div className="flex flex-col lg:flex-row lg:items-center gap-4 mb-2">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          {empresaLogoUrl ? (
+            <img
+              src={empresaLogoUrl}
+              alt={`Logo ${vaga.empresa}`}
+              className="h-12 w-12 rounded-lg object-cover border border-border bg-card shrink-0"
+            />
+          ) : (
+            <div className="h-12 w-12 rounded-lg bg-gradient-brand text-white flex items-center justify-center text-sm font-semibold shrink-0">
+              {vaga.empresa.split(" ").map((p) => p[0]).join("").slice(0, 2)}
+            </div>
+          )}
+          <div className="min-w-0">
+            <h1 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight truncate">
+              {vaga.titulo}
+            </h1>
+            <p className="text-sm text-muted-foreground mt-0.5 truncate">
+              {vaga.empresa} · {vaga.filial}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Consultora */}
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-card border border-border">
+            {consultoraFoto ? (
+              <img
+                src={consultoraFoto}
+                alt={consultoraNome}
+                className="h-7 w-7 rounded-lg object-cover"
+              />
+            ) : (
+              <div className="h-7 w-7 rounded-lg bg-primary/15 text-primary text-[11px] font-semibold flex items-center justify-center">
+                {consultoraIniciais()}
+              </div>
+            )}
+            <div className="leading-tight">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Consultora</div>
+              <div className="text-xs font-medium">{consultoraNome}</div>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setAlteracaoOpen(true)}
+            className="h-9 px-3 rounded-lg border border-border text-sm font-medium hover:bg-secondary inline-flex items-center gap-1.5"
+          >
+            <Pencil className="h-3.5 w-3.5" /> Solicitar alteração
+          </button>
+
+          <StatusBadge status={vaga.status} />
+        </div>
+      </div>
+
+      {/* Link público */}
+      {vagaPublicada && (
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-success/30 bg-success/10 px-3 py-2">
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-success">
+            <ExternalLink className="h-3.5 w-3.5" /> Vaga publicada no Connect
+          </span>
+          <code className="text-xs font-data text-foreground/90 truncate">{linkPublico}</code>
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(`https://${linkPublico}`);
+              toast.success("Link copiado!");
+            }}
+            className="ml-auto h-7 px-2 rounded-md border border-border text-xs hover:bg-card inline-flex items-center gap-1"
+          >
+            <Copy className="h-3 w-3" /> Copiar
+          </button>
+        </div>
+      )}
 
       {/* Aviso quando ainda não há perfis enviados */}
       {candidatosVisiveis.length === 0 && (
@@ -180,32 +292,28 @@ export default function VagaDetalheCliente() {
         </div>
       )}
 
-      {/* Resumo da vaga */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-2">
-        <div className="lg:col-span-2 bg-card border border-border rounded-xl p-5">
-          <h3 className="font-display font-semibold mb-2">Resumo da vaga</h3>
-          <p className="text-sm text-muted-foreground">
-            {vaga.titulo} para {vaga.empresa} ({vaga.filial}). O processo segue
-            conduzido pela consultoria Azumi. Para qualquer ajuste no perfil
-            desejado, fale com sua consultora.
-          </p>
-        </div>
-        <div className="bg-card border border-border rounded-xl p-5">
-          <div className="flex items-start gap-2">
-            <Info className="h-4 w-4 text-info mt-0.5" />
-            <div>
-              <h4 className="font-display font-semibold text-sm">
-                Como funciona
-              </h4>
-              <ul className="mt-2 text-xs text-muted-foreground space-y-1.5 list-disc pl-4">
-                <li>A Azumi envia até 3 perfis com relatório.</li>
-                <li>Você visualiza cada relatório e realiza a entrevista.</li>
-                <li>Após a entrevista, registra o parecer pelo botão da ficha.</li>
-              </ul>
+      {/* Resumo da vaga em accordion */}
+      <Accordion type="single" collapsible defaultValue="resumo" className="mb-5">
+        <AccordionItem value="resumo" className="bg-card border border-border rounded-xl px-5">
+          <AccordionTrigger className="hover:no-underline">
+            <div className="flex items-center gap-2">
+              <Briefcase className="h-4 w-4 text-primary" />
+              <span className="font-display font-semibold text-sm">Resumo da vaga</span>
             </div>
-          </div>
-        </div>
-      </div>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 pb-2">
+              <DetalheItem icon={DollarSign} label="Salário" value={`${detalhesVaga.salarioDe} — ${detalhesVaga.salarioAte}`} />
+              <DetalheItem icon={MapPin} label="Local" value={detalhesVaga.local} />
+              <DetalheItem icon={Layers} label="Modalidade" value={detalhesVaga.modalidade} />
+              <DetalheItem icon={FileText} label="Contrato" value={detalhesVaga.contrato} />
+              <DetalheItem icon={Star} label="Senioridade" value={detalhesVaga.senioridade} />
+              <DetalheItem icon={Gift} label="Benefícios" value={detalhesVaga.beneficios.join(", ")} />
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+
 
       {/* Painel: Entrevistas com gestor pendentes (Etapa 5) */}
       {agendamentos.length > 0 && (
@@ -388,7 +496,127 @@ export default function VagaDetalheCliente() {
           />
         );
       })()}
+
+      {/* Modal: solicitar alteração na vaga */}
+      {alteracaoOpen && (
+        <SolicitarAlteracaoModal
+          vagaTitulo={vaga.titulo}
+          onClose={() => setAlteracaoOpen(false)}
+          onSubmit={() => {
+            // TODO: conectar Supabase — tabela de solicitações de alteração
+            toast.success("Solicitação enviada para sua consultora.");
+            setAlteracaoOpen(false);
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+function DetalheItem({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
+  return (
+    <div className="flex items-start gap-2.5">
+      <Icon className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+      <div className="min-w-0">
+        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+        <div className="text-sm font-medium break-words">{value}</div>
+      </div>
+    </div>
+  );
+}
+
+function SolicitarAlteracaoModal({
+  vagaTitulo,
+  onClose,
+  onSubmit,
+}: {
+  vagaTitulo: string;
+  onClose: () => void;
+  onSubmit: () => void;
+}) {
+  const motivos = [
+    "Salário incorreto",
+    "Requisitos desatualizados",
+    "Mudança de modalidade",
+    "Mudança de senioridade",
+    "Outro",
+  ];
+  const [selecionados, setSelecionados] = useState<string[]>([]);
+  const [detalhes, setDetalhes] = useState("");
+
+  function toggle(m: string) {
+    setSelecionados((s) => (s.includes(m) ? s.filter((x) => x !== m) : [...s, m]));
+  }
+
+  const podeEnviar = selecionados.length > 0 && detalhes.trim().length > 5;
+
+  return (
+    <ModalShell
+      title="Solicitar alteração na vaga"
+      subtitle={vagaTitulo}
+      onClose={onClose}
+      footer={
+        <>
+          <button
+            onClick={onClose}
+            className="h-9 px-4 rounded-lg border border-border text-sm font-medium hover:bg-secondary"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onSubmit}
+            disabled={!podeEnviar}
+            className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Enviar solicitação
+          </button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <div>
+          <div className="text-sm font-medium mb-2">Motivo da alteração</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {motivos.map((m) => {
+              const ativo = selecionados.includes(m);
+              return (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => toggle(m)}
+                  className={cn(
+                    "h-9 px-3 rounded-lg border text-sm font-medium text-left",
+                    ativo
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border hover:bg-secondary"
+                  )}
+                >
+                  {m}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium block mb-1.5">Detalhe a alteração desejada</label>
+          <textarea
+            value={detalhes}
+            onChange={(e) => setDetalhes(e.target.value)}
+            rows={4}
+            className="w-full rounded-lg border border-border bg-background p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            placeholder="Descreva o que precisa ser ajustado..."
+          />
+        </div>
+
+        <div className="rounded-lg border border-warning/30 bg-warning/10 px-3 py-2.5 flex items-start gap-2">
+          <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+          <p className="text-xs text-warning leading-relaxed">
+            Alterações nos requisitos da vaga podem impactar o prazo e o cálculo do processo seletivo.
+          </p>
+        </div>
+      </div>
+    </ModalShell>
   );
 }
 
