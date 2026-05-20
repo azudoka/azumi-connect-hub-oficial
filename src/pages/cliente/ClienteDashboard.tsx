@@ -244,6 +244,23 @@ export default function ClienteDashboard() {
   const projetosKentaki = projetos.filter((p) => p.empresaId === "kentaki" && p.status === "andamento").length + 1;
 
   const [comunicadoOpen, setComunicadoOpen] = useState(false);
+  const [minhasReacoes, setMinhasReacoes] = useState<string[]>([]);
+  const [contagemReacoes, setContagemReacoes] = useState<Record<string, number>>({
+    "❤️": 5,
+    "👍": 3,
+    "🎉": 2,
+    "🔥": 1,
+    "😂": 0,
+  });
+
+  function toggleReacao(emoji: string) {
+    const jaReagiu = minhasReacoes.includes(emoji);
+    setMinhasReacoes((prev) => (jaReagiu ? prev.filter((e) => e !== emoji) : [...prev, emoji]));
+    setContagemReacoes((prev) => ({
+      ...prev,
+      [emoji]: Math.max(0, (prev[emoji] ?? 0) + (jaReagiu ? -1 : 1)),
+    }));
+  }
 
   const vagasCliente = useMemo(
     () => (isTrial ? [] : vagas.filter((v) => v.empresaId === "kentaki")),
