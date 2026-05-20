@@ -14,12 +14,9 @@ import type { ReactNode } from "react";
 
 import { AppLayout } from "@/components/layout/AppLayout";
 import { HubLayout } from "@/components/layout/HubLayout";
-import PortalLayout from "@/layouts/PortalLayout";
 
-import PortalDashboard from "./pages/portal/PortalDashboard";
-// PortalProjetos, PortalProjetoDetalhe e PortalFinanceiro foram descontinuados
-// como rotas — os arquivos permanecem no disco. As rotas /portal/* equivalentes
-// agora redirecionam para /cliente/* (caminho canônico do cliente).
+// Rotas /portal/* foram removidas — arquivos em src/pages/portal/ e src/layouts/PortalLayout.tsx
+// permanecem no disco mas não são mais montados em nenhuma rota.
 
 import Login from "./pages/auth/Login";
 import SelecaoPerfil from "./pages/auth/SelecaoPerfil";
