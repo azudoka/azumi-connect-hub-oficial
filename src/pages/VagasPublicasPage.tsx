@@ -201,17 +201,17 @@ export default function VagasPublicasPage() {
 
       {/* Banco de talentos */}
       <section className="mx-auto mt-14 max-w-6xl px-6">
-        <div
-          className="overflow-hidden rounded-2xl p-8 text-white sm:p-10"
-          style={{ background: `linear-gradient(135deg, ${NAVY}, ${BLUE})` }}
-        >
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-blue-50/60 p-8 sm:p-10">
           <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
             <div>
-              <h3 className="text-xl font-semibold">Não encontrou a vaga ideal?</h3>
-              <p className="mt-1 text-white/80">Cadastre seu currículo em nosso banco de talentos.</p>
+              <h3 className="text-xl font-semibold text-slate-900">Não encontrou a vaga ideal?</h3>
+              <p className="mt-1 text-sm text-slate-600">Cadastre seu currículo em nosso banco de talentos e receba oportunidades alinhadas ao seu perfil.</p>
             </div>
-            <button onClick={() => setModalBanco(true)} className="rounded-lg bg-white px-5 py-2.5 text-sm font-semibold" style={{ color: NAVY }}>
-              Banco de talentos
+            <button
+              onClick={() => setModalBanco(true)}
+              className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50"
+            >
+              Cadastrar no banco de talentos
             </button>
           </div>
         </div>

@@ -2,7 +2,8 @@ import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SlaBar } from "@/components/SlaBar";
 import { vagas as vagasMock, type StatusKey } from "@/data/mock";
-import { Plus, LayoutGrid, List, Filter, Info, AlertTriangle } from "lucide-react";
+import { Plus, LayoutGrid, List, Filter, Info, AlertTriangle, Users } from "lucide-react";
+import BancoTalentosDrawer from "@/components/atracao/BancoTalentosDrawer";
 import { Link, useSearchParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -84,6 +85,7 @@ export default function AtracaoLista() {
 
   // Sheet de nova vaga
   const [novaVagaOpen, setNovaVagaOpen] = useState(false);
+  const [bancoOpen, setBancoOpen] = useState(false);
 
   const TIPOS_VAGA = [
     { value: "operacional", label: "Operacional" },
@@ -228,6 +230,12 @@ export default function AtracaoLista() {
             </div>
             <button className="h-9 px-3 rounded-lg border border-border hover:bg-secondary text-sm flex items-center gap-1.5">
               <Filter className="h-4 w-4" /> Filtros
+            </button>
+            <button
+              onClick={() => setBancoOpen(true)}
+              className="h-9 px-3 rounded-lg border border-border hover:bg-secondary text-sm font-medium flex items-center gap-1.5"
+            >
+              <Users className="h-4 w-4" /> Banco de Talentos
             </button>
             <button
               onClick={() => setNovaVagaOpen(true)}
@@ -403,6 +411,9 @@ export default function AtracaoLista() {
           </table>
         </div>
       )}
+
+      <BancoTalentosDrawer open={bancoOpen} onClose={() => setBancoOpen(false)} />
+
 
       {/* Sheet de nova vaga */}
       <Sheet open={novaVagaOpen} onOpenChange={(o) => {
