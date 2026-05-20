@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Eye, Send, X } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 
