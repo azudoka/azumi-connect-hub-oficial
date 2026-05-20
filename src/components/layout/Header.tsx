@@ -269,6 +269,12 @@ export function Header({ showSwitcher = true, context = "connect" }: HeaderProps
           </DropdownMenu>
         </div>
       </div>
+      <UpgradePlanoModal
+        open={openUpgrade}
+        onClose={() => setOpenUpgrade(false)}
+        planoAtual={usuario?.plano ?? "trial"}
+      />
     </header>
   );
+
 }
