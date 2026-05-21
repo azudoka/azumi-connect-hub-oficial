@@ -448,16 +448,23 @@ export default function SolicitacoesClientePage() {
       setSolicitacoes((p) => [nova, ...p]);
       setTipoForm(null);
       setForm(FORM_BASE);
-      toast.success(`Solicitação criada — protocolo ${nova.codigo}`);
+      toast.success(
+        isTrial
+          ? "Solicitação criada! (dados de demonstração)"
+          : `Solicitação criada — protocolo ${nova.codigo}`,
+      );
     }
   }
 
   function confirmarComCusto() {
     if (!confirmCusto || !confirmCusto.cienteCusto) return;
     setSolicitacoes((p) => [confirmCusto.payload, ...p]);
-    toast.success(`Solicitação enviada — protocolo ${confirmCusto.payload.codigo}`, {
-      description: "Você será contatado para alinhar o custo adicional.",
-    });
+    toast.success(
+      isTrial
+        ? "Solicitação criada! (dados de demonstração)"
+        : `Solicitação enviada — protocolo ${confirmCusto.payload.codigo}`,
+      isTrial ? undefined : { description: "Você será contatado para alinhar o custo adicional." },
+    );
     setConfirmCusto(null);
     setTipoForm(null);
     setForm(FORM_BASE);
