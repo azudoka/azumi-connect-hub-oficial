@@ -191,8 +191,29 @@ function DetalheModal({ c, onClose, onReagir, onAddComentario }: { c: Comunicado
 }
 
 export default function ClienteComunicadosPage() {
-  const [lista, setLista]     = useState<Comunicado[]>(MOCK_CLIENTE);
+  const { usuario } = useAuth();
+  const isDemoUser = usuario?.role === "trial";
+
+  const listaInicial: Comunicado[] = isDemoUser
+    ? comunicadosDemo.map((c) => ({
+        id: c.id,
+        titulo: c.titulo,
+        corpo: c.resumo,
+        tipo: c.tipo as TipoComunicado,
+        autor: "Ana Beatriz",
+        iniciais: "AB",
+        data: c.data,
+        lido: false,
+        visualizacoes: 0,
+        comentarios: [],
+        reacoes: { "❤️": 0, "👍": 0, "😂": 0, "🎉": 0, "🔥": 0 },
+        minhasReacoes: [],
+      }))
+    : MOCK_CLIENTE;
+
+  const [lista, setLista]     = useState<Comunicado[]>(listaInicial);
   const [detalhe, setDetalhe] = useState<Comunicado | null>(null);
+
 
   const abrirDetalhe = (c: Comunicado) => {
     setLista(prev => prev.map(x => x.id === c.id ? { ...x, lido: true } : x));
