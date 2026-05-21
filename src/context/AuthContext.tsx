@@ -164,6 +164,7 @@ const MOCK_USUARIOS: MockCred[] = [
   { email: "mariana@kentaki.com",     senha: "123", id: "u-mariana",  nome: "Mariana Souza", role: "cliente",   empresaNome: "Kentaki Foods", empresaId: "kentaki", avatarUrl: null, plano: "ongoing" },
   { email: "joao@startupy.com.br",    senha: "123", id: "u-joao",     nome: "João Pedro",    role: "cliente_avulso", empresaNome: "Startup Y", empresaId: "startupy", avatarUrl: null, inativo: true },
   { email: "demo@azumirh.com.br",     senha: "Demo2026", id: "u-trial-demo", nome: "Carlos Demo", role: "trial", empresaNome: "Empresa Demo", empresaId: "empresa-demo", avatarUrl: null, plano: "trial", trialExpiraEm: "2026-06-30" },
+  { email: "fernanda@valoreconsultoria.com.br", senha: "azumi2026", id: "u-fernanda", nome: "Fernanda Albuquerque", role: "cliente", empresaNome: "Valore Consultoria", empresaId: "valore", avatarUrl: null, plano: "ongoing" },
 ];
 
 function buildUsuario(cred: MockCred): Usuario {
