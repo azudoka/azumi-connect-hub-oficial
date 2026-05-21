@@ -325,14 +325,22 @@ export default function ClienteDashboard() {
   const { usuario } = useAuth();
   const isTrial = usuario?.role === "trial";
   const isValore = usuario?.empresaId === "valore";
+  const empresaIdAtual = usuario?.empresaId ?? "kentaki";
   const empresaNome = usuario?.empresaNome || "Kentaki Foods";
   const logoUrl = empresaLogos[empresaNome];
   const perfilLabel = isTrial ? "Trial da conta" : "Admin da conta";
-  const consultoraNome = isValore ? "Rafael Moura" : "Ana Beatriz";
+  // Consultora padrão por empresa
+  const consultoraPorEmpresa: Record<string, string> = {
+    kentaki: "Ana Beatriz",
+    valore: "Rafael Moura",
+    horizonte: "Rafael Moura",
+    vita: "Juliana Costa",
+  };
+  const consultoraNome = consultoraPorEmpresa[empresaIdAtual] ?? "Ana Beatriz";
 
   const projetosKentaki = isValore
     ? projetosValore.length
-    : projetos.filter((p) => p.empresaId === "kentaki" && p.status === "andamento").length + 1;
+    : projetos.filter((p) => p.empresaId === empresaIdAtual && p.status === "andamento").length;
 
   const [comunicadoOpen, setComunicadoOpen] = useState(false);
   const [minhasReacoes, setMinhasReacoes] = useState<string[]>([]);
