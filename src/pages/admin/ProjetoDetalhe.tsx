@@ -624,7 +624,7 @@ export default function ProjetoDetalhe() {
           <div>
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Consultor responsável</div>
             <div className="mt-1 flex items-center gap-2">
-              <div className="h-7 w-7 rounded-full bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white">AB</div>
+              <div className="h-7 w-7 rounded-lg bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white">AB</div>
               <span className="text-sm">Ana Beatriz</span>
             </div>
           </div>
@@ -2011,7 +2011,7 @@ function ChatLista({
         return (
           <li key={m.id} className={cn("flex gap-2 items-end group", isMe && "flex-row-reverse")}>
             {!isMe && (
-              <div className="h-7 w-7 rounded-full bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white shrink-0">
+              <div className="h-7 w-7 rounded-lg bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white shrink-0">
                 {m.iniciais}
               </div>
             )}

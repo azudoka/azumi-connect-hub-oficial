@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Clock, ListTodo } from "lucide-react";
+import { ArrowLeft, ArrowRight, Clock, ListTodo, FileText, MessageSquare, Paperclip } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -18,6 +18,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { StarRating } from "@/components/ui/StarRating";
 import { cn } from "@/lib/utils";
 import {
@@ -106,7 +113,7 @@ export default function ClienteProjetoDetalhe() {
             </h1>
           </div>
           <div className="sm:ml-auto flex items-center gap-2">
-            <span className="h-7 w-7 rounded-full bg-primary/15 text-primary text-xs font-semibold flex items-center justify-center">
+            <span className="h-7 w-7 rounded-lg bg-primary/15 text-primary text-xs font-semibold flex items-center justify-center">
               {projeto.consultorIniciais}
             </span>
             <span className="text-sm text-muted-foreground">{projeto.consultor}</span>
@@ -146,8 +153,28 @@ function EntregavelCard({
   const [openNps, setOpenNps] = useState(false);
   const [openDocs, setOpenDocs] = useState(false);
   const [openAjuste, setOpenAjuste] = useState(false);
+  const [openConversa, setOpenConversa] = useState(false);
+  const [openVisualizar, setOpenVisualizar] = useState(false);
 
-  // Estado do NPS
+  // Conversa mockada entre cliente e consultor sobre este entregável (sessão).
+  const [conversa, setConversa] = useState<
+    { autor: "consultor" | "cliente"; nome: string; texto: string; data: string; anexo?: string }[]
+  >(() => [
+    {
+      autor: "consultor",
+      nome: "Consultor Azumi",
+      texto: `Olá! Enviei a versão para sua aprovação de "${entregavel.nome}". Qualquer ajuste me avise por aqui.`,
+      data: entregavel.aprovacaoEnviadaEm ?? new Date().toISOString(),
+      anexo: `${entregavel.codigo}.pdf`,
+    },
+    {
+      autor: "consultor",
+      nome: "Consultor Azumi",
+      texto: "Aproveitei e já apontei os principais pontos no documento. Vou ficar aguardando seu retorno.",
+      data: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+    },
+  ]);
+  const [novaMsg, setNovaMsg] = useState("");
   const [nota, setNota] = useState(0);
   const [comentario, setComentario] = useState("");
 
@@ -242,14 +269,31 @@ function EntregavelCard({
           </span>
         </div>
 
-        {entregavel.subtarefas > 0 && (
-          <div>
+        <div className="flex flex-wrap items-center gap-2">
+          {entregavel.subtarefas > 0 && (
             <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-2.5 py-0.5 text-xs text-muted-foreground">
               <ListTodo className="h-3 w-3" />
               {entregavel.subtarefas} subtarefas
             </span>
-          </div>
-        )}
+          )}
+          {entregavel.tipoDocumento && (
+            <button
+              type="button"
+              onClick={() => setOpenVisualizar(true)}
+              className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-xs text-primary hover:bg-primary/15 transition-colors"
+            >
+              <FileText className="h-3 w-3" /> Visualizar documento
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setOpenConversa(true)}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-2.5 py-0.5 text-xs text-foreground hover:bg-secondary/80 transition-colors"
+          >
+            <MessageSquare className="h-3 w-3" /> Conversa com consultor ({conversa.length})
+          </button>
+        </div>
+
 
         {/* Banner de aprovação */}
         {aguardando && (
@@ -455,6 +499,138 @@ function EntregavelCard({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Visualizador de documento (mock) */}
+      <Dialog open={openVisualizar} onOpenChange={setOpenVisualizar}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-primary" />
+              {entregavel.nome}
+            </DialogTitle>
+            <DialogDescription>
+              {entregavel.codigo} · Pré-visualização do documento enviado pelo consultor.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-lg border border-border bg-muted/30 p-8 min-h-[300px] flex flex-col items-center justify-center text-center gap-3">
+            <div className="h-16 w-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+              <FileText className="h-8 w-8" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">{entregavel.codigo}.pdf</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Documento de demonstração — a versão final será exibida aqui.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              className="rounded-full"
+              onClick={() => toast.info("Download disponível na versão final.")}
+            >
+              Baixar PDF
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" className="rounded-full" onClick={() => setOpenVisualizar(false)}>
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Conversa com consultor */}
+      <Sheet open={openConversa} onOpenChange={setOpenConversa}>
+        <SheetContent className="sm:max-w-md w-full flex flex-col">
+          <SheetHeader>
+            <SheetTitle>Conversa do entregável</SheetTitle>
+            <SheetDescription>
+              {entregavel.codigo} · {entregavel.nome}
+            </SheetDescription>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto space-y-3 py-4 pr-1">
+            {conversa.map((m, i) => {
+              const isMe = m.autor === "cliente";
+              return (
+                <div key={i} className={cn("flex gap-2 items-end", isMe && "flex-row-reverse")}>
+                  {!isMe && (
+                    <div className="h-7 w-7 rounded-lg bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white shrink-0">
+                      {m.nome.charAt(0)}
+                    </div>
+                  )}
+                  <div
+                    className={cn(
+                      "max-w-[80%] rounded-2xl px-3 py-2 text-sm shadow-sm",
+                      isMe
+                        ? "bg-primary text-primary-foreground rounded-br-sm"
+                        : "bg-secondary text-foreground border border-border rounded-bl-sm"
+                    )}
+                  >
+                    {!isMe && (
+                      <div className="text-[10px] font-semibold mb-0.5 text-primary">{m.nome}</div>
+                    )}
+                    <p className="break-words">{m.texto}</p>
+                    {m.anexo && (
+                      <div
+                        className={cn(
+                          "mt-2 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs",
+                          isMe ? "bg-primary-foreground/15" : "bg-background border border-border"
+                        )}
+                      >
+                        <Paperclip className="h-3 w-3" /> {m.anexo}
+                      </div>
+                    )}
+                    <div
+                      className={cn(
+                        "text-[10px] font-data mt-1 text-right",
+                        isMe ? "text-primary-foreground/70" : "text-muted-foreground"
+                      )}
+                    >
+                      {format(new Date(m.data), "dd/MM HH:mm", { locale: ptBR })}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="flex gap-2 items-end border-t border-border pt-3">
+            <Textarea
+              rows={2}
+              value={novaMsg}
+              onChange={(e) => setNovaMsg(e.target.value)}
+              placeholder="Escreva uma mensagem para o consultor…"
+              className="resize-none flex-1 text-sm rounded-xl"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  if (novaMsg.trim()) {
+                    setConversa((prev) => [
+                      ...prev,
+                      { autor: "cliente", nome: "Você", texto: novaMsg.trim(), data: new Date().toISOString() },
+                    ]);
+                    setNovaMsg("");
+                  }
+                }
+              }}
+            />
+            <Button
+              size="sm"
+              disabled={!novaMsg.trim()}
+              className="rounded-full shrink-0"
+              onClick={() => {
+                if (!novaMsg.trim()) return;
+                setConversa((prev) => [
+                  ...prev,
+                  { autor: "cliente", nome: "Você", texto: novaMsg.trim(), data: new Date().toISOString() },
+                ]);
+                setNovaMsg("");
+              }}
+            >
+              Enviar
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
     </Card>
   );
 }
+
