@@ -7,7 +7,6 @@ import { TimerFlutuante } from "@/components/TimerFlutuante";
 import { useTimerGlobal } from "@/context/TimerContext";
 import { TrialGuard } from "@/components/TrialGuard";
 import { MockDataBanner } from "@/components/MockDataBanner";
-import { algumaEmpresaIsMock } from "@/data/mockEmpresas";
 
 interface AppLayoutProps {
   /**
@@ -30,7 +29,7 @@ export function AppLayout({ variant: variantOverride }: AppLayoutProps) {
       <SidebarConnect variant={variant} />
       <div className="flex-1 flex flex-col min-w-0">
         <Header context="connect" />
-        {isClienteLike && (isTrial || algumaEmpresaIsMock) && <MockDataBanner />}
+        {isTrial && <MockDataBanner />}
         {isTrial && (
           <div
             className="border-b border-[#DDD6FE] px-6 py-2 flex items-center gap-3 text-sm"
