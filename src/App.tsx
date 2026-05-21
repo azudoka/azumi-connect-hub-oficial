@@ -239,7 +239,7 @@ const AppRoutes = () => (
 
     {/* Hub Colaborador (cliente liberado em ambiente demo) */}
     <Route element={
-      <PrivateRoute allowed={["colaborador", "lider", "rh", "admin", "cliente"]}>
+      <PrivateRoute allowed={["colaborador", "lider", "rh", "admin", "cliente", "trial"]}>
         <HubLayout profile="colaborador" />
       </PrivateRoute>
     }>
