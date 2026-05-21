@@ -518,7 +518,9 @@ export default function VagaDetalheAdmin() {
       toast.info(`${cand?.nome ?? "Candidato"} adicionado ao banco de talentos. Perfil disponível para futuras oportunidades.`);
       return true;
     }
-    return false;
+    // Fallback: etapas simples (Recebido, Triagem, Perfis enviados, etc.) — apenas mover.
+    moverCandidato(candId, coluna);
+    return true;
   }
 
   function tentarMover(candId: string, coluna: Coluna): boolean {
