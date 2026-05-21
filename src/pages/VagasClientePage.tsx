@@ -240,9 +240,21 @@ export default function VagasClientePage() {
   const { user, usuario } = useAuth();
   const empresaId = user?.empresaId ?? "";
   const pacote = planoToPacote(usuario?.plano);
+  const isDemoUser = usuario?.role === "trial";
 
   const [vagas, setVagas] = useState<VagaMock[]>(() =>
-    MOCK.filter((v) => (empresaId ? v.empresaId === empresaId : true)),
+    isDemoUser
+      ? vagasDemo.map<VagaMock>((v) => ({
+          id: v.id,
+          cargo: v.titulo,
+          departamento: "Empresa Demo",
+          status: v.status === "andamento" ? "em_andamento" : "finalizada",
+          totalCandidatos: v.perfisEnviados,
+          aprovados: v.status === "finalizada" ? 1 : 0,
+          criadaEm: new Date().toISOString(),
+          empresaId: "empresa-demo",
+        }))
+      : MOCK.filter((v) => (empresaId ? v.empresaId === empresaId : true)),
   );
   const [filtro, setFiltro] = useState<StatusVaga | "todas">("todas");
   const [vagaSelecionadaId, setVagaSelecionadaId] = useState<string | null>(null);
