@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { candidatosComRelatorioPorVaga } from "@/data/atracaoClienteStore";
-import { vagasDemo } from "@/data/mockDemoData";
+import { vagasDemo, candidatosDemo } from "@/data/mockDemoData";
 
 import { useAuth, type Plano } from "@/context/AuthContext";
 import { PageHeader } from "@/components/PageHeader";
@@ -66,6 +66,28 @@ const CANDIDATOS_MOCK: CandidatoEnviado[] = [
   { id: "ca-02", vagaId: "v-01", nome: "Rafael Tavares", cargo: "Gerente de TI", parecer: "Background em arquitetura cloud e governança. Forte em planejamento estratégico de TI.", enviado: true, disc: { D: 62, I: 44, S: 55, C: 82 } },
   { id: "ca-03", vagaId: "v-01", nome: "Juliana Pires", cargo: "Gerente de TI", parecer: "Experiência em multinacionais com squads multidisciplinares. Excelente articuladora.", enviado: true, disc: { D: 55, I: 72, S: 60, C: 50 } },
   { id: "ca-04", vagaId: "v-02", nome: "Patrícia Lima", cargo: "Analista de Marketing", parecer: "Contratada — campanhas de performance e branding integrado.", enviado: true, disc: { D: 48, I: 80, S: 58, C: 45 } },
+];
+
+// Candidatos do perfil trial (Empresa Demo) — vinculados às vagas demo-v1/demo-v2.
+const DEMO_CANDIDATOS: CandidatoEnviado[] = [
+  ...candidatosDemo.map<CandidatoEnviado>((c) => ({
+    id: c.id,
+    vagaId: c.vagaId,
+    nome: c.nome,
+    cargo: c.cargo,
+    parecer: "Perfil enviado pela Azumi para sua avaliação. (Dados de demonstração.)",
+    enviado: true,
+    disc: c.disc,
+  })),
+  {
+    id: "demo-c-final",
+    vagaId: "demo-v2",
+    nome: "Carolina Mendes",
+    cargo: "Analista de Marketing",
+    parecer: "Contratada — perfil aprovado e processo finalizado. (Dados de demonstração.)",
+    enviado: true,
+    disc: { D: 50, I: 78, S: 60, C: 48 },
+  },
 ];
 
 const FEEDBACK_LABEL: Record<FeedbackAcao, string> = {
@@ -434,7 +456,8 @@ export default function VagasClientePage() {
         </div>
 
         {(() => {
-          const candidatosVaga = CANDIDATOS_MOCK.filter((c) => c.vagaId === v.id && c.enviado);
+          const fonte = isDemoUser ? DEMO_CANDIDATOS : CANDIDATOS_MOCK;
+          const candidatosVaga = fonte.filter((c) => c.vagaId === v.id && c.enviado);
           if (candidatosVaga.length === 0) return null;
           return (
             <div className="bg-card/80 backdrop-blur border rounded-2xl p-5">
@@ -585,7 +608,7 @@ export default function VagasClientePage() {
             />
           ) : (
             <>
-              <DemoVagaDestaque />
+              {!isDemoUser && <DemoVagaDestaque />}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {lista.map((v) => (
                   <article key={v.id} className="bg-card/80 backdrop-blur border rounded-2xl p-5 flex flex-col gap-3">
