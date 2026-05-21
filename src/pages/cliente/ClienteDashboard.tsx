@@ -521,9 +521,9 @@ export default function ClienteDashboard() {
                   <Megaphone className="h-8 w-8 text-primary/40" />
                 </div>
                 <div className="p-3">
-                  <div className="font-semibold text-sm leading-snug">{comunicadoRecente.titulo}</div>
+                  <div className="font-semibold text-sm leading-snug">{comunicadoExibir.titulo}</div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {comunicadoRecente.data} · {comunicadoRecente.autor}
+                    {comunicadoExibir.data} · {comunicadoExibir.autor}
                   </p>
                 </div>
               </button>
@@ -568,7 +568,7 @@ export default function ClienteDashboard() {
                 <CalendarDays className="h-4 w-4 text-primary" />
                 <h3 className="font-display font-semibold text-sm">Agenda</h3>
               </div>
-              <MiniCalendario eventos={eventosAgendados} />
+              <MiniCalendario eventos={eventosExibir} />
               <div className="space-y-1.5 mt-1">
                 {eventosAgendados
                   .filter((e) => e.data >= new Date(new Date().setHours(0, 0, 0, 0)))
@@ -779,13 +779,13 @@ export default function ClienteDashboard() {
               <Megaphone className="h-5 w-5" />
             </div>
             <div className="min-w-0 flex-1">
-              <h3 className="font-display font-semibold text-base">{comunicadoRecente.titulo}</h3>
+              <h3 className="font-display font-semibold text-base">{comunicadoExibir.titulo}</h3>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {comunicadoRecente.data} · {comunicadoRecente.autor}
+                {comunicadoExibir.data} · {comunicadoExibir.autor}
               </p>
             </div>
           </div>
-          <p className="text-sm text-muted-foreground leading-relaxed mt-2">{comunicadoRecente.conteudo}</p>
+          <p className="text-sm text-muted-foreground leading-relaxed mt-2">{comunicadoExibir.conteudo}</p>
         </DialogContent>
       </Dialog>
     </div>
