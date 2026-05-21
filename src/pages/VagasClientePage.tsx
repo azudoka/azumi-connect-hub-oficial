@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { candidatosComRelatorioPorVaga } from "@/data/atracaoClienteStore";
+import { vagasDemo } from "@/data/mockDemoData";
 
 import { useAuth, type Plano } from "@/context/AuthContext";
 import { PageHeader } from "@/components/PageHeader";
