@@ -110,7 +110,7 @@ export default function ClienteProjetosPage() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {projetos.map((p) => {
+            {projetosExibir.map((p) => {
               const total = p.entregaveis.length;
               const aprovados = p.entregaveis.filter(
                 (e) => e.status === "aprovado_cliente"
