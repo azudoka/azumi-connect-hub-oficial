@@ -27,6 +27,7 @@ const EMPRESA_ID_MAP: Record<string, string> = {
   valore: "valore",
   horizonte: "horizonte",
   vita: "vita",
+  "empresa-demo": "empresa-demo",
 };
 
 export default function ClienteDocumentosPage() {
