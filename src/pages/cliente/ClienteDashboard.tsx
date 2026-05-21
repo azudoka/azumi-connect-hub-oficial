@@ -570,7 +570,7 @@ export default function ClienteDashboard() {
               </div>
               <MiniCalendario eventos={eventosExibir} />
               <div className="space-y-1.5 mt-1">
-                {eventosAgendados
+                {eventosExibir
                   .filter((e) => e.data >= new Date(new Date().setHours(0, 0, 0, 0)))
                   .sort((a, b) => a.data.getTime() - b.data.getTime())
                   .slice(0, 3)
