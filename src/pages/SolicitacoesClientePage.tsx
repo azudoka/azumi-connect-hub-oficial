@@ -261,6 +261,9 @@ const MOCK: Solicitacao[] = [
     urgencia: "media", status: "andamento", empresaId: "kentaki",
     consultor: "Ana Beatriz", criadaEm: "2026-05-05T09:30:00Z",
     historico: [
+      { autor: "Você", texto: "Oi Ana, precisamos atualizar a política. Tem o documento atual em anexo.", data: "2026-05-05T09:32:00Z", anexo: { nome: "politica-home-office-v1.pdf", tipo: "arquivo" } },
+      { autor: "Ana Beatriz", texto: "Recebi! Vou revisar essa semana e te trago um draft.", data: "2026-05-05T14:10:00Z" },
+      { autor: "Ana Beatriz", texto: "Olha esse benchmark que separei: ajuda a calibrar dias presenciais por área.", data: "2026-05-07T10:20:00Z", anexo: { nome: "Benchmark Home Office 2026", tipo: "link", url: "https://example.com/benchmark" } },
       { autor: "Ana Beatriz", texto: "Estou consolidando o draft atualizado para sua revisão.", data: "2026-05-08T14:10:00Z" },
     ],
   },
@@ -271,7 +274,9 @@ const MOCK: Solicitacao[] = [
     urgencia: "media", status: "finalizada", empresaId: "kentaki",
     consultor: "Ana Beatriz", criadaEm: "2026-01-20T10:00:00Z",
     historico: [
-      { autor: "Ana Beatriz", texto: "Entregue. Documento disponível em Documentos.", data: "2026-03-30T16:45:00Z" },
+      { autor: "Você", texto: "Boa, vamos começar pelo Comercial.", data: "2026-01-21T09:00:00Z" },
+      { autor: "Ana Beatriz", texto: "Perfeito. Já agendei entrevistas com os líderes.", data: "2026-01-22T11:30:00Z" },
+      { autor: "Ana Beatriz", texto: "Entregue. Documento disponível em Documentos.", data: "2026-03-30T16:45:00Z", anexo: { nome: "mapa-cargos-q1.pdf", tipo: "arquivo" } },
     ],
   },
   {
@@ -281,7 +286,8 @@ const MOCK: Solicitacao[] = [
     urgencia: "baixa", status: "cancelada", empresaId: "kentaki",
     consultor: "Ana Beatriz", criadaEm: "2026-04-02T11:15:00Z",
     historico: [
-      { autor: "Cliente", texto: "Vamos pausar e retomar no próximo trimestre.", data: "2026-04-10T09:00:00Z" },
+      { autor: "Você", texto: "Vamos pausar e retomar no próximo trimestre.", data: "2026-04-10T09:00:00Z" },
+      { autor: "Ana Beatriz", texto: "Sem problema, deixo arquivada por aqui.", data: "2026-04-10T09:20:00Z" },
     ],
   },
   {
@@ -290,6 +296,11 @@ const MOCK: Solicitacao[] = [
     descricao: "Suporte da consultora na próxima entrevista.",
     urgencia: "media", status: "andamento", empresaId: "valore",
     consultor: "Rafael Moura", criadaEm: "2026-05-10T09:30:00Z",
+    historico: [
+      { autor: "Você", texto: "Rafael, consegue participar da entrevista de quinta?", data: "2026-05-10T09:35:00Z" },
+      { autor: "Rafael Moura", texto: "Posso sim. Me manda o roteiro que você costuma usar.", data: "2026-05-10T11:00:00Z" },
+      { autor: "Você", texto: "Aqui vai.", data: "2026-05-10T15:00:00Z", anexo: { nome: "roteiro-entrevista.docx", tipo: "arquivo" } },
+    ],
   },
   {
     id: "s-val-2", codigo: "SOL-2026-VAL02", tipo: "duvida",
@@ -297,6 +308,10 @@ const MOCK: Solicitacao[] = [
     descricao: "Modelo entregue e aprovado.",
     urgencia: "baixa", status: "finalizada", empresaId: "valore",
     consultor: "Rafael Moura", criadaEm: "2026-03-15T10:00:00Z",
+    historico: [
+      { autor: "Rafael Moura", texto: "Segue modelo final. Pode aplicar a partir do próximo ciclo.", data: "2026-03-28T17:00:00Z", anexo: { nome: "avaliacao-desempenho-v3.pdf", tipo: "arquivo" } },
+      { autor: "Você", texto: "Aprovado, obrigada!", data: "2026-03-29T09:10:00Z" },
+    ],
   },
   // ───── Construtora Horizonte ─────
   {
@@ -305,6 +320,10 @@ const MOCK: Solicitacao[] = [
     descricao: "Suporte para estruturar avaliação de produtividade em canteiro.",
     urgencia: "media", status: "aberta", empresaId: "horizonte",
     consultor: "Rafael Moura", criadaEm: "2026-05-15T11:20:00Z",
+    historico: [
+      { autor: "Você", texto: "Rafael, precisamos de um modelo de avaliação para canteiro. Pode ajudar?", data: "2026-05-15T11:22:00Z" },
+      { autor: "Rafael Moura", texto: "Claro! Te trago uma proposta inicial até quinta.", data: "2026-05-15T14:00:00Z" },
+    ],
   },
   {
     id: "s-hz-2", codigo: "SOL-2026-HZ02", tipo: "reuniao",
@@ -312,6 +331,10 @@ const MOCK: Solicitacao[] = [
     descricao: "Alinhamento mensal sobre andamento do projeto.",
     urgencia: "baixa", status: "andamento", empresaId: "horizonte",
     consultor: "Rafael Moura", criadaEm: "2026-05-08T14:00:00Z",
+    historico: [
+      { autor: "Rafael Moura", texto: "Te mando o convite agora. Sugiro pauta abaixo.", data: "2026-05-08T15:00:00Z", anexo: { nome: "Convite Google Meet", tipo: "link", url: "https://meet.example.com/xyz" } },
+      { autor: "Você", texto: "Confirmado.", data: "2026-05-08T15:20:00Z" },
+    ],
   },
   {
     id: "s-hz-3", codigo: "SOL-2026-HZ03", tipo: "duvida",
@@ -319,6 +342,10 @@ const MOCK: Solicitacao[] = [
     descricao: "Esclarecimento sobre adequação de cronograma à NR-18.",
     urgencia: "alta", status: "finalizada", empresaId: "horizonte",
     consultor: "Rafael Moura", criadaEm: "2026-04-20T09:00:00Z",
+    historico: [
+      { autor: "Rafael Moura", texto: "Segue parecer técnico. Resumo: cronograma OK com 2 pontos de atenção.", data: "2026-04-25T10:00:00Z", anexo: { nome: "parecer-nr18.pdf", tipo: "arquivo" } },
+      { autor: "Você", texto: "Perfeito, vamos implementar.", data: "2026-04-25T16:00:00Z" },
+    ],
   },
   // ───── Clínica Vita Saúde ─────
   {
@@ -327,6 +354,10 @@ const MOCK: Solicitacao[] = [
     descricao: "Planejar capacitação NR-32 para 3 unidades.",
     urgencia: "alta", status: "andamento", empresaId: "vita",
     consultor: "Juliana Costa", criadaEm: "2026-05-09T10:30:00Z",
+    historico: [
+      { autor: "Juliana Costa", texto: "Levantei datas possíveis para as 3 unidades. Confere?", data: "2026-05-10T09:00:00Z", anexo: { nome: "cronograma-nr32.xlsx", tipo: "arquivo" } },
+      { autor: "Você", texto: "Sim, podemos seguir.", data: "2026-05-10T11:00:00Z" },
+    ],
   },
   {
     id: "s-vt-2", codigo: "SOL-2026-VT02", tipo: "endomarketing",
@@ -335,6 +366,9 @@ const MOCK: Solicitacao[] = [
     urgencia: "media", status: "aguardando_cliente", empresaId: "vita",
     consultor: "Juliana Costa", criadaEm: "2026-05-12T15:00:00Z",
     temCustoAdicional: true,
+    historico: [
+      { autor: "Juliana Costa", texto: "Mandei as 3 propostas de layout. Qual ressoa mais?", data: "2026-05-14T16:00:00Z", anexo: { nome: "propostas-layout.pdf", tipo: "arquivo" } },
+    ],
   },
   {
     id: "s-vt-3", codigo: "SOL-2026-VT03", tipo: "visita",
@@ -342,6 +376,9 @@ const MOCK: Solicitacao[] = [
     descricao: "Visita presencial para mapear processos da Unidade Sul.",
     urgencia: "media", status: "aberta", empresaId: "vita",
     consultor: "Juliana Costa", criadaEm: "2026-05-17T08:45:00Z",
+    historico: [
+      { autor: "Você", texto: "Podemos agendar para a próxima semana?", data: "2026-05-17T08:50:00Z" },
+    ],
   },
   {
     id: "s-vt-4", codigo: "SOL-2026-VT04", tipo: "duvida",
@@ -349,6 +386,9 @@ const MOCK: Solicitacao[] = [
     descricao: "Relatório consolidado e plano de ação entregues.",
     urgencia: "baixa", status: "finalizada", empresaId: "vita",
     consultor: "Juliana Costa", criadaEm: "2026-02-22T13:00:00Z",
+    historico: [
+      { autor: "Juliana Costa", texto: "Relatório final + plano de ação. Disponível em Documentos também.", data: "2026-03-05T17:00:00Z", anexo: { nome: "clima-q1-relatorio.pdf", tipo: "arquivo" } },
+    ],
   },
 ];
 
@@ -360,6 +400,11 @@ const MOCK_DEMO: Solicitacao[] = [
     descricao: "Atualizar regras e elegibilidade.",
     urgencia: "media", status: "andamento", empresaId: "empresa-demo",
     consultor: "Ana Beatriz", criadaEm: "2026-05-05T09:00:00Z",
+    historico: [
+      { autor: "Você", texto: "Ana, queremos revisar a política de home office.", data: "2026-05-05T09:05:00Z" },
+      { autor: "Ana Beatriz", texto: "Show! Vou enviar um modelo base para você customizar.", data: "2026-05-05T11:00:00Z", anexo: { nome: "modelo-home-office.docx", tipo: "arquivo" } },
+      { autor: "Ana Beatriz", texto: "Esse artigo também ajuda no enquadramento.", data: "2026-05-06T10:00:00Z", anexo: { nome: "Guia CLT — trabalho remoto", tipo: "link", url: "https://example.com/guia" } },
+    ],
   },
   {
     id: "demo-s2", codigo: "SOL-DEMO-002", tipo: "duvida",
@@ -367,6 +412,10 @@ const MOCK_DEMO: Solicitacao[] = [
     descricao: "Mapeamento concluído e entregue.",
     urgencia: "media", status: "finalizada", empresaId: "empresa-demo",
     consultor: "Ana Beatriz", criadaEm: "2026-01-20T10:00:00Z",
+    historico: [
+      { autor: "Ana Beatriz", texto: "Mapa de cargos consolidado. Já está em Documentos.", data: "2026-03-20T15:00:00Z", anexo: { nome: "mapa-cargos-demo.pdf", tipo: "arquivo" } },
+      { autor: "Você", texto: "Obrigada!", data: "2026-03-21T09:00:00Z" },
+    ],
   },
   {
     id: "demo-s3", codigo: "SOL-DEMO-003", tipo: "endomarketing",
@@ -374,8 +423,12 @@ const MOCK_DEMO: Solicitacao[] = [
     descricao: "Pausada a pedido do cliente.",
     urgencia: "baixa", status: "cancelada", empresaId: "empresa-demo",
     consultor: "Ana Beatriz", criadaEm: "2026-04-02T11:15:00Z",
+    historico: [
+      { autor: "Você", texto: "Vamos pausar por ora.", data: "2026-04-02T11:20:00Z" },
+    ],
   },
 ];
+
 
 
 
