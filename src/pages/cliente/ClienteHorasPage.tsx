@@ -127,6 +127,59 @@ const REGISTROS: Registro[] = [
     tipo: "timer",
     empresaId: "kentaki",
   },
+  // ───── Construtora Horizonte ─────
+  {
+    id: "h-hz-1", data: "2026-04-20", inicio: "09:00", fim: "11:00", duracaoMin: 120,
+    consultor: "Rafael Moura", acao: "Diagnóstico inicial de cargos",
+    codigoAcao: "ENT-2026-HZ01", modulo: "projeto", tipo: "timer", empresaId: "horizonte",
+  },
+  {
+    id: "h-hz-2", data: "2026-04-15", inicio: "14:00", fim: "15:30", duracaoMin: 90,
+    consultor: "Rafael Moura", acao: "Triagem — Engenheiro Civil",
+    codigoAcao: "VAGA-2026-HZ01", modulo: "vaga", tipo: "timer", empresaId: "horizonte",
+  },
+  {
+    id: "h-hz-3", data: "2026-04-10", inicio: "—", fim: "—", duracaoMin: 60,
+    consultor: "Rafael Moura", acao: "Suporte com NR-18",
+    codigoAcao: "SOL-2026-HZ03", modulo: "solicitacao", tipo: "manual", empresaId: "horizonte",
+  },
+  // ───── Clínica Vita Saúde ─────
+  {
+    id: "h-vt-1", data: "2026-04-22", inicio: "09:00", fim: "12:00", duracaoMin: 180,
+    consultor: "Juliana Costa", acao: "Diagnóstico de lideranças",
+    codigoAcao: "ENT-2026-VT01", modulo: "projeto", tipo: "timer", empresaId: "vita",
+  },
+  {
+    id: "h-vt-2", data: "2026-04-20", inicio: "13:00", fim: "16:30", duracaoMin: 210,
+    consultor: "Juliana Costa", acao: "Trilha de liderança — Módulo 1",
+    codigoAcao: "ENT-2026-VT02", modulo: "projeto", tipo: "timer", empresaId: "vita",
+  },
+  {
+    id: "h-vt-3", data: "2026-04-18", inicio: "10:00", fim: "12:00", duracaoMin: 120,
+    consultor: "Juliana Costa", acao: "Entrevistas — Enfermagem",
+    codigoAcao: "VAGA-2026-VT01", modulo: "vaga", tipo: "timer", empresaId: "vita",
+  },
+  {
+    id: "h-vt-4", data: "2026-04-12", inicio: "—", fim: "—", duracaoMin: 180,
+    consultor: "Juliana Costa", acao: "Planejamento NR-32",
+    codigoAcao: "SOL-2026-VT01", modulo: "solicitacao", tipo: "manual", empresaId: "vita",
+  },
+  // ───── Valore Consultoria ─────
+  {
+    id: "h-val-1", data: "2026-04-21", inicio: "09:30", fim: "11:30", duracaoMin: 120,
+    consultor: "Rafael Moura", acao: "Diagnóstico inicial do RH",
+    codigoAcao: "ENT-2026-VAL01", modulo: "projeto", tipo: "timer", empresaId: "valore",
+  },
+  {
+    id: "h-val-2", data: "2026-04-18", inicio: "14:00", fim: "16:30", duracaoMin: 150,
+    consultor: "Rafael Moura", acao: "Mapa de cargos — v1",
+    codigoAcao: "ENT-2026-VAL02", modulo: "projeto", tipo: "timer", empresaId: "valore",
+  },
+  {
+    id: "h-val-3", data: "2026-04-12", inicio: "10:00", fim: "11:00", duracaoMin: 60,
+    consultor: "Rafael Moura", acao: "Triagem — Analista RH",
+    codigoAcao: "VAGA-2026-VAL01", modulo: "vaga", tipo: "timer", empresaId: "valore",
+  },
 ];
 
 const MODULO_PILL: Record<Modulo, string> = {
