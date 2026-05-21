@@ -47,6 +47,12 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { vagas, projetos } from "@/data/mock";
 import { useAuth } from "@/context/AuthContext";
+import {
+  vagasDemo,
+  projetosDemo,
+  comunicadosDemo,
+  eventosDemo,
+} from "@/data/mockDemoData";
 import { cn } from "@/lib/utils";
 
 // TODO: conectar Supabase — logo_url da tabela empresas
