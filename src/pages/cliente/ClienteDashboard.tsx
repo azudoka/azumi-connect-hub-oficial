@@ -59,6 +59,7 @@ import {
   comunicadosValore,
   eventosValore,
 } from "@/data/mockValoreData";
+import { PROJETOS_MOCK } from "@/data/projetosClienteMock";
 import { cn } from "@/lib/utils";
 
 // TODO: conectar Supabase — logo_url da tabela empresas
@@ -325,14 +326,22 @@ export default function ClienteDashboard() {
   const { usuario } = useAuth();
   const isTrial = usuario?.role === "trial";
   const isValore = usuario?.empresaId === "valore";
+  const empresaIdAtual = usuario?.empresaId ?? "kentaki";
   const empresaNome = usuario?.empresaNome || "Kentaki Foods";
   const logoUrl = empresaLogos[empresaNome];
   const perfilLabel = isTrial ? "Trial da conta" : "Admin da conta";
-  const consultoraNome = isValore ? "Rafael Moura" : "Ana Beatriz";
+  // Consultora padrão por empresa
+  const consultoraPorEmpresa: Record<string, string> = {
+    kentaki: "Ana Beatriz",
+    valore: "Rafael Moura",
+    horizonte: "Rafael Moura",
+    vita: "Juliana Costa",
+  };
+  const consultoraNome = consultoraPorEmpresa[empresaIdAtual] ?? "Ana Beatriz";
 
   const projetosKentaki = isValore
     ? projetosValore.length
-    : projetos.filter((p) => p.empresaId === "kentaki" && p.status === "andamento").length + 1;
+    : projetos.filter((p) => p.empresaId === empresaIdAtual && p.status === "andamento").length;
 
   const [comunicadoOpen, setComunicadoOpen] = useState(false);
   const [minhasReacoes, setMinhasReacoes] = useState<string[]>([]);
@@ -374,25 +383,45 @@ export default function ClienteDashboard() {
         candidatosEnviados: v.perfisEnviados,
       }));
     }
-    return vagas.filter((v) => v.empresaId === "kentaki");
-  }, [isTrial, isValore]);
+    return vagas.filter((v) => v.empresaId === empresaIdAtual);
+  }, [isTrial, isValore, empresaIdAtual]);
 
   const entregaveis = useMemo(() => {
-    const fonte = isTrial ? projetosDemo : isValore ? projetosValore : null;
-    if (!fonte) return entregaveisAguardando;
-    return fonte.flatMap((p) =>
+    if (isTrial) {
+      return projetosDemo.flatMap((p) =>
+        p.entregaveis
+          .filter((e) => e.status === "aguardando_parecer")
+          .map((e) => ({
+            id: e.id, projeto: p.nome, titulo: e.titulo,
+            categoria: "default", prazo: "—", vencido: false,
+          }))
+      );
+    }
+    if (isValore) {
+      return projetosValore.flatMap((p) =>
+        p.entregaveis
+          .filter((e) => e.status === "aguardando_parecer")
+          .map((e) => ({
+            id: e.id, projeto: p.nome, titulo: e.titulo,
+            categoria: "default", prazo: "—", vencido: false,
+          }))
+      );
+    }
+    // Real-mode: pega entregáveis aguardando_cliente da empresa logada
+    const itens = PROJETOS_MOCK.filter((p) => p.empresaId === empresaIdAtual).flatMap((p) =>
       p.entregaveis
-        .filter((e) => e.status === "aguardando_parecer")
+        .filter((e) => e.status === "aprovacao_cliente")
         .map((e) => ({
           id: e.id,
           projeto: p.nome,
-          titulo: e.titulo,
+          titulo: e.nome,
           categoria: "default",
-          prazo: "—",
-          vencido: false,
+          prazo: new Date(e.prazo).toLocaleDateString("pt-BR"),
+          vencido: new Date(e.prazo).getTime() < Date.now(),
         }))
     );
-  }, [isTrial, isValore]);
+    return itens.length > 0 ? itens : entregaveisAguardando;
+  }, [isTrial, isValore, empresaIdAtual]);
 
   const comunicadoSrc = isTrial ? comunicadosDemo : isValore ? comunicadosValore : null;
   const comunicadoExibir = comunicadoSrc

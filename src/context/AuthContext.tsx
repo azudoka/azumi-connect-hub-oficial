@@ -162,6 +162,8 @@ const MOCK_USUARIOS: MockCred[] = [
   { email: "ana@azumirh.com.br",      senha: "123", id: "u-ana",      nome: "Ana Beatriz",   role: "consultor", empresaNome: "", empresaId: "", avatarUrl: null },
   { email: "rafael@azumirh.com.br",   senha: "123", id: "u-rafael",   nome: "Rafael Moura",  role: "consultor", empresaNome: "", empresaId: "", avatarUrl: null },
   { email: "mariana@kentaki.com",     senha: "123", id: "u-mariana",  nome: "Mariana Souza", role: "cliente",   empresaNome: "Kentaki Foods", empresaId: "kentaki", avatarUrl: null, plano: "ongoing" },
+  { email: "felipe@horizonte.com.br", senha: "123", id: "u-felipe",   nome: "Felipe Andrade", role: "cliente",  empresaNome: "Construtora Horizonte", empresaId: "horizonte", avatarUrl: null, plano: "start" },
+  { email: "beatriz@vitasaude.com.br", senha: "123", id: "u-beatriz", nome: "Beatriz Lopes",  role: "cliente",  empresaNome: "Clínica Vita Saúde", empresaId: "vita", avatarUrl: null, plano: "growth" },
   { email: "joao@startupy.com.br",    senha: "123", id: "u-joao",     nome: "João Pedro",    role: "cliente_avulso", empresaNome: "Startup Y", empresaId: "startupy", avatarUrl: null, inativo: true },
   { email: "demo@azumirh.com.br",     senha: "Demo2026", id: "u-trial-demo", nome: "Carlos Demo", role: "trial", empresaNome: "Empresa Demo", empresaId: "empresa-demo", avatarUrl: null, plano: "trial", trialExpiraEm: "2026-06-30" },
   { email: "fernanda@valoreconsultoria.com.br", senha: "azumi2026", id: "u-fernanda", nome: "Fernanda Albuquerque", role: "cliente", empresaNome: "Valore Consultoria", empresaId: "valore", avatarUrl: null, plano: "ongoing" },
@@ -296,7 +298,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: usuario.id,
           nome: usuario.nome,
           papel: usuario.role,
-          empresaId: usuario.empresaNome || null,
+          // BUGFIX: empresaId precisa ser o slug ("kentaki", "valore", "horizonte"…),
+          // não o empresaNome. As páginas do cliente filtram por esse slug.
+          empresaId: usuario.empresaId ?? null,
         }
       : null;
     return {

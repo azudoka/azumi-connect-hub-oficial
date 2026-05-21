@@ -297,6 +297,58 @@ const MOCK: Solicitacao[] = [
     urgencia: "baixa", status: "finalizada", empresaId: "valore",
     consultor: "Rafael Moura", criadaEm: "2026-03-15T10:00:00Z",
   },
+  // ───── Construtora Horizonte ─────
+  {
+    id: "s-hz-1", codigo: "SOL-2026-HZ01", tipo: "duvida",
+    titulo: "Modelo de avaliação de obra",
+    descricao: "Suporte para estruturar avaliação de produtividade em canteiro.",
+    urgencia: "media", status: "aberta", empresaId: "horizonte",
+    consultor: "Rafael Moura", criadaEm: "2026-05-15T11:20:00Z",
+  },
+  {
+    id: "s-hz-2", codigo: "SOL-2026-HZ02", tipo: "reuniao",
+    titulo: "Reunião de alinhamento — Maio",
+    descricao: "Alinhamento mensal sobre andamento do projeto.",
+    urgencia: "baixa", status: "andamento", empresaId: "horizonte",
+    consultor: "Rafael Moura", criadaEm: "2026-05-08T14:00:00Z",
+  },
+  {
+    id: "s-hz-3", codigo: "SOL-2026-HZ03", tipo: "duvida",
+    titulo: "Suporte com NR-18",
+    descricao: "Esclarecimento sobre adequação de cronograma à NR-18.",
+    urgencia: "alta", status: "finalizada", empresaId: "horizonte",
+    consultor: "Rafael Moura", criadaEm: "2026-04-20T09:00:00Z",
+  },
+  // ───── Clínica Vita Saúde ─────
+  {
+    id: "s-vt-1", codigo: "SOL-2026-VT01", tipo: "nr_compliance",
+    titulo: "Treinamento NR-32",
+    descricao: "Planejar capacitação NR-32 para 3 unidades.",
+    urgencia: "alta", status: "andamento", empresaId: "vita",
+    consultor: "Juliana Costa", criadaEm: "2026-05-09T10:30:00Z",
+  },
+  {
+    id: "s-vt-2", codigo: "SOL-2026-VT02", tipo: "endomarketing",
+    titulo: "Material endomarketing — Maio",
+    descricao: "Campanha de cuidado e bem-estar para colaboradores.",
+    urgencia: "media", status: "aguardando_cliente", empresaId: "vita",
+    consultor: "Juliana Costa", criadaEm: "2026-05-12T15:00:00Z",
+    temCustoAdicional: true,
+  },
+  {
+    id: "s-vt-3", codigo: "SOL-2026-VT03", tipo: "visita",
+    titulo: "Visita técnica — Unidade Sul",
+    descricao: "Visita presencial para mapear processos da Unidade Sul.",
+    urgencia: "media", status: "aberta", empresaId: "vita",
+    consultor: "Juliana Costa", criadaEm: "2026-05-17T08:45:00Z",
+  },
+  {
+    id: "s-vt-4", codigo: "SOL-2026-VT04", tipo: "duvida",
+    titulo: "Pesquisa de clima Q1",
+    descricao: "Relatório consolidado e plano de ação entregues.",
+    urgencia: "baixa", status: "finalizada", empresaId: "vita",
+    consultor: "Juliana Costa", criadaEm: "2026-02-22T13:00:00Z",
+  },
 ];
 
 // Solicitações pré-carregadas para o perfil trial (Empresa Demo).

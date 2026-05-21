@@ -25,6 +25,8 @@ function formatarData(iso: string): string {
 const EMPRESA_ID_MAP: Record<string, string> = {
   kentaki: "emp-001",
   valore: "valore",
+  horizonte: "horizonte",
+  vita: "vita",
 };
 
 export default function ClienteDocumentosPage() {
