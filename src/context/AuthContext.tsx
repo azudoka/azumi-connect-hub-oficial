@@ -70,6 +70,8 @@ export interface Usuario {
   trialExpiraEm?: string | null;
   avatarUrl?: string | null;
   inativo?: boolean;
+  /** Cliente contratou o produto Hub? Define se vê o Hub real ou a apresentação. */
+  hubContratado?: boolean;
 }
 
 
@@ -155,18 +157,19 @@ interface MockCred {
   trialExpiraEm?: string | null;
   avatarUrl?: string | null;
   inativo?: boolean;
+  hubContratado?: boolean;
 }
 
 const MOCK_USUARIOS: MockCred[] = [
-  { email: "patricia@azumirh.com.br", senha: "123", id: "u-patricia", nome: "Patricia Lima", role: "admin", empresaNome: "", empresaId: "", avatarUrl: null },
-  { email: "ana@azumirh.com.br",      senha: "123", id: "u-ana",      nome: "Ana Beatriz",   role: "consultor", empresaNome: "", empresaId: "", avatarUrl: null },
-  { email: "rafael@azumirh.com.br",   senha: "123", id: "u-rafael",   nome: "Rafael Moura",  role: "consultor", empresaNome: "", empresaId: "", avatarUrl: null },
-  { email: "mariana@kentaki.com",     senha: "123", id: "u-mariana",  nome: "Mariana Souza", role: "cliente",   empresaNome: "Kentaki Foods", empresaId: "kentaki", avatarUrl: null, plano: "ongoing" },
-  { email: "felipe@horizonte.com.br", senha: "123", id: "u-felipe",   nome: "Felipe Andrade", role: "cliente",  empresaNome: "Construtora Horizonte", empresaId: "horizonte", avatarUrl: null, plano: "start" },
-  { email: "beatriz@vitasaude.com.br", senha: "123", id: "u-beatriz", nome: "Beatriz Lopes",  role: "cliente",  empresaNome: "Clínica Vita Saúde", empresaId: "vita", avatarUrl: null, plano: "growth" },
-  { email: "joao@startupy.com.br",    senha: "123", id: "u-joao",     nome: "João Pedro",    role: "cliente_avulso", empresaNome: "Startup Y", empresaId: "startupy", avatarUrl: null, inativo: true },
-  { email: "demo@azumirh.com.br",     senha: "Demo2026", id: "u-trial-demo", nome: "Carlos Demo", role: "trial", empresaNome: "Empresa Demo", empresaId: "empresa-demo", avatarUrl: null, plano: "trial", trialExpiraEm: "2026-06-30" },
-  { email: "fernanda@valoreconsultoria.com.br", senha: "azumi2026", id: "u-fernanda", nome: "Fernanda Albuquerque", role: "cliente", empresaNome: "Valore Consultoria", empresaId: "valore", avatarUrl: null, plano: "ongoing" },
+  { email: "patricia@azumirh.com.br", senha: "123", id: "u-patricia", nome: "Patricia Lima", role: "admin", empresaNome: "", empresaId: "", avatarUrl: null, hubContratado: true },
+  { email: "ana@azumirh.com.br",      senha: "123", id: "u-ana",      nome: "Ana Beatriz",   role: "consultor", empresaNome: "", empresaId: "", avatarUrl: null, hubContratado: true },
+  { email: "rafael@azumirh.com.br",   senha: "123", id: "u-rafael",   nome: "Rafael Moura",  role: "consultor", empresaNome: "", empresaId: "", avatarUrl: null, hubContratado: true },
+  { email: "mariana@kentaki.com",     senha: "123", id: "u-mariana",  nome: "Mariana Souza", role: "cliente",   empresaNome: "Kentaki Foods", empresaId: "kentaki", avatarUrl: null, plano: "ongoing", hubContratado: true },
+  { email: "felipe@horizonte.com.br", senha: "123", id: "u-felipe",   nome: "Felipe Andrade", role: "cliente",  empresaNome: "Construtora Horizonte", empresaId: "horizonte", avatarUrl: null, plano: "start", hubContratado: false },
+  { email: "beatriz@vitasaude.com.br", senha: "123", id: "u-beatriz", nome: "Beatriz Lopes",  role: "cliente",  empresaNome: "Clínica Vita Saúde", empresaId: "vita", avatarUrl: null, plano: "growth", hubContratado: true },
+  { email: "joao@startupy.com.br",    senha: "123", id: "u-joao",     nome: "João Pedro",    role: "cliente_avulso", empresaNome: "Startup Y", empresaId: "startupy", avatarUrl: null, inativo: true, hubContratado: false },
+  { email: "demo@azumirh.com.br",     senha: "Demo2026", id: "u-trial-demo", nome: "Carlos Demo", role: "trial", empresaNome: "Empresa Demo", empresaId: "empresa-demo", avatarUrl: null, plano: "trial", trialExpiraEm: "2026-06-30", hubContratado: false },
+  { email: "fernanda@valoreconsultoria.com.br", senha: "azumi2026", id: "u-fernanda", nome: "Fernanda Albuquerque", role: "cliente", empresaNome: "Valore Consultoria", empresaId: "valore", avatarUrl: null, plano: "ongoing", hubContratado: true },
 ];
 
 function buildUsuario(cred: MockCred): Usuario {
@@ -184,6 +187,7 @@ function buildUsuario(cred: MockCred): Usuario {
     trialExpiraEm: cred.trialExpiraEm ?? null,
     avatarUrl: cred.avatarUrl ?? null,
     inativo: cred.inativo ?? false,
+    hubContratado: cred.hubContratado ?? false,
   };
 }
 
