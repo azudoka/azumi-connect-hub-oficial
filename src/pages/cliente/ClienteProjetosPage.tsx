@@ -98,7 +98,7 @@ export default function ClienteProjetosPage() {
       </div>
 
       {aba === "projetos" ? (
-        projetos.length === 0 ? (
+        projetosExibir.length === 0 ? (
           <Card className="glass">
             <CardContent className="p-0">
               <EmptyState
