@@ -200,5 +200,7 @@ export const CRONOGRAMAS_MOCK: CronogramaCliente[] = [
         tempoEstimado: "16h",
       },
     ],
+  },
 ];
+
 
