@@ -382,8 +382,8 @@ export default function ClienteDashboard() {
         candidatosEnviados: v.perfisEnviados,
       }));
     }
-    return vagas.filter((v) => v.empresaId === "kentaki");
-  }, [isTrial, isValore]);
+    return vagas.filter((v) => v.empresaId === empresaIdAtual);
+  }, [isTrial, isValore, empresaIdAtual]);
 
   const entregaveis = useMemo(() => {
     const fonte = isTrial ? projetosDemo : isValore ? projetosValore : null;
