@@ -44,6 +44,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { vagas, projetos } from "@/data/mock";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
