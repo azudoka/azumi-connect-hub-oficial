@@ -2,6 +2,8 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { Eye, Send, X } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
+import { useAuth } from "@/context/AuthContext";
+import { comunicadosDemo } from "@/data/mockDemoData";
 
 const U: React.CSSProperties = { fontFamily: "'Urbanist',sans-serif" };
 
