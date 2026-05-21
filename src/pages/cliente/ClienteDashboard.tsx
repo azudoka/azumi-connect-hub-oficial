@@ -59,6 +59,7 @@ import {
   comunicadosValore,
   eventosValore,
 } from "@/data/mockValoreData";
+import { PROJETOS_MOCK } from "@/data/projetosClienteMock";
 import { cn } from "@/lib/utils";
 
 // TODO: conectar Supabase — logo_url da tabela empresas
@@ -386,21 +387,41 @@ export default function ClienteDashboard() {
   }, [isTrial, isValore, empresaIdAtual]);
 
   const entregaveis = useMemo(() => {
-    const fonte = isTrial ? projetosDemo : isValore ? projetosValore : null;
-    if (!fonte) return entregaveisAguardando;
-    return fonte.flatMap((p) =>
+    if (isTrial) {
+      return projetosDemo.flatMap((p) =>
+        p.entregaveis
+          .filter((e) => e.status === "aguardando_parecer")
+          .map((e) => ({
+            id: e.id, projeto: p.nome, titulo: e.titulo,
+            categoria: "default", prazo: "—", vencido: false,
+          }))
+      );
+    }
+    if (isValore) {
+      return projetosValore.flatMap((p) =>
+        p.entregaveis
+          .filter((e) => e.status === "aguardando_parecer")
+          .map((e) => ({
+            id: e.id, projeto: p.nome, titulo: e.titulo,
+            categoria: "default", prazo: "—", vencido: false,
+          }))
+      );
+    }
+    // Real-mode: pega entregáveis aguardando_cliente da empresa logada
+    const itens = PROJETOS_MOCK.filter((p) => p.empresaId === empresaIdAtual).flatMap((p) =>
       p.entregaveis
-        .filter((e) => e.status === "aguardando_parecer")
+        .filter((e) => e.status === "aprovacao_cliente")
         .map((e) => ({
           id: e.id,
           projeto: p.nome,
-          titulo: e.titulo,
+          titulo: e.nome,
           categoria: "default",
-          prazo: "—",
-          vencido: false,
+          prazo: new Date(e.prazo).toLocaleDateString("pt-BR"),
+          vencido: new Date(e.prazo).getTime() < Date.now(),
         }))
     );
-  }, [isTrial, isValore]);
+    return itens.length > 0 ? itens : entregaveisAguardando;
+  }, [isTrial, isValore, empresaIdAtual]);
 
   const comunicadoSrc = isTrial ? comunicadosDemo : isValore ? comunicadosValore : null;
   const comunicadoExibir = comunicadoSrc
