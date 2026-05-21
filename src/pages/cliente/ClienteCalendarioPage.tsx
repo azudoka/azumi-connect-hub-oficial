@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, X, Clock, MapPin, ExternalLink, Download } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
+import { useAuth } from "@/context/AuthContext";
+import { eventosDemo } from "@/data/mockDemoData";
 
 const U: React.CSSProperties = { fontFamily: "'Urbanist',sans-serif" };
 
