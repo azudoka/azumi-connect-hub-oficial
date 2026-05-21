@@ -106,7 +106,7 @@ export default function ClienteProjetoDetalhe() {
             </h1>
           </div>
           <div className="sm:ml-auto flex items-center gap-2">
-            <span className="h-7 w-7 rounded-full bg-primary/15 text-primary text-xs font-semibold flex items-center justify-center">
+            <span className="h-7 w-7 rounded-lg bg-primary/15 text-primary text-xs font-semibold flex items-center justify-center">
               {projeto.consultorIniciais}
             </span>
             <span className="text-sm text-muted-foreground">{projeto.consultor}</span>

@@ -130,7 +130,7 @@ export default function ClienteProjetosPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span className="h-6 w-6 rounded-full bg-primary/15 text-primary text-xs font-semibold flex items-center justify-center">
+                      <span className="h-6 w-6 rounded-lg bg-primary/15 text-primary text-xs font-semibold flex items-center justify-center">
                         {p.consultorIniciais}
                       </span>
                       <span className="text-sm text-muted-foreground">{p.consultor}</span>
