@@ -73,6 +73,20 @@ export function Header({ showSwitcher = true, context = "connect" }: HeaderProps
   return (
     <header className="h-16 shrink-0 border-b border-border bg-background/80 backdrop-blur sticky top-0 z-30">
       <div className="h-full flex items-center gap-3 px-6">
+        {/* Empresa do cliente logado */}
+        {(usuario?.role === "cliente" || usuario?.role === "cliente_avulso" || usuario?.role === "trial") && usuario?.empresaNome && (
+          <div
+            className="hidden md:flex items-center gap-2 h-9 px-3 rounded-lg border border-border bg-secondary/40"
+            style={{ fontFamily: "'Urbanist',sans-serif" }}
+          >
+            <div className="h-6 w-6 rounded bg-gradient-brand flex items-center justify-center text-[10px] font-bold text-white">
+              {usuario.empresaNome.slice(0, 2).toUpperCase()}
+            </div>
+            <span className="text-xs font-semibold text-foreground truncate max-w-[180px]">
+              {usuario.empresaNome}
+            </span>
+          </div>
+        )}
         {/* Search */}
         <div className="flex-1 max-w-md relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
