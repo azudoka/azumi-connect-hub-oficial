@@ -324,11 +324,13 @@ const FORM_BASE = {
 export default function SolicitacoesClientePage() {
   const { user, usuario } = useAuth();
   const empresaId = user?.empresaId ?? "";
+  const isTrial = usuario?.role === "trial";
   const pacote = planoToPacote(usuario?.plano);
 
-  const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>(() =>
-    MOCK.filter((s) => (empresaId ? s.empresaId === empresaId : true)),
-  );
+  const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>(() => {
+    if (isTrial) return MOCK_DEMO;
+    return MOCK.filter((s) => (empresaId ? s.empresaId === empresaId : true));
+  });
   const [filtro, setFiltro] = useState<"todos" | StatusSolicitacao>("todos");
   const [filtroTipo, setFiltroTipo] = useState<"todos" | TipoSolicitacao>("todos");
   const [expandidos, setExpandidos] = useState<Record<string, boolean>>({});
