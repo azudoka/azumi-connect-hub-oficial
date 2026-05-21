@@ -345,10 +345,55 @@ export default function ClienteDashboard() {
   }
 
   const vagasCliente = useMemo(
-    () => (isTrial ? [] : vagas.filter((v) => v.empresaId === "kentaki")),
+    () =>
+      isTrial
+        ? vagasDemo.map((v) => ({
+            id: v.id,
+            titulo: v.titulo,
+            filial: "Empresa Demo",
+            status: (v.status === "andamento" ? "ativa" : "concluida") as any,
+            etapa: v.etapa,
+            candidatosEnviados: v.perfisEnviados,
+          }))
+        : vagas.filter((v) => v.empresaId === "kentaki"),
     [isTrial]
   );
-  const entregaveis = isTrial ? [] : entregaveisAguardando;
+
+  const entregaveis = useMemo(() => {
+    if (!isTrial) return entregaveisAguardando;
+    return projetosDemo.flatMap((p) =>
+      p.entregaveis
+        .filter((e) => e.status === "aguardando_parecer")
+        .map((e) => ({
+          id: e.id,
+          projeto: p.nome,
+          titulo: e.titulo,
+          categoria: "default",
+          prazo: "—",
+          vencido: false,
+        }))
+    );
+  }, [isTrial]);
+
+  const comunicadoExibir = isTrial
+    ? {
+        id: comunicadosDemo[0]?.id ?? "demo-cm",
+        titulo: comunicadosDemo[0]?.titulo ?? "",
+        data: comunicadosDemo[0]?.data ?? "",
+        autor: "Ana Beatriz · Consultora Azumi",
+        capa: "/placeholder.svg",
+        conteudo: comunicadosDemo[0]?.resumo ?? "",
+      }
+    : comunicadoRecente;
+
+  const eventosExibir: EventoAgendado[] = isTrial
+    ? eventosDemo.map((e) => ({
+        data: new Date(e.data),
+        titulo: e.titulo,
+        tipo: e.tipo as EventoTipo,
+        hora: e.hora,
+      }))
+    : eventosAgendados;
 
   return (
     <div>
