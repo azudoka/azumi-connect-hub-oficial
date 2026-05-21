@@ -153,8 +153,28 @@ function EntregavelCard({
   const [openNps, setOpenNps] = useState(false);
   const [openDocs, setOpenDocs] = useState(false);
   const [openAjuste, setOpenAjuste] = useState(false);
+  const [openConversa, setOpenConversa] = useState(false);
+  const [openVisualizar, setOpenVisualizar] = useState(false);
 
-  // Estado do NPS
+  // Conversa mockada entre cliente e consultor sobre este entregável (sessão).
+  const [conversa, setConversa] = useState<
+    { autor: "consultor" | "cliente"; nome: string; texto: string; data: string; anexo?: string }[]
+  >(() => [
+    {
+      autor: "consultor",
+      nome: "Consultor Azumi",
+      texto: `Olá! Enviei a versão para sua aprovação de "${entregavel.nome}". Qualquer ajuste me avise por aqui.`,
+      data: entregavel.aprovacaoEnviadaEm ?? new Date().toISOString(),
+      anexo: `${entregavel.codigo}.pdf`,
+    },
+    {
+      autor: "consultor",
+      nome: "Consultor Azumi",
+      texto: "Aproveitei e já apontei os principais pontos no documento. Vou ficar aguardando seu retorno.",
+      data: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+    },
+  ]);
+  const [novaMsg, setNovaMsg] = useState("");
   const [nota, setNota] = useState(0);
   const [comentario, setComentario] = useState("");
 
