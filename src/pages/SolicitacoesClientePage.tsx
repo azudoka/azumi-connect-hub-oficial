@@ -285,6 +285,33 @@ const MOCK: Solicitacao[] = [
   },
 ];
 
+// Solicitações pré-carregadas para o perfil trial (Empresa Demo).
+const MOCK_DEMO: Solicitacao[] = [
+  {
+    id: "demo-s1", codigo: "SOL-DEMO-001", tipo: "duvida",
+    titulo: "Revisão de política de home office",
+    descricao: "Atualizar regras e elegibilidade.",
+    urgencia: "media", status: "andamento", empresaId: "empresa-demo",
+    consultor: "Ana Beatriz", criadaEm: "2026-05-05T09:00:00Z",
+  },
+  {
+    id: "demo-s2", codigo: "SOL-DEMO-002", tipo: "duvida",
+    titulo: "Mapeamento de cargos Q1",
+    descricao: "Mapeamento concluído e entregue.",
+    urgencia: "media", status: "finalizada", empresaId: "empresa-demo",
+    consultor: "Ana Beatriz", criadaEm: "2026-01-20T10:00:00Z",
+  },
+  {
+    id: "demo-s3", codigo: "SOL-DEMO-003", tipo: "endomarketing",
+    titulo: "Pesquisa de clima",
+    descricao: "Pausada a pedido do cliente.",
+    urgencia: "baixa", status: "cancelada", empresaId: "empresa-demo",
+    consultor: "Ana Beatriz", criadaEm: "2026-04-02T11:15:00Z",
+  },
+];
+
+
+
 
 // ============================================================================
 // Componente principal
