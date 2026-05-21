@@ -21,6 +21,7 @@ export type Papel =
   | "admin"
   | "consultor"
   | "cliente"
+  | "cliente_avulso"
   | "rh"
   | "rh_operacional"
   | "ceo"
@@ -61,11 +62,14 @@ export interface Usuario {
   email: string;
   role: UserRole;
   empresaNome: string;
+  empresaId?: string | null;
   modulos: ModuloPermissao[];
   isDemo: boolean;
   auditoria: boolean;
   plano?: Plano | null;
   trialExpiraEm?: string | null;
+  avatarUrl?: string | null;
+  inativo?: boolean;
 }
 
 
@@ -132,6 +136,7 @@ const PERMISSOES_POR_ROLE: Record<UserRole, ModuloPermissao[]> = {
   // legados — sem módulos do Hub
   consultor: [],
   cliente: [],
+  cliente_avulso: [],
   trial: [],
 };
 
@@ -145,22 +150,20 @@ interface MockCred {
   nome: string;
   role: UserRole;
   empresaNome: string;
+  empresaId?: string | null;
   plano?: Plano | null;
   trialExpiraEm?: string | null;
+  avatarUrl?: string | null;
+  inativo?: boolean;
 }
 
 const MOCK_USUARIOS: MockCred[] = [
-  { email: "rh@empresa.com", senha: "123", id: "u-rh", nome: "Julia Fernandes", role: "rh", empresaNome: "Azumi" },
-  { email: "ceo@empresa.com", senha: "123", id: "u-ceo", nome: "Roberto Alves", role: "ceo", empresaNome: "Azumi" },
-  { email: "colaborador@empresa.com", senha: "123", id: "u-col", nome: "Ana Carolina Silva", role: "colaborador", empresaNome: "Azumi" },
-  { email: "lider@empresa.com", senha: "123", id: "u-lid", nome: "Roberto Mendes", role: "lider", empresaNome: "Azumi" },
-  { email: "dp@empresa.com", senha: "123", id: "u-dp", nome: "Patrícia Santos", role: "dp", empresaNome: "Azumi" },
-  { email: "contador@empresa.com", senha: "123", id: "u-cont", nome: "Carlos Lima", role: "contador", empresaNome: "Azumi" },
-  { email: "juridico@empresa.com", senha: "123", id: "u-jur", nome: "Dr. Marcos Ribeiro", role: "juridico", empresaNome: "Azumi" },
-  { email: "admin@empresa.com", senha: "123", id: "u-adm", nome: "Administrador", role: "admin", empresaNome: "Azumi" },
-  { email: "consultor@azumi.com", senha: "123", id: "ab", nome: "Ana Beatriz", role: "consultor", empresaNome: "Azumi" },
-  { email: "cliente@kentaki.com", senha: "123", id: "u-cli-kentaki", nome: "Admin Kentaki", role: "cliente", empresaNome: "Kentaki Foods", plano: "ongoing" },
-  { email: "demo@azumirh.com.br", senha: "demo2026", id: "u-trial-demo", nome: "Carlos Demo", role: "trial", empresaNome: "Empresa Demo", plano: "trial", trialExpiraEm: "2026-06-30" },
+  { email: "patricia@azumirh.com.br", senha: "123", id: "u-patricia", nome: "Patricia Lima", role: "admin", empresaNome: "", empresaId: "", avatarUrl: null },
+  { email: "ana@azumirh.com.br",      senha: "123", id: "u-ana",      nome: "Ana Beatriz",   role: "consultor", empresaNome: "", empresaId: "", avatarUrl: null },
+  { email: "rafael@azumirh.com.br",   senha: "123", id: "u-rafael",   nome: "Rafael Moura",  role: "consultor", empresaNome: "", empresaId: "", avatarUrl: null },
+  { email: "mariana@kentaki.com",     senha: "123", id: "u-mariana",  nome: "Mariana Souza", role: "cliente",   empresaNome: "Kentaki Foods", empresaId: "kentaki", avatarUrl: null, plano: "ongoing" },
+  { email: "joao@startupy.com.br",    senha: "123", id: "u-joao",     nome: "João Pedro",    role: "cliente_avulso", empresaNome: "Startup Y", empresaId: "startupy", avatarUrl: null, inativo: true },
+  { email: "demo@azumirh.com.br",     senha: "Demo2026", id: "u-trial-demo", nome: "Carlos Demo", role: "trial", empresaNome: "Empresa Demo", empresaId: "empresa-demo", avatarUrl: null, plano: "trial", trialExpiraEm: "2026-06-30" },
 ];
 
 function buildUsuario(cred: MockCred): Usuario {
@@ -170,11 +173,14 @@ function buildUsuario(cred: MockCred): Usuario {
     email: cred.email,
     role: cred.role,
     empresaNome: cred.empresaNome,
+    empresaId: cred.empresaId ?? null,
     modulos: PERMISSOES_POR_ROLE[cred.role] ?? [],
-    isDemo: false,
+    isDemo: cred.role === "trial",
     auditoria: ROLES_COM_AUDITORIA.includes(cred.role),
     plano: cred.plano ?? null,
     trialExpiraEm: cred.trialExpiraEm ?? null,
+    avatarUrl: cred.avatarUrl ?? null,
+    inativo: cred.inativo ?? false,
   };
 }
 
