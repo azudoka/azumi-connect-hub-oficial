@@ -8,7 +8,7 @@ type Profile = "lider" | "colaborador" | "ceo";
 
 export function HubLayout({ profile }: { profile: Profile }) {
   const { usuario } = useAuth();
-  const semHub = usuario?.role === "trial" || usuario?.hubContratado === false;
+  const isTrial = usuario?.role === "trial";
 
   return (
     <div className="product-hub hub-light flex min-h-screen w-full bg-background text-foreground">
@@ -17,7 +17,7 @@ export function HubLayout({ profile }: { profile: Profile }) {
         <Header context="hub" />
         <main className="flex-1 overflow-y-auto">
           <div className="p-6 lg:p-8 max-w-[1600px] mx-auto animate-fade-in">
-            {semHub ? <HubTrialPresentation /> : <Outlet />}
+            {isTrial ? <HubTrialPresentation /> : <Outlet />}
           </div>
         </main>
       </div>
