@@ -269,14 +269,31 @@ function EntregavelCard({
           </span>
         </div>
 
-        {entregavel.subtarefas > 0 && (
-          <div>
+        <div className="flex flex-wrap items-center gap-2">
+          {entregavel.subtarefas > 0 && (
             <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-2.5 py-0.5 text-xs text-muted-foreground">
               <ListTodo className="h-3 w-3" />
               {entregavel.subtarefas} subtarefas
             </span>
-          </div>
-        )}
+          )}
+          {entregavel.tipoDocumento && (
+            <button
+              type="button"
+              onClick={() => setOpenVisualizar(true)}
+              className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-xs text-primary hover:bg-primary/15 transition-colors"
+            >
+              <FileText className="h-3 w-3" /> Visualizar documento
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setOpenConversa(true)}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-2.5 py-0.5 text-xs text-foreground hover:bg-secondary/80 transition-colors"
+          >
+            <MessageSquare className="h-3 w-3" /> Conversa com consultor ({conversa.length})
+          </button>
+        </div>
+
 
         {/* Banner de aprovação */}
         {aguardando && (
