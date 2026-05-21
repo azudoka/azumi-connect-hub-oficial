@@ -70,6 +70,12 @@ const PERMISSOES_POR_PAPEL: Record<Papel, Permissao[]> = {
     "guia.ver",
     "perfil.editar_proprio",
   ],
+  cliente_avulso: [
+    "dashboard.ver",
+    "vagas.ver",
+    "candidatos.ver",
+    "perfil.editar_proprio",
+  ],
   // Novos papéis Hub — sem mapeamento detalhado de permissões legadas
   rh: ["dashboard.ver", "auditoria.ver", "perfil.editar_proprio"],
   rh_operacional: ["dashboard.ver", "perfil.editar_proprio"],
