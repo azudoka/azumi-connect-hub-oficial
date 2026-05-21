@@ -106,7 +106,55 @@ export const PROJETOS_MOCK: ProjetoCliente[] = [
       },
     ],
   },
+  {
+    id: "proj-valore-1",
+    codigo: "PROJ-2026-VAL01",
+    nome: "Reestruturação do RH",
+    empresaId: "valore",
+    consultor: "Rafael Moura",
+    consultorIniciais: "RM",
+    status: "andamento",
+    frente: "Estrutura de RH",
+    entregaveis: [
+      {
+        id: "ent-val-001",
+        codigo: "ENT-2026-VAL01",
+        nome: "Diagnóstico inicial do RH",
+        frente: "Estrutura de RH",
+        complexidade: "C1",
+        status: "aprovado_cliente",
+        prazo: DAYS_AGO(20),
+        subtarefas: 3,
+        tipoDocumento: true,
+        vinculadoDocsOficiais: true,
+      },
+      {
+        id: "ent-val-002",
+        codigo: "ENT-2026-VAL02",
+        nome: "Mapa de cargos — versão 1",
+        frente: "Estrutura de RH",
+        complexidade: "C2",
+        status: "aprovacao_cliente",
+        prazo: DAYS_AHEAD(10),
+        subtarefas: 5,
+        tipoDocumento: true,
+        aprovacaoEnviadaEm: HOURS_AGO(24),
+      },
+      {
+        id: "ent-val-003",
+        codigo: "ENT-2026-VAL03",
+        nome: "Política de remuneração",
+        frente: "Estrutura de RH",
+        complexidade: "C2",
+        status: "em_andamento",
+        prazo: DAYS_AHEAD(30),
+        subtarefas: 4,
+        tipoDocumento: true,
+      },
+    ],
+  },
 ];
+
 
 export const CRONOGRAMAS_MOCK: CronogramaCliente[] = [
   {
@@ -154,3 +202,5 @@ export const CRONOGRAMAS_MOCK: CronogramaCliente[] = [
     ],
   },
 ];
+
+

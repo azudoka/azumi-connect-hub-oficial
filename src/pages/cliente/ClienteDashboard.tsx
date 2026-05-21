@@ -53,6 +53,12 @@ import {
   comunicadosDemo,
   eventosDemo,
 } from "@/data/mockDemoData";
+import {
+  vagasValore,
+  projetosValore,
+  comunicadosValore,
+  eventosValore,
+} from "@/data/mockValoreData";
 import { cn } from "@/lib/utils";
 
 // TODO: conectar Supabase — logo_url da tabela empresas
@@ -318,12 +324,15 @@ const REACOES = ["❤️", "👍", "🎉", "🔥", "😂"] as const;
 export default function ClienteDashboard() {
   const { usuario } = useAuth();
   const isTrial = usuario?.role === "trial";
+  const isValore = usuario?.empresaId === "valore";
   const empresaNome = usuario?.empresaNome || "Kentaki Foods";
   const logoUrl = empresaLogos[empresaNome];
   const perfilLabel = isTrial ? "Trial da conta" : "Admin da conta";
-  const consultoraNome = "Ana Beatriz";
+  const consultoraNome = isValore ? "Rafael Moura" : "Ana Beatriz";
 
-  const projetosKentaki = projetos.filter((p) => p.empresaId === "kentaki" && p.status === "andamento").length + 1;
+  const projetosKentaki = isValore
+    ? projetosValore.length
+    : projetos.filter((p) => p.empresaId === "kentaki" && p.status === "andamento").length + 1;
 
   const [comunicadoOpen, setComunicadoOpen] = useState(false);
   const [minhasReacoes, setMinhasReacoes] = useState<string[]>([]);
@@ -344,24 +353,34 @@ export default function ClienteDashboard() {
     }));
   }
 
-  const vagasCliente = useMemo(
-    () =>
-      isTrial
-        ? vagasDemo.map((v) => ({
-            id: v.id,
-            titulo: v.titulo,
-            filial: "Empresa Demo",
-            status: (v.status === "andamento" ? "ativa" : "concluida") as any,
-            etapa: v.etapa,
-            candidatosEnviados: v.perfisEnviados,
-          }))
-        : vagas.filter((v) => v.empresaId === "kentaki"),
-    [isTrial]
-  );
+  const vagasCliente = useMemo(() => {
+    if (isTrial) {
+      return vagasDemo.map((v) => ({
+        id: v.id,
+        titulo: v.titulo,
+        filial: "Empresa Demo",
+        status: (v.status === "andamento" ? "ativa" : "concluida") as any,
+        etapa: v.etapa,
+        candidatosEnviados: v.perfisEnviados,
+      }));
+    }
+    if (isValore) {
+      return vagasValore.map((v) => ({
+        id: v.id,
+        titulo: v.titulo,
+        filial: "Curitiba — Matriz",
+        status: (v.status === "andamento" ? "ativa" : "concluida") as any,
+        etapa: v.etapa,
+        candidatosEnviados: v.perfisEnviados,
+      }));
+    }
+    return vagas.filter((v) => v.empresaId === "kentaki");
+  }, [isTrial, isValore]);
 
   const entregaveis = useMemo(() => {
-    if (!isTrial) return entregaveisAguardando;
-    return projetosDemo.flatMap((p) =>
+    const fonte = isTrial ? projetosDemo : isValore ? projetosValore : null;
+    if (!fonte) return entregaveisAguardando;
+    return fonte.flatMap((p) =>
       p.entregaveis
         .filter((e) => e.status === "aguardando_parecer")
         .map((e) => ({
@@ -373,21 +392,23 @@ export default function ClienteDashboard() {
           vencido: false,
         }))
     );
-  }, [isTrial]);
+  }, [isTrial, isValore]);
 
-  const comunicadoExibir = isTrial
+  const comunicadoSrc = isTrial ? comunicadosDemo : isValore ? comunicadosValore : null;
+  const comunicadoExibir = comunicadoSrc
     ? {
-        id: comunicadosDemo[0]?.id ?? "demo-cm",
-        titulo: comunicadosDemo[0]?.titulo ?? "",
-        data: comunicadosDemo[0]?.data ?? "",
-        autor: "Ana Beatriz · Consultora Azumi",
+        id: comunicadoSrc[0]?.id ?? "demo-cm",
+        titulo: comunicadoSrc[0]?.titulo ?? "",
+        data: comunicadoSrc[0]?.data ?? "",
+        autor: `${consultoraNome} · Consultora Azumi`,
         capa: "/placeholder.svg",
-        conteudo: comunicadosDemo[0]?.resumo ?? "",
+        conteudo: comunicadoSrc[0]?.resumo ?? "",
       }
     : comunicadoRecente;
 
-  const eventosExibir: EventoAgendado[] = isTrial
-    ? eventosDemo.map((e) => ({
+  const eventosSrc = isTrial ? eventosDemo : isValore ? eventosValore : null;
+  const eventosExibir: EventoAgendado[] = eventosSrc
+    ? eventosSrc.map((e) => ({
         data: new Date(e.data),
         titulo: e.titulo,
         tipo: e.tipo as EventoTipo,

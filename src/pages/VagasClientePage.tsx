@@ -126,6 +126,8 @@ const STATUS_ORDER: Record<string, number> = {
 const MOCK: VagaMock[] = [
   { id: "v-01", cargo: "Gerente de TI", departamento: "Tecnologia", status: "em_andamento", totalCandidatos: 18, aprovados: 3, criadaEm: "2026-04-10T09:00:00Z", empresaId: "kentaki" },
   { id: "v-02", cargo: "Analista de Marketing", departamento: "Marketing", status: "finalizada", totalCandidatos: 11, aprovados: 1, criadaEm: "2026-02-15T14:45:00Z", empresaId: "kentaki" },
+  { id: "v-val-1", cargo: "Analista RH", departamento: "Recursos Humanos", status: "em_andamento", totalCandidatos: 22, aprovados: 4, criadaEm: "2026-05-02T09:00:00Z", empresaId: "valore" },
+  { id: "v-val-2", cargo: "Consultora Comercial", departamento: "Comercial", status: "finalizada", totalCandidatos: 18, aprovados: 1, criadaEm: "2026-02-20T10:00:00Z", empresaId: "valore" },
 ];
 
 function statusClasses(s: StatusVaga) {

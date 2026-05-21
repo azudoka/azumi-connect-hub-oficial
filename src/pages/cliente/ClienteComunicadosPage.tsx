@@ -4,6 +4,7 @@ import { Eye, Send, X } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { useAuth } from "@/context/AuthContext";
 import { comunicadosDemo } from "@/data/mockDemoData";
+import { comunicadosValore } from "@/data/mockValoreData";
 
 const U: React.CSSProperties = { fontFamily: "'Urbanist',sans-serif" };
 
@@ -193,15 +194,18 @@ function DetalheModal({ c, onClose, onReagir, onAddComentario }: { c: Comunicado
 export default function ClienteComunicadosPage() {
   const { usuario } = useAuth();
   const isDemoUser = usuario?.role === "trial";
+  const isValoreUser = usuario?.empresaId === "valore";
 
-  const listaInicial: Comunicado[] = isDemoUser
-    ? comunicadosDemo.map((c) => ({
+  const fonteMock = isDemoUser ? comunicadosDemo : isValoreUser ? comunicadosValore : null;
+
+  const listaInicial: Comunicado[] = fonteMock
+    ? fonteMock.map((c) => ({
         id: c.id,
         titulo: c.titulo,
         corpo: c.resumo,
         tipo: c.tipo as TipoComunicado,
-        autor: "Ana Beatriz",
-        iniciais: "AB",
+        autor: isValoreUser ? "Rafael Moura" : "Ana Beatriz",
+        iniciais: isValoreUser ? "RM" : "AB",
         data: c.data,
         lido: false,
         visualizacoes: 0,

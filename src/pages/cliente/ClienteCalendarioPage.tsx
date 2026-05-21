@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, X, Clock, MapPin, ExternalLink, Download } f
 import { PageHeader } from "@/components/PageHeader";
 import { useAuth } from "@/context/AuthContext";
 import { eventosDemo } from "@/data/mockDemoData";
+import { eventosValore } from "@/data/mockValoreData";
 
 const U: React.CSSProperties = { fontFamily: "'Urbanist',sans-serif" };
 
@@ -196,6 +197,7 @@ function Modal({ open, onClose, children }: { open: boolean; onClose: () => void
 export default function ClienteCalendarioPage() {
   const { usuario } = useAuth();
   const isDemoUser = usuario?.role === "trial";
+  const isValoreUser = usuario?.empresaId === "valore";
   const [view, setView] = useState<"mes" | "semana">("mes");
   const [cursor, setCursor] = useState(new Date(Y0, M0, 1));
   const [anoFiltro, setAnoFiltro] = useState(Y0);
@@ -213,8 +215,9 @@ export default function ClienteCalendarioPage() {
   }
 
   const eventosLista: Evento[] = useMemo(() => {
-    if (!isDemoUser) return EVENTOS_CLIENTE;
-    return eventosDemo.map((e) => {
+    const fonte = isDemoUser ? eventosDemo : isValoreUser ? eventosValore : null;
+    if (!fonte) return EVENTOS_CLIENTE;
+    return fonte.map((e) => {
       const d = new Date(e.data);
       const tipo: EventoTipo = e.tipo === "feriado" ? "feriado_nacional" : (e.tipo as EventoTipo);
       return {
@@ -225,7 +228,7 @@ export default function ClienteCalendarioPage() {
         tipo,
       };
     });
-  }, [isDemoUser]);
+  }, [isDemoUser, isValoreUser]);
 
   const eventosPorData = useMemo(() => {
     const m = new Map<string, Evento[]>();

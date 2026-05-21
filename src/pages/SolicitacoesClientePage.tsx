@@ -283,6 +283,20 @@ const MOCK: Solicitacao[] = [
       { autor: "Cliente", texto: "Vamos pausar e retomar no próximo trimestre.", data: "2026-04-10T09:00:00Z" },
     ],
   },
+  {
+    id: "s-val-1", codigo: "SOL-2026-VAL01", tipo: "duvida",
+    titulo: "Suporte para entrevista — Analista RH",
+    descricao: "Suporte da consultora na próxima entrevista.",
+    urgencia: "media", status: "andamento", empresaId: "valore",
+    consultor: "Rafael Moura", criadaEm: "2026-05-10T09:30:00Z",
+  },
+  {
+    id: "s-val-2", codigo: "SOL-2026-VAL02", tipo: "duvida",
+    titulo: "Modelo de avaliação de desempenho",
+    descricao: "Modelo entregue e aprovado.",
+    urgencia: "baixa", status: "finalizada", empresaId: "valore",
+    consultor: "Rafael Moura", criadaEm: "2026-03-15T10:00:00Z",
+  },
 ];
 
 // Solicitações pré-carregadas para o perfil trial (Empresa Demo).

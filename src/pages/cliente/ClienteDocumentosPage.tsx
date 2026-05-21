@@ -4,6 +4,7 @@ import { FileText, FileSpreadsheet, Presentation, Download, FolderOpen } from "l
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 import { documentosMock, type DocumentoMock } from "@/data/documentosMock";
+import { useAuth } from "@/context/AuthContext";
 
 const tipoConfig: Record<string, { icon: LucideIcon; cls: string }> = {
   PDF:          { icon: FileText,        cls: "text-red-500 bg-red-500/10" },
@@ -20,12 +21,17 @@ function formatarData(iso: string): string {
   return `${dia}/${mes}/${ano}`;
 }
 
-// Documentos visíveis para o cliente: apenas publicados, da sua empresa (Kentaki Foods).
-const EMPRESA_CLIENTE_ID = "emp-001";
+// Mapeia empresaId do auth → empresa_id usado nos documentos.
+const EMPRESA_ID_MAP: Record<string, string> = {
+  kentaki: "emp-001",
+  valore: "valore",
+};
 
 export default function ClienteDocumentosPage() {
+  const { user } = useAuth();
+  const empresaDocId = EMPRESA_ID_MAP[user?.empresaId ?? ""] ?? "emp-001";
   const docs: DocumentoMock[] = documentosMock.filter(
-    (d) => d.empresa_id === EMPRESA_CLIENTE_ID && d.status === "publicado",
+    (d) => d.empresa_id === empresaDocId && d.status === "publicado",
   );
   const categorias = [...new Set(docs.map((d) => d.categoria))];
 
