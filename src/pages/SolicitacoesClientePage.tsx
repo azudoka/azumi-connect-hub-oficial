@@ -68,6 +68,7 @@ type StatusSolicitacao =
 interface MensagemHistorico {
   autor: string; texto: string; data: string;
   enviadoEm?: number; editadoEm?: string;
+  anexo?: { nome: string; tipo: "arquivo" | "link"; url?: string };
 }
 
 interface Solicitacao {
