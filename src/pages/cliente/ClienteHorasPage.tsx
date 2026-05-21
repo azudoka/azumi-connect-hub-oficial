@@ -180,6 +180,22 @@ const REGISTROS: Registro[] = [
     consultor: "Rafael Moura", acao: "Triagem — Analista RH",
     codigoAcao: "VAGA-2026-VAL01", modulo: "vaga", tipo: "timer", empresaId: "valore",
   },
+  // ───── Empresa Demo (trial) ─────
+  {
+    id: "h-demo-1", data: "2026-05-04", inicio: "09:00", fim: "11:00", duracaoMin: 120,
+    consultor: "Ana Beatriz", acao: "Diagnóstico inicial",
+    codigoAcao: "ENT-DEMO-001", modulo: "projeto", tipo: "timer", empresaId: "empresa-demo",
+  },
+  {
+    id: "h-demo-2", data: "2026-05-08", inicio: "14:00", fim: "15:30", duracaoMin: 90,
+    consultor: "Ana Beatriz", acao: "Triagem — Gerente de TI",
+    codigoAcao: "VAGA-DEMO-001", modulo: "vaga", tipo: "timer", empresaId: "empresa-demo",
+  },
+  {
+    id: "h-demo-3", data: "2026-05-12", inicio: "—", fim: "—", duracaoMin: 60,
+    consultor: "Ana Beatriz", acao: "Atendimento — política de home office",
+    codigoAcao: "SOL-DEMO-001", modulo: "solicitacao", tipo: "manual", empresaId: "empresa-demo",
+  },
 ];
 
 const MODULO_PILL: Record<Modulo, string> = {
