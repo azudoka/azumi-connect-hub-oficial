@@ -16,6 +16,15 @@ export type StatusAgendamento =
 
 export type ModoEntrevista = "presencial" | "remoto";
 
+/**
+ * Tipo da entrevista agendada.
+ * - "gestor": entrevista do candidato com o gestor da área (Etapa 5).
+ * - "cliente_final": entrevista final do candidato com o cliente/decisor,
+ *   disparada automaticamente quando o cliente dá parecer "avançar"
+ *   após a entrevista com gestor.
+ */
+export type TipoAgendamento = "gestor" | "cliente_final";
+
 export interface SugestaoHorario {
   data: string; // yyyy-mm-dd
   hora: string; // HH:MM
