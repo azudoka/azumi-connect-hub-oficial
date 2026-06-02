@@ -5152,9 +5152,10 @@ function AgendamentoGestorPanel({
     <div className="bg-card border border-border rounded-xl p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="font-display font-semibold">Entrevistas com gestor</h3>
+          <h3 className="font-display font-semibold">Entrevistas com gestor e entrevistas finais</h3>
           <p className="text-[11px] text-muted-foreground">
             Etapa 5 — sugestões enviadas → gestor escolhe → candidato confirma via link com CPF.
+            Entrevistas finais com o cliente são criadas automaticamente quando o cliente dá parecer "Avançar".
           </p>
         </div>
         <span className="text-xs text-muted-foreground">{agendamentos.length} agendamento(s)</span>
@@ -5170,19 +5171,29 @@ function AgendamentoGestorPanel({
             const link = ag.linkConfirmacao ?? `${origem}/confirmar-entrevista/${ag.id}?cand=${ag.candidatoId}`;
             const podeEnviarLink = ag.status === "aprovado_gestor" || ag.status === "nova_sugestao_gestor";
             const podeSimularConfirmar = ag.status === "aguardando_confirmacao_candidato";
+            const isClienteFinal = ag.tipo === "cliente_final";
             return (
-              <li key={ag.id} className="rounded-lg border border-border bg-background/40 p-3 space-y-2">
+              <li key={ag.id} className={`rounded-lg border p-3 space-y-2 ${isClienteFinal ? "border-primary/40 bg-primary/5" : "border-border bg-background/40"}`}>
                 <div className="flex items-start justify-between gap-3 flex-wrap">
                   <div className="min-w-0">
-                    <div className="text-sm font-medium">{ag.candidatoNome}</div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-medium">{ag.candidatoNome}</span>
+                      <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border ${isClienteFinal ? "border-primary/40 bg-primary/10 text-primary" : "border-border bg-muted text-muted-foreground"}`}>
+                        {isClienteFinal ? "Entrevista final com cliente" : "Entrevista com gestor"}
+                      </span>
+                    </div>
                     <div className="text-[11px] text-muted-foreground">
-                      Gestor: {ag.gestorNome}
+                      {isClienteFinal ? "Decisor do cliente" : `Gestor: ${ag.gestorNome}`}
+                      {isClienteFinal && ag.sugestoes.length === 0 && (
+                        <span className="ml-2 text-primary">· proponha 2 horários ao cliente</span>
+                      )}
                     </div>
                   </div>
                   <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-border bg-muted text-muted-foreground">
                     {statusAgendamentoLabel(ag.status)}
                   </span>
                 </div>
+
                 <div className="text-xs space-y-1">
                   {ag.sugestoes.map((s, i) => (
                     <div key={i} className="text-muted-foreground">
