@@ -394,31 +394,44 @@ export default function VagaDetalheCliente() {
                 </button>
                 {(() => {
                   const ag = getAgendamentoDoCandidato(c.id);
+                  const agCliente = getEntrevistaClienteDoCandidato(c.id);
                   const pg = getParecerGestor(c.id);
-                  if (pg) {
-                    return (
-                      <div className="mt-2 text-[11px] text-muted-foreground inline-flex items-center gap-1">
-                        <CheckCircle2 className="h-3 w-3 text-success" /> Parecer do gestor registrado
-                      </div>
-                    );
-                  }
-                  if (ag?.status === "confirmado") {
-                    return (
-                      <button
-                        onClick={() => setParecerGestorCandId(c.id)}
-                        className="mt-2 w-full h-8 rounded-lg bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center gap-1.5"
-                      >
-                        <Star className="h-3.5 w-3.5" /> Parecer do gestor
-                      </button>
-                    );
-                  }
-                  return null;
+                  return (
+                    <>
+                      {agCliente && (
+                        <div className="mt-2 rounded-md border border-primary/30 bg-primary/5 px-2 py-1.5 text-[11px] text-primary">
+                          <div className="font-medium">Entrevista final agendada</div>
+                          <div className="text-[10px] text-primary/80">
+                            {agCliente.escolhido
+                              ? `Confirmada: ${formatarSugestao(agCliente.escolhido)}`
+                              : agCliente.status === "aguardando_resposta_gestor"
+                              ? "Aguardando a consultora propor 2 horários."
+                              : statusAgendamentoLabel(agCliente.status)}
+                          </div>
+                        </div>
+                      )}
+                      {pg && (
+                        <div className="mt-2 text-[11px] text-muted-foreground inline-flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3 text-success" /> Parecer do gestor registrado
+                        </div>
+                      )}
+                      {!pg && ag?.status === "confirmado" && (
+                        <button
+                          onClick={() => setParecerGestorCandId(c.id)}
+                          className="mt-2 w-full h-8 rounded-lg bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center gap-1.5"
+                        >
+                          <Star className="h-3.5 w-3.5" /> Parecer do gestor
+                        </button>
+                      )}
+                    </>
+                  );
                 })()}
               </div>
             );
           })}
         </div>
       )}
+
 
       {/* Ficha simplificada do candidato */}
       {fichaCand && (
