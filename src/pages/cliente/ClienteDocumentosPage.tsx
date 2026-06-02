@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { assinar, isAssinado, listarAssinados, subscribeAssinaturas } from "@/data/assinaturasStore";
 import {
   FileText, FileCheck, BookOpen, Workflow, ExternalLink, MessageSquare,
   PenLine, FolderOpen, Check, Send,
@@ -73,7 +74,17 @@ export default function ClienteDocumentosPage() {
   const [viewerDoc, setViewerDoc] = useState<DocumentoMock | null>(null);
   const [chatDoc, setChatDoc] = useState<DocumentoMock | null>(null);
   const [assinarDoc, setAssinarDoc] = useState<DocumentoMock | null>(null);
-  const [assinados, setAssinados] = useState<Set<string>>(new Set());
+  const userId = user?.id ?? user?.email ?? "anon";
+  const [assinados, setAssinados] = useState<Set<string>>(() =>
+    listarAssinados("cliente-doc", userId),
+  );
+
+  useEffect(() => {
+    setAssinados(listarAssinados("cliente-doc", userId));
+    return subscribeAssinaturas(() =>
+      setAssinados(listarAssinados("cliente-doc", userId)),
+    );
+  }, [userId]);
 
   const [mensagens, setMensagens] = useState<Record<string, Mensagem[]>>({});
   const [novaMsg, setNovaMsg] = useState("");
@@ -98,9 +109,11 @@ export default function ClienteDocumentosPage() {
 
   function confirmarAssinatura() {
     if (!assinarDoc) return;
+    assinar("cliente-doc", userId, assinarDoc.id);
     setAssinados((prev) => new Set(prev).add(assinarDoc.id));
     setAssinarDoc(null);
   }
+
 
   return (
     <div className="space-y-6">
