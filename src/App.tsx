@@ -133,6 +133,7 @@ function RootRedirect() {
     rh:            "/app/dashboard",
     rh_operacional:"/app/dashboard",
     cliente:       "/cliente/dashboard",
+    cliente_avulso:"/cliente/dashboard",
     trial:         "/cliente/dashboard",
     colaborador:   "/hub/colaborador/inicio",
     lider:         "/hub/lider/painel",
@@ -170,7 +171,7 @@ const AppRoutes = () => (
       <Route path="/app/projetos" element={<ProjetosPage />} />
       <Route path="/app/projetos/:id" element={<ProjetoDetalhe />} />
       <Route path="/app/clientes" element={<ClientesPage />} />
-      <Route path="/app/clientes/:id" element={<Stub title="Detalhe do cliente" subtitle="Visão consolidada da empresa" />} />
+      <Route path="/app/clientes/:id" element={<EmpresaDetalhePage />} />
       <Route path="/app/horas" element={<HorasPage />} />
       <Route path="/app/financeiro" element={<FinanceiroPage />} />
       <Route path="/app/solicitacoes" element={<SolicitacoesPage />} />
@@ -193,7 +194,7 @@ const AppRoutes = () => (
     {/* Cliente ADM (mantido) */}
     <Route
       element={
-        <PrivateRoute allowed={["cliente", "trial"]}>
+        <PrivateRoute allowed={["cliente", "cliente_avulso", "trial"]}>
           <AppLayout />
         </PrivateRoute>
       }

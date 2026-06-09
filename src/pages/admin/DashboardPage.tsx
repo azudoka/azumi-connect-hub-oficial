@@ -184,6 +184,7 @@ function AdminDashboard() {
   const navigate = useNavigate();
   const { pode } = usePermissao();
   const { ocultar } = useValorFinanceiro();
+  const { usuario } = useAuth();
   const now = useMemo(() => new Date(), []);
   const saudacao = getSaudacao(now.getHours());
   const dataFormatada = useMemo(
@@ -254,7 +255,7 @@ function AdminDashboard() {
   return (
     <div>
       <PageHeader
-        title={`${saudacao}, Ana 👋`}
+        title={`${saudacao}, ${(usuario?.nome ?? "").split(" ")[0] || "Azumi"} 👋`}
         subtitle={dataCapitalizada}
       />
 

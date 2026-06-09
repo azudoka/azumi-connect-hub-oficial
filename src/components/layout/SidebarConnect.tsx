@@ -10,6 +10,7 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useAuth } from "@/context/AuthContext";
 import { usePermissao, type Permissao } from "@/config/permissoes";
+import { empresasMockById } from "@/data/mockEmpresas";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 interface SidebarConnectProps {
@@ -153,9 +154,22 @@ function NavTooltip({ label, children }: { label: string; children: React.ReactN
 export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, usuario } = useAuth();
   const { pode } = usePermissao();
   const [consultorOpen, setConsultorOpen] = useState(false);
+
+  // Consultor responsável pela empresa do cliente logado (fallback Ana Beatriz)
+  const consultorEmpresa = (user?.empresaId && empresasMockById[user.empresaId]?.consultor) || {
+    nome: "Ana Beatriz",
+    email: "ana.beatriz@azumi.com.br",
+  };
+  const consultorIniciais = consultorEmpresa.nome
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0])
+    .join("")
+    .toUpperCase();
 
 
   const groupsBase = variant === "admin" ? adminGroups : clienteGroups;
@@ -316,20 +330,20 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
       {!collapsed && (
         <div className="p-3 border-t border-sidebar-border/60">
           <div className="bg-card/60 backdrop-blur rounded-xl p-3 border border-border/60">
-            {user?.papel === "cliente" && (
+            {(user?.papel === "cliente" || user?.papel === "trial" || user?.papel === "cliente_avulso") && (
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  <div className="h-9 w-9 rounded-lg bg-gradient-brand flex items-center justify-center text-xs font-semibold text-white">AB</div>
+                  <div className="h-9 w-9 rounded-lg bg-gradient-brand flex items-center justify-center text-xs font-semibold text-white">{consultorIniciais}</div>
                   <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-success ring-2 ring-card animate-soft-pulse" />
                 </div>
                 <div className="min-w-0">
                   <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Seu consultor Azumi</div>
-                  <div className="text-sm font-medium truncate">Ana Beatriz</div>
+                  <div className="text-sm font-medium truncate">{consultorEmpresa.nome}</div>
                 </div>
               </div>
             )}
-            <div className={cn("flex items-center gap-2", user?.papel === "cliente" && "mt-3")}>
-              {user?.papel === "cliente" && (
+            <div className={cn("flex items-center gap-2", (user?.papel === "cliente" || user?.papel === "trial" || user?.papel === "cliente_avulso") && "mt-3")}>
+              {(user?.papel === "cliente" || user?.papel === "trial" || user?.papel === "cliente_avulso") && (
                 <button
                   type="button"
                   onClick={() => setConsultorOpen(true)}
@@ -350,14 +364,14 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
             <DialogDescription>Fale diretamente com quem cuida da sua conta.</DialogDescription>
           </DialogHeader>
           <div className="flex items-center gap-3 mt-2">
-            <div className="h-12 w-12 rounded-full bg-gradient-brand flex items-center justify-center text-sm font-semibold text-white">AB</div>
+            <div className="h-12 w-12 rounded-lg bg-gradient-brand flex items-center justify-center text-sm font-semibold text-white">{consultorIniciais}</div>
             <div>
-              <div className="text-base font-semibold">Ana Beatriz</div>
-              <div className="text-xs text-muted-foreground">Consultora sênior — Azumi</div>
+              <div className="text-base font-semibold">{consultorEmpresa.nome}</div>
+              <div className="text-xs text-muted-foreground">Consultor(a) — Azumi</div>
             </div>
           </div>
           <div className="space-y-2 text-sm mt-2">
-            <div className="flex items-center gap-2"><Mail className="h-4 w-4 text-muted-foreground" /> ana.beatriz@azumi.com.br</div>
+            <div className="flex items-center gap-2"><Mail className="h-4 w-4 text-muted-foreground" /> {consultorEmpresa.email}</div>
             <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-muted-foreground" /> (11) 98888-1234</div>
             <div className="flex items-center gap-2"><Clock className="h-4 w-4 text-muted-foreground" /> Seg–Sex, 9h às 18h</div>
           </div>
