@@ -87,13 +87,15 @@ export function Header({ showSwitcher = true, context = "connect" }: HeaderProps
             </span>
           </div>
         )}
-        {/* Search */}
+        {/* Search (global em breve) */}
         <div className="flex-1 max-w-md relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
             type="search"
-            placeholder="Buscar empresas, vagas, candidatos…"
-            className="w-full h-9 pl-9 pr-16 rounded-lg bg-secondary/60 border border-transparent focus:border-primary/40 focus:bg-secondary outline-none text-sm placeholder:text-muted-foreground transition-colors"
+            disabled
+            title="Busca global estará disponível em breve"
+            placeholder="Busca global — em breve"
+            className="w-full h-9 pl-9 pr-16 rounded-lg bg-secondary/60 border border-transparent outline-none text-sm placeholder:text-muted-foreground cursor-not-allowed opacity-70"
           />
           <kbd className="absolute right-2 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded border border-border bg-background text-[10px] font-data text-muted-foreground">⌘K</kbd>
         </div>
@@ -266,10 +268,12 @@ export function Header({ showSwitcher = true, context = "connect" }: HeaderProps
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 h-11 px-2 pr-3 rounded-lg hover:bg-secondary">
-                <div className="h-9 w-9 rounded-lg bg-gradient-brand flex items-center justify-center text-xs font-semibold text-white">VC</div>
+                <div className="h-9 w-9 rounded-lg bg-gradient-brand flex items-center justify-center text-xs font-semibold text-white">
+                  {(usuario?.nome ?? "U").split(" ").filter(Boolean).slice(0,2).map(p => p[0]).join("").toUpperCase()}
+                </div>
                 <div className="text-left hidden sm:block">
-                  <div className="text-xs font-medium leading-tight">Você</div>
-                  <div className="text-[10px] text-muted-foreground leading-tight">Admin Azumi</div>
+                  <div className="text-xs font-medium leading-tight truncate max-w-[140px]">{usuario?.nome ?? "Usuário"}</div>
+                  <div className="text-[10px] text-muted-foreground leading-tight capitalize">{usuario?.role ?? ""}</div>
                 </div>
                 <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
               </button>
