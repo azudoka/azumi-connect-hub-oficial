@@ -227,11 +227,11 @@ export default function AtracaoLista() {
   );
 
   const vagasAtivas = useMemo(
-    () => vagas.filter((v) => v.status !== "standby" && v.status !== "cancelada"),
+    () => vagas.filter((v) => v.status !== "standby" && v.status !== "cancelada" && v.status !== "concluida"),
     [vagas],
   );
   const vagasInativas = useMemo(
-    () => vagas.filter((v) => v.status === "standby" || v.status === "cancelada"),
+    () => vagas.filter((v) => v.status === "standby" || v.status === "cancelada" || v.status === "concluida"),
     [vagas],
   );
 
@@ -409,11 +409,11 @@ export default function AtracaoLista() {
                               <Link
                                 to={`/app/atracao/${v.id}`}
                                 onClick={(e) => e.stopPropagation()}
-                                className="text-sm font-medium leading-tight hover:text-primary"
+                                className="text-sm font-medium leading-tight hover:text-primary flex-1 min-w-0 line-clamp-2"
                               >
                                 {v.titulo}
                               </Link>
-                              <StatusBadge status={v.status} />
+                              <StatusBadge status={v.status} className="shrink-0" />
                             </div>
                             <div className="text-[11px] text-muted-foreground mt-1">{v.empresa}</div>
                             <div className="mt-3"><SlaBar percent={v.sla} /></div>
@@ -474,7 +474,7 @@ export default function AtracaoLista() {
             className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors mb-3"
           >
             {inativasOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-            Standby e Canceladas ({vagasInativas.length})
+            Standby, Canceladas e Concluídas ({vagasInativas.length})
           </button>
           {inativasOpen && (
             <div className="bg-card border border-border rounded-xl overflow-hidden">
