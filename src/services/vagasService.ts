@@ -27,6 +27,7 @@ export type VagaSupabase = {
   tem_comissao: boolean | null;
   sla_dias: number | null;
   excluida_em: string | null;
+  motivo_exclusao: string | null;
 };
 
 export async function listarVagas(): Promise<VagaSupabase[]> {
@@ -163,15 +164,14 @@ export async function definirStatusVaga(
   if (error) throw error;
 }
 
-export async function excluirVaga(id: string, _justificativa: string): Promise<void> {
-  // Move candidatos do site para Banco de Talentos antes de excluir
+export async function excluirVaga(id: string, justificativa: string): Promise<void> {
   await supabase
     .from("candidaturas")
     .update({ etapa: "Banco de Talentos" })
     .eq("vaga_id", id);
   const { error } = await supabase
     .from("vagas")
-    .update({ excluida_em: new Date().toISOString() })
+    .update({ excluida_em: new Date().toISOString(), motivo_exclusao: justificativa })
     .eq("id", id);
   if (error) throw error;
 }
