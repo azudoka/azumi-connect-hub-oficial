@@ -509,8 +509,7 @@ export default function VagaDetalheAdmin() {
     [vaga?.id, storeVersao]
   );
 
-  // Link público da vaga (mock)
-  const linkPublico = `https://azumi.jobs/vaga/${vaga?.id ?? ""}`;
+  const linkPublico = `${window.location.origin}/vagas/${vaga?.id ?? ""}`;
 
   function moverCandidato(candId: string, coluna: Coluna) {
     const cand = candidatosVaga.find((c) => c.id === candId);
@@ -618,7 +617,7 @@ export default function VagaDetalheAdmin() {
 
   /** Gera link público (mock) para o candidato responder o questionário. */
   function gerarLinkQuestionario(questionarioId: string, candidatoId: string) {
-    return `https://azumi.jobs/questionario/${questionarioId}?cand=${candidatoId}&vaga=${vaga?.id ?? ""}`;
+    return `${window.location.origin}/questionario/${questionarioId}?cand=${candidatoId}&vaga=${vaga?.id ?? ""}`;
   }
 
   function enviarQuestionarioParaCandidato(questionarioId: string, candidatoId: string) {
@@ -2797,7 +2796,7 @@ function NovoCandidatoForm({
 }
 
 function ConvidarLinkForm({ vagaId, onClose }: { vagaId: string; onClose: () => void }) {
-  const link = `https://azumi.jobs/aplicar/${vagaId}?ref=convite`;
+  const link = `${window.location.origin}/aplicar/${vagaId}?ref=convite`;
   return (
     <div className="space-y-3 text-sm">
       <p>Compartilhe o link abaixo com o candidato para se inscrever diretamente na vaga.</p>
@@ -5294,7 +5293,7 @@ function AgendamentoGestorPanel({
   agendamentos: AgendamentoEntrevistaGestor[];
   empresaNome: string;
 }) {
-  const origem = typeof window !== "undefined" ? window.location.origin : "https://azumi.jobs";
+  const origem = typeof window !== "undefined" ? window.location.origin : "https://connect.azumirh.com.br";
   return (
     <div className="bg-card border border-border rounded-xl p-5">
       <div className="flex items-center justify-between mb-4">

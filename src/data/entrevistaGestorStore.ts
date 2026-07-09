@@ -258,7 +258,7 @@ export function gestorSugerirOutro(
 /** Consultor envia o link de confirmação ao candidato. */
 export function enviarParaCandidatoConfirmar(
   agendamentoId: string,
-  origem: string = "https://azumi.jobs"
+  origem: string = "https://connect.azumirh.com.br"
 ): AgendamentoEntrevistaGestor | null {
   const ag = getAgendamento(agendamentoId);
   if (!ag) return null;
