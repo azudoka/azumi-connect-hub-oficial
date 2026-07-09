@@ -175,7 +175,6 @@ export async function criarVaga(input: CriarVagaInput): Promise<VagaSupabase> {
       cargo: input.titulo,
       public_titulo: input.titulo,
       avulsa_empresa_nome: input.empresa,
-      company_id: input.empresa_id ?? null,
       branch_id: input.filial ?? null,
       tipo_vaga: input.tipo ?? null,
       modalidade: input.modalidade ?? "presencial",
