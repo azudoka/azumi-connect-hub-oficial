@@ -115,6 +115,8 @@ interface CandidatoExtra {
   linkedin?: string | null;
   cidade_estado?: string | null;
   mensagem?: string | null;
+  cpf?: string | null;
+  escolaridade?: string | null;
 }
 
 type TipoPergunta = "texto_livre" | "multipla_escolha" | "escala_1_5";
@@ -403,7 +405,7 @@ export default function VagaDetalheAdmin() {
   // Candidaturas vindas do site (Supabase)
   type CandidaturaSite = {
     id: string; nome: string; email: string | null; telefone: string | null;
-    cidade_estado: string | null; escolaridade: string | null; linkedin: string | null;
+    cpf: string | null; cidade_estado: string | null; escolaridade: string | null; linkedin: string | null;
     disc_perfil: string | null; disc_d: number | null; disc_i: number | null;
     disc_s: number | null; disc_c: number | null; criado_em: string;
     curriculo_nome: string | null; curriculo_url: string | null;
@@ -441,6 +443,8 @@ export default function VagaDetalheAdmin() {
             linkedin: row.linkedin,
             cidade_estado: row.cidade_estado,
             mensagem: row.mensagem,
+            cpf: row.cpf,
+            escolaridade: row.escolaridade,
           }));
           setCandidatosExtras((prev) => [
             ...prev.filter((c) => c.origem !== "site"),
@@ -4194,7 +4198,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 // Dados complementares mock (no futuro virão do backend)
 const DADOS_EXTRA_MOCK: Record<string, {
-  email: string; telefone: string; cidade: string; origem: string; pretensao: string;
+  email: string; telefone: string; cidade: string; origem: string;
   resumo: string; experiencias: { empresa: string; cargo: string; periodo: string }[];
   discStatus: "nao_solicitado" | "solicitado" | "concluido";
   cpf?: string;
@@ -4213,7 +4217,7 @@ const DADOS_EXTRA_MOCK: Record<string, {
 }> = {
   c1: {
     email: "pedro.alves@email.com", telefone: "(11) 99876-1122", cidade: "São Paulo / SP",
-    origem: "LinkedIn", pretensao: "R$ 18.000",
+    origem: "LinkedIn",
     resumo: "Gerente de TI com 12 anos de experiência em transformação digital e liderança de squads multidisciplinares.",
     experiencias: [
       { empresa: "TechCorp", cargo: "Gerente de TI", periodo: "2021 — atual" },
@@ -4335,7 +4339,8 @@ function CandidatoDetailSheet({
           : candidatoExtra?.origem === "convite" ? "Convite por link"
           : candidatoExtra?.origem === "site" ? "Aplicação pelo site"
           : "—",
-    pretensao: "—",
+    cpf: candidatoExtra?.cpf ?? "—",
+    escolaridade: candidatoExtra?.escolaridade ?? "—",
     resumo: candidatoExtra?.mensagem ?? cand.parecer ?? "Sem resumo disponível.",
     curriculo: candidatoExtra?.curriculo_url ?? null,
     linkedin: candidatoExtra?.linkedin ?? null,
@@ -4522,7 +4527,7 @@ function CandidatoDetailSheet({
                   <DadoLinha icon={<MapPin className="h-3.5 w-3.5" />} label="Cidade / UF" value={dados.cidade} />
                   <DadoLinha icon={<Briefcase className="h-3.5 w-3.5" />} label="Cargo pretendido" value={cand.cargo} />
                   <DadoLinha icon={<Users className="h-3.5 w-3.5" />} label="Origem" value={dados.origem} />
-                  <DadoLinha icon={<Globe className="h-3.5 w-3.5" />} label="Pretensão salarial" value={dados.pretensao} />
+
                 </div>
               </section>
 
