@@ -104,6 +104,16 @@ interface CandidatoExtra {
   cargo: string;
   origem: "manual" | "convite" | "site";
   declinio?: { motivo: string; quem: "candidato" | "azumi" };
+  // campos extras de candidaturas do site
+  disc_d?: number | null;
+  disc_i?: number | null;
+  disc_s?: number | null;
+  disc_c?: number | null;
+  disc_perfil?: string | null;
+  curriculo_url?: string | null;
+  linkedin?: string | null;
+  cidade_estado?: string | null;
+  mensagem?: string | null;
 }
 
 type TipoPergunta = "texto_livre" | "multipla_escolha" | "escala_1_5";
@@ -387,7 +397,8 @@ export default function VagaDetalheAdmin() {
     cidade_estado: string | null; escolaridade: string | null; linkedin: string | null;
     disc_perfil: string | null; disc_d: number | null; disc_i: number | null;
     disc_s: number | null; disc_c: number | null; criado_em: string;
-    curriculo_nome: string | null; mensagem: string | null; modo: string;
+    curriculo_nome: string | null; curriculo_url: string | null;
+    mensagem: string | null; modo: string;
   };
   const [candidaturasSite, setCandidaturasSite] = useState<CandidaturaSite[]>([]);
   const [loadingSite, setLoadingSite] = useState(false);
@@ -402,7 +413,31 @@ export default function VagaDetalheAdmin() {
       .order("criado_em", { ascending: false })
       .then(({ data, error }) => {
         setLoadingSite(false);
-        if (!error && data) setCandidaturasSite(data as CandidaturaSite[]);
+        if (!error && data) {
+          const rows = data as CandidaturaSite[];
+          setCandidaturasSite(rows);
+          const extrasDoSite: CandidatoExtra[] = rows.map((row) => ({
+            id: row.id,
+            nome: row.nome,
+            email: row.email ?? undefined,
+            telefone: row.telefone ?? undefined,
+            cargo: vaga?.titulo ?? "—",
+            origem: "site" as const,
+            disc_d: row.disc_d,
+            disc_i: row.disc_i,
+            disc_s: row.disc_s,
+            disc_c: row.disc_c,
+            disc_perfil: row.disc_perfil,
+            curriculo_url: row.curriculo_url,
+            linkedin: row.linkedin,
+            cidade_estado: row.cidade_estado,
+            mensagem: row.mensagem,
+          }));
+          setCandidatosExtras((prev) => [
+            ...prev.filter((c) => c.origem !== "site"),
+            ...extrasDoSite,
+          ]);
+        }
       });
   }, [vaga?.id]);
   const [questionariosVaga, setQuestionariosVaga] = useState<QuestionarioVaga[]>([
@@ -3968,13 +4003,24 @@ function CandidatoDetailSheet({
   const dados = DADOS_EXTRA_MOCK[cand.id] ?? {
     email: candidatoExtra?.email ?? "—",
     telefone: candidatoExtra?.telefone ?? "—",
-    cidade: "—",
+    cidade: candidatoExtra?.cidade_estado ?? "—",
     origem: candidatoExtra?.origem === "manual" ? "Adicionado manualmente"
-          : candidatoExtra?.origem === "convite" ? "Convite por link" : "—",
+          : candidatoExtra?.origem === "convite" ? "Convite por link"
+          : candidatoExtra?.origem === "site" ? "Aplicação pelo site"
+          : "—",
     pretensao: "—",
-    resumo: cand.parecer ?? "Sem resumo disponível.",
+    resumo: candidatoExtra?.mensagem ?? cand.parecer ?? "Sem resumo disponível.",
+    curriculo: candidatoExtra?.curriculo_url ?? null,
+    linkedin: candidatoExtra?.linkedin ?? null,
     experiencias: [],
-    discStatus: "nao_solicitado" as const,
+    discStatus: (candidatoExtra?.disc_d != null ? "concluido" : "nao_solicitado") as "concluido" | "solicitado" | "nao_solicitado",
+    discDetalhes: candidatoExtra?.disc_perfil ? {
+      perfil: candidatoExtra.disc_perfil,
+      d: candidatoExtra.disc_d ?? 0,
+      i: candidatoExtra.disc_i ?? 0,
+      s: candidatoExtra.disc_s ?? 0,
+      c: candidatoExtra.disc_c ?? 0,
+    } : undefined,
   };
 
   const etapaPodeAgendar = etapaAtual === "Entrevista Azumi" || etapaAtual === "Entrevista gestor" || etapaAtual === "Quest/Entrevista";
