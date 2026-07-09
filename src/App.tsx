@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import type { ReactElement } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -155,6 +155,13 @@ function PortalProjetoRedirect() {
   return <Navigate to={`/cliente/projetos/${id ?? ""}`} replace />;
 }
 
+// Redireciona /aplicar/:id → /vagas/:id preservando query params (ex: ?ref=convite)
+function AplicarRedirect() {
+  const { id } = useParams<{ id: string }>();
+  const location = useLocation();
+  return <Navigate to={`/vagas/${id ?? ""}${location.search}`} replace />;
+}
+
 const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<RootRedirect />} />
@@ -163,6 +170,7 @@ const AppRoutes = () => (
     <Route path="/confirmar-entrevista/:agendamentoId" element={<ConfirmarEntrevistaPage />} />
     <Route path="/vagas" element={<VagasPublicasPage />} />
     <Route path="/vagas/:id" element={<VagaPublicaDetalhePage />} />
+    <Route path="/aplicar/:id" element={<AplicarRedirect />} />
 
     {/* Admin / Consultor */}
     <Route
