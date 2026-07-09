@@ -326,6 +326,30 @@ export default function VagaDetalheAdmin() {
   ] as const;
   type Coluna = typeof colunas[number];
 
+  const ETAPA_LABEL_TO_DB: Record<Coluna, string | null> = {
+    "Recebido": "recebido",
+    "Triagem": "triagem_inicial",
+    "Questionário": "questionario",
+    "Entrevista Azumi": "entrevista_azumi",
+    "Teste Técnico": "teste_tecnico",
+    "Entrevista Cliente": "entrevista_cliente",
+    "Proposta": "proposta",
+    "Contratado": "contratado",
+    "Reprovado": "reprovado",
+    "Banco de Talentos": null,
+  };
+  const ETAPA_DB_TO_LABEL: Record<string, Coluna> = {
+    recebido: "Recebido",
+    triagem_inicial: "Triagem",
+    questionario: "Questionário",
+    entrevista_azumi: "Entrevista Azumi",
+    teste_tecnico: "Teste Técnico",
+    entrevista_cliente: "Entrevista Cliente",
+    proposta: "Proposta",
+    contratado: "Contratado",
+    reprovado: "Reprovado",
+  };
+
   // Posições da vaga (Doc Mestre — Etapa 6: bloquear contratações além do total).
   const posicoesVaga: number = (vaga as unknown as { posicoes?: number } | null)?.posicoes ?? 1;
 
@@ -403,14 +427,17 @@ export default function VagaDetalheAdmin() {
       })),
   ];
 
-  // Candidaturas vindas do site (Supabase)
+  // Candidaturas vindas do site (Supabase — tabela candidates)
   type CandidaturaSite = {
     id: string; nome: string; email: string | null; telefone: string | null;
-    cpf: string | null; cidade_estado: string | null; escolaridade: string | null; linkedin: string | null;
-    disc_perfil: string | null; disc_d: number | null; disc_i: number | null;
-    disc_s: number | null; disc_c: number | null; criado_em: string;
-    curriculo_nome: string | null; curriculo_url: string | null;
-    mensagem: string | null; modo: string; etapa: string;
+    cpf: string | null; cidade: string | null; escolaridade: string | null; linkedin: string | null;
+    created_at: string; curriculo_nome: string | null; curriculo_url: string | null;
+    observacoes: string | null; banco_talentos: boolean; etapa_azumi: string | null;
+    disc_resultado_candidato?: Array<{
+      score_d: number | null; score_i: number | null;
+      score_s: number | null; score_c: number | null;
+      fator_predominante: string | null;
+    }>;
   };
   const [candidaturasSite, setCandidaturasSite] = useState<CandidaturaSite[]>([]);
   const [loadingSite, setLoadingSite] = useState(false);
@@ -419,34 +446,37 @@ export default function VagaDetalheAdmin() {
     if (!vaga?.id || vaga.id.startsWith("v-")) return;
     setLoadingSite(true);
     supabase
-      .from("candidaturas")
-      .select("*")
-      .eq("vaga_id", vaga.id)
-      .order("criado_em", { ascending: false })
+      .from("candidates")
+      .select("*, disc_resultado_candidato(*)")
+      .eq("job_id", vaga.id)
+      .order("created_at", { ascending: false })
       .then(({ data, error }) => {
         setLoadingSite(false);
         if (!error && data) {
           const rows = data as CandidaturaSite[];
           setCandidaturasSite(rows);
-          const extrasDoSite: CandidatoExtra[] = rows.map((row) => ({
-            id: row.id,
-            nome: row.nome,
-            email: row.email ?? undefined,
-            telefone: row.telefone ?? undefined,
-            cargo: vaga?.titulo ?? "—",
-            origem: "site" as const,
-            disc_d: row.disc_d,
-            disc_i: row.disc_i,
-            disc_s: row.disc_s,
-            disc_c: row.disc_c,
-            disc_perfil: row.disc_perfil,
-            curriculo_url: row.curriculo_url,
-            linkedin: row.linkedin,
-            cidade_estado: row.cidade_estado,
-            mensagem: row.mensagem,
-            cpf: row.cpf,
-            escolaridade: row.escolaridade,
-          }));
+          const extrasDoSite: CandidatoExtra[] = rows.map((row) => {
+            const disc = row.disc_resultado_candidato?.[0];
+            return {
+              id: row.id,
+              nome: row.nome,
+              email: row.email ?? undefined,
+              telefone: row.telefone ?? undefined,
+              cargo: vaga?.titulo ?? "—",
+              origem: "site" as const,
+              disc_d: disc?.score_d ?? null,
+              disc_i: disc?.score_i ?? null,
+              disc_s: disc?.score_s ?? null,
+              disc_c: disc?.score_c ?? null,
+              disc_perfil: disc?.fator_predominante ?? null,
+              curriculo_url: row.curriculo_url,
+              linkedin: row.linkedin,
+              cidade_estado: row.cidade ?? null,
+              mensagem: row.observacoes,
+              cpf: row.cpf,
+              escolaridade: row.escolaridade,
+            };
+          });
           setCandidatosExtras((prev) => [
             ...prev.filter((c) => c.origem !== "site"),
             ...extrasDoSite,
@@ -458,7 +488,9 @@ export default function VagaDetalheAdmin() {
                 .filter((e) => !(e.id in prev))
                 .map((e) => {
                   const row = rows.find((r) => r.id === e.id);
-                  const etapa = (row?.etapa ?? "Recebido") as Coluna;
+                  const etapa: Coluna = row?.banco_talentos
+                    ? "Banco de Talentos"
+                    : (ETAPA_DB_TO_LABEL[row?.etapa_azumi ?? ""] ?? "Recebido");
                   etapaPersistidaRef.current[e.id] = etapa;
                   return [e.id, etapa];
                 })
@@ -487,7 +519,10 @@ export default function VagaDetalheAdmin() {
       if (!idsSite.has(id)) return;
       if (etapaPersistidaRef.current[id] === coluna) return;
       etapaPersistidaRef.current[id] = coluna;
-      supabase.from("candidaturas").update({ etapa: coluna }).eq("id", id).then(({ error }) => {
+      const update = coluna === "Banco de Talentos"
+        ? supabase.from("candidates").update({ banco_talentos: true }).eq("id", id)
+        : supabase.from("candidates").update({ banco_talentos: false, etapa_azumi: ETAPA_LABEL_TO_DB[coluna as Coluna] }).eq("id", id);
+      update.then(({ error }) => {
         if (error) console.error("[etapa] falha ao persistir", id, error);
       });
     });
@@ -1718,14 +1753,14 @@ export default function VagaDetalheAdmin() {
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm">{c.nome}</p>
                     <p className="text-xs text-muted-foreground">{c.email} {c.telefone ? `· ${c.telefone}` : ""}</p>
-                    {c.cidade_estado && <p className="text-xs text-muted-foreground">{c.cidade_estado}</p>}
-                    {c.disc_perfil && (
-                      <p className="text-xs mt-1">DISC: <strong>{c.disc_perfil}</strong> — D{c.disc_d} I{c.disc_i} S{c.disc_s} C{c.disc_c}</p>
+                    {c.cidade && <p className="text-xs text-muted-foreground">{c.cidade}</p>}
+                    {c.disc_resultado_candidato?.[0]?.fator_predominante && (
+                      <p className="text-xs mt-1">DISC: <strong>{c.disc_resultado_candidato[0].fator_predominante}</strong> — D{c.disc_resultado_candidato[0].score_d} I{c.disc_resultado_candidato[0].score_i} S{c.disc_resultado_candidato[0].score_s} C{c.disc_resultado_candidato[0].score_c}</p>
                     )}
-                    {c.mensagem && <p className="text-xs mt-1 text-muted-foreground italic">"{c.mensagem}"</p>}
+                    {c.observacoes && <p className="text-xs mt-1 text-muted-foreground italic">"{c.observacoes}"</p>}
                   </div>
                   <div className="text-xs text-muted-foreground whitespace-nowrap">
-                    {new Date(c.criado_em).toLocaleDateString("pt-BR")}
+                    {new Date(c.created_at).toLocaleDateString("pt-BR")}
                     {c.curriculo_nome && (
                       <p className="mt-1 flex items-center gap-1"><FileText className="h-3 w-3" /> {c.curriculo_nome}</p>
                     )}
@@ -5148,7 +5183,8 @@ function CandidatoDetailSheet({
             </button>
             <button
               onClick={async () => {
-                const { error } = await supabase.from("candidaturas").update(editForm).eq("id", candidatoExtra!.id);
+                const { cidade_estado: cidade, ...rest } = editForm;
+                const { error } = await supabase.from("candidates").update({ ...rest, cidade }).eq("id", candidatoExtra!.id);
                 if (error) { toast.error("Erro ao salvar: " + error.message); return; }
                 toast.success("Candidato atualizado.");
                 setEditarCandOpen(false);
