@@ -22,6 +22,7 @@ import PortalDashboard from "./pages/portal/PortalDashboard";
 // agora redirecionam para /cliente/* (caminho canônico do cliente).
 
 import Login from "./pages/auth/Login";
+import RedefinirSenha from "./pages/auth/RedefinirSenha";
 import SelecaoPerfil from "./pages/auth/SelecaoPerfil";
 import NotFound from "./pages/NotFound";
 import Stub from "./pages/Stub";
@@ -177,6 +178,7 @@ const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<RootRedirect />} />
     <Route path="/login" element={<Login />} />
+    <Route path="/redefinir-senha" element={<RedefinirSenha />} />
     <Route path="/selecao-perfil" element={<SelecaoPerfil />} />
     <Route path="/confirmar-entrevista/:agendamentoId" element={<ConfirmarEntrevistaPage />} />
     <Route path="/vagas" element={<VagasPublicasPage />} />
