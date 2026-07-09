@@ -598,6 +598,10 @@ export default function VagaDetalheAdmin() {
 
   const linkPublico = `${window.location.origin}/vagas/${vaga?.id ?? ""}`;
 
+  // ── Retrocesso de etapa no Kanban ──────────────────────────────
+  const [voltaEtapaOpen, setVoltaEtapaOpen] = useState<{ candId: string; de: Coluna; para: Coluna } | null>(null);
+  const [voltaJustificativa, setVoltaJustificativa] = useState("");
+
   // ── Edição de vaga e mudança de status ─────────────────────────
   const [editVagaOpen, setEditVagaOpen] = useState(false);
   const [excluirVagaOpen, setExcluirVagaOpen] = useState(false);
@@ -882,6 +886,13 @@ export default function VagaDetalheAdmin() {
       return;
     }
     if (tentarMoverSemAlerta(id, coluna)) return;
+    const colunaAtual = colunasEstado[id];
+    const indexAtual = colunas.indexOf(colunaAtual);
+    const indexNova = colunas.indexOf(coluna);
+    if (indexNova < indexAtual) {
+      setVoltaEtapaOpen({ candId: id, de: colunaAtual, para: coluna });
+      return;
+    }
     const cand = candidatosVaga.find((c) => c.id === id);
     setColunasEstado((prev) =>
       prev[id] === coluna ? prev : { ...prev, [id]: coluna }
@@ -2855,6 +2866,44 @@ export default function VagaDetalheAdmin() {
             toast.success("Vaga atualizada.");
           }}
         />
+      )}
+
+      {/* ── Modal: Retrocesso de etapa ──────────────────────────── */}
+      {voltaEtapaOpen && (
+        <ModalShell title="Mover candidato para etapa anterior" onClose={() => { setVoltaEtapaOpen(null); setVoltaJustificativa(""); }}>
+          <p className="text-sm text-muted-foreground">
+            Mover de <strong className="text-foreground">{voltaEtapaOpen.de}</strong> para <strong className="text-foreground">{voltaEtapaOpen.para}</strong>.
+            Essa é uma etapa anterior no processo — confirma que foi um erro ou que existe um motivo para retroceder?
+          </p>
+          <textarea
+            value={voltaJustificativa}
+            onChange={(e) => setVoltaJustificativa(e.target.value)}
+            placeholder="Justificativa (obrigatória)"
+            className="mt-3 w-full min-h-[100px] rounded-md border border-border bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+          <div className="flex justify-end gap-2 mt-4">
+            <button
+              onClick={() => { setVoltaEtapaOpen(null); setVoltaJustificativa(""); }}
+              className="h-9 px-3 rounded-md border border-border text-sm hover:bg-secondary"
+            >
+              Cancelar
+            </button>
+            <button
+              disabled={!voltaJustificativa.trim()}
+              onClick={() => {
+                const { candId, para } = voltaEtapaOpen;
+                setColunasEstado((prev) => ({ ...prev, [candId]: para }));
+                const cand = candidatosVaga.find((c) => c.id === candId);
+                toast.info(`${cand?.nome ?? "Candidato"} movido para ${para}. Motivo: ${voltaJustificativa}`);
+                setVoltaEtapaOpen(null);
+                setVoltaJustificativa("");
+              }}
+              className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Confirmar retrocesso
+            </button>
+          </div>
+        </ModalShell>
       )}
 
       {/* ── Modal: Excluir vaga ──────────────────────────────────── */}
