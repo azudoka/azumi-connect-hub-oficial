@@ -307,7 +307,7 @@ export default function VagaDetalheAdmin() {
   ];
   const max = Math.max(...funil.map((f) => f.n), 1);
 
-  const candidatosVaga = candidatos.filter((c) => c.vagaId === (vaga?.id ?? ""));
+  const candidatosVagaMock = candidatos.filter((c) => c.vagaId === (vaga?.id ?? ""));
   const colunas = [
     "Recebido",
     "Triagem",
@@ -327,7 +327,7 @@ export default function VagaDetalheAdmin() {
 
   // Estado do Kanban: candidato -> coluna (todos começam em "Recebido")
   const [colunasEstado, setColunasEstado] = useState<Record<string, Coluna>>(
-    () => Object.fromEntries(candidatosVaga.map((c) => [c.id, "Recebido" as Coluna]))
+    () => Object.fromEntries(candidatosVagaMock.map((c) => [c.id, "Recebido" as Coluna]))
   );
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<Coluna | null>(null);
@@ -391,6 +391,25 @@ export default function VagaDetalheAdmin() {
 
   const [candidatosExtras, setCandidatosExtras] = useState<CandidatoExtra[]>([]);
 
+  const candidatosVaga = [
+    ...candidatosVagaMock,
+    ...candidatosExtras
+      .filter((c) => c.origem === "site")
+      .map((c) => ({
+        id: c.id,
+        nome: c.nome,
+        cargo: c.cargo,
+        vagaId: vaga?.id ?? "",
+        disc: c.disc_d != null
+          ? { D: c.disc_d, I: c.disc_i ?? 0, S: c.disc_s ?? 0, C: c.disc_c ?? 0 }
+          : undefined,
+        perfilDom: c.disc_perfil ?? undefined,
+        parecer: c.mensagem ?? undefined,
+        enviado: false,
+        status: "novo" as const,
+      })),
+  ];
+
   // Candidaturas vindas do site (Supabase)
   type CandidaturaSite = {
     id: string; nome: string; email: string | null; telefone: string | null;
@@ -448,6 +467,16 @@ export default function VagaDetalheAdmin() {
         }
       });
   }, [vaga?.id]);
+
+  useEffect(() => {
+    setColunasEstado((prev) => {
+      const novos = candidatosVaga.filter((c) => !(c.id in prev));
+      if (novos.length === 0) return prev;
+      return { ...prev, ...Object.fromEntries(novos.map((c) => [c.id, "Recebido" as Coluna])) };
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [candidatosExtras]);
+
   const [questionariosVaga, setQuestionariosVaga] = useState<QuestionarioVaga[]>([
     {
       id: "q-disc",
@@ -1107,14 +1136,14 @@ export default function VagaDetalheAdmin() {
             );
           })()}
 
-          {/* Candidatos adicionados manualmente / convidados (mock — não entram no kanban ainda) */}
-          {candidatosExtras.length > 0 && (
+          {/* Candidatos adicionados manualmente / convidados (site já aparece no Kanban) */}
+          {candidatosExtras.filter((c) => c.origem !== "site").length > 0 && (
             <div className="mb-4 rounded-lg border border-dashed border-border bg-card p-3">
               <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-                Adicionados recentemente ({candidatosExtras.length})
+                Adicionados recentemente ({candidatosExtras.filter((c) => c.origem !== "site").length})
               </div>
               <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                {candidatosExtras.map((c) => (
+                {candidatosExtras.filter((c) => c.origem !== "site").map((c) => (
                   <li
                     key={c.id}
                     onClick={() => setFichaCandidatoId(c.id)}
@@ -1137,27 +1166,9 @@ export default function VagaDetalheAdmin() {
           <div className="-mx-2 overflow-x-auto pb-3 kanban-scroll">
             <div className="flex gap-3 px-2 min-w-max">
               {colunas.map((col) => {
-                const candidatosNaColuna: CandidatoBase[] = [
-                  ...candidatosVaga.filter(
-                    (c) => colunasEstado[c.id] === col && !desclassificados.has(c.id)
-                  ),
-                  ...candidatosExtras
-                    .filter(
-                      (c) =>
-                        c.origem === "site" &&
-                        colunasEstado[c.id] === col &&
-                        !desclassificados.has(c.id)
-                    )
-                    .map((c) => ({
-                      id: c.id,
-                      nome: c.nome,
-                      cargo: c.cargo,
-                      disc:
-                        c.disc_d != null
-                          ? { D: c.disc_d, I: c.disc_i ?? 0, S: c.disc_s ?? 0, C: c.disc_c ?? 0 }
-                          : undefined,
-                    } as CandidatoBase)),
-                ];
+                const candidatosNaColuna = candidatosVaga.filter(
+                  (c) => colunasEstado[c.id] === col && !desclassificados.has(c.id)
+                );
                 const isOver = dragOverCol === col;
                 return (
                   <div
@@ -4049,6 +4060,10 @@ function CandidatoDetailSheet({
     } : undefined,
   };
 
+  const discValues = cand.disc ?? (dados.discDetalhes
+    ? { D: dados.discDetalhes.d, I: dados.discDetalhes.i, S: dados.discDetalhes.s, C: dados.discDetalhes.c }
+    : undefined);
+
   const etapaPodeAgendar = etapaAtual === "Entrevista Azumi" || etapaAtual === "Entrevista gestor" || etapaAtual === "Quest/Entrevista";
   const questsDoCandidato = questionariosVaga.map((q) => {
     const resp = q.respostasPorCandidato[cand.id];
@@ -4316,13 +4331,13 @@ function CandidatoDetailSheet({
                     </button>
                   </div>
                 </div>
-                {cand.disc && <DiscBars values={cand.disc} />}
-                {cand.disc && (
+                {discValues && <DiscBars values={discValues} />}
+                {discValues && (
                   <div className="grid grid-cols-4 gap-2 mt-3">
                     {(["D","I","S","C"] as const).map((fator) => (
                       <div key={fator} className="rounded-md border border-border bg-background/40 p-2 text-center">
                         <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{fator}</div>
-                        <div className="text-lg font-bold font-data mt-0.5">{cand.disc![fator]}</div>
+                        <div className="text-lg font-bold font-data mt-0.5">{discValues[fator]}</div>
                         <div className="text-[10px] text-muted-foreground">%</div>
                       </div>
                     ))}
