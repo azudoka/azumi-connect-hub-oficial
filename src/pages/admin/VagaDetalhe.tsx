@@ -732,6 +732,12 @@ export default function VagaDetalheAdmin() {
   }
 
   function enviarQuestionarioParaCandidato(questionarioId: string, candidatoId: string) {
+    if (colunasEstado[candidatoId] !== "Questionário") {
+      toast.error(
+        `Este candidato está na etapa "${colunasEstado[candidatoId] ?? "Recebido"}". Mova-o para "Questionário" antes de enviar.`
+      );
+      return;
+    }
     const link = gerarLinkQuestionario(questionarioId, candidatoId);
     const hoje = new Date().toLocaleDateString("pt-BR");
     setQuestionariosVaga((prev) =>
@@ -4854,8 +4860,9 @@ function CandidatoDetailSheet({
                           {onEnviarWhatsQuestionario && (
                             <button
                               onClick={() => onEnviarWhatsQuestionario(cand.id, q.id)}
-                              className="h-7 px-2 rounded-md bg-success text-success-foreground text-[10px] font-medium inline-flex items-center gap-1"
-                              title="Enviar via WhatsApp"
+                              disabled={etapaAtual !== "Questionário"}
+                              className="h-7 px-2 rounded-md bg-success text-success-foreground text-[10px] font-medium inline-flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
+                              title={etapaAtual !== "Questionário" ? `Candidato em "${etapaAtual ?? "Recebido"}" — mova para "Questionário" primeiro` : "Enviar via WhatsApp"}
                             >
                               <MessageCircle className="h-3 w-3" /> WhatsApp
                             </button>
