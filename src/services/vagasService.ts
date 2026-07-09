@@ -1,5 +1,9 @@
 import { supabase } from "@/integrations/supabase/client";
 
+// ── Tipo público retornado por todas as funções ──────────────────────────────
+// Os nomes de campo aqui são os mesmos da era "vagas" para minimizar mudanças
+// no código de UI. O mapeamento pro schema real (job_solicitations) fica só
+// neste arquivo.
 export type VagaSupabase = {
   id: string;
   criado_em: string;
@@ -10,11 +14,11 @@ export type VagaSupabase = {
   tipo: string | null;
   modalidade: string | null;
   posicoes: number | null;
-  beneficios: string[] | null;
+  beneficios: string[] | null;   // text no banco → array aqui
   descricao: string | null;
-  status: string;
-  etapa: string;
-  publicacao: string;
+  status: string;                // mapeado: em_processo→ativa, finalizada→concluida
+  etapa: string;                 // de job_solicitations.etapa_connect
+  publicacao: string;            // "publicada" | "nao_publicada" ← public_visible bool
   consultor: string | null;
   local_trabalho: string | null;
   nivel: string | null;
@@ -26,42 +30,60 @@ export type VagaSupabase = {
   nivel_urgencia: string | null;
   tem_comissao: boolean | null;
   sla_dias: number | null;
-  excluida_em: string | null;
-  motivo_exclusao: string | null;
+  excluida_em: string | null;    // ← encerrada_em
+  motivo_exclusao: string | null;// ← motivo_encerramento
 };
 
-export async function listarVagas(): Promise<VagaSupabase[]> {
-  const { data, error } = await supabase
-    .from("vagas")
-    .select("*")
-    .is("excluida_em", null)
-    .order("criado_em", { ascending: false });
-  if (error) throw error;
-  return data ?? [];
+// ── Mapeamento DB → VagaSupabase ─────────────────────────────────────────────
+const STATUS_DB_TO_UI: Record<string, string> = {
+  em_processo: "ativa",
+  finalizada: "concluida",
+  cancelada: "cancelada",
+  standby: "standby",
+};
+const STATUS_UI_TO_DB: Record<string, string> = {
+  ativa: "em_processo",
+  concluida: "finalizada",
+  cancelada: "cancelada",
+  standby: "standby",
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function jsToVaga(row: any): VagaSupabase {
+  return {
+    id: row.id,
+    criado_em: row.created_at,
+    titulo: row.public_titulo ?? row.cargo,
+    empresa: row.avulsa_empresa_nome ?? "—",
+    empresa_id: row.company_id ?? null,
+    filial: row.branch_id ?? null,
+    tipo: row.tipo_vaga ?? null,
+    modalidade: row.modalidade ?? null,
+    posicoes: row.quantidade_vagas ?? null,
+    beneficios: row.beneficios
+      ? (row.beneficios as string).split(",").map((s: string) => s.trim()).filter(Boolean)
+      : [],
+    descricao: row.public_descricao ?? null,
+    status: STATUS_DB_TO_UI[row.status] ?? row.status,
+    etapa: row.etapa_connect ?? "briefing",
+    publicacao: row.public_visible ? "publicada" : "nao_publicada",
+    consultor: row.responsavel_interno ?? null,
+    local_trabalho: row.local_trabalho ?? null,
+    nivel: row.nivel ?? null,
+    turno: row.turno ?? null,
+    tipo_contrato: row.tipo_contrato ?? null,
+    carga_horaria: row.carga_horaria ?? null,
+    salario_de: row.salario_de != null ? Number(row.salario_de) : null,
+    salario_ate: row.salario_ate != null ? Number(row.salario_ate) : null,
+    nivel_urgencia: row.nivel_urgencia ?? null,
+    tem_comissao: row.tem_comissao ?? null,
+    sla_dias: row.prazo_entrega_dias ?? null,
+    excluida_em: row.encerrada_em ?? null,
+    motivo_exclusao: row.motivo_encerramento ?? null,
+  };
 }
 
-export async function listarVagasPublicadas(): Promise<VagaSupabase[]> {
-  const { data, error } = await supabase
-    .from("vagas")
-    .select("*")
-    .eq("publicacao", "publicada")
-    .neq("status", "concluida")
-    .neq("status", "cancelada")
-    .order("criado_em", { ascending: false });
-  if (error) throw error;
-  return data ?? [];
-}
-
-export async function getVaga(id: string): Promise<VagaSupabase | null> {
-  const { data, error } = await supabase
-    .from("vagas")
-    .select("*")
-    .eq("id", id)
-    .single();
-  if (error) return null;
-  return data;
-}
-
+// ── Input de criação/edição (mesmos nomes de campo de antes) ─────────────────
 export type CriarVagaInput = {
   titulo: string;
   empresa: string;
@@ -85,25 +107,87 @@ export type CriarVagaInput = {
   sla_dias?: number;
 };
 
+// Converte CriarVagaInput → colunas de job_solicitations
+function inputToJs(input: Partial<CriarVagaInput>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  if (input.titulo !== undefined) { out.cargo = input.titulo; out.public_titulo = input.titulo; }
+  if (input.empresa !== undefined) out.avulsa_empresa_nome = input.empresa;
+  if (input.empresa_id !== undefined) out.company_id = input.empresa_id ?? null;
+  if (input.filial !== undefined) out.branch_id = input.filial ?? null;
+  if (input.tipo !== undefined) out.tipo_vaga = input.tipo ?? null;
+  if (input.modalidade !== undefined) out.modalidade = input.modalidade;
+  if (input.posicoes !== undefined) out.quantidade_vagas = input.posicoes;
+  if (input.beneficios !== undefined) out.beneficios = (input.beneficios ?? []).join(",");
+  if (input.descricao !== undefined) out.public_descricao = input.descricao ?? null;
+  if (input.consultor !== undefined) out.responsavel_interno = input.consultor ?? null;
+  if (input.local_trabalho !== undefined) out.local_trabalho = input.local_trabalho ?? null;
+  if (input.nivel !== undefined) out.nivel = input.nivel;
+  if (input.turno !== undefined) out.turno = input.turno ?? null;
+  if (input.tipo_contrato !== undefined) out.tipo_contrato = input.tipo_contrato ?? null;
+  if (input.carga_horaria !== undefined) out.carga_horaria = input.carga_horaria ?? null;
+  if (input.salario_de !== undefined) out.salario_de = input.salario_de ?? null;
+  if (input.salario_ate !== undefined) out.salario_ate = input.salario_ate ?? null;
+  if (input.nivel_urgencia !== undefined) out.nivel_urgencia = input.nivel_urgencia ?? null;
+  if (input.tem_comissao !== undefined) out.tem_comissao = input.tem_comissao;
+  if (input.sla_dias !== undefined) out.prazo_entrega_dias = input.sla_dias;
+  return out;
+}
+
+// ── Funções exportadas (mesmos nomes de antes) ───────────────────────────────
+
+export async function listarVagas(): Promise<VagaSupabase[]> {
+  const { data, error } = await supabase
+    .from("job_solicitations")
+    .select("*")
+    .is("encerrada_em", null)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(jsToVaga);
+}
+
+export async function listarVagasPublicadas(): Promise<VagaSupabase[]> {
+  const { data, error } = await supabase
+    .from("job_solicitations")
+    .select("*")
+    .eq("public_visible", true)
+    .neq("status", "finalizada")
+    .neq("status", "cancelada")
+    .is("encerrada_em", null)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(jsToVaga);
+}
+
+export async function getVaga(id: string): Promise<VagaSupabase | null> {
+  const { data, error } = await supabase
+    .from("job_solicitations")
+    .select("*")
+    .eq("id", id)
+    .single();
+  if (error) return null;
+  return jsToVaga(data);
+}
+
 export async function criarVaga(input: CriarVagaInput): Promise<VagaSupabase> {
   const { data, error } = await supabase
-    .from("vagas")
+    .from("job_solicitations")
     .insert({
-      titulo: input.titulo,
-      empresa: input.empresa,
-      empresa_id: input.empresa_id ?? null,
-      filial: input.filial ?? null,
-      tipo: input.tipo ?? null,
-      modalidade: input.modalidade ?? null,
-      posicoes: input.posicoes ?? 1,
-      beneficios: input.beneficios ?? [],
-      descricao: input.descricao ?? null,
-      status: "ativa",
-      etapa: "briefing",
-      publicacao: "nao_publicada",
-      consultor: input.consultor ?? null,
+      cargo: input.titulo,
+      public_titulo: input.titulo,
+      avulsa_empresa_nome: input.empresa,
+      company_id: input.empresa_id ?? null,
+      branch_id: input.filial ?? null,
+      tipo_vaga: input.tipo ?? null,
+      modalidade: input.modalidade ?? "presencial",
+      quantidade_vagas: input.posicoes ?? 1,
+      beneficios: (input.beneficios ?? []).join(","),
+      public_descricao: input.descricao ?? null,
+      status: "em_processo",
+      etapa_connect: "briefing",
+      public_visible: false,
+      responsavel_interno: input.consultor ?? null,
       local_trabalho: input.local_trabalho ?? null,
-      nivel: input.nivel ?? null,
+      nivel: input.nivel ?? "pleno",
       turno: input.turno ?? null,
       tipo_contrato: input.tipo_contrato ?? null,
       carga_horaria: input.carga_horaria ?? null,
@@ -111,48 +195,52 @@ export async function criarVaga(input: CriarVagaInput): Promise<VagaSupabase> {
       salario_ate: input.salario_ate ?? null,
       nivel_urgencia: input.nivel_urgencia ?? null,
       tem_comissao: input.tem_comissao ?? false,
-      sla_dias: input.sla_dias ?? 30,
+      prazo_entrega_dias: input.sla_dias ?? 30,
+      is_avulsa: true,
     })
     .select()
     .single();
   if (error) throw error;
-  return data;
+  return jsToVaga(data);
 }
 
 export async function publicarVaga(id: string): Promise<void> {
   const { error } = await supabase
-    .from("vagas")
-    .update({ publicacao: "publicada" })
+    .from("job_solicitations")
+    .update({ public_visible: true })
     .eq("id", id);
   if (error) throw error;
 }
 
 export async function despublicarVaga(id: string): Promise<void> {
   const { error } = await supabase
-    .from("vagas")
-    .update({ publicacao: "nao_publicada" })
+    .from("job_solicitations")
+    .update({ public_visible: false })
     .eq("id", id);
   if (error) throw error;
 }
 
 export async function fecharVaga(id: string): Promise<void> {
   const { error } = await supabase
-    .from("vagas")
-    .update({ status: "concluida", publicacao: "nao_publicada" })
+    .from("job_solicitations")
+    .update({ status: "finalizada", public_visible: false, encerrada_em: new Date().toISOString() })
     .eq("id", id);
   if (error) throw error;
 }
 
 export async function atualizarEtapa(id: string, etapa: string): Promise<void> {
   const { error } = await supabase
-    .from("vagas")
-    .update({ etapa })
+    .from("job_solicitations")
+    .update({ etapa_connect: etapa })
     .eq("id", id);
   if (error) throw error;
 }
 
 export async function atualizarVaga(id: string, input: Partial<CriarVagaInput>): Promise<void> {
-  const { error } = await supabase.from("vagas").update(input).eq("id", id);
+  const { error } = await supabase
+    .from("job_solicitations")
+    .update(inputToJs(input))
+    .eq("id", id);
   if (error) throw error;
 }
 
@@ -160,18 +248,22 @@ export async function definirStatusVaga(
   id: string,
   status: "ativa" | "standby" | "cancelada" | "concluida"
 ): Promise<void> {
-  const { error } = await supabase.from("vagas").update({ status }).eq("id", id);
+  const { error } = await supabase
+    .from("job_solicitations")
+    .update({ status: STATUS_UI_TO_DB[status] ?? status })
+    .eq("id", id);
   if (error) throw error;
 }
 
 export async function excluirVaga(id: string, justificativa: string): Promise<void> {
+  // Move candidatos ligados para Banco de Talentos
   await supabase
-    .from("candidaturas")
-    .update({ etapa: "Banco de Talentos" })
-    .eq("vaga_id", id);
+    .from("candidates")
+    .update({ banco_talentos: true })
+    .eq("job_id", id);
   const { error } = await supabase
-    .from("vagas")
-    .update({ excluida_em: new Date().toISOString(), motivo_exclusao: justificativa })
+    .from("job_solicitations")
+    .update({ encerrada_em: new Date().toISOString(), motivo_encerramento: justificativa })
     .eq("id", id);
   if (error) throw error;
 }

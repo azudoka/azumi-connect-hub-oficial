@@ -131,41 +131,42 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
       supabase.storage
         .from("curriculos")
         .upload(path, c.curriculo, { upsert: false })
-        .then(({ data, error }) => {
-          if (error) console.error("[curriculo] storage:", error.message);
-          else curriculoUrl = data?.path ?? null;
+        .then(({ data: upData, error }) => {
+          if (error) { console.error("[curriculo] storage:", error.message); return; }
+          const { data: urlData } = supabase.storage.from("curriculos").getPublicUrl(upData.path);
+          curriculoUrl = urlData.publicUrl;
         });
     }
 
+    // Inserção em candidates (tabela principal — migração Fase A)
+    // DISC (scores/perfilDim) não tem colunas diretas em candidates —
+    // candidate_profile_id seria o lugar correto, mas requer criar um perfil separado.
+    // Por ora os scores ficam só no e-mail de notificação (abaixo).
     const row = {
-      modo,
-      vaga_id: vagaId ?? null,
-      vaga_titulo: vagaTitulo ?? null,
+      job_id: vagaId ?? null,
       nome: c.nome,
       email: c.email,
       telefone: c.telefone,
       cpf: c.cpf || null,
-      nascimento: c.nascimento || null,
-      cidade_estado: c.cidadeEstado || null,
+      data_nascimento: c.nascimento || null,
+      cidade: c.cidadeEstado || null, // candidates.cidade (só cidade; "UF" vai junto no texto)
       bairro: c.bairro || null,
       escolaridade: c.escolaridade || null,
-      filhos: c.filhos || null,
+      possui_filhos: c.filhos || null,
       linkedin: c.linkedin || null,
-      portfolio: c.portfolio || null,
+      portfolio_url: c.portfolio || null,
       origem: c.origem || null,
-      mensagem: c.mensagem || null,
+      observacoes: c.mensagem || null,
       curriculo_nome: c.curriculo?.name ?? null,
       curriculo_url: curriculoUrl,
-      contrato_desejado: c.contratoDesejado || null,
-      disponibilidade: c.disponibilidade || null,
-      disc_d: scores.D,
-      disc_i: scores.I,
-      disc_s: scores.S,
-      disc_c: scores.C,
-      disc_perfil: perfilDim,
+      disponibilidade_inicio: modo === "banco" ? (c.disponibilidade || null) : null,
+      banco_talentos: modo === "banco",
+      etapa_azumi: "recebido",
+      lgpd_aceite: c.aceitePrivacidade,
+      lgpd_aceite_at: c.aceitePrivacidade ? new Date().toISOString() : null,
     };
 
-    supabase.from("candidaturas").insert(row).then(({ error }) => {
+    supabase.from("candidates").insert(row).then(({ error }) => {
       if (error) console.error("[candidatura] Supabase:", error.message);
     });
 
