@@ -415,7 +415,7 @@ export default function VagaDetalheAdmin() {
   const [candidaturasSite, setCandidaturasSite] = useState<CandidaturaSite[]>([]);
   const [loadingSite, setLoadingSite] = useState(false);
 
-  useEffect(() => {
+  function recarregarCandidaturas() {
     if (!vaga?.id || vaga.id.startsWith("v-")) return;
     setLoadingSite(true);
     supabase
@@ -466,7 +466,9 @@ export default function VagaDetalheAdmin() {
           }));
         }
       });
-  }, [vaga?.id]);
+  }
+
+  useEffect(() => { recarregarCandidaturas(); }, [vaga?.id]);
 
   useEffect(() => {
     setColunasEstado((prev) => {
@@ -2696,6 +2698,7 @@ export default function VagaDetalheAdmin() {
         onSalvarAvaliacao={salvarAvaliacaoQuestionario}
         onSimularResposta={simularRespostaQuestionario}
         onConvidarParaVaga={(id) => { setConvidarVagaCandId(id); setConvidarVagaOpen(true); }}
+        onRecarregarCandidaturas={recarregarCandidaturas}
       />
 
       {/* ── Modal: Convidar para outra vaga ──────────────────────── */}
@@ -4396,6 +4399,7 @@ function CandidatoDetailSheet({
   onSalvarAvaliacao,
   onSimularResposta,
   onConvidarParaVaga,
+  onRecarregarCandidaturas,
 }: {
   open: boolean;
   candidato: CandidatoBase | null;
@@ -4408,7 +4412,7 @@ function CandidatoDetailSheet({
   mensagensVaga: MensagemVaga[];
   onClose: () => void;
   onSolicitarDisc: (id: string) => void;
-  
+
   onAssociarQuestionario: (id: string) => void;
   onDeclinar: (id: string) => void;
   onAgendar: (id: string) => void;
@@ -4418,11 +4422,34 @@ function CandidatoDetailSheet({
   onSalvarAvaliacao?: (questionarioId: string, candidatoId: string, questoes: Record<string, AvaliacaoQuestao>, salvoComo: "rascunho" | "definitivo") => void;
   onSimularResposta?: (candidatoId: string, questionarioId: string) => void;
   onConvidarParaVaga?: (candidatoId: string) => void;
+  onRecarregarCandidaturas?: () => void;
 }) {
   useScrollLock(open);
   const { id: vagaIdParam } = useParams();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [fichaTab, setFichaTab] = useState<"dados" | "disc" | "processos">("dados");
+  const [editarCandOpen, setEditarCandOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    nome: candidatoExtra?.nome ?? "",
+    email: candidatoExtra?.email ?? "",
+    telefone: candidatoExtra?.telefone ?? "",
+    cidade_estado: candidatoExtra?.cidade_estado ?? "",
+    linkedin: candidatoExtra?.linkedin ?? "",
+    escolaridade: candidatoExtra?.escolaridade ?? "",
+    cpf: candidatoExtra?.cpf ?? "",
+  });
+  useEffect(() => {
+    setEditForm({
+      nome: candidatoExtra?.nome ?? "",
+      email: candidatoExtra?.email ?? "",
+      telefone: candidatoExtra?.telefone ?? "",
+      cidade_estado: candidatoExtra?.cidade_estado ?? "",
+      linkedin: candidatoExtra?.linkedin ?? "",
+      escolaridade: candidatoExtra?.escolaridade ?? "",
+      cpf: candidatoExtra?.cpf ?? "",
+    });
+    setEditarCandOpen(false);
+  }, [candidatoExtra?.id]);
   useEffect(() => {
     if (!open) return;
     const el = scrollAreaRef.current;
@@ -4517,6 +4544,15 @@ function CandidatoDetailSheet({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="font-display text-xl font-semibold truncate">{cand.nome}</h2>
+                {candidatoExtra?.origem === "site" && (
+                  <button
+                    onClick={() => setEditarCandOpen(true)}
+                    className="h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-secondary shrink-0"
+                    title="Editar candidato"
+                  >
+                    <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                  </button>
+                )}
                 {etapaAtual && (
                   <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
                     {etapaAtual}
@@ -5078,6 +5114,53 @@ function CandidatoDetailSheet({
           )}
         </div>
       </aside>
+
+      {/* ── Modal: Editar candidato ──────────────────────────────── */}
+      {editarCandOpen && candidatoExtra?.origem === "site" && (
+        <ModalShell title="Editar candidato" onClose={() => setEditarCandOpen(false)}>
+          <div className="space-y-3">
+            {([
+              { key: "nome",         label: "Nome completo" },
+              { key: "email",        label: "E-mail" },
+              { key: "telefone",     label: "Telefone" },
+              { key: "cidade_estado",label: "Cidade / UF" },
+              { key: "linkedin",     label: "LinkedIn" },
+              { key: "escolaridade", label: "Escolaridade" },
+              { key: "cpf",          label: "CPF" },
+            ] as const).map(({ key, label }) => (
+              <div key={key} className="space-y-1">
+                <label className="text-xs font-medium text-foreground">{label}</label>
+                <input
+                  type="text"
+                  value={editForm[key]}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, [key]: e.target.value }))}
+                  className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-end gap-2 mt-4">
+            <button
+              onClick={() => setEditarCandOpen(false)}
+              className="h-9 px-3 rounded-md border border-border text-sm hover:bg-secondary"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={async () => {
+                const { error } = await supabase.from("candidaturas").update(editForm).eq("id", candidatoExtra!.id);
+                if (error) { toast.error("Erro ao salvar: " + error.message); return; }
+                toast.success("Candidato atualizado.");
+                setEditarCandOpen(false);
+                onRecarregarCandidaturas?.();
+              }}
+              className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium"
+            >
+              Salvar
+            </button>
+          </div>
+        </ModalShell>
+      )}
     </>
   );
 }
