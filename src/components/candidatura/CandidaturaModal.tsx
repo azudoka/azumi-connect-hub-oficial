@@ -166,9 +166,33 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
       lgpd_aceite_at: c.aceitePrivacidade ? new Date().toISOString() : null,
     };
 
-    supabase.from("candidates").insert(row).then(({ error }) => {
-      if (error) console.error("[candidatura] Supabase:", error.message);
-    });
+    const { data: candidatoInserido, error } = await supabase
+      .from("candidates")
+      .insert(row)
+      .select("id")
+      .single();
+
+    if (error) {
+      console.error("[candidatura] Supabase:", error.message);
+    } else if (candidatoInserido) {
+      const entries = (["D", "I", "S", "C"] as const)
+        .map((k) => ({ k, v: scores[k] }))
+        .sort((a, b) => b.v - a.v);
+      const fatorSecundario = entries[1]?.k ?? null;
+
+      const { error: discError } = await supabase
+        .from("disc_resultado_candidato")
+        .insert({
+          candidato_id: candidatoInserido.id,
+          score_d: scores.D,
+          score_i: scores.I,
+          score_s: scores.S,
+          score_c: scores.C,
+          fator_predominante: perfilDim,
+          fator_secundario: fatorSecundario,
+        });
+      if (discError) console.error("[candidatura] DISC:", discError.message);
+    }
 
     const linhas = [
       `<tr><td><strong>Vaga</strong></td><td>${vagaTitulo ?? "Banco de talentos"}</td></tr>`,
