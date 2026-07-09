@@ -1,13 +1,71 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { X, Search, Mail, Phone, MapPin, GraduationCap, Briefcase, Calendar, Link2, AlertCircle, Eye, Link as LinkIcon } from "lucide-react";
 import {
-  TALENTOS_MOCK,
   STATUS_LABEL,
   DISC_COR,
   type TalentoCandidato,
   type StatusTalento,
   type DiscDimMock,
 } from "@/data/bancoTalentosMock";
+import { supabase } from "@/integrations/supabase/client";
+
+interface CandidatoBanco {
+  id: string;
+  nome: string;
+  email: string | null;
+  telefone: string | null;
+  cidade: string | null;
+  escolaridade: string | null;
+  etapa_azumi: string | null;
+  linkedin: string | null;
+  updated_at: string;
+  // embed via FK candidates.job_id → job_solicitations.id (many-to-one → objeto)
+  job_solicitations?: { cargo: string } | null;
+  disc_resultado_candidato?: Array<{
+    fator_predominante: string | null;
+    score_d: number | null;
+    score_i: number | null;
+    score_s: number | null;
+    score_c: number | null;
+  }>;
+}
+
+function statusDoTalento(etapa: string | null): StatusTalento {
+  if (etapa === "contratado") return "contratado";
+  if (etapa === "recebido" || etapa === "reprovado" || !etapa) return "disponivel";
+  return "em_processo";
+}
+
+function toView(t: CandidatoBanco): TalentoCandidato {
+  const disc = t.disc_resultado_candidato?.[0];
+  const perfil = (disc?.fator_predominante ?? "D") as DiscDimMock;
+  // job_solicitations pode vir como objeto (many-to-one) ou array (PostgREST ambíguo)
+  const js = t.job_solicitations;
+  const cargo = Array.isArray(js) ? (js[0]?.cargo ?? "—") : (js?.cargo ?? "—");
+  return {
+    id: t.id,
+    nome: t.nome,
+    email: t.email ?? "—",
+    telefone: t.telefone ?? "—",
+    cargoPretendido: cargo,
+    cidade: t.cidade ?? "—",
+    escolaridade: t.escolaridade ?? "—",
+    perfilDisc: perfil,
+    scoresDisc: {
+      D: disc?.score_d ?? 0,
+      I: disc?.score_i ?? 0,
+      S: disc?.score_s ?? 0,
+      C: disc?.score_c ?? 0,
+    },
+    status: statusDoTalento(t.etapa_azumi),
+    ultimaInteracao: t.updated_at,
+    fotoUrl: undefined,
+    linkedin: t.linkedin ?? undefined,
+    historico: [],
+    contratoDesejado: "—",
+    disponibilidade: "—",
+  };
+}
 
 interface Props {
   open: boolean;
@@ -35,12 +93,31 @@ export default function BancoTalentosDrawer({ open, onClose }: Props) {
   const [cidadeFiltro, setCidadeFiltro] = useState("");
   const [cargoFiltro, setCargoFiltro] = useState("");
   const [selecionado, setSelecionado] = useState<TalentoCandidato | null>(null);
+  const [talentos, setTalentos] = useState<CandidatoBanco[]>([]);
+  const [carregando, setCarregando] = useState(false);
 
-  const cidades = useMemo(() => Array.from(new Set(TALENTOS_MOCK.map((t) => t.cidade))).sort(), []);
-  const cargos = useMemo(() => Array.from(new Set(TALENTOS_MOCK.map((t) => t.cargoPretendido))).sort(), []);
+  useEffect(() => {
+    if (!open) return;
+    setCarregando(true);
+    supabase
+      .from("candidates")
+      .select("id, nome, email, telefone, cidade, escolaridade, etapa_azumi, linkedin, updated_at, job_solicitations(cargo), disc_resultado_candidato(*)")
+      .eq("banco_talentos", true)
+      .order("updated_at", { ascending: false })
+      .then(({ data, error }) => {
+        setCarregando(false);
+        if (error) { console.error("[bancoTalentos]", error.message); return; }
+        setTalentos((data ?? []) as unknown as CandidatoBanco[]);
+      });
+  }, [open]);
+
+  const talentosView = useMemo(() => talentos.map(toView), [talentos]);
+
+  const cidades = useMemo(() => Array.from(new Set(talentosView.map((t) => t.cidade))).sort(), [talentosView]);
+  const cargos = useMemo(() => Array.from(new Set(talentosView.map((t) => t.cargoPretendido))).sort(), [talentosView]);
 
   const filtrados = useMemo(() => {
-    return TALENTOS_MOCK.filter((t) => {
+    return talentosView.filter((t) => {
       if (busca) {
         const q = busca.toLowerCase();
         if (!t.nome.toLowerCase().includes(q) && !t.email.toLowerCase().includes(q)) return false;
@@ -62,7 +139,7 @@ export default function BancoTalentosDrawer({ open, onClose }: Props) {
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <div>
             <h2 className="text-lg font-semibold text-foreground">Banco de Talentos</h2>
-            <p className="text-xs text-muted-foreground">{filtrados.length} candidatos · {TALENTOS_MOCK.length} no total</p>
+            <p className="text-xs text-muted-foreground">{filtrados.length} candidatos · {talentos.length} no total</p>
           </div>
           <button onClick={onClose} className="rounded-md p-1.5 text-muted-foreground hover:bg-secondary">
             <X className="h-5 w-5" />
@@ -121,7 +198,14 @@ export default function BancoTalentosDrawer({ open, onClose }: Props) {
               </tr>
             </thead>
             <tbody>
-              {filtrados.map((t) => (
+              {carregando && (
+                <tr>
+                  <td colSpan={8} className="px-6 py-12 text-center text-sm text-muted-foreground">
+                    Carregando…
+                  </td>
+                </tr>
+              )}
+              {!carregando && filtrados.map((t) => (
                 <tr
                   key={t.id}
                   onClick={() => setSelecionado(t)}
@@ -176,7 +260,7 @@ export default function BancoTalentosDrawer({ open, onClose }: Props) {
                   </td>
                 </tr>
               ))}
-              {filtrados.length === 0 && (
+              {!carregando && filtrados.length === 0 && (
                 <tr>
                   <td colSpan={8} className="px-6 py-12 text-center text-sm text-muted-foreground">
                     Nenhum candidato encontrado com esses filtros.
