@@ -4546,7 +4546,7 @@ function CandidatoDetailSheet({
                     </div>
                     {dados.curriculo && (
                       <button
-                        onClick={() => toast.success("Abrindo currículo (mock).")}
+                        onClick={() => window.open(dados.curriculo!, "_blank", "noopener,noreferrer")}
                         className="h-7 px-2.5 rounded-md border border-border hover:bg-secondary text-[11px] font-medium inline-flex items-center gap-1 shrink-0"
                       >
                         <Download className="h-3 w-3" /> Abrir
