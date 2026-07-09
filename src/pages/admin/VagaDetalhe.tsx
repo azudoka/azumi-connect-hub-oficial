@@ -3307,7 +3307,7 @@ function QuestionarioEditorModal({
     onSave(q);
   }
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[60] bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
       <div className="bg-card border border-border rounded-2xl shadow-elevated w-full max-w-3xl max-h-[92vh] flex flex-col animate-scale-in overflow-hidden">
         <header className="px-6 py-4 border-b border-border flex items-center gap-3">
@@ -3461,7 +3461,8 @@ function QuestionarioEditorModal({
           </button>
         </footer>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -5219,7 +5220,7 @@ function RelatorioCandidatoModal({
       questoes: { ...p.questoes, [id]: { ...(p.questoes[id] ?? { nota: 3, justificativa: "" }), ...patch } },
     }));
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[60] bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
       <div className="bg-card border border-border rounded-2xl shadow-elevated w-full max-w-5xl max-h-[92vh] flex flex-col animate-scale-in overflow-hidden">
         {/* Header */}
@@ -5421,7 +5422,8 @@ function RelatorioCandidatoModal({
           </button>
         </footer>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -5635,7 +5637,7 @@ function AgendarEntrevistaGestorModal({
     onSaved();
   }
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} aria-hidden />
       <div className="relative w-full max-w-2xl bg-card border border-border rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
@@ -5670,7 +5672,8 @@ function AgendarEntrevistaGestorModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
