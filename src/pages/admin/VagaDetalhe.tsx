@@ -417,7 +417,7 @@ export default function VagaDetalheAdmin() {
     disc_perfil: string | null; disc_d: number | null; disc_i: number | null;
     disc_s: number | null; disc_c: number | null; criado_em: string;
     curriculo_nome: string | null; curriculo_url: string | null;
-    mensagem: string | null; modo: string;
+    mensagem: string | null; modo: string; etapa: string;
   };
   const [candidaturasSite, setCandidaturasSite] = useState<CandidaturaSite[]>([]);
   const [loadingSite, setLoadingSite] = useState(false);
@@ -461,7 +461,12 @@ export default function VagaDetalheAdmin() {
             ...Object.fromEntries(
               extrasDoSite
                 .filter((e) => !(e.id in prev))
-                .map((e) => [e.id, "Recebido" as Coluna])
+                .map((e) => {
+                  const row = rows.find((r) => r.id === e.id);
+                  const etapa = (row?.etapa ?? "Recebido") as Coluna;
+                  etapaPersistidaRef.current[e.id] = etapa;
+                  return [e.id, etapa];
+                })
             ),
           }));
         }
@@ -476,6 +481,21 @@ export default function VagaDetalheAdmin() {
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [candidatosExtras]);
+
+  const etapaPersistidaRef = useRef<Record<string, string>>({});
+
+  useEffect(() => {
+    const idsSite = new Set(candidatosExtras.filter((c) => c.origem === "site").map((c) => c.id));
+    Object.entries(colunasEstado).forEach(([id, coluna]) => {
+      if (!idsSite.has(id)) return;
+      if (etapaPersistidaRef.current[id] === coluna) return;
+      etapaPersistidaRef.current[id] = coluna;
+      supabase.from("candidaturas").update({ etapa: coluna }).eq("id", id).then(({ error }) => {
+        if (error) console.error("[etapa] falha ao persistir", id, error);
+      });
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [colunasEstado, candidatosExtras]);
 
   const [questionariosVaga, setQuestionariosVaga] = useState<QuestionarioVaga[]>([
     {
