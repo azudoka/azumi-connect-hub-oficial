@@ -43,7 +43,7 @@ function Header() {
     <header className="sticky top-0 z-30 w-full bg-[hsl(var(--ocean))]">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <AzumiLogo light product="Connect" size={20} hideSubtitle />
-        
+        <a
           href="https://azumirh.com.br"
           target="_blank"
           rel="noreferrer"
