@@ -229,6 +229,8 @@ const ICON_COLOR = "hsl(var(--sidebar-primary))";
 
 export function SidebarHub({ profile }: { profile: HubProfile }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [hovering, setHovering] = useState(false);
+  const isCollapsed = collapsed && !hovering;
   const { hasModulo, podeOperar, usuario, logout } = useAuth();
   const { isPaginaAtiva, isModuloAtivo, isEmTrial, diasRestantesTrial } = useModulos();
 
@@ -258,11 +260,11 @@ export function SidebarHub({ profile }: { profile: HubProfile }) {
 
   const renderItem = (it: NavItem, keyPrefix: string, extraBadge?: React.ReactNode) => (
     <li key={`${keyPrefix}-${it.label}`}>
-      {collapsed ? (
+      {isCollapsed ? (
         <NavLink
           to={it.to}
           onClick={(e) => e.stopPropagation()}
-          className="flex items-center justify-center w-full py-2.5 hover:bg-sidebar-accent transition-colors rounded-none"
+          className="flex items-center justify-center w-full py-2.5 hover:bg-sidebar-accent/60 transition-all duration-250 rounded-none"
           activeClassName="!bg-sidebar-primary/30"
         >
           <NavTooltip label={it.label}>
@@ -272,7 +274,7 @@ export function SidebarHub({ profile }: { profile: HubProfile }) {
       ) : (
         <NavLink
           to={it.to}
-          className="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
+          className="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground transition-all duration-250"
           activeClassName="!bg-primary/25 !text-foreground border-l-[3px] border-primary rounded-l-none ml-[3px]"
         >
           <it.icon className="h-4 w-4 shrink-0" style={{ color: ICON_COLOR }} />
@@ -285,17 +287,19 @@ export function SidebarHub({ profile }: { profile: HubProfile }) {
 
   return (
     <aside
-      onClick={() => { if (collapsed) setCollapsed(false); }}
-      className={cn("sidebar-hub-brand", collapsed ? "" : "bg-gradient-sidebar")}
+      onClick={() => { if (isCollapsed) { setCollapsed(false); setHovering(false); } }}
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => setHovering(false)}
+      className={cn("sidebar-hub-brand backdrop-blur-xl", isCollapsed ? "" : "bg-gradient-sidebar")}
       style={{
         display: "flex",
         flexDirection: "column",
         flexShrink: 0,
-        width: collapsed ? 64 : 240,
+        width: isCollapsed ? 64 : 240,
         transition: "width 0.3s ease",
         borderRight: "1px solid hsl(var(--sidebar-border))",
-        background: collapsed ? "hsl(var(--sidebar-background))" : undefined,
-        cursor: collapsed ? "pointer" : "default",
+        background: isCollapsed ? "hsl(var(--sidebar-background) / 0.88)" : undefined,
+        cursor: isCollapsed ? "pointer" : "default",
         height: "100svh",
         position: "sticky",
         top: 0,
@@ -304,7 +308,7 @@ export function SidebarHub({ profile }: { profile: HubProfile }) {
     >
       {/* Logo */}
       <div style={{ height: 64, display: "flex", alignItems: "center", padding: "0 16px", borderBottom: "1px solid hsl(var(--sidebar-border) / 0.6)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: collapsed ? 0 : 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: isCollapsed ? 0 : 8 }}>
           <div style={{ width: 28, height: 28, borderRadius: 8, background: "linear-gradient(135deg,#3B82F6,#031D38)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <span style={{ color: "white", fontSize: 13, fontWeight: 800, fontFamily: "'Urbanist',sans-serif" }}>A</span>
           </div>

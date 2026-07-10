@@ -68,7 +68,12 @@ export function Header({ showSwitcher = true, context = "connect" }: HeaderProps
             type="search"
             disabled
             placeholder="Busca global — em breve"
-            className="w-full h-9 pl-9 pr-4 rounded-lg bg-secondary/40 border border-transparent outline-none text-sm placeholder:text-muted-foreground/50 cursor-not-allowed opacity-60"
+            className={cn(
+              "w-full h-9 pl-9 pr-4 rounded-lg border outline-none text-sm placeholder:text-muted-foreground/50 cursor-not-allowed opacity-60 backdrop-blur-md transition-all",
+              context === "hub"
+                ? "bg-purple-500/10 border-purple-300/30"
+                : "bg-blue-500/10 border-blue-300/30"
+            )}
           />
         </div>
 

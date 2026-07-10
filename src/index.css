@@ -171,7 +171,10 @@
     --sidebar-border: 217 60% 30%;
     --muted-foreground: 214 40% 78%;
     --foreground: 0 0% 100%;
-    --gradient-sidebar: linear-gradient(180deg, hsl(217 90% 18%) 0%, hsl(217 85% 28%) 100%);
+    --card: 217 60% 26%;
+    --secondary: 217 55% 24%;
+    --border: 217 50% 32%;
+    --gradient-sidebar: linear-gradient(180deg, hsl(217 90% 18% / 0.88) 0%, hsl(217 85% 28% / 0.88) 100%);
   }
 
   /* ── Sidebar brand — Hub (roxo escuro) ── */
@@ -184,7 +187,10 @@
     --sidebar-border: 262 50% 36%;
     --muted-foreground: 262 35% 80%;
     --foreground: 0 0% 100%;
-    --gradient-sidebar: linear-gradient(180deg, hsl(262 70% 24%) 0%, hsl(262 65% 34%) 100%);
+    --card: 262 45% 32%;
+    --secondary: 262 40% 30%;
+    --border: 262 40% 38%;
+    --gradient-sidebar: linear-gradient(180deg, hsl(262 70% 24% / 0.88) 0%, hsl(262 65% 34% / 0.88) 100%);
   }
 
   /* MIDNIGHT — alternativa dark on-brand (Azul Oceano) */

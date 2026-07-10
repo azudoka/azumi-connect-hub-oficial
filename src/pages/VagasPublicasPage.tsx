@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Building2, Heart, MapPin, Clock, DollarSign, Search, Lock, Zap, Instagram, Linkedin, Globe } from "lucide-react";
+import { Building2, Heart, MapPin, Clock, DollarSign, Search, Lock, Zap, Instagram, Linkedin, Globe, ExternalLink } from "lucide-react";
 import capaVagas from "@/assets/brand/capa-vagas.png";
 import {
   VAGAS_MOCK,
@@ -131,21 +131,44 @@ export default function VagasPublicasPage() {
 
         <div className="relative z-10 mx-auto flex max-w-6xl items-center justify-between py-3">
           <AzumiLogo light product="Connect" size={20} hideSubtitle />
-          <a
-            href="https://azumirh.com.br"
-            target="_blank"
-            rel="noreferrer"
-            className="font-sans text-sm text-white/80 hover:text-white"
-          >
-            azumirh.com.br
-          </a>
+          <div className="flex items-center gap-3">
+            <a
+              href="https://www.instagram.com/azumirh/"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Instagram da Azumi RH"
+              className="text-white/70 hover:text-white transition-colors"
+            >
+              <Instagram className="h-4 w-4" />
+            </a>
+            <a
+              href="https://www.linkedin.com/company/azumirh"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="LinkedIn da Azumi RH"
+              className="text-white/70 hover:text-white transition-colors"
+            >
+              <Linkedin className="h-4 w-4" />
+            </a>
+            <a
+              href="https://azumirh.com.br"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Site da Azumi RH"
+              className="text-white/70 hover:text-white transition-colors"
+            >
+              <Globe className="h-4 w-4" />
+            </a>
+          </div>
         </div>
 
         <div className="relative z-10 mx-auto mt-10 max-w-5xl text-center text-white">
-          <h1 className="font-display text-3xl font-semibold sm:text-4xl">
-            Encontre sua próxima oportunidade
+          <h1 className="font-display text-4xl font-bold sm:text-5xl leading-tight">
+            Encontre sua próxima{" "}
+            <span className="text-blue-300">oportunidade</span> de trabalho<br className="hidden sm:block" /> com a{" "}
+            <span className="text-blue-300">Azumi</span>
           </h1>
-          <p className="mt-2 font-sans text-white/80">Vagas selecionadas pela Azumi RH</p>
+          <p className="mt-3 font-sans text-white/75 text-lg">Vagas selecionadas pela nossa equipe especializada em RH</p>
         </div>
 
         <div className="relative z-10 mx-auto mt-8 max-w-4xl rounded-2xl bg-card p-3 shadow-elevated sm:p-4">

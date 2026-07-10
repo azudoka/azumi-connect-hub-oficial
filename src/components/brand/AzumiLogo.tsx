@@ -55,12 +55,20 @@ export function AzumiLogo({
 }: AzumiLogoProps) {
   if (collapsed) {
     const icon = product === "Hub" ? hubIcon : connectIcon;
+    const glowColor = product === "Hub" ? "#A78BFA" : "#60A5FA";
     return (
-      <img
-        src={icon}
-        alt={product}
-        style={{ height: size + 10, width: size + 10, objectFit: "contain" }}
-      />
+      <div className="relative flex items-center justify-center" style={{ height: size + 22, width: size + 22 }}>
+        <div
+          className="absolute inset-0 rounded-full blur-md opacity-40"
+          style={{ background: glowColor }}
+        />
+        <img
+          src={icon}
+          alt={product}
+          style={{ height: size + 18, width: size + 18, objectFit: "contain" }}
+          className="relative z-10"
+        />
+      </div>
     );
   }
   const src =
@@ -71,7 +79,7 @@ export function AzumiLogo({
     <img
       src={src}
       alt={`${product} by Azumi`}
-      style={{ height: size * 1.8, width: "auto", objectFit: "contain" }}
+      style={{ height: size * 2.6, width: "auto", objectFit: "contain" }}
     />
   );
 }

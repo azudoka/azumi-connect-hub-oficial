@@ -106,6 +106,8 @@ const clienteGroups = [
 
 export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const [hovering, setHovering] = useState(false);
+  const isCollapsed = collapsed && !hovering;
   const inactivityRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const resetInactivity = () => {
     if (inactivityRef.current) clearTimeout(inactivityRef.current);
@@ -156,28 +158,23 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
   return (
     <aside
       className={cn(
-        "sidebar-connect-brand flex flex-col shrink-0 border-r border-sidebar-border bg-gradient-sidebar transition-all duration-300",
-        collapsed ? "w-16" : "w-60"
+        "sidebar-connect-brand flex flex-col shrink-0 border-r border-sidebar-border bg-gradient-sidebar backdrop-blur-xl transition-all duration-300",
+        isCollapsed ? "w-16" : "w-60"
       )}
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => setHovering(false)}
       aria-label="Navegação principal"
     >
       {/* Logo */}
       <div className="h-16 flex items-center px-4 border-b border-sidebar-border/60">
-        <AzumiLogo product="Connect" collapsed={collapsed} light />
-        <button
-          onClick={() => setCollapsed((c) => !c)}
-          className="ml-auto h-7 w-7 rounded-md hover:bg-sidebar-accent flex items-center justify-center text-muted-foreground"
-          aria-label={collapsed ? "Expandir" : "Colapsar"}
-        >
-          <ChevronLeft className={cn("h-4 w-4 transition-transform", collapsed && "rotate-180")} />
-        </button>
+        <AzumiLogo product="Connect" collapsed={isCollapsed} light />
       </div>
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-5">
         {groups.map((g) => (
           <div key={g.label}>
-            {!collapsed && (
+            {!isCollapsed && (
               <div className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
                 {g.label}
               </div>
@@ -188,13 +185,13 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
                   <NavLink
                     to={it.to}
                     className={cn(
-                      "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors",
-                      collapsed && "justify-center px-0"
+                      "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground transition-all duration-250",
+                      isCollapsed && "justify-center px-0"
                     )}
                     activeClassName="!bg-primary/25 !text-foreground border-l-[3px] border-primary rounded-l-none ml-[3px]"
                   >
                     <it.icon className="h-4 w-4 shrink-0" />
-                    {!collapsed && <span className="truncate">{it.label}</span>}
+                    {!isCollapsed && <span className="truncate">{it.label}</span>}
                   </NavLink>
                 </li>
               ))}
@@ -204,7 +201,7 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
 
         {variant === "admin" && (
           <div>
-            {!collapsed && (
+            {!isCollapsed && (
               <div className="px-3 mb-1.5 flex items-center gap-2">
                 <Sparkles className="h-3 w-3 text-highlight" />
                 <span className="text-[10px] font-semibold uppercase tracking-widest text-highlight">Hub</span>
@@ -220,13 +217,13 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
                   <NavLink
                     to={it.to}
                     className={cn(
-                      "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors",
-                      collapsed && "justify-center px-0"
+                      "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground transition-all duration-250",
+                      isCollapsed && "justify-center px-0"
                     )}
                     activeClassName="!bg-primary/25 !text-foreground"
                   >
                     <it.icon className="h-4 w-4 shrink-0" />
-                    {!collapsed && <span className="truncate">{it.label}</span>}
+                    {!isCollapsed && <span className="truncate">{it.label}</span>}
                   </NavLink>
                 </li>
               ))}
@@ -242,13 +239,13 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
               <NavLink
                 to={configHref}
                 className={cn(
-                  "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors",
-                  collapsed && "justify-center px-0"
+                  "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground transition-all duration-250",
+                  isCollapsed && "justify-center px-0"
                 )}
                 activeClassName="!bg-primary/25 !text-foreground"
               >
                 <Settings className="h-4 w-4 shrink-0" />
-                {!collapsed && <span className="truncate">Configurações</span>}
+                {!isCollapsed && <span className="truncate">Configurações</span>}
               </NavLink>
             );
           })()}
@@ -260,13 +257,13 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
                 type="button"
                 onClick={() => navigate("/portal")}
                 className={cn(
-                  "group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors",
-                  collapsed ? "justify-center px-0" : "text-xs text-muted-foreground"
+                  "group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground transition-all duration-250",
+                  isCollapsed ? "justify-center px-0" : "text-xs text-muted-foreground"
                 )}
                 aria-label="Acessar Portal do Cliente"
               >
                 <ExternalLink className="h-4 w-4 shrink-0" />
-                {!collapsed && (
+                {!isCollapsed && (
                   <span className="truncate">Acessar Portal do Cliente</span>
                 )}
               </button>
@@ -277,7 +274,7 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
 
       {/* Footer card */}
       <div className="p-3 border-t border-sidebar-border/60">
-        {!collapsed ? (
+        {!isCollapsed ? (
           <div className="bg-card/60 backdrop-blur rounded-xl p-3 border border-border/60">
             {user?.papel === "cliente" && (
               <div className="flex items-center gap-3">
@@ -334,6 +331,14 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
             </button>
           </div>
         )}
+        {/* Botão colapsar/expandir — fixo no rodapé */}
+        <button
+          onClick={() => { setCollapsed((c) => !c); setHovering(false); }}
+          className="mt-2 w-full flex items-center justify-center py-2 text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-white/5 rounded-lg transition-colors"
+          aria-label={isCollapsed ? "Expandir sidebar" : "Colapsar sidebar"}
+        >
+          <ChevronLeft className={cn("h-4 w-4 transition-transform", isCollapsed && "rotate-180")} />
+        </button>
       </div>
 
       <Dialog open={consultorOpen} onOpenChange={setConsultorOpen}>
