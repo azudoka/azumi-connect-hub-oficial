@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Building2, MapPin, Clock, DollarSign, Briefcase, GraduationCap, Sun, FileText, ArrowLeft } from "lucide-react";
+import { Building2, MapPin, Clock, DollarSign, Briefcase, GraduationCap, Sun, FileText, ArrowLeft, Zap, Lock } from "lucide-react";
 import {
   VAGAS_MOCK,
   NIVEL_LABEL,
@@ -12,23 +12,21 @@ import {
 } from "@/data/vagasPublicasMock";
 import { getVaga } from "@/services/vagasService";
 import CandidaturaModal from "@/components/candidatura/CandidaturaModal";
-
-const NAVY = "#031D38";
-const BLUE = "#034C8B";
+import { AzumiLogo } from "@/components/brand/AzumiLogo";
 
 function Header() {
   return (
-    <header className="sticky top-0 z-30 w-full" style={{ background: NAVY }}>
+    <header className="sticky top-0 z-30 w-full bg-[hsl(var(--ocean))]">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Link
-          to="/vagas"
-          className="text-xl font-semibold tracking-tight"
-          style={{ fontFamily: "Poppins, Urbanist, system-ui, sans-serif" }}
-        >
-          <span className="text-white">azumi </span>
-          <span style={{ color: "#93C5FD" }}>RH</span>
+        <Link to="/vagas">
+          <AzumiLogo light product="Connect" size={20} hideSubtitle />
         </Link>
-        <a href="https://azumirh.com.br" target="_blank" rel="noreferrer" className="text-sm text-white/80 hover:text-white">
+        
+          href="https://azumirh.com.br"
+          target="_blank"
+          rel="noreferrer"
+          className="font-sans text-sm text-white/80 hover:text-white"
+        >
           azumirh.com.br
         </a>
       </div>
@@ -38,7 +36,7 @@ function Header() {
 
 function Footer() {
   return (
-    <footer style={{ background: NAVY }} className="mt-16 py-6 text-center text-sm text-white/70">
+    <footer className="mt-16 bg-[hsl(var(--ocean))] py-6 text-center font-sans text-sm text-white/70">
       © 2026 Azumi RH · azumirh.com.br · contato@azumirh.com.br
     </footer>
   );
@@ -46,12 +44,12 @@ function Footer() {
 
 function NotFound() {
   return (
-    <div style={{ background: "#F5F7FA", minHeight: "100vh" }}>
+    <div className="min-h-screen bg-background">
       <Header />
       <div className="mx-auto max-w-md px-6 py-24 text-center">
-        <h1 className="text-2xl font-semibold text-slate-800">Vaga não encontrada</h1>
-        <p className="mt-2 text-slate-600">Esta vaga pode ter sido encerrada ou removida.</p>
-        <Link to="/vagas" className="mt-6 inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium text-white" style={{ background: BLUE }}>
+        <h1 className="font-display text-2xl font-semibold text-foreground">Vaga não encontrada</h1>
+        <p className="mt-2 font-sans text-muted-foreground">Esta vaga pode ter sido encerrada ou removida.</p>
+        <Link to="/vagas" className="btn-primary mt-6 inline-flex">
           <ArrowLeft className="h-4 w-4" /> Voltar para vagas
         </Link>
       </div>
@@ -99,9 +97,9 @@ export default function VagaPublicaDetalhePage() {
 
   if (vaga === undefined) {
     return (
-      <div style={{ background: "#F5F7FA", minHeight: "100vh" }}>
+      <div className="min-h-screen bg-background">
         <Header />
-        <div className="mx-auto max-w-md px-6 py-24 text-center text-slate-500">Carregando…</div>
+        <div className="mx-auto max-w-md px-6 py-24 text-center font-sans text-muted-foreground">Carregando…</div>
         <Footer />
       </div>
     );
@@ -122,56 +120,61 @@ export default function VagaPublicaDetalhePage() {
   ].filter((d) => !!d.value);
 
   return (
-    <div style={{ background: "#F5F7FA", minHeight: "100vh" }}>
+    <div className="min-h-screen bg-background">
       <Header />
 
       <div className="mx-auto max-w-[1000px] px-6 py-8">
-        <Link to="/vagas" className="inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900">
+        <Link to="/vagas" className="inline-flex items-center gap-1.5 font-sans text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> Voltar para vagas
         </Link>
 
         <div className="mt-5 space-y-5">
           {urgente && (
-            <div className="rounded-lg bg-orange-100 px-4 py-3 text-sm font-medium text-orange-800">
-              ⚡ Vaga urgente — candidate-se o quanto antes
+            <div className="flex items-center gap-2 rounded-lg bg-[hsl(var(--warning)/0.15)] px-4 py-3 font-sans text-sm font-medium text-[hsl(var(--warning))]">
+              <Zap className="h-4 w-4 shrink-0" /> Vaga urgente — candidate-se o quanto antes
             </div>
           )}
 
-          <div className="rounded-xl border border-slate-200 bg-white p-6">
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex items-start gap-4">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                   <Building2 className="h-6 w-6" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm text-slate-500">{vaga.empresa}</p>
-                  <h1 className="text-2xl font-semibold text-slate-900">{vaga.titulo}</h1>
+                  <p className="flex items-center gap-1.5 font-sans text-sm text-muted-foreground">
+                    {vaga.confidencial && <Lock className="h-3 w-3 shrink-0" />}
+                    {vaga.empresa}
+                  </p>
+                  <h1 className="font-display text-2xl font-semibold text-foreground">{vaga.titulo}</h1>
                   <div className="mt-2 flex flex-wrap gap-1.5">
-                    <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">{MODALIDADE_LABEL[vaga.modalidade] ?? vaga.modalidade}</span>
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">{NIVEL_LABEL[vaga.nivel] ?? vaga.nivel}</span>
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">{CONTRATO_LABEL[vaga.tipo_contrato] ?? vaga.tipo_contrato}</span>
+                    <span className="rounded-full bg-accent px-2 py-0.5 font-sans text-xs font-medium text-accent-foreground">
+                      {MODALIDADE_LABEL[vaga.modalidade] ?? vaga.modalidade}
+                    </span>
+                    <span className="rounded-full bg-muted px-2 py-0.5 font-sans text-xs font-medium text-muted-foreground">
+                      {NIVEL_LABEL[vaga.nivel] ?? vaga.nivel}
+                    </span>
+                    <span className="rounded-full bg-muted px-2 py-0.5 font-sans text-xs font-medium text-muted-foreground">
+                      {CONTRATO_LABEL[vaga.tipo_contrato] ?? vaga.tipo_contrato}
+                    </span>
                   </div>
                 </div>
               </div>
-              <button
-                onClick={() => setModalOpen(true)}
-                className="h-12 shrink-0 rounded-lg px-6 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
-                style={{ background: BLUE }}
-              >
+              <button onClick={() => setModalOpen(true)} className="btn-primary w-full shrink-0 justify-center sm:w-auto">
                 Quero me candidatar →
               </button>
             </div>
           </div>
 
-          <section className="rounded-xl border border-slate-200 bg-white p-6">
-            <h2 className="mb-4 text-lg font-semibold text-slate-900">Detalhes da vaga</h2>
+          <section className="rounded-2xl border border-border bg-card p-6 shadow-card">
+            <h2 className="mb-4 font-display text-lg font-semibold text-foreground">Detalhes da vaga</h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {detalhes.map((d) => (
                 <div key={d.label} className="flex items-start gap-3">
-                  <d.icon className="mt-0.5 h-4 w-4 text-slate-400" />
+                  <d.icon className="mt-0.5 h-4 w-4 text-muted-foreground" />
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-slate-500">{d.label}</p>
-                    <p className="text-sm font-medium text-slate-800">{d.value}</p>
+                    <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">{d.label}</p>
+                    <p className="font-sans text-sm font-medium text-foreground">{d.value}</p>
                   </div>
                 </div>
               ))}
@@ -179,36 +182,34 @@ export default function VagaPublicaDetalhePage() {
           </section>
 
           {vaga.beneficios && vaga.beneficios.split(",").map((b) => b.trim()).filter(Boolean).length > 0 && (
-            <section className="rounded-xl border border-slate-200 bg-white p-6">
-              <h2 className="mb-3 text-lg font-semibold text-slate-900">Benefícios</h2>
+            <section className="rounded-2xl border border-border bg-card p-6 shadow-card">
+              <h2 className="mb-3 font-display text-lg font-semibold text-foreground">Benefícios</h2>
               <div className="flex flex-wrap gap-2">
                 {vaga.beneficios.split(",").map((b) => b.trim()).filter(Boolean).map((b) => (
-                  <span key={b} className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs text-slate-700">{b}</span>
+                  <span key={b} className="rounded-full border border-border bg-muted px-3 py-1 font-sans text-xs text-foreground">
+                    {b}
+                  </span>
                 ))}
               </div>
             </section>
           )}
 
           {vaga.descricao && (
-            <section className="rounded-xl border border-slate-200 bg-white p-6">
-              <h2 className="mb-3 text-lg font-semibold text-slate-900">Sobre a vaga</h2>
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{vaga.descricao}</p>
+            <section className="rounded-2xl border border-border bg-card p-6 shadow-card">
+              <h2 className="mb-3 font-display text-lg font-semibold text-foreground">Sobre a vaga</h2>
+              <p className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-foreground/85">{vaga.descricao}</p>
             </section>
           )}
 
           {/* CTA banco de talentos */}
-          <div
-            className="rounded-xl px-6 py-12 text-center text-white"
-            style={{ background: NAVY }}
-          >
-            <h3 className="text-2xl font-semibold">Não encontrou a vaga ideal?</h3>
-            <p className="mx-auto mt-3 max-w-xl text-sm text-white/80">
+          <div className="brand-gradient-bg rounded-2xl px-6 py-12 text-center text-white">
+            <h3 className="font-display text-2xl font-semibold">Não encontrou a vaga ideal?</h3>
+            <p className="mx-auto mt-3 max-w-xl font-sans text-sm text-white/80">
               Cadastre-se no nosso banco de talentos e entraremos em contato quando surgir uma oportunidade para o seu perfil.
             </p>
             <button
               onClick={() => setModalBanco(true)}
-              className="mt-6 h-12 rounded-lg bg-white px-8 text-sm font-semibold shadow-sm transition hover:bg-white/90"
-              style={{ color: BLUE }}
+              className="mt-6 inline-flex h-12 items-center rounded-full bg-white px-8 font-sans text-sm font-semibold text-primary shadow-card transition hover:bg-white/90"
             >
               Quero entrar no banco de talentos →
             </button>
