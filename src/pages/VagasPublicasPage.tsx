@@ -100,7 +100,7 @@ export default function VagasPublicasPage() {
 
         <div className="relative z-10 mx-auto flex max-w-6xl items-center justify-between py-3">
           <AzumiLogo light product="Connect" size={20} hideSubtitle />
-          
+          <a
             href="https://azumirh.com.br"
             target="_blank"
             rel="noreferrer"

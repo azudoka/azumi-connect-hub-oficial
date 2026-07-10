@@ -21,7 +21,7 @@ function Header() {
         <Link to="/vagas">
           <AzumiLogo light product="Connect" size={20} hideSubtitle />
         </Link>
-        
+        <a
           href="https://azumirh.com.br"
           target="_blank"
           rel="noreferrer"
