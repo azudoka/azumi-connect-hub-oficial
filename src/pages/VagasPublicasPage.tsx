@@ -42,7 +42,7 @@ function Header() {
   return (
     <header className="sticky top-0 z-30 w-full bg-[hsl(var(--ocean))]">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <AzumiLogo light product="Connect" size={20} />
+        <AzumiLogo light product="Connect" size={20} hideSubtitle />
         
           href="https://azumirh.com.br"
           target="_blank"
@@ -110,7 +110,7 @@ export default function VagasPublicasPage() {
       <Header />
 
       {/* Hero */}
-      <section className="relative bg-gradient-brand-bg px-6 pb-24 pt-14" style={{ minHeight: 320 }}>
+      <section className="brand-gradient-bg relative px-6 pb-24 pt-14" style={{ minHeight: 320 }}>
         <div className="mx-auto max-w-5xl text-center text-white">
           <h1 className="font-display text-3xl font-semibold sm:text-4xl">
             Encontre sua próxima oportunidade
@@ -151,7 +151,7 @@ export default function VagasPublicasPage() {
               <option value="senior">Sênior</option>
               <option value="especialista">Especialista</option>
             </select>
-            <button onClick={scrollToList} className="btn-primary px-5 py-2.5 text-sm">
+            <button onClick={scrollToList} className="btn-primary justify-center">
               Buscar vagas
             </button>
           </div>
@@ -233,7 +233,7 @@ export default function VagasPublicasPage() {
                       </div>
 
                       <div className="mt-3 flex flex-wrap gap-1.5">
-                        <span className="rounded-full bg-primary/10 px-2 py-0.5 font-sans text-xs font-medium text-primary">
+                        <span className="rounded-full bg-accent px-2 py-0.5 font-sans text-xs font-medium text-accent-foreground">
                           {MODALIDADE_LABEL[v.modalidade] ?? v.modalidade}
                         </span>
                         <span className="rounded-full bg-muted px-2 py-0.5 font-sans text-xs font-medium text-muted-foreground">
@@ -243,12 +243,12 @@ export default function VagasPublicasPage() {
                           {CONTRATO_LABEL[v.tipo_contrato] ?? v.tipo_contrato}
                         </span>
                         {urgente && (
-                          <span className="rounded-full bg-destructive/10 px-2 py-0.5 font-sans text-xs font-medium text-destructive">
+                          <span className="rounded-full bg-[hsl(var(--destructive)/0.1)] px-2 py-0.5 font-sans text-xs font-medium text-destructive">
                             Urgente
                           </span>
                         )}
                         {v.tem_comissao && (
-                          <span className="rounded-full bg-success/10 px-2 py-0.5 font-sans text-xs font-medium text-success">
+                          <span className="rounded-full bg-[hsl(var(--success)/0.12)] px-2 py-0.5 font-sans text-xs font-medium text-success">
                             + Comissão
                           </span>
                         )}
@@ -283,7 +283,7 @@ export default function VagasPublicasPage() {
 
       {/* Banco de talentos */}
       <section className="mx-auto mt-14 max-w-6xl px-6">
-        <div className="overflow-hidden rounded-2xl border border-border bg-primary/5 p-8 sm:p-10">
+        <div className="overflow-hidden rounded-2xl border border-border bg-accent p-8 sm:p-10">
           <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
             <div>
               <h3 className="font-display text-xl font-semibold text-foreground">
@@ -293,7 +293,7 @@ export default function VagasPublicasPage() {
                 Cadastre seu currículo em nosso banco de talentos e receba oportunidades alinhadas ao seu perfil.
               </p>
             </div>
-            <button onClick={() => setModalBanco(true)} className="btn-outline-brand px-5 py-2.5 text-sm">
+            <button onClick={() => setModalBanco(true)} className="btn-outline-brand">
               Cadastrar no banco de talentos
             </button>
           </div>
