@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Building2, Heart, MapPin, Clock, DollarSign, Search, Lock, Zap } from "lucide-react";
+import { Building2, Heart, MapPin, Clock, DollarSign, Search, Lock, Zap, Instagram, Linkedin, Globe } from "lucide-react";
 import {
   VAGAS_MOCK,
   NIVEL_LABEL,
@@ -40,8 +40,39 @@ function supabaseToPublica(r: VagaSupabase): VagaPublica {
 
 function Footer() {
   return (
-    <footer className="mt-16 bg-[hsl(var(--ocean))] py-6 text-center font-sans text-sm text-white/70">
-      © 2026 Azumi RH · azumirh.com.br · contato@azumirh.com.br
+    <footer className="mt-16 bg-[hsl(var(--ocean))] py-8 text-center font-sans text-sm text-white/70">
+      <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-6">
+        <div className="flex items-center gap-4">
+          <a
+            href="https://www.instagram.com/azumirh/"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Instagram da Azumi RH"
+            className="text-white/70 transition hover:text-white"
+          >
+            <Instagram className="h-5 w-5" />
+          </a>
+          <a
+            href="https://www.linkedin.com/company/azumirh"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="LinkedIn da Azumi RH"
+            className="text-white/70 transition hover:text-white"
+          >
+            <Linkedin className="h-5 w-5" />
+          </a>
+          <a
+            href="https://azumirh.com.br"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Site da Azumi RH"
+            className="text-white/70 transition hover:text-white"
+          >
+            <Globe className="h-5 w-5" />
+          </a>
+        </div>
+        <p>© 2026 Azumi RH · azumirh.com.br · contato@azumirh.com.br</p>
+      </div>
     </footer>
   );
 }
