@@ -3,14 +3,18 @@
  * Marca oficial: 2 círculos sobrepostos + wordmark "azumi RH"
  * Subtítulo opcional: "Connect" ou "Hub" em JetBrains Mono uppercase.
  *
- * Para ativar arquivos de imagem (PNG/SVG), coloque os arquivos em
- * src/assets/brand/ conforme README.md e descomente as linhas abaixo:
+ * Para ativar os arquivos de imagem, coloque em src/assets/brand/
+ * conforme README.md e descomente:
  *
- * import logoFull from "@/assets/brand/logo-full.svg";
- * import logoMark from "@/assets/brand/logo-mark.svg";
+ * import connectLogo from "@/assets/brand/connect-logo.svg";
+ * import connectLogoLight from "@/assets/brand/connect-logo-light.svg";
+ * import connectIcon from "@/assets/brand/connect-icon.svg";
+ * import hubLogo from "@/assets/brand/hub-logo.svg";
+ * import hubLogoLight from "@/assets/brand/hub-logo-light.svg";
+ * import hubIcon from "@/assets/brand/hub-icon.svg";
  *
- * Depois substitua <AzumiMark /> por <img src={logoMark} … />
- * e o wordmark por <img src={logoFull} … />.
+ * Depois, dentro de AzumiLogo, escolher o arquivo certo baseado nas
+ * props `product` ("Connect" | "Hub") e `light` (fundo escuro ou não).
  */
 
 interface AzumiMarkProps {
