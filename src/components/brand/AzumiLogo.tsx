@@ -1,30 +1,18 @@
-/**
- * Azumi Brand — v2.3
- * Marca oficial: 2 círculos sobrepostos + wordmark "azumi RH"
- * Subtítulo opcional: "Connect" ou "Hub" em JetBrains Mono uppercase.
- *
- * Para ativar os arquivos de imagem, coloque em src/assets/brand/
- * conforme README.md e descomente:
- *
- * import connectLogo from "@/assets/brand/connect-logo.svg";
- * import connectLogoLight from "@/assets/brand/connect-logo-light.svg";
- * import connectIcon from "@/assets/brand/connect-icon.svg";
- * import hubLogo from "@/assets/brand/hub-logo.svg";
- * import hubLogoLight from "@/assets/brand/hub-logo-light.svg";
- * import hubIcon from "@/assets/brand/hub-icon.svg";
- *
- * Depois, dentro de AzumiLogo, escolher o arquivo certo baseado nas
- * props `product` ("Connect" | "Hub") e `light` (fundo escuro ou não).
- */
+import connectLogo from "@/assets/brand/connect-logo.png";
+import connectLogoLight from "@/assets/brand/connect-logo-light.png";
+import connectIcon from "@/assets/brand/connect-icon.png";
+import hubLogo from "@/assets/brand/hub-logo.png";
+import hubLogoLight from "@/assets/brand/hub-logo-light.png";
+import hubIcon from "@/assets/brand/hub-icon.png";
 
 interface AzumiMarkProps {
   size?: number;
   className?: string;
 }
 
+/** SVG mark mantido para uso standalone se necessário. */
 export function AzumiMark({ size = 28, className }: AzumiMarkProps) {
   const id = `azumi-mark-grad-${size}`;
-  // Sobreposição ~25% — dois círculos do mesmo diâmetro
   const r = size / 2;
   const overlap = size * 0.25;
   const totalW = size * 2 - overlap;
@@ -51,9 +39,12 @@ export function AzumiMark({ size = 28, className }: AzumiMarkProps) {
 
 interface AzumiLogoProps {
   product?: "Connect" | "Hub";
+  /** true = logo sobre fundo escuro (usa variante light/branca) */
   light?: boolean;
   collapsed?: boolean;
   size?: number;
+  /** reservado para compatibilidade — sem efeito com logos PNG */
+  hideSubtitle?: boolean;
 }
 
 export function AzumiLogo({
@@ -63,30 +54,24 @@ export function AzumiLogo({
   size = 22,
 }: AzumiLogoProps) {
   if (collapsed) {
-    return <AzumiMark size={size + 6} />;
+    const icon = product === "Hub" ? hubIcon : connectIcon;
+    return (
+      <img
+        src={icon}
+        alt={product}
+        style={{ height: size + 10, width: size + 10, objectFit: "contain" }}
+      />
+    );
   }
-  const wordColor = light ? "text-white" : "text-foreground";
-  const subColor = light ? "text-white/70" : "text-muted-foreground";
+  const src =
+    product === "Hub"
+      ? light ? hubLogoLight : hubLogo
+      : light ? connectLogoLight : connectLogo;
   return (
-    <div className="flex items-center gap-2.5">
-      <AzumiMark size={size + 6} />
-      <div className="flex flex-col leading-none">
-        <div
-          className={`font-logo ${wordColor} flex items-baseline gap-1`}
-          style={{ fontSize: size, lineHeight: 1 }}
-        >
-          <span className="font-semibold lowercase tracking-tight">azumi</span>
-          <span className="brand-gradient font-normal italic uppercase" style={{ fontSize: size * 0.72 }}>
-            RH
-          </span>
-        </div>
-        <div
-          className={`mt-1 font-data uppercase ${subColor}`}
-          style={{ fontSize: 9, letterSpacing: "0.18em" }}
-        >
-          {product}
-        </div>
-      </div>
-    </div>
+    <img
+      src={src}
+      alt={`${product} by Azumi`}
+      style={{ height: size * 1.8, width: "auto", objectFit: "contain" }}
+    />
   );
 }

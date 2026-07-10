@@ -1,30 +1,32 @@
 # Azumi Brand Assets
 
-Coloque os arquivos de marca nesta pasta, com estes nomes exatos.
+Todos os arquivos são PNG de alta resolução. Não há vetorial (SVG) por enquanto.
 
 ## Connect (tons de azul)
 
-| Arquivo                  | Uso                                                         |
-|--------------------------|-------------------------------------------------------------|
-| `connect-logo.svg`       | Logo completo (ícone + texto), fundo claro                  |
-| `connect-logo-light.svg` | Logo completo, variante pra fundo escuro/navy               |
-| `connect-icon.svg`       | Só o ícone (círculos), sem texto — modo colapsado da sidebar |
-| `connect-logo.png`       | Fallback PNG do logo completo (2×, mín. 400×120 px)        |
-| `connect-icon.png`       | Fallback PNG do ícone (2×, mín. 160×160 px)                |
+| Arquivo                  | Dimensões   | Uso                                                          |
+|--------------------------|-------------|--------------------------------------------------------------|
+| `connect-logo.png`       | 1536×1024   | Logo horizontal (ícone + wordmark), para fundo escuro        |
+| `connect-logo-light.png` | 1536×1024   | Logo horizontal, variante para fundo escuro (texto claro)    |
+| `connect-icon.png`       | 2750×2750   | Só o ícone (círculos) — sidebar colapsada                    |
 
 ## Hub (tons de roxo)
 
-| Arquivo               | Uso                                        |
-|-----------------------|--------------------------------------------|
-| `hub-logo.svg`        | Logo completo, fundo claro                 |
-| `hub-logo-light.svg`  | Logo completo, variante pra fundo escuro   |
-| `hub-icon.svg`        | Só o ícone                                 |
-| `hub-logo.png`        | Fallback PNG do logo completo              |
-| `hub-icon.png`        | Fallback PNG do ícone                      |
+| Arquivo               | Dimensões   | Uso                                                          |
+|-----------------------|-------------|--------------------------------------------------------------|
+| `hub-logo.png`        | 1536×1024   | Logo horizontal, fundo claro                                 |
+| `hub-logo-light.png`  | 1536×1024   | Logo horizontal, variante para fundo escuro                  |
+| `hub-icon.png`        | 2750×2750   | Só o ícone — sidebar colapsada                               |
 
-Formato preferido: SVG (escala sem perda). PNG só como fallback se não tiver o vetorial.
+## Outros
 
-## Como ativar no componente
+| Arquivo           | Dimensões | Uso                              |
+|-------------------|-----------|----------------------------------|
+| `capa-vagas.png`  | 1536×1024 | Banner hero da página pública de vagas |
 
-Em `src/components/brand/AzumiLogo.tsx`, o bloco de comentário no topo
-mostra onde descomentar os imports assim que os arquivos acima estiverem aqui.
+## Prop `light` em `<AzumiLogo>`
+
+- `light={false}` (padrão) → usa `*-logo.png` — para sidebar/área com fundo claro
+- `light={true}` → usa `*-logo-light.png` — para sidebar escura, hero, fundo navy
+
+Para atualizar os arquivos, substitua diretamente mantendo os nomes exatos acima.

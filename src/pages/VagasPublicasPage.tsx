@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Building2, Heart, MapPin, Clock, DollarSign, Search, Lock, Zap, Instagram, Linkedin, Globe } from "lucide-react";
+import capaVagas from "@/assets/brand/capa-vagas.png";
 import {
   VAGAS_MOCK,
   NIVEL_LABEL,
@@ -122,9 +123,8 @@ export default function VagasPublicasPage() {
     <div className="min-h-screen bg-background">
       {/* ── HERO — capa única contínua, logo dentro dela (sem faixa separada) ── */}
       <section className="relative overflow-hidden px-6 pb-24 pt-6" style={{ minHeight: 420 }}>
-        {/* Foto de capa — troque a div abaixo por <img> quando tiver a foto real */}
-        <div className="absolute inset-0 bg-muted">
-          {/* <img src={fotoCapaVagas} alt="" className="h-full w-full object-cover" /> */}
+        <div className="absolute inset-0">
+          <img src={capaVagas} alt="" className="h-full w-full object-cover" />
         </div>
         <div className="absolute inset-0 bg-gradient-brand-bg opacity-[0.94]" />
         <div className="absolute inset-0 bg-black/15" />

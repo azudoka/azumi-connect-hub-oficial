@@ -163,7 +163,7 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
     >
       {/* Logo */}
       <div className="h-16 flex items-center px-4 border-b border-sidebar-border/60">
-        <AzumiLogo product="Connect" collapsed={collapsed} />
+        <AzumiLogo product="Connect" collapsed={collapsed} light />
         <button
           onClick={() => setCollapsed((c) => !c)}
           className="ml-auto h-7 w-7 rounded-md hover:bg-sidebar-accent flex items-center justify-center text-muted-foreground"
