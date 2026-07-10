@@ -75,7 +75,7 @@ export default function VagaPublicaDetalhePage() {
       setVaga({
         id: r.id,
         titulo: r.titulo,
-        empresa: r.empresa,
+        empresa: r.confidencial ? "Empresa confidencial" : r.empresa,
         logo: null,
         segmento: r.tipo ?? "—",
         nivel: r.nivel ?? "",
@@ -83,7 +83,8 @@ export default function VagaPublicaDetalhePage() {
         tipo_contrato: r.tipo_contrato ?? "",
         salario_de: r.salario_de,
         salario_ate: r.salario_ate,
-        salario_fixo: false,
+        salario_fixo: r.salario_fixo,
+        confidencial: r.confidencial,
         tem_comissao: r.tem_comissao ?? false,
         local_trabalho: r.local_trabalho ?? "",
         carga_horaria: r.carga_horaria ?? "",
@@ -117,7 +118,7 @@ export default function VagaPublicaDetalhePage() {
     { icon: GraduationCap, label: "Nível", value: NIVEL_LABEL[vaga.nivel] ?? vaga.nivel },
     { icon: Clock, label: "Carga horária", value: vaga.carga_horaria },
     { icon: Sun, label: "Turno", value: TURNO_LABEL[vaga.turno] ?? vaga.turno },
-    { icon: DollarSign, label: "Salário", value: formatSalario(vaga.salario_de, vaga.salario_ate) },
+    { icon: DollarSign, label: "Salário", value: formatSalario(vaga.salario_de, vaga.salario_ate, vaga.salario_fixo) },
   ].filter((d) => !!d.value);
 
   return (

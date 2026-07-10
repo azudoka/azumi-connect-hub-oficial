@@ -30,6 +30,8 @@ export type VagaSupabase = {
   nivel_urgencia: string | null;
   tem_comissao: boolean | null;
   sla_dias: number | null;
+  confidencial: boolean;
+  salario_fixo: boolean;
   excluida_em: string | null;    // ← encerrada_em
   motivo_exclusao: string | null;// ← motivo_encerramento
 };
@@ -78,6 +80,8 @@ function jsToVaga(row: any): VagaSupabase {
     nivel_urgencia: row.nivel_urgencia ?? null,
     tem_comissao: row.tem_comissao ?? null,
     sla_dias: row.prazo_entrega_dias ?? null,
+    confidencial: row.confidencial ?? false,
+    salario_fixo: row.salario_fixo ?? false,
     excluida_em: row.encerrada_em ?? null,
     motivo_exclusao: row.motivo_encerramento ?? null,
   };
@@ -105,6 +109,8 @@ export type CriarVagaInput = {
   nivel_urgencia?: string;
   tem_comissao?: boolean;
   sla_dias?: number;
+  confidencial?: boolean;
+  salario_fixo?: boolean;
 };
 
 // Converte CriarVagaInput → colunas de job_solicitations
@@ -130,6 +136,8 @@ function inputToJs(input: Partial<CriarVagaInput>): Record<string, unknown> {
   if (input.nivel_urgencia !== undefined) out.nivel_urgencia = input.nivel_urgencia ?? null;
   if (input.tem_comissao !== undefined) out.tem_comissao = input.tem_comissao;
   if (input.sla_dias !== undefined) out.prazo_entrega_dias = input.sla_dias;
+  if (input.confidencial !== undefined) out.confidencial = input.confidencial;
+  if (input.salario_fixo !== undefined) out.salario_fixo = input.salario_fixo;
   return out;
 }
 
@@ -195,6 +203,8 @@ export async function criarVaga(input: CriarVagaInput): Promise<VagaSupabase> {
       nivel_urgencia: input.nivel_urgencia ?? null,
       tem_comissao: input.tem_comissao ?? false,
       prazo_entrega_dias: input.sla_dias ?? 30,
+      confidencial: input.confidencial ?? false,
+      salario_fixo: input.salario_fixo ?? false,
       is_avulsa: true,
     })
     .select()

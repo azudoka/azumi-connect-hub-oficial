@@ -3072,6 +3072,8 @@ function EditVagaModal({
   const [nivelUrgencia, setNivelUrgencia] = useState(vaga.nivel_urgencia ?? "");
   const [temComissao, setTemComissao] = useState(vaga.tem_comissao ?? false);
   const [slaDias, setSlaDias] = useState(String(vaga.sla_dias ?? 30));
+  const [confidencial, setConfidencial] = useState(vaga.confidencial ?? false);
+  const [salarioFixo, setSalarioFixo] = useState(vaga.salario_fixo ?? false);
   const [saving, setSaving] = useState(false);
 
   const inputCls = "w-full h-9 px-3 rounded-md border border-border bg-background text-sm";
@@ -3101,6 +3103,8 @@ function EditVagaModal({
         nivel_urgencia: nivelUrgencia || undefined,
         tem_comissao: temComissao,
         sla_dias: parseInt(slaDias) || 30,
+        confidencial,
+        salario_fixo: salarioFixo,
       };
       await atualizarVaga(vaga.id, input);
       await onSaved();
@@ -3194,6 +3198,7 @@ function EditVagaModal({
           <Field label="Nível">
             <select value={nivel} onChange={(e) => setNivel(e.target.value)} className={selectCls}>
               <option value="">Selecione</option>
+              <option value="padrao">Padrão (sem senioridade definida)</option>
               <option value="estagio">Estágio</option>
               <option value="junior">Júnior</option>
               <option value="pleno">Pleno</option>
@@ -3230,13 +3235,21 @@ function EditVagaModal({
           </Field>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Salário de (R$)">
-            <input type="number" value={salarioDe} onChange={(e) => setSalarioDe(e.target.value)} placeholder="0" className={inputCls} />
-          </Field>
-          <Field label="Salário até (R$)">
-            <input type="number" value={salarioAte} onChange={(e) => setSalarioAte(e.target.value)} placeholder="0" className={inputCls} />
-          </Field>
+        <div>
+          <label className="mb-2 flex items-center gap-2 cursor-pointer text-xs">
+            <input type="checkbox" checked={salarioFixo} onChange={(e) => { setSalarioFixo(e.target.checked); if (e.target.checked) setSalarioAte(""); }} className="h-4 w-4 rounded" />
+            Salário fixo (não é faixa "a partir de")
+          </label>
+          <div className={`grid gap-3 ${salarioFixo ? "grid-cols-1" : "grid-cols-2"}`}>
+            <Field label={salarioFixo ? "Salário fixo (R$)" : "Salário de (R$)"}>
+              <input type="number" value={salarioDe} onChange={(e) => setSalarioDe(e.target.value)} placeholder="0" className={inputCls} />
+            </Field>
+            {!salarioFixo && (
+              <Field label="Salário até (R$)">
+                <input type="number" value={salarioAte} onChange={(e) => setSalarioAte(e.target.value)} placeholder="0" className={inputCls} />
+              </Field>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -3252,6 +3265,11 @@ function EditVagaModal({
             Tem comissão
           </label>
         </div>
+
+        <label className="flex items-center gap-2 cursor-pointer text-xs">
+          <input type="checkbox" checked={confidencial} onChange={(e) => setConfidencial(e.target.checked)} className="h-4 w-4 rounded" />
+          Empresa confidencial (oculta nome e logo na página pública)
+        </label>
 
         <div className="flex justify-end gap-2 pt-2 border-t border-border mt-2">
           <button onClick={onClose} disabled={saving} className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm disabled:opacity-50">

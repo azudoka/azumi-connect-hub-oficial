@@ -17,7 +17,7 @@ function supabaseToPublica(r: VagaSupabase): VagaPublica {
   return {
     id: r.id,
     titulo: r.titulo,
-    empresa: r.empresa,
+    empresa: r.confidencial ? "Empresa confidencial" : r.empresa,
     logo: null,
     segmento: r.tipo ?? "—",
     nivel: r.nivel ?? "",
@@ -25,7 +25,8 @@ function supabaseToPublica(r: VagaSupabase): VagaPublica {
     tipo_contrato: r.tipo_contrato ?? "",
     salario_de: r.salario_de,
     salario_ate: r.salario_ate,
-    salario_fixo: false,
+    salario_fixo: r.salario_fixo,
+    confidencial: r.confidencial,
     tem_comissao: r.tem_comissao ?? false,
     local_trabalho: r.local_trabalho ?? "",
     carga_horaria: r.carga_horaria ?? "",
@@ -214,7 +215,7 @@ export default function VagasPublicasPage() {
 
                   <div className="mt-3 space-y-1.5 text-sm text-slate-600">
                     <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-slate-400" /> {v.local_trabalho}</div>
-                    <div className="flex items-center gap-2"><DollarSign className="h-3.5 w-3.5 text-slate-400" /> {formatSalario(v.salario_de, v.salario_ate)}</div>
+                    <div className="flex items-center gap-2"><DollarSign className="h-3.5 w-3.5 text-slate-400" /> {formatSalario(v.salario_de, v.salario_ate, v.salario_fixo)}</div>
                     <div className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 text-slate-400" /> {v.carga_horaria}</div>
                   </div>
 

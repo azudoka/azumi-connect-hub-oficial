@@ -849,6 +849,8 @@ export default function AtracaoLista() {
                     carga_horaria: pubCarga.trim() || undefined,
                     salario_de: pubACombinar ? undefined : (pubSalDe ? Number(pubSalDe) : undefined),
                     salario_ate: pubACombinar ? undefined : (pubSalAte ? Number(pubSalAte) : undefined),
+                    confidencial: pubConfidencial,
+                    salario_fixo: !pubACombinar && !!pubSalDe && !pubSalAte,
                   });
                   if (pubPublicar) {
                     await publicarVaga(vagaCriada.id);

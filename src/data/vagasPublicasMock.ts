@@ -10,6 +10,7 @@ export type VagaPublica = {
   salario_de: number | null;
   salario_ate: number | null;
   salario_fixo: boolean;
+  confidencial: boolean;
   tem_comissao: boolean;
   local_trabalho: string;
   carga_horaria: string;
@@ -33,6 +34,7 @@ export const VAGAS_MOCK: VagaPublica[] = [
     salario_de: 4500,
     salario_ate: 6000,
     salario_fixo: false,
+    confidencial: false,
     tem_comissao: false,
     local_trabalho: "Curitiba, PR",
     carga_horaria: "44h semanais",
@@ -55,6 +57,7 @@ export const VAGAS_MOCK: VagaPublica[] = [
     salario_de: 8000,
     salario_ate: 12000,
     salario_fixo: false,
+    confidencial: false,
     tem_comissao: true,
     local_trabalho: "São Paulo, SP",
     carga_horaria: "44h semanais",
@@ -77,6 +80,7 @@ export const VAGAS_MOCK: VagaPublica[] = [
     salario_de: 1800,
     salario_ate: 2200,
     salario_fixo: false,
+    confidencial: false,
     tem_comissao: false,
     local_trabalho: "Curitiba, PR",
     carga_horaria: "40h semanais",
@@ -99,6 +103,7 @@ export const VAGAS_MOCK: VagaPublica[] = [
     salario_de: 1200,
     salario_ate: null,
     salario_fixo: true,
+    confidencial: false,
     tem_comissao: false,
     local_trabalho: "Remoto",
     carga_horaria: "30h semanais",
@@ -121,6 +126,7 @@ export const VAGAS_MOCK: VagaPublica[] = [
     salario_de: 7000,
     salario_ate: 9000,
     salario_fixo: false,
+    confidencial: false,
     tem_comissao: false,
     local_trabalho: "Florianópolis, SC",
     carga_horaria: "44h semanais",
@@ -143,6 +149,7 @@ export const VAGAS_MOCK: VagaPublica[] = [
     salario_de: 1800,
     salario_ate: 2000,
     salario_fixo: false,
+    confidencial: false,
     tem_comissao: false,
     local_trabalho: "Curitiba, PR",
     carga_horaria: "40h semanais",
@@ -191,7 +198,8 @@ export function formatBRL(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 }
 
-export function formatSalario(de: number | null, ate: number | null) {
+export function formatSalario(de: number | null, ate: number | null, salario_fixo?: boolean) {
+  if (salario_fixo && de) return formatBRL(de);
   if (de && ate) return `${formatBRL(de)} – ${formatBRL(ate)}`;
   if (de) return `A partir de ${formatBRL(de)}`;
   if (ate) return `Até ${formatBRL(ate)}`;
