@@ -12,6 +12,7 @@ import {
 } from "@/data/vagasPublicasMock";
 import { listarVagasPublicadas, type VagaSupabase } from "@/services/vagasService";
 import CandidaturaModal from "@/components/candidatura/CandidaturaModal";
+import { AzumiLogo } from "@/components/brand/AzumiLogo";
 
 function supabaseToPublica(r: VagaSupabase): VagaPublica {
   return {
@@ -37,28 +38,16 @@ function supabaseToPublica(r: VagaSupabase): VagaPublica {
   };
 }
 
-const NAVY = "#031D38";
-const BLUE = "#034C8B";
-
 function Header() {
   return (
-    <header
-      className="sticky top-0 z-30 w-full"
-      style={{ background: NAVY }}
-    >
+    <header className="sticky top-0 z-30 w-full bg-[hsl(var(--ocean))]">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <div
-          className="text-xl font-semibold tracking-tight"
-          style={{ fontFamily: "Poppins, Urbanist, system-ui, sans-serif" }}
-        >
-          <span className="text-white">azumi </span>
-          <span style={{ color: "#93C5FD" }}>RH</span>
-        </div>
-        <a
+        <AzumiLogo light product="Connect" size={20} />
+        
           href="https://azumirh.com.br"
           target="_blank"
           rel="noreferrer"
-          className="text-sm text-white/80 hover:text-white"
+          className="font-sans text-sm text-white/80 hover:text-white"
         >
           azumirh.com.br
         </a>
@@ -69,14 +58,11 @@ function Header() {
 
 function Footer() {
   return (
-    <footer style={{ background: NAVY }} className="mt-16 py-6 text-center text-sm text-white/70">
+    <footer className="mt-16 bg-[hsl(var(--ocean))] py-6 text-center font-sans text-sm text-white/70">
       © 2026 Azumi RH · azumirh.com.br · contato@azumirh.com.br
     </footer>
   );
 }
-
-
-
 
 export default function VagasPublicasPage() {
   const [q, setQ] = useState("");
@@ -120,37 +106,44 @@ export default function VagasPublicasPage() {
   }
 
   return (
-    <div style={{ background: "#F5F7FA", minHeight: "100vh" }}>
+    <div className="min-h-screen bg-background">
       <Header />
 
       {/* Hero */}
-      <section
-        className="relative px-6 pb-24 pt-14"
-        style={{ background: `linear-gradient(135deg, ${NAVY}, ${BLUE})`, minHeight: 320 }}
-      >
+      <section className="relative bg-gradient-brand-bg px-6 pb-24 pt-14" style={{ minHeight: 320 }}>
         <div className="mx-auto max-w-5xl text-center text-white">
-          <h1 className="text-3xl font-semibold sm:text-4xl">Encontre sua próxima oportunidade</h1>
-          <p className="mt-2 text-white/80">Vagas selecionadas pela Azumi RH</p>
+          <h1 className="font-display text-3xl font-semibold sm:text-4xl">
+            Encontre sua próxima oportunidade
+          </h1>
+          <p className="mt-2 font-sans text-white/80">Vagas selecionadas pela Azumi RH</p>
         </div>
 
-        <div className="mx-auto mt-8 max-w-4xl rounded-xl bg-white p-3 shadow-xl sm:p-4">
+        <div className="mx-auto mt-8 max-w-4xl rounded-2xl bg-card p-3 shadow-elevated sm:p-4">
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_180px_180px_auto]">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Qual vaga você procura?"
-                className="w-full rounded-lg border border-slate-200 py-2.5 pl-9 pr-3 text-sm focus:border-slate-400 focus:outline-none"
+                className="w-full rounded-lg border border-border bg-background py-2.5 pl-9 pr-3 font-sans text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </div>
-            <select value={modalidade} onChange={(e) => setModalidade(e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-slate-400 focus:outline-none">
+            <select
+              value={modalidade}
+              onChange={(e) => setModalidade(e.target.value)}
+              className="rounded-lg border border-border bg-background px-3 py-2.5 font-sans text-sm text-foreground focus:border-primary focus:outline-none"
+            >
               <option value="">Todas modalidades</option>
               <option value="presencial">Presencial</option>
               <option value="remoto">Remoto</option>
               <option value="hibrido">Híbrido</option>
             </select>
-            <select value={nivel} onChange={(e) => setNivel(e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-slate-400 focus:outline-none">
+            <select
+              value={nivel}
+              onChange={(e) => setNivel(e.target.value)}
+              className="rounded-lg border border-border bg-background px-3 py-2.5 font-sans text-sm text-foreground focus:border-primary focus:outline-none"
+            >
               <option value="">Todos níveis</option>
               <option value="estagio">Estágio</option>
               <option value="junior">Júnior</option>
@@ -158,7 +151,7 @@ export default function VagasPublicasPage() {
               <option value="senior">Sênior</option>
               <option value="especialista">Especialista</option>
             </select>
-            <button onClick={scrollToList} className="rounded-lg px-5 py-2.5 text-sm font-medium text-white" style={{ background: BLUE }}>
+            <button onClick={scrollToList} className="btn-primary px-5 py-2.5 text-sm">
               Buscar vagas
             </button>
           </div>
@@ -168,102 +161,139 @@ export default function VagasPublicasPage() {
       {/* Lista */}
       <section id="vagas-lista" className="mx-auto -mt-10 max-w-6xl px-6">
         {loadingPublicas && (
-          <div className="flex justify-center py-20 text-slate-400 gap-2">
-            <span className="h-5 w-5 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+          <div className="flex justify-center gap-2 py-20 font-sans text-muted-foreground">
+            <span className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
             Carregando vagas…
           </div>
         )}
         {!loadingPublicas && vagasSupabase.length === 0 && (
-          <div className="py-20 text-center text-slate-500">
-            <p className="text-lg font-medium">Nenhuma vaga disponível no momento.</p>
+          <div className="py-20 text-center font-sans text-muted-foreground">
+            <p className="text-lg font-medium text-foreground">Nenhuma vaga disponível no momento.</p>
             <p className="mt-1 text-sm">Volte em breve — novas oportunidades chegam regularmente.</p>
           </div>
         )}
         {!loadingPublicas && vagasSupabase.length > 0 && (
-        <>
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold text-slate-800">{filtradas.length} vagas encontradas</h2>
-          <select value={contrato} onChange={(e) => setContrato(e.target.value)} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm">
-            <option value="">Todos contratos</option>
-            <option value="clt">CLT</option>
-            <option value="pj">PJ</option>
-            <option value="estagio">Estágio</option>
-            <option value="temporario">Temporário</option>
-          </select>
-        </div>
+          <>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <h2 className="font-display text-lg font-semibold text-foreground">
+                {filtradas.length} vagas encontradas
+              </h2>
+              <select
+                value={contrato}
+                onChange={(e) => setContrato(e.target.value)}
+                className="rounded-lg border border-border bg-card px-3 py-2 font-sans text-sm text-foreground"
+              >
+                <option value="">Todos contratos</option>
+                <option value="clt">CLT</option>
+                <option value="pj">PJ</option>
+                <option value="estagio">Estágio</option>
+                <option value="temporario">Temporário</option>
+              </select>
+            </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtradas.map((v) => {
-            const urgente = v.nivel_urgencia === "urgente";
-            const fav = favoritas.has(v.id);
-            return (
-              <article key={v.id} className="relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md flex flex-col">
-                {urgente && <div className="h-1 w-full bg-red-500" />}
-                <div className="flex flex-1 flex-col p-5">
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
-                      <Building2 className="h-5 w-5" />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {filtradas.map((v) => {
+                const urgente = v.nivel_urgencia === "urgente";
+                const fav = favoritas.has(v.id);
+                return (
+                  <article
+                    key={v.id}
+                    className="card-hover relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-card"
+                  >
+                    {urgente && <div className="h-1 w-full bg-destructive" />}
+                    <div className="flex flex-1 flex-col p-5">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                          <Building2 className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="truncate font-display font-semibold text-foreground">{v.titulo}</h3>
+                          <p className="truncate font-sans text-sm text-muted-foreground">{v.empresa}</p>
+                        </div>
+                        <button
+                          onClick={() => toggleFav(v.id)}
+                          aria-label="Salvar"
+                          className="text-muted-foreground hover:text-destructive"
+                        >
+                          <Heart className={`h-5 w-5 ${fav ? "fill-destructive text-destructive" : ""}`} />
+                        </button>
+                      </div>
+
+                      <div className="mt-3 space-y-1.5 font-sans text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-3.5 w-3.5" /> {v.local_trabalho}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="h-3.5 w-3.5" />{" "}
+                          {formatSalario(v.salario_de, v.salario_ate, v.salario_fixo)}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-3.5 w-3.5" /> {v.carga_horaria}
+                        </div>
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        <span className="rounded-full bg-primary/10 px-2 py-0.5 font-sans text-xs font-medium text-primary">
+                          {MODALIDADE_LABEL[v.modalidade] ?? v.modalidade}
+                        </span>
+                        <span className="rounded-full bg-muted px-2 py-0.5 font-sans text-xs font-medium text-muted-foreground">
+                          {NIVEL_LABEL[v.nivel] ?? v.nivel}
+                        </span>
+                        <span className="rounded-full bg-muted px-2 py-0.5 font-sans text-xs font-medium text-muted-foreground">
+                          {CONTRATO_LABEL[v.tipo_contrato] ?? v.tipo_contrato}
+                        </span>
+                        {urgente && (
+                          <span className="rounded-full bg-destructive/10 px-2 py-0.5 font-sans text-xs font-medium text-destructive">
+                            Urgente
+                          </span>
+                        )}
+                        {v.tem_comissao && (
+                          <span className="rounded-full bg-success/10 px-2 py-0.5 font-sans text-xs font-medium text-success">
+                            + Comissão
+                          </span>
+                        )}
+                      </div>
+
+                      {v.descricao && (
+                        <p className="mt-3 line-clamp-2 font-sans text-sm text-muted-foreground">
+                          {v.descricao}
+                        </p>
+                      )}
+
+                      <div className="mt-4 flex items-center justify-between border-t border-border pt-3 font-sans text-sm">
+                        <span className="text-muted-foreground">{diasAtras(v.created_at)}</span>
+                        <Link to={`/vagas/${v.id}`} className="font-medium text-primary">
+                          Ver detalhes →
+                        </Link>
+                      </div>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="truncate font-semibold text-slate-900">{v.titulo}</h3>
-                      <p className="truncate text-sm text-slate-500">{v.empresa}</p>
-                    </div>
-                    <button onClick={() => toggleFav(v.id)} aria-label="Salvar" className="text-slate-400 hover:text-red-500">
-                      <Heart className={`h-5 w-5 ${fav ? "fill-red-500 text-red-500" : ""}`} />
-                    </button>
-                  </div>
+                  </article>
+                );
+              })}
+            </div>
 
-                  <div className="mt-3 space-y-1.5 text-sm text-slate-600">
-                    <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-slate-400" /> {v.local_trabalho}</div>
-                    <div className="flex items-center gap-2"><DollarSign className="h-3.5 w-3.5 text-slate-400" /> {formatSalario(v.salario_de, v.salario_ate, v.salario_fixo)}</div>
-                    <div className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 text-slate-400" /> {v.carga_horaria}</div>
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">{MODALIDADE_LABEL[v.modalidade] ?? v.modalidade}</span>
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">{NIVEL_LABEL[v.nivel] ?? v.nivel}</span>
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">{CONTRATO_LABEL[v.tipo_contrato] ?? v.tipo_contrato}</span>
-                    {urgente && <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">Urgente</span>}
-                    {v.tem_comissao && <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">+ Comissão</span>}
-                  </div>
-
-                  {v.descricao && (
-                    <p className="mt-3 text-sm text-slate-600 line-clamp-2">{v.descricao}</p>
-                  )}
-
-                  <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-sm">
-                    <span className="text-slate-400">{diasAtras(v.created_at)}</span>
-                    <Link to={`/vagas/${v.id}`} className="font-medium" style={{ color: BLUE }}>
-                      Ver detalhes →
-                    </Link>
-                  </div>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-
-        {filtradas.length === 0 && (
-          <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center text-slate-500">
-            Nenhuma vaga encontrada com esses filtros.
-          </div>
-        )}
-        </>
+            {filtradas.length === 0 && (
+              <div className="rounded-2xl border border-dashed border-border bg-card p-12 text-center font-sans text-muted-foreground">
+                Nenhuma vaga encontrada com esses filtros.
+              </div>
+            )}
+          </>
         )}
       </section>
 
       {/* Banco de talentos */}
       <section className="mx-auto mt-14 max-w-6xl px-6">
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-blue-50/60 p-8 sm:p-10">
+        <div className="overflow-hidden rounded-2xl border border-border bg-primary/5 p-8 sm:p-10">
           <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
             <div>
-              <h3 className="text-xl font-semibold text-slate-900">Não encontrou a vaga ideal?</h3>
-              <p className="mt-1 text-sm text-slate-600">Cadastre seu currículo em nosso banco de talentos e receba oportunidades alinhadas ao seu perfil.</p>
+              <h3 className="font-display text-xl font-semibold text-foreground">
+                Não encontrou a vaga ideal?
+              </h3>
+              <p className="mt-1 font-sans text-sm text-muted-foreground">
+                Cadastre seu currículo em nosso banco de talentos e receba oportunidades alinhadas ao seu perfil.
+              </p>
             </div>
-            <button
-              onClick={() => setModalBanco(true)}
-              className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50"
-            >
+            <button onClick={() => setModalBanco(true)} className="btn-outline-brand px-5 py-2.5 text-sm">
               Cadastrar no banco de talentos
             </button>
           </div>
