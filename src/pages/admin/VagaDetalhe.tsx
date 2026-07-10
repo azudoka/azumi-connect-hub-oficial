@@ -4569,7 +4569,7 @@ function CandidatoDetailSheet({
     };
   });
 
-  return (
+  return createPortal(
     <>
       {/* Backdrop — z-30 para ficar abaixo dos modais (z-50) */}
       <div
@@ -5219,7 +5219,8 @@ function CandidatoDetailSheet({
         </ModalShell>
       )}
       </div>
-    </>
+    </>,
+    document.body
   );
 }
 

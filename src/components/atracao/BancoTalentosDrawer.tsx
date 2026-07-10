@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { X, Search, Mail, Phone, MapPin, GraduationCap, Briefcase, Calendar, Link2, AlertCircle, Eye, Link as LinkIcon } from "lucide-react";
 import {
   STATUS_LABEL,
@@ -132,7 +133,7 @@ export default function BancoTalentosDrawer({ open, onClose }: Props) {
 
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[90] flex justify-end bg-black/50">
       <div className="relative flex h-full w-full max-w-5xl flex-col bg-background shadow-elevated">
         {/* Header */}
@@ -276,7 +277,8 @@ export default function BancoTalentosDrawer({ open, onClose }: Props) {
           <DrawerDetalhe talento={selecionado} onClose={() => setSelecionado(null)} />
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
