@@ -3,6 +3,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { SlaBar } from "@/components/SlaBar";
 import { vagas as vagasMock, type StatusKey } from "@/data/mock";
 import { criarVaga, publicarVaga, listarVagas, type VagaSupabase } from "@/services/vagasService";
+import { supabase } from "@/integrations/supabase/client";
 import { Plus, LayoutGrid, List, Filter, Info, AlertTriangle, Users, ChevronDown, ChevronRight } from "lucide-react";
 
 function supabaseToLocal(r: VagaSupabase): VagaLocal {
@@ -26,6 +27,7 @@ function supabaseToLocal(r: VagaSupabase): VagaLocal {
     consultor: r.consultor ?? "Não atribuído",
     modalidade: r.modalidade ?? "—",
     beneficios: r.beneficios ?? [],
+    is_avulsa: r.is_avulsa,
   } as unknown as VagaLocal;
 }
 import BancoTalentosDrawer from "@/components/atracao/BancoTalentosDrawer";
@@ -83,7 +85,7 @@ const STATUS_ORDEM: Record<string, number> = {
   cancelada: 4,
 };
 
-type VagaLocal = (typeof vagasMock)[number] & { etapaFunil: FunilEtapa };
+type VagaLocal = (typeof vagasMock)[number] & { etapaFunil: FunilEtapa; is_avulsa?: boolean };
 
 export default function AtracaoLista() {
   const [view, setView] = useState<"kanban" | "list">("kanban");
@@ -137,6 +139,9 @@ export default function AtracaoLista() {
   ] as const;
 
   // Estados do form
+  const [tipoEmpresa, setTipoEmpresa] = useState<"avulsa" | "cadastrada">("avulsa");
+  const [empresasCadastradas, setEmpresasCadastradas] = useState<{ id: string; name: string }[]>([]);
+  const [empresaCadastradaId, setEmpresaCadastradaId] = useState("");
   const [nTitulo, setNTitulo] = useState("");
   const [nEmpresa, setNEmpresa] = useState("");
   const [nFilial, setNFilial] = useState("");
@@ -162,7 +167,14 @@ export default function AtracaoLista() {
   const [pubACombinar, setPubACombinar] = useState(false);
   const [pubDescricao, setPubDescricao] = useState("");
 
+  useEffect(() => {
+    if (!novaVagaOpen) return;
+    supabase.from("companies").select("id, name").eq("status", "active").order("name")
+      .then(({ data }) => setEmpresasCadastradas(data ?? []));
+  }, [novaVagaOpen]);
+
   function resetNovaVaga() {
+    setTipoEmpresa("avulsa"); setEmpresaCadastradaId("");
     setNTitulo(""); setNEmpresa(""); setNFilial("");
     setNTipo("operacional"); setNModalidade("presencial");
     setNPosicoes("1"); setNBeneficios([]); setNOutrosBeneficios(""); setNDescricao("");
@@ -415,7 +427,12 @@ export default function AtracaoLista() {
                               </Link>
                               <StatusBadge status={v.status} className="shrink-0" />
                             </div>
-                            <div className="text-[11px] text-muted-foreground mt-1">{v.empresa}</div>
+                            <div className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1.5">
+                              {v.empresa}
+                              {v.is_avulsa && (
+                                <span className="rounded-full border border-border bg-muted px-1.5 py-px text-[9px] font-medium uppercase tracking-wide text-muted-foreground">Avulso</span>
+                              )}
+                            </div>
                             <div className="mt-3"><SlaBar percent={v.sla} /></div>
                             {critico && (
                               <div className="mt-2 inline-flex items-center gap-1 rounded-full border border-warning/30 bg-warning/10 px-2 py-0.5 text-[10px] text-warning font-medium">
@@ -453,7 +470,14 @@ export default function AtracaoLista() {
                       {v.titulo}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">{v.empresa}</td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    <span className="flex items-center gap-1.5">
+                      {v.empresa}
+                      {v.is_avulsa && (
+                        <span className="rounded-full border border-border bg-muted px-1.5 py-px text-[9px] font-medium uppercase tracking-wide text-muted-foreground">Avulso</span>
+                      )}
+                    </span>
+                  </td>
                   <td className="px-4 py-3">{FUNIL_ETAPA_LABEL[v.etapaFunil]}</td>
                   <td className="px-4 py-3"><StatusBadge status={v.status} /></td>
                   <td className="px-4 py-3"><SlaBar percent={v.sla} /></td>
@@ -496,7 +520,14 @@ export default function AtracaoLista() {
                           {v.titulo}
                         </Link>
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">{v.empresa}</td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        <span className="flex items-center gap-1.5">
+                          {v.empresa}
+                          {v.is_avulsa && (
+                            <span className="rounded-full border border-border bg-muted px-1.5 py-px text-[9px] font-medium uppercase tracking-wide text-muted-foreground">Avulso</span>
+                          )}
+                        </span>
+                      </td>
                       <td className="px-4 py-3">{FUNIL_ETAPA_LABEL[v.etapaFunil]}</td>
                       <td className="px-4 py-3"><StatusBadge status={v.status} /></td>
                       <td className="px-4 py-3"><SlaBar percent={v.sla} /></td>
@@ -536,16 +567,51 @@ export default function AtracaoLista() {
               />
             </div>
 
+            {/* Toggle: Empresa cadastrada vs Cliente avulso */}
+            <div className="space-y-3">
+              <Label>Tipo de cliente *</Label>
+              <div className="flex gap-2">
+                {(["avulsa", "cadastrada"] as const).map((tipo) => (
+                  <button
+                    key={tipo}
+                    type="button"
+                    onClick={() => { setTipoEmpresa(tipo); setEmpresaCadastradaId(""); setNEmpresa(""); }}
+                    className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                      tipoEmpresa === tipo
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border bg-background text-muted-foreground hover:bg-secondary"
+                    }`}
+                  >
+                    {tipo === "avulsa" ? "Cliente avulso" : "Empresa cadastrada"}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Empresa e Filial */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="nEmpresa">Empresa *</Label>
-                <Input
-                  id="nEmpresa"
-                  value={nEmpresa}
-                  onChange={(e) => setNEmpresa(e.target.value)}
-                  placeholder="Nome da empresa"
-                />
+                {tipoEmpresa === "cadastrada" ? (
+                  <select
+                    id="nEmpresa"
+                    value={empresaCadastradaId}
+                    onChange={(e) => setEmpresaCadastradaId(e.target.value)}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="">Selecione a empresa…</option>
+                    {empresasCadastradas.map((e) => (
+                      <option key={e.id} value={e.id}>{e.name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <Input
+                    id="nEmpresa"
+                    value={nEmpresa}
+                    onChange={(e) => setNEmpresa(e.target.value)}
+                    placeholder="Nome da empresa"
+                  />
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="nFilial">Filial</Label>
@@ -822,7 +888,7 @@ export default function AtracaoLista() {
             </Button>
             <Button
               className="rounded-full"
-              disabled={!nTitulo.trim() || !nEmpresa.trim() || huntBloqueado}
+              disabled={!nTitulo.trim() || (tipoEmpresa === "avulsa" ? !nEmpresa.trim() : !empresaCadastradaId) || huntBloqueado}
               onClick={async () => {
                 const titulo = nTitulo.trim();
                 const outrosExtras = nOutrosBeneficios
@@ -836,7 +902,9 @@ export default function AtracaoLista() {
                 try {
                   const vagaCriada = await criarVaga({
                     titulo,
-                    empresa: nEmpresa.trim(),
+                    is_avulsa: tipoEmpresa === "avulsa",
+                    empresa: tipoEmpresa === "avulsa" ? nEmpresa.trim() : "",
+                    empresa_id: tipoEmpresa === "cadastrada" ? empresaCadastradaId : undefined,
                     filial: nFilial.trim() || undefined,
                     tipo: nTipo || undefined,
                     modalidade: pubModalidade || nModalidade || undefined,

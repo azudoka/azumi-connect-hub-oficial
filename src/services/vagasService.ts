@@ -32,6 +32,7 @@ export type VagaSupabase = {
   sla_dias: number | null;
   confidencial: boolean;
   salario_fixo: boolean;
+  is_avulsa: boolean;
   excluida_em: string | null;    // ← encerrada_em
   motivo_exclusao: string | null;// ← motivo_encerramento
 };
@@ -82,6 +83,7 @@ function jsToVaga(row: any): VagaSupabase {
     sla_dias: row.prazo_entrega_dias ?? null,
     confidencial: row.confidencial ?? false,
     salario_fixo: row.salario_fixo ?? false,
+    is_avulsa: row.is_avulsa ?? true,
     excluida_em: row.encerrada_em ?? null,
     motivo_exclusao: row.motivo_encerramento ?? null,
   };
@@ -111,6 +113,7 @@ export type CriarVagaInput = {
   sla_dias?: number;
   confidencial?: boolean;
   salario_fixo?: boolean;
+  is_avulsa?: boolean;
 };
 
 // Converte CriarVagaInput → colunas de job_solicitations
@@ -138,6 +141,7 @@ function inputToJs(input: Partial<CriarVagaInput>): Record<string, unknown> {
   if (input.sla_dias !== undefined) out.prazo_entrega_dias = input.sla_dias;
   if (input.confidencial !== undefined) out.confidencial = input.confidencial;
   if (input.salario_fixo !== undefined) out.salario_fixo = input.salario_fixo;
+  if (input.is_avulsa !== undefined) out.is_avulsa = input.is_avulsa;
   return out;
 }
 
@@ -182,7 +186,9 @@ export async function criarVaga(input: CriarVagaInput): Promise<VagaSupabase> {
     .insert({
       cargo: input.titulo,
       public_titulo: input.titulo,
-      avulsa_empresa_nome: input.empresa,
+      is_avulsa: input.is_avulsa ?? true,
+      avulsa_empresa_nome: (input.is_avulsa ?? true) ? (input.empresa ?? null) : null,
+      company_id: (input.is_avulsa ?? true) ? null : (input.empresa_id ?? null),
       branch_id: input.filial ?? null,
       tipo_vaga: input.tipo ?? null,
       modalidade: input.modalidade ?? "presencial",
@@ -205,7 +211,6 @@ export async function criarVaga(input: CriarVagaInput): Promise<VagaSupabase> {
       prazo_entrega_dias: input.sla_dias ?? 30,
       confidencial: input.confidencial ?? false,
       salario_fixo: input.salario_fixo ?? false,
-      is_avulsa: true,
     })
     .select()
     .single();
