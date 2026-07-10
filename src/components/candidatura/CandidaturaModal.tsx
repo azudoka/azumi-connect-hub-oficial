@@ -6,9 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 
 const EMAIL_API = "https://azumi-email-api.vercel.app/api/send-email";
 
-const NAVY = "#031D38";
-const BLUE = "#034C8B";
-
 export type CandidaturaModo = "vaga" | "banco";
 
 interface Props {
@@ -37,7 +34,6 @@ interface Cadastro {
   curriculo: File | null;
   mensagem: string;
   aceitePrivacidade: boolean;
-  // banco de talentos:
   contratoDesejado: string;
   disponibilidade: string;
 }
@@ -81,9 +77,6 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
   const [c, setC] = useState<Cadastro>(CADASTRO_INIT);
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
-  const [cpfEncontrado, setCpfEncontrado] = useState<{
-    nome: string; email: string; telefone: string; cidade: string | null; escolaridade: string | null; linkedin: string | null;
-  } | null>(null);
 
   if (!open) return null;
 
@@ -95,23 +88,7 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
     setStep(1);
     setC(CADASTRO_INIT);
     setErro("");
-    setCpfEncontrado(null);
     onClose();
-  }
-
-  async function verificarCpfExistente(cpfDigitado: string) {
-    const cpfLimpo = cpfDigitado.replace(/\D/g, "");
-    if (cpfLimpo.length < 11) return;
-    const { data } = await supabase
-      .from("candidates")
-      .select("nome, email, telefone, cidade, escolaridade, linkedin")
-      .eq("cpf", cpfDigitado)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (data) {
-      setCpfEncontrado(data);
-    }
   }
 
   function validarStep1(): string {
@@ -158,25 +135,6 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
       }
     }
 
-    let fotoUrl: string | null = null;
-    if (c.foto) {
-      const ext = c.foto.name.split(".").pop() ?? "jpg";
-      const path = `fotos/${Date.now()}_${c.nome.replace(/\s+/g, "_")}.${ext}`;
-      const { data: upData, error: upError } = await supabase.storage
-        .from("public-applications")
-        .upload(path, c.foto, { upsert: false });
-      if (upError) {
-        console.error("[foto] storage:", upError.message);
-      } else if (upData) {
-        const { data: urlData } = supabase.storage.from("public-applications").getPublicUrl(upData.path);
-        fotoUrl = urlData.publicUrl;
-      }
-    }
-
-    // Inserção em candidates (tabela principal — migração Fase A)
-    // DISC (scores/perfilDim) não tem colunas diretas em candidates —
-    // candidate_profile_id seria o lugar correto, mas requer criar um perfil separado.
-    // Por ora os scores ficam só no e-mail de notificação (abaixo).
     const row = {
       job_id: vagaId ?? null,
       nome: c.nome,
@@ -184,7 +142,7 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
       telefone: c.telefone,
       cpf: c.cpf || null,
       data_nascimento: c.nascimento || null,
-      cidade: c.cidadeEstado || null, // candidates.cidade (só cidade; "UF" vai junto no texto)
+      cidade: c.cidadeEstado || null,
       bairro: c.bairro || null,
       escolaridade: c.escolaridade || null,
       possui_filhos: c.filhos || null,
@@ -194,7 +152,6 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
       observacoes: c.mensagem || null,
       curriculo_nome: c.curriculo?.name ?? null,
       curriculo_url: curriculoUrl,
-      foto_url: fotoUrl,
       disponibilidade_inicio: modo === "banco" ? (c.disponibilidade || null) : null,
       banco_talentos: modo === "banco",
       etapa_azumi: "recebido",
@@ -275,21 +232,24 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-stretch justify-center bg-black/70 sm:items-center sm:p-6 overflow-y-auto">
-      <div className="relative flex w-full max-w-4xl flex-col bg-white sm:rounded-2xl sm:my-6 sm:max-h-[calc(100vh-3rem)]">
-        {/* Overlay de envio */}
+    <div className="fixed inset-0 z-[100] flex items-stretch justify-center overflow-y-auto bg-black/70 sm:items-center sm:p-6">
+      <div className="relative flex w-full max-w-4xl flex-col bg-card sm:my-6 sm:max-h-[calc(100vh-3rem)] sm:rounded-2xl">
         {enviando && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 rounded-2xl bg-white/90">
-            <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
-            <p className="text-sm text-slate-600">Enviando candidatura…</p>
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 rounded-2xl bg-card/90">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <p className="font-sans text-sm text-muted-foreground">Enviando candidatura…</p>
           </div>
         )}
 
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4" style={{ background: NAVY, color: "#fff" }}>
+        <div className="flex items-center justify-between border-b border-border bg-[hsl(var(--ocean))] px-6 py-4 text-white sm:rounded-t-2xl">
           <div className="min-w-0">
-            <p className="text-xs uppercase tracking-wider text-white/70">{modo === "banco" ? "Banco de talentos" : "Candidatura"}</p>
-            <h2 className="truncate text-base font-semibold">{vagaTitulo ?? "Entre para o banco de talentos Azumi"}</h2>
+            <p className="font-sans text-xs uppercase tracking-wider text-white/70">
+              {modo === "banco" ? "Banco de talentos" : "Candidatura"}
+            </p>
+            <h2 className="truncate font-display text-base font-semibold">
+              {vagaTitulo ?? "Entre para o banco de talentos Azumi"}
+            </h2>
           </div>
           <button onClick={close} className="rounded-md p-1.5 text-white/80 hover:bg-white/10">
             <X className="h-5 w-5" />
@@ -298,9 +258,9 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
 
         {/* Stepper */}
         {step !== "ok" && (
-          <div className="flex items-center gap-3 border-b border-slate-200 bg-slate-50 px-6 py-3">
+          <div className="flex items-center gap-3 border-b border-border bg-muted/50 px-6 py-3">
             <StepItem n={1} label="Cadastro" active={step === 1} done={step === 2} />
-            <div className="h-px flex-1 bg-slate-300" />
+            <div className="h-px flex-1 bg-border" />
             <StepItem n={2} label="Perfil DISC" active={step === 2} done={false} />
           </div>
         )}
@@ -309,14 +269,13 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
         <div className="flex-1 overflow-y-auto px-6 py-6">
           {step === 1 && (
             <div className="mx-auto max-w-2xl space-y-5">
-              {/* Foto */}
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-700">Foto (opcional)</label>
+                <label className="mb-1 block font-sans text-xs font-medium text-foreground">Foto (opcional)</label>
                 <div className="flex items-center gap-4">
-                  <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-slate-300 bg-slate-100 text-xs text-slate-400">
+                  <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-border bg-muted font-sans text-xs text-muted-foreground">
                     {c.fotoPreview ? <img src={c.fotoPreview} alt="" className="h-full w-full object-cover" /> : "Sem foto"}
                   </div>
-                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50">
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border px-3 py-2 font-sans text-xs text-foreground hover:bg-muted">
                     <Upload className="h-3.5 w-3.5" /> Enviar foto
                     <input
                       type="file"
@@ -349,50 +308,9 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
                   <Input value={c.telefone} onChange={(v) => up("telefone", v)} placeholder="(00) 00000-0000" />
                 </Field>
                 <Field label="CPF *">
-                  <Input
-                    value={c.cpf}
-                    onChange={(v) => { up("cpf", v); setCpfEncontrado(null); }}
-                    placeholder="000.000.000-00"
-                    onBlur={() => verificarCpfExistente(c.cpf)}
-                  />
+                  <Input value={c.cpf} onChange={(v) => up("cpf", v)} placeholder="000.000.000-00" />
                 </Field>
               </Grid2>
-
-              {cpfEncontrado && (
-                <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm">
-                  <p className="font-medium text-blue-900 mb-2">
-                    Encontramos um cadastro anterior com esse CPF. Quer reaproveitar seus dados (nome, e-mail, telefone, cidade, escolaridade) ou prefere preencher tudo de novo?
-                  </p>
-                  <div className="flex gap-2 flex-wrap">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setC((p) => ({
-                          ...p,
-                          nome: cpfEncontrado.nome || p.nome,
-                          email: cpfEncontrado.email || p.email,
-                          telefone: cpfEncontrado.telefone || p.telefone,
-                          cidadeEstado: cpfEncontrado.cidade || p.cidadeEstado,
-                          escolaridade: cpfEncontrado.escolaridade || p.escolaridade,
-                          linkedin: cpfEncontrado.linkedin || p.linkedin,
-                        }));
-                        setCpfEncontrado(null);
-                      }}
-                      className="rounded-md bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-800"
-                    >
-                      Reaproveitar dados
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setCpfEncontrado(null)}
-                      className="rounded-md border border-blue-300 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100"
-                    >
-                      Preencher do zero
-                    </button>
-                  </div>
-                </div>
-              )}
-
               <Grid2>
                 <Field label="Data de nascimento *">
                   <Input type="date" value={c.nascimento} onChange={(v) => up("nascimento", v)} />
@@ -424,8 +342,10 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
                       key={o.v}
                       type="button"
                       onClick={() => up("filhos", o.v as Cadastro["filhos"])}
-                      className={`rounded-full border px-3 py-1.5 text-xs font-medium ${
-                        c.filhos === o.v ? "border-slate-900 bg-slate-900 text-white" : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                      className={`rounded-full border px-3 py-1.5 font-sans text-xs font-medium ${
+                        c.filhos === o.v
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-background text-foreground hover:bg-muted"
                       }`}
                     >
                       {o.l}
@@ -467,8 +387,10 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
                       key={o}
                       type="button"
                       onClick={() => up("origem", o)}
-                      className={`rounded-full border px-3 py-1.5 text-xs font-medium ${
-                        c.origem === o ? "border-slate-900 bg-slate-900 text-white" : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                      className={`rounded-full border px-3 py-1.5 font-sans text-xs font-medium ${
+                        c.origem === o
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-background text-foreground hover:bg-muted"
                       }`}
                     >
                       {o}
@@ -480,7 +402,9 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
               <Field label="Currículo *">
                 <label
                   className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed px-4 py-6 text-center transition ${
-                    c.curriculo ? "border-emerald-300 bg-emerald-50" : "border-slate-300 bg-slate-50 hover:bg-slate-100"
+                    c.curriculo
+                      ? "border-success bg-[hsl(var(--success)/0.08)]"
+                      : "border-border bg-muted/50 hover:bg-muted"
                   }`}
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={(e) => {
@@ -493,14 +417,14 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
                   }}
                 >
                   {c.curriculo ? (
-                    <div className="flex items-center gap-2 text-sm text-emerald-800">
+                    <div className="flex items-center gap-2 font-sans text-sm text-success">
                       <FileText className="h-4 w-4" /> {c.curriculo.name}
                     </div>
                   ) : (
                     <>
-                      <Upload className="mb-2 h-5 w-5 text-slate-500" />
-                      <p className="text-sm font-medium text-slate-700">Arraste o arquivo aqui ou clique para selecionar</p>
-                      <p className="mt-0.5 text-xs text-slate-500">PDF, DOC ou DOCX — máx 5MB</p>
+                      <Upload className="mb-2 h-5 w-5 text-muted-foreground" />
+                      <p className="font-sans text-sm font-medium text-foreground">Arraste o arquivo aqui ou clique para selecionar</p>
+                      <p className="mt-0.5 font-sans text-xs text-muted-foreground">PDF, DOC ou DOCX — máx 5MB</p>
                     </>
                   )}
                   <input
@@ -522,17 +446,17 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
                   maxLength={500}
                   value={c.mensagem}
                   onChange={(e) => up("mensagem", e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground focus:border-primary focus:outline-none"
                 />
-                <p className="mt-1 text-right text-[10px] text-slate-400">{c.mensagem.length}/500</p>
+                <p className="mt-1 text-right font-sans text-[10px] text-muted-foreground">{c.mensagem.length}/500</p>
               </Field>
 
-              <label className="flex items-start gap-2 text-xs text-slate-700">
+              <label className="flex items-start gap-2 font-sans text-xs text-foreground">
                 <input
                   type="checkbox"
                   checked={c.aceitePrivacidade}
                   onChange={(e) => up("aceitePrivacidade", e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-slate-300"
+                  className="mt-0.5 h-4 w-4 rounded border-border"
                 />
                 <span>
                   Li e aceito a <a className="underline" href="https://azumirh.com.br/privacidade" target="_blank" rel="noreferrer">Política de Privacidade</a>.
@@ -540,15 +464,10 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
                 </span>
               </label>
 
-              {erro && <p className="text-sm text-red-600">{erro}</p>}
+              {erro && <p className="font-sans text-sm text-destructive">{erro}</p>}
 
               <div className="flex justify-end pt-2">
-                <button
-                  type="button"
-                  onClick={avancar}
-                  className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white"
-                  style={{ background: BLUE }}
-                >
+                <button type="button" onClick={avancar} className="btn-primary">
                   Próximo <ChevronRight className="h-4 w-4" />
                 </button>
               </div>
@@ -563,16 +482,12 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
 
           {step === "ok" && (
             <div className="mx-auto max-w-md py-10 text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[hsl(var(--success)/0.15)] text-success">
                 <Check className="h-8 w-8" />
               </div>
-              <h3 className="text-xl font-semibold text-slate-900">Candidatura enviada!</h3>
-              <p className="mt-2 text-sm text-slate-600">Entraremos em contato em breve.</p>
-              <button
-                onClick={close}
-                className="mt-6 rounded-lg px-5 py-2.5 text-sm font-semibold text-white"
-                style={{ background: BLUE }}
-              >
+              <h3 className="font-display text-xl font-semibold text-foreground">Candidatura enviada!</h3>
+              <p className="mt-2 font-sans text-sm text-muted-foreground">Entraremos em contato em breve.</p>
+              <button onClick={close} className="btn-primary mt-6">
                 Fechar
               </button>
             </div>
@@ -587,13 +502,19 @@ function StepItem({ n, label, active, done }: { n: number; label: string; active
   return (
     <div className="flex items-center gap-2">
       <div
-        className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
-          done ? "bg-emerald-500 text-white" : active ? "bg-slate-900 text-white" : "bg-slate-200 text-slate-500"
+        className={`flex h-7 w-7 items-center justify-center rounded-full font-sans text-xs font-semibold ${
+          done
+            ? "bg-success text-success-foreground"
+            : active
+            ? "bg-primary text-primary-foreground"
+            : "bg-muted text-muted-foreground"
         }`}
       >
         {done ? <Check className="h-4 w-4" /> : n}
       </div>
-      <span className={`text-sm font-medium ${active || done ? "text-slate-900" : "text-slate-500"}`}>{label}</span>
+      <span className={`font-sans text-sm font-medium ${active || done ? "text-foreground" : "text-muted-foreground"}`}>
+        {label}
+      </span>
     </div>
   );
 }
@@ -601,7 +522,7 @@ function StepItem({ n, label, active, done }: { n: number; label: string; active
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="mb-1 block text-xs font-medium text-slate-700">{label}</label>
+      <label className="mb-1 block font-sans text-xs font-medium text-foreground">{label}</label>
       {children}
     </div>
   );
@@ -611,15 +532,14 @@ function Grid2({ children }: { children: React.ReactNode }) {
   return <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{children}</div>;
 }
 
-function Input({ value, onChange, type = "text", placeholder, onBlur }: { value: string; onChange: (v: string) => void; type?: string; placeholder?: string; onBlur?: () => void }) {
+function Input({ value, onChange, type = "text", placeholder }: { value: string; onChange: (v: string) => void; type?: string; placeholder?: string }) {
   return (
     <input
       type={type}
       value={value}
       placeholder={placeholder}
       onChange={(e) => onChange(e.target.value)}
-      onBlur={onBlur}
-      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"
+      className="w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground focus:border-primary focus:outline-none"
     />
   );
 }
@@ -629,7 +549,7 @@ function Select({ value, onChange, children }: { value: string; onChange: (v: st
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"
+      className="w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground focus:border-primary focus:outline-none"
     >
       {children}
     </select>
