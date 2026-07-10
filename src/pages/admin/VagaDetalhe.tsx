@@ -221,7 +221,7 @@ const PESSOAS_MENCAO_VAGA = [
 // Templates centralizados (Handoff): quando faltarem reais, usar esses placeholders.
 const TEMPLATE_DISC_WHATSAPP = (nome: string) =>
   `Oi ${nome}! Aqui é da Azumi 👋 Para avançar no processo, pedimos que você responda ` +
-  `nosso teste DISC (leva ~10 min). Acesse: https://azumi.app/disc/{token}. Qualquer dúvida, ` +
+  `nosso teste DISC (leva ~10 min). Acesse: ${window.location.origin}/disc/{token}. Qualquer dúvida, ` +
   `é só chamar por aqui!`;
 
 const TEMPLATE_DECLINIO_CANDIDATO = (nome: string) =>
@@ -551,7 +551,7 @@ export default function VagaDetalheAdmin() {
     { id: "mv2", autor: "RH Cliente", iniciais: "RH", quando: "07/04 09:10",
       texto: "Podemos priorizar quem tenha vivência em multinacional?", canal: "cliente" },
     { id: "mv3", autor: "Ana Beatriz", iniciais: "AB", quando: "07/04 09:42",
-      texto: "Anotado @RH Cliente — vou sinalizar essa prioridade no parecer. https://azumi.app/vaga/v1",
+      texto: `Anotado @RH Cliente — vou sinalizar essa prioridade no parecer. ${window.location.origin}/vaga/v1`,
       canal: "cliente" },
   ]);
   const [declinios, setDeclinios] = useState<Record<string, { motivo: string; quem: "candidato" | "azumi" }>>({});
@@ -2597,7 +2597,7 @@ export default function VagaDetalheAdmin() {
             <div className="text-sm space-y-3">
               <p>Enviar link do questionário DISC para <strong>{c?.nome}</strong>.</p>
               <textarea
-                defaultValue={`Olá ${c?.nome ?? ""}, segue o link para o teste DISC: https://azumi.app/disc/${c?.id ?? ""}`}
+                defaultValue={`Olá ${c?.nome ?? ""}, segue o link para o teste DISC: ${window.location.origin}/disc/${c?.id ?? ""}`}
                 rows={3}
                 className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm"
               />
