@@ -12,7 +12,7 @@
 @layer base {
   :root {
     /* Surfaces — Connect default (light + blue/violet tinted) */
-    --background: 220 35% 98%;
+    --background: 220 18% 98.5%;
     --foreground: 213 40% 14%;
 
     --card: 0 0% 100%;
@@ -81,8 +81,8 @@
     --sidebar-ring: 217 92% 42%;
 
     /* Gradients — Azumi Transformation */
-    --gradient-brand: linear-gradient(90deg, #034C8B 0%, #3B82F6 50%, #8B5CF6 100%);
-    --gradient-brand-bg: linear-gradient(135deg, #034C8B 0%, #3B82F6 50%, #8B5CF6 100%);
+    --gradient-brand: linear-gradient(90deg, #1E3A8A 0%, #1D4ED8 50%, #2563EB 100%);
+    --gradient-brand-bg: linear-gradient(135deg, #1E3A8A 0%, #1D4ED8 60%, #2563EB 100%);
     --gradient-sidebar: linear-gradient(180deg, hsl(220 40% 99%) 0%, hsl(220 35% 97%) 100%);
     --gradient-card-hover: linear-gradient(180deg, hsl(0 0% 100%), hsl(220 35% 98%));
     --gradient-divider: linear-gradient(90deg, hsl(217 92% 42% / 0.35), transparent);
