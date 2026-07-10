@@ -14,13 +14,10 @@ export default {
       fontFamily: {
         sans: ["Space Grotesk", "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
         ui: ["Space Grotesk", "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
-        display: ["Fraunces", "Georgia", "serif"],
-        brand: ["Inter", "ui-sans-serif", "sans-serif"],
+        display: ["Sora", "Space Grotesk", "sans-serif"],
         data: ["JetBrains Mono", "ui-monospace", "monospace"],
         logo: ["Poppins", "Inter", "sans-serif"],
       },
-      transitionDuration: { DEFAULT: "250ms" },
-      transitionTimingFunction: { DEFAULT: "cubic-bezier(0,0,0.2,1)" },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

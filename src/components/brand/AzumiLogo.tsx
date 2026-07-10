@@ -1,46 +1,37 @@
 /**
- * Azumi Brand — v3.0
- * Connect: círculos concêntricos em azul, wordmark "CONNECT" em Fraunces
- * Hub: círculos concêntricos em roxo, wordmark "HUB" em Fraunces
- * Subtítulo: "by AZUMI" em Inter
+ * Azumi Brand — v2.3
+ * Marca oficial: 2 círculos sobrepostos + wordmark "azumi RH"
+ * Subtítulo opcional: "Connect" ou "Hub" em JetBrains Mono uppercase.
  */
-
-const PALETAS = {
-  Connect: ["#BFDBFE", "#93C5FD", "#60A5FA", "#2563EB", "#1D4ED8"],
-  Hub:     ["#EDE9FE", "#DDD6FE", "#A78BFA", "#7C3AED", "#6D28D9"],
-};
-
-// Raios e opacidades: externo → interno (mais opaco no centro)
-const RADII   = [1.0, 0.80, 0.63, 0.48, 0.34];
-const OPACITY = [0.25, 0.42, 0.62, 0.82, 1.0];
 
 interface AzumiMarkProps {
   size?: number;
   className?: string;
-  product?: "Connect" | "Hub";
 }
 
-export function AzumiMark({ size = 28, className, product = "Connect" }: AzumiMarkProps) {
-  const cores = PALETAS[product];
+export function AzumiMark({ size = 28, className }: AzumiMarkProps) {
+  const id = `azumi-mark-grad-${size}`;
+  // Sobreposição ~25% — dois círculos do mesmo diâmetro
   const r = size / 2;
+  const overlap = size * 0.25;
+  const totalW = size * 2 - overlap;
   return (
     <svg
-      width={size}
+      width={totalW}
       height={size}
-      viewBox={`0 0 ${size} ${size}`}
+      viewBox={`0 0 ${totalW} ${size}`}
       className={className}
       aria-hidden="true"
     >
-      {cores.map((cor, i) => (
-        <circle
-          key={i}
-          cx={r}
-          cy={r}
-          r={r * RADII[i]}
-          fill={cor}
-          opacity={OPACITY[i]}
-        />
-      ))}
+      <defs>
+        <linearGradient id={id} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#034C8B" />
+          <stop offset="50%" stopColor="#3B82F6" />
+          <stop offset="100%" stopColor="#8B5CF6" />
+        </linearGradient>
+      </defs>
+      <circle cx={r} cy={r} r={r} fill={`url(#${id})`} opacity="0.9" />
+      <circle cx={totalW - r} cy={r} r={r} fill={`url(#${id})`} opacity="0.7" />
     </svg>
   );
 }
@@ -50,7 +41,6 @@ interface AzumiLogoProps {
   light?: boolean;
   collapsed?: boolean;
   size?: number;
-  hideSubtitle?: boolean;
 }
 
 export function AzumiLogo({
@@ -58,31 +48,31 @@ export function AzumiLogo({
   light = false,
   collapsed = false,
   size = 22,
-  hideSubtitle = false,
 }: AzumiLogoProps) {
-  if (collapsed) return <AzumiMark size={size + 6} product={product} />;
-
+  if (collapsed) {
+    return <AzumiMark size={size + 6} />;
+  }
   const wordColor = light ? "text-white" : "text-foreground";
-  const subColor  = light ? "text-white/60" : "text-muted-foreground";
-
+  const subColor = light ? "text-white/70" : "text-muted-foreground";
   return (
     <div className="flex items-center gap-2.5">
-      <AzumiMark size={size + 10} product={product} />
+      <AzumiMark size={size + 6} />
       <div className="flex flex-col leading-none">
         <div
-          className={`font-display ${wordColor} uppercase tracking-wide`}
-          style={{ fontSize: size * 1.25, fontWeight: 500, lineHeight: 1 }}
+          className={`font-logo ${wordColor} flex items-baseline gap-1`}
+          style={{ fontSize: size, lineHeight: 1 }}
+        >
+          <span className="font-semibold lowercase tracking-tight">azumi</span>
+          <span className="brand-gradient font-normal italic uppercase" style={{ fontSize: size * 0.72 }}>
+            RH
+          </span>
+        </div>
+        <div
+          className={`mt-1 font-data uppercase ${subColor}`}
+          style={{ fontSize: 9, letterSpacing: "0.18em" }}
         >
           {product}
         </div>
-        {!hideSubtitle && (
-          <div
-            className={`font-brand ${subColor} uppercase`}
-            style={{ fontSize: size * 0.42, letterSpacing: "0.12em", marginTop: 3 }}
-          >
-            by AZUMI
-          </div>
-        )}
       </div>
     </div>
   );
