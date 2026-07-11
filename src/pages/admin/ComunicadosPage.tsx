@@ -3,25 +3,25 @@ import { createPortal } from "react-dom";
 import { Plus, X, Send, Eye, Upload, Link2 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 
-const U: React.CSSProperties = { fontFamily: "'Urbanist',sans-serif" };
+const U: React.CSSProperties = { fontFamily: "var(--font-body)" };
 
 type Categoria = "interno" | "externo";
 type TipoComunicado = "atualizacao" | "aviso" | "endomarketing" | "alerta" | "evento";
 
 const TIPO_MAP: Record<TipoComunicado, { label: string; hex: string; bg: string; border: string }> = {
-  atualizacao:   { label: "Atualização",  hex: "#3B82F6", bg: "#EFF6FF", border: "#BFDBFE" },
+  atualizacao:   { label: "Atualização",  hex: "hsl(var(--primary))", bg: "#EFF6FF", border: "#BFDBFE" },
   aviso:         { label: "Aviso",        hex: "#F59E0B", bg: "#FFFBEB", border: "#FDE68A" },
   endomarketing: { label: "Endomarketing",hex: "#EC4899", bg: "#FDF2F8", border: "#FBCFE8" },
   alerta:        { label: "Alerta",       hex: "#EF4444", bg: "#FFF1F2", border: "#FECACA" },
-  evento:        { label: "Evento",       hex: "#8B5CF6", bg: "#F5F3FF", border: "#DDD6FE" },
+  evento:        { label: "Evento",       hex: "hsl(var(--highlight))", bg: "#F5F3FF", border: "#DDD6FE" },
 };
 
 const GRAD: Record<TipoComunicado, string> = {
-  endomarketing: "linear-gradient(135deg,#EC4899,#8B5CF6)",
-  evento:        "linear-gradient(135deg,#8B5CF6,#3B82F6)",
+  endomarketing: "linear-gradient(135deg,#EC4899,hsl(var(--highlight)))",
+  evento:        "linear-gradient(135deg,hsl(var(--highlight)),hsl(var(--primary)))",
   alerta:        "linear-gradient(135deg,#EF4444,#F97316)",
   aviso:         "linear-gradient(135deg,#F59E0B,#EF4444)",
-  atualizacao:   "linear-gradient(135deg,#031D38,#3B82F6)",
+  atualizacao:   "linear-gradient(135deg,hsl(var(--connect-ink)),hsl(var(--primary)))",
 };
 
 const REACOES_LIST = ["❤️","👍","😂","🎉","🔥"] as const;
@@ -107,7 +107,7 @@ const MOCK_INICIAL: Comunicado[] = [
 
 function Av({ ini, size = 28 }: { ini: string; size?: number }) {
   return (
-    <div style={{ width: size, height: size, borderRadius: "50%", background: "#031D38", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.4, fontWeight: 700, flexShrink: 0, ...U }}>
+    <div style={{ width: size, height: size, borderRadius: "50%", background: "hsl(var(--connect-ink))", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.4, fontWeight: 700, flexShrink: 0, ...U }}>
       {ini}
     </div>
   );
@@ -132,7 +132,7 @@ function PostCard({ c, onSelect, onReagir }: { c: Comunicado; onSelect: () => vo
         )}
         <div style={{ position: "absolute", top: 10, left: 10, display: "flex", gap: 6 }}>
           <span style={{ padding: "3px 9px", borderRadius: 20, background: tipo.bg, color: tipo.hex, fontSize: 10, fontWeight: 700, border: `1px solid ${tipo.border}`, ...U }}>{tipo.label}</span>
-          <span style={{ padding: "3px 9px", borderRadius: 20, background: "rgba(255,255,255,.95)", color: "#031D38", fontSize: 10, fontWeight: 700, ...U }}>
+          <span style={{ padding: "3px 9px", borderRadius: 20, background: "rgba(255,255,255,.95)", color: "hsl(var(--connect-ink))", fontSize: 10, fontWeight: 700, ...U }}>
             {c.categoria === "interno" ? "Interno" : "Externo"}
           </span>
         </div>
@@ -141,12 +141,12 @@ function PostCard({ c, onSelect, onReagir }: { c: Comunicado; onSelect: () => vo
       <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: "#64748B", ...U }}>
           <Av ini={c.iniciais} size={22} />
-          <span style={{ fontWeight: 600, color: "#031D38" }}>{c.autor}</span>
+          <span style={{ fontWeight: 600, color: "hsl(var(--connect-ink))" }}>{c.autor}</span>
           <span>·</span>
           <span>{c.data}</span>
         </div>
 
-        <div style={{ fontSize: 14, fontWeight: 700, color: "#031D38", lineHeight: 1.3, ...U }}>{c.titulo}</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: "hsl(var(--connect-ink))", lineHeight: 1.3, ...U }}>{c.titulo}</div>
         <div style={{ fontSize: 12, color: "#64748B", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", ...U }}>{c.corpo}</div>
 
         <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
@@ -155,7 +155,7 @@ function PostCard({ c, onSelect, onReagir }: { c: Comunicado; onSelect: () => vo
             const ativo = c.minhasReacoes.includes(emoji);
             return (
               <button key={emoji} onClick={e => { e.stopPropagation(); onReagir(emoji); }}
-                style={{ display: "flex", alignItems: "center", gap: 3, padding: "2px 7px", borderRadius: 20, border: `1px solid ${ativo ? "#3B82F6" : "#E4E6EA"}`, background: ativo ? "#EFF6FF" : "white", cursor: "pointer", fontSize: 12, fontWeight: 600, color: ativo ? "#3B82F6" : "#64748B", transition: "all .15s", ...U }}>
+                style={{ display: "flex", alignItems: "center", gap: 3, padding: "2px 7px", borderRadius: 20, border: `1px solid ${ativo ? "hsl(var(--primary))" : "#E4E6EA"}`, background: ativo ? "#EFF6FF" : "white", cursor: "pointer", fontSize: 12, fontWeight: 600, color: ativo ? "hsl(var(--primary))" : "#64748B", transition: "all .15s", ...U }}>
                 {emoji}{count > 0 && <span>{count}</span>}
               </button>
             );
@@ -203,13 +203,13 @@ function DetalheModal({ c, onClose, onReagir, onAddComentario }: {
             <Av ini={c.iniciais} size={36} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#031D38", ...U }}>{c.autor}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "hsl(var(--connect-ink))", ...U }}>{c.autor}</span>
                 <span style={{ padding: "2px 7px", borderRadius: 20, background: tipo.bg, color: tipo.hex, fontSize: 10, fontWeight: 700, border: `1px solid ${tipo.border}`, ...U }}>{tipo.label}</span>
-                <span style={{ padding: "2px 7px", borderRadius: 20, background: "#F0F5FF", color: "#031D38", fontSize: 10, fontWeight: 700, ...U }}>
+                <span style={{ padding: "2px 7px", borderRadius: 20, background: "#F0F5FF", color: "hsl(var(--connect-ink))", fontSize: 10, fontWeight: 700, ...U }}>
                   {c.categoria === "interno" ? "Interno" : "Externo"}
                 </span>
               </div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "#031D38", marginTop: 4, ...U }}>{c.titulo}</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "hsl(var(--connect-ink))", marginTop: 4, ...U }}>{c.titulo}</div>
               <div style={{ fontSize: 12, color: "#64748B", marginTop: 4, lineHeight: 1.5, ...U }}>{c.corpo}</div>
             </div>
             <button onClick={onClose} style={{ background: "transparent", border: "none", cursor: "pointer", color: "#64748B", padding: 4, height: "fit-content" }}>
@@ -223,7 +223,7 @@ function DetalheModal({ c, onClose, onReagir, onAddComentario }: {
               const ativo = c.minhasReacoes.includes(emoji);
               return (
                 <button key={emoji} onClick={() => onReagir(emoji)}
-                  style={{ display: "flex", alignItems: "center", gap: 3, padding: "3px 9px", borderRadius: 20, border: `1px solid ${ativo ? "#3B82F6" : "#E4E6EA"}`, background: ativo ? "#EFF6FF" : "white", cursor: "pointer", fontSize: 12, fontWeight: 700, color: ativo ? "#3B82F6" : "#64748B", transition: "all .15s", ...U }}>
+                  style={{ display: "flex", alignItems: "center", gap: 3, padding: "3px 9px", borderRadius: 20, border: `1px solid ${ativo ? "hsl(var(--primary))" : "#E4E6EA"}`, background: ativo ? "#EFF6FF" : "white", cursor: "pointer", fontSize: 12, fontWeight: 700, color: ativo ? "hsl(var(--primary))" : "#64748B", transition: "all .15s", ...U }}>
                   {emoji}{count > 0 && <span>{count}</span>}
                 </button>
               );
@@ -256,7 +256,7 @@ function DetalheModal({ c, onClose, onReagir, onAddComentario }: {
                 <Av ini={cm.iniciais} size={28} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ background: "#F0F5FF", borderRadius: 12, padding: "7px 10px" }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: "#031D38", ...U }}>{cm.autor}</span>{" "}
+                    <span style={{ fontSize: 12, fontWeight: 700, color: "hsl(var(--connect-ink))", ...U }}>{cm.autor}</span>{" "}
                     <span style={{ fontSize: 12, color: "#374151", ...U }}>{cm.texto}</span>
                   </div>
                   <span style={{ fontSize: 10, color: "#94A3B8", marginLeft: 10, ...U }}>{cm.hora}</span>
@@ -269,9 +269,9 @@ function DetalheModal({ c, onClose, onReagir, onAddComentario }: {
             <input value={novoComent} onChange={e => setNovoComent(e.target.value)}
               onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); enviar(); } }}
               placeholder="Escreva um comentário…"
-              style={{ flex: 1, height: 34, borderRadius: 8, border: "1px solid #E4E6EA", padding: "0 10px", fontSize: 13, fontFamily: "'Urbanist',sans-serif", outline: "none" }}
+              style={{ flex: 1, height: 34, borderRadius: 8, border: "1px solid #E4E6EA", padding: "0 10px", fontSize: 13, fontFamily: "var(--font-body)", outline: "none" }}
             />
-            <button onClick={enviar} style={{ height: 34, width: 34, borderRadius: 8, background: "#3B82F6", border: "none", color: "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <button onClick={enviar} style={{ height: 34, width: 34, borderRadius: 8, background: "hsl(var(--primary))", border: "none", color: "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Send size={14} />
             </button>
           </div>
@@ -299,14 +299,14 @@ function CriarModal({ onClose, onCreate }: { onClose: () => void; onCreate: (c: 
   };
 
   const lbl: React.CSSProperties = { fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: "#64748B", letterSpacing: ".06em", display: "block", marginBottom: 5, ...U };
-  const inp: React.CSSProperties = { width: "100%", height: 36, borderRadius: 8, border: "1px solid #E4E6EA", padding: "0 10px", fontSize: 13, fontFamily: "'Urbanist',sans-serif", outline: "none", boxSizing: "border-box" };
+  const inp: React.CSSProperties = { width: "100%", height: 36, borderRadius: 8, border: "1px solid #E4E6EA", padding: "0 10px", fontSize: 13, fontFamily: "var(--font-body)", outline: "none", boxSizing: "border-box" };
 
   return (
     <div onClick={e => { if (e.target === e.currentTarget) onClose(); }}
       style={{ position: "fixed", inset: 0, background: "rgba(3,29,56,.6)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
       <div style={{ background: "white", borderRadius: 14, width: "100%", maxWidth: 520, maxHeight: "90vh", overflowY: "auto" }}>
         <div style={{ padding: 16, borderBottom: "1px solid #F0F5FF", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: "#031D38", ...U }}>Novo comunicado</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: "hsl(var(--connect-ink))", ...U }}>Novo comunicado</div>
           <button onClick={onClose} style={{ background: "transparent", border: "none", cursor: "pointer", color: "#64748B" }}><X size={18} /></button>
         </div>
         <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
@@ -323,7 +323,7 @@ function CriarModal({ onClose, onCreate }: { onClose: () => void; onCreate: (c: 
             <label style={lbl}>Categoria</label>
             <div style={{ display: "flex", gap: 5 }}>
               {(["interno","externo"] as Categoria[]).map(cat => (
-                <button key={cat} onClick={() => setCategoria(cat)} style={{ height: 28, padding: "0 14px", borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: "pointer", border: "1px solid", background: categoria === cat ? "#031D38" : "white", color: categoria === cat ? "white" : "#64748B", borderColor: categoria === cat ? "#031D38" : "#E4E6EA", ...U }}>
+                <button key={cat} onClick={() => setCategoria(cat)} style={{ height: 28, padding: "0 14px", borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: "pointer", border: "1px solid", background: categoria === cat ? "hsl(var(--connect-ink))" : "white", color: categoria === cat ? "white" : "#64748B", borderColor: categoria === cat ? "hsl(var(--connect-ink))" : "#E4E6EA", ...U }}>
                   {cat.charAt(0).toUpperCase() + cat.slice(1)}
                 </button>
               ))}
@@ -341,7 +341,7 @@ function CriarModal({ onClose, onCreate }: { onClose: () => void; onCreate: (c: 
             <label style={lbl}>Imagem de capa <span style={{ fontWeight: 400, textTransform: "none" }}>— 1:1 recomendado</span></label>
             <div style={{ display: "flex", gap: 5, marginBottom: 7 }}>
               {([["url","URL",Link2],["upload","Upload",Upload]] as const).map(([m, l, Icon]) => (
-                <button key={m} onClick={() => setCoverMode(m)} style={{ height: 26, padding: "0 10px", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", border: "1px solid", display: "flex", alignItems: "center", gap: 3, background: coverMode === m ? "#031D38" : "white", color: coverMode === m ? "white" : "#64748B", borderColor: coverMode === m ? "#031D38" : "#E4E6EA", ...U }}>
+                <button key={m} onClick={() => setCoverMode(m)} style={{ height: 26, padding: "0 10px", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", border: "1px solid", display: "flex", alignItems: "center", gap: 3, background: coverMode === m ? "hsl(var(--connect-ink))" : "white", color: coverMode === m ? "white" : "#64748B", borderColor: coverMode === m ? "hsl(var(--connect-ink))" : "#E4E6EA", ...U }}>
                   <Icon size={10} />{l}
                 </button>
               ))}
@@ -351,7 +351,7 @@ function CriarModal({ onClose, onCreate }: { onClose: () => void; onCreate: (c: 
           </div>
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, paddingTop: 8, borderTop: "1px solid #F0F5FF" }}>
             <button onClick={onClose} style={{ height: 34, padding: "0 14px", borderRadius: 8, background: "white", border: "1px solid #E4E6EA", fontSize: 13, cursor: "pointer", color: "#374151", ...U }}>Cancelar</button>
-            <button onClick={salvar} disabled={!titulo.trim() || !corpo.trim()} style={{ height: 34, padding: "0 18px", borderRadius: 8, background: "#031D38", border: "none", color: "white", fontSize: 13, fontWeight: 700, cursor: "pointer", opacity: (!titulo.trim() || !corpo.trim()) ? 0.5 : 1, ...U }}>Publicar</button>
+            <button onClick={salvar} disabled={!titulo.trim() || !corpo.trim()} style={{ height: 34, padding: "0 18px", borderRadius: 8, background: "hsl(var(--connect-ink))", border: "none", color: "white", fontSize: 13, fontWeight: 700, cursor: "pointer", opacity: (!titulo.trim() || !corpo.trim()) ? 0.5 : 1, ...U }}>Publicar</button>
           </div>
         </div>
       </div>
@@ -410,7 +410,7 @@ export default function ComunicadosPage() {
         title="Comunicados"
         subtitle="Feed de comunicações internas e externas"
         actions={
-          <button onClick={() => setCriarOpen(true)} style={{ height: 36, padding: "0 16px", borderRadius: 100, background: "#3B82F6", border: "none", color: "white", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, fontFamily: "'Urbanist',sans-serif" }}>
+          <button onClick={() => setCriarOpen(true)} style={{ height: 36, padding: "0 16px", borderRadius: 100, background: "hsl(var(--primary))", border: "none", color: "white", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, fontFamily: "var(--font-body)" }}>
             <Plus size={14} /> Novo comunicado
           </button>
         }
@@ -419,21 +419,21 @@ export default function ComunicadosPage() {
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
         {(["todos","interno","externo"] as const).map(cat => (
           <button key={cat} onClick={() => setFiltroCateg(cat)}
-            style={{ height: 28, padding: "0 12px", borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: "pointer", border: "1px solid", background: filtroCateg === cat ? "#031D38" : "white", color: filtroCateg === cat ? "white" : "#64748B", borderColor: filtroCateg === cat ? "#031D38" : "#E4E6EA", fontFamily: "'Urbanist',sans-serif" }}>
+            style={{ height: 28, padding: "0 12px", borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: "pointer", border: "1px solid", background: filtroCateg === cat ? "hsl(var(--connect-ink))" : "white", color: filtroCateg === cat ? "white" : "#64748B", borderColor: filtroCateg === cat ? "hsl(var(--connect-ink))" : "#E4E6EA", fontFamily: "var(--font-body)" }}>
             {cat === "todos" ? "Todos" : cat.charAt(0).toUpperCase() + cat.slice(1)}
           </button>
         ))}
         <div style={{ width: 1, background: "#E4E6EA", margin: "0 4px" }} />
         {([{ value: "todos" as const, label: "Todos os tipos" }, ...(Object.entries(TIPO_MAP) as [TipoComunicado, typeof TIPO_MAP[TipoComunicado]][]).map(([v, m]) => ({ value: v, label: m.label }))]).map(t => (
           <button key={t.value} onClick={() => setFiltroTipo(t.value as TipoComunicado | "todos")}
-            style={{ height: 28, padding: "0 12px", borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: "pointer", border: "1px solid", background: filtroTipo === t.value ? "#3B82F6" : "white", color: filtroTipo === t.value ? "white" : "#64748B", borderColor: filtroTipo === t.value ? "#3B82F6" : "#E4E6EA", fontFamily: "'Urbanist',sans-serif" }}>
+            style={{ height: 28, padding: "0 12px", borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: "pointer", border: "1px solid", background: filtroTipo === t.value ? "hsl(var(--primary))" : "white", color: filtroTipo === t.value ? "white" : "#64748B", borderColor: filtroTipo === t.value ? "hsl(var(--primary))" : "#E4E6EA", fontFamily: "var(--font-body)" }}>
             {t.label}
           </button>
         ))}
       </div>
 
       {filtrados.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "60px 20px", color: "#94A3B8", fontFamily: "'Urbanist',sans-serif", fontSize: 13 }}>
+        <div style={{ textAlign: "center", padding: "60px 20px", color: "#94A3B8", fontFamily: "var(--font-body)", fontSize: 13 }}>
           Nenhum comunicado encontrado.
         </div>
       ) : (
