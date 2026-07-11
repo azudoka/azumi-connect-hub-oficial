@@ -12,9 +12,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Space Grotesk", "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
-        ui: ["Space Grotesk", "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
-        display: ["Sora", "Space Grotesk", "sans-serif"],
+        sans: ["var(--font-body)", "Space Grotesk", "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+        ui: ["var(--font-body)", "Space Grotesk", "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "Sora", "Space Grotesk", "sans-serif"],
         data: ["JetBrains Mono", "ui-monospace", "monospace"],
         logo: ["Poppins", "Inter", "sans-serif"],
       },
