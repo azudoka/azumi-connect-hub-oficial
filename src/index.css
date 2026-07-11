@@ -23,24 +23,28 @@
 
     --border: 218 28% 90%;
     --input: 220 30% 96%;
-    --ring: 217 90% 50%;
+    --ring: 218 52% 31%;
 
     /* Brand */
-    --primary: 217 92% 42%;          /* Azul Electric #0050D3 */
+    --primary: 218 52% 31%;          /* Índigo Connect #264478 — cor exata da logo oficial */
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 217 92% 60%;
+    --primary-glow: 221 50% 48%;     /* Índigo CTA #3D63B8 */
 
     --highlight: 258 70% 60%;        /* Violeta Inovação */
     --highlight-foreground: 0 0% 100%;
 
-    --accent: 217 92% 95%;
-    --accent-foreground: 217 92% 30%;
+    --accent: 220 55% 96%;           /* Névoa Connect #EEF2FA */
+    --accent-foreground: 218 52% 31%;
 
     --secondary: 220 28% 95%;
     --secondary-foreground: 213 40% 20%;
 
     --muted: 220 25% 94%;
     --muted-foreground: 218 10% 45%;
+
+    /* Tipografia — Kit de Marca Connect v1 (variável, cada produto sobrescreve a sua) */
+    --font-display: 'Big Shoulders Display', sans-serif;
+    --font-body: 'Public Sans', sans-serif;
 
     /* Brand named (reutilizáveis) */
     --ocean: 213 95% 12%;            /* Azul Oceano #031D38 */
@@ -49,6 +53,14 @@
     --violeta: 258 70% 66%;          /* Violeta #8B5CF6 */
     --ice: 214 95% 78%;              /* Azul Gelo #93C5FD */
     --mint: 191 50% 95%;             /* Mint #EAF6F8 */
+
+    /* Connect — Kit de Marca v1 (cor extraída da logo oficial, aprovada) */
+    --connect-indigo: 218 52% 31%;      /* #264478 */
+    --connect-indigo-cta: 221 50% 48%;  /* #3D63B8 */
+    --connect-ink: 219 52% 16%;         /* #14233F */
+    --connect-sky: 217 70% 70%;         /* #7FA8E8 */
+    --connect-graphite: 217 19% 44%;    /* #5B6B85 */
+    --connect-mist: 220 55% 96%;        /* #EEF2FA */
 
     /* Status */
     --destructive: 0 72% 52%;
@@ -73,12 +85,12 @@
     /* Sidebar — Connect: light com lavagem azul+violeta */
     --sidebar-background: 220 40% 99%;
     --sidebar-foreground: 213 25% 32%;
-    --sidebar-primary: 217 92% 42%;
+    --sidebar-primary: 218 52% 31%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 258 60% 95%;
     --sidebar-accent-foreground: 258 70% 38%;
     --sidebar-border: 218 28% 90%;
-    --sidebar-ring: 217 92% 42%;
+    --sidebar-ring: 218 52% 31%;
 
     /* Gradients — Azumi Transformation */
     --gradient-brand: linear-gradient(90deg, #034C8B 0%, #3B82F6 50%, #8B5CF6 100%);
@@ -105,6 +117,12 @@
 
   /* HUB — diferencial mint para distinguir do Connect */
   .product-hub {
+    /* Tipografia — mantém as fontes atuais até a Fase Hub começar de verdade.
+       Sem isso, o Hub herdaria Big Shoulders Display / Public Sans do :root
+       por engano, já que o Tailwind agora lê var(--font-display)/var(--font-body). */
+    --font-display: 'Sora', 'Space Grotesk', sans-serif;
+    --font-body: 'Space Grotesk', 'Inter', sans-serif;
+
     --background: 191 35% 97%;
     --foreground: 213 40% 14%;
     --card: 0 0% 100%;
