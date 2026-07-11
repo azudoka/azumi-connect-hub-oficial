@@ -4,7 +4,7 @@ import {
   Trash2, HardDrive, Eye, Check,
 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
-import { KpiCard } from "@/components/KpiCard";
+import { ConnectStatCard } from "@/components/ConnectStatCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -173,17 +173,30 @@ export default function DocumentosPage() {
         title="Documentos"
         subtitle="Biblioteca de documentos publicados para os clientes."
         actions={
-          <Button onClick={abrirNovo} className="rounded-[100px] bg-[#3B82F6] hover:bg-[#3B82F6]/90 text-white">
+          <Button onClick={abrirNovo} className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground">
             <Plus className="h-4 w-4" /> Inserir documento
           </Button>
         }
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard label="Total de documentos" value={kpis.total} icon={FileText} />
-        <KpiCard label="Publicados" value={kpis.publicados} icon={Check} />
-        <KpiCard label="Ciências pendentes" value={kpis.cienciasPendentes} icon={Eye} />
-        <KpiCard label="Publicados de entregáveis" value={kpis.deEntregavel} icon={FileCheck} />
+        <ConnectStatCard variant="terminal" label="Total de documentos" value={kpis.total} />
+        <ConnectStatCard
+          variant="radial"
+          label="Publicados"
+          percent={kpis.total > 0 ? (kpis.publicados / kpis.total) * 100 : 0}
+          contextLabel={`${kpis.publicados} de ${kpis.total} documentos`}
+        />
+        <ConnectStatCard
+          variant="list"
+          label="Ciências pendentes"
+          items={docs
+            .filter((d) => d.status === "publicado" && d.visualizacoes > 0 && d.ciencias < d.visualizacoes)
+            .slice(0, 3)
+            .map((d) => ({ label: d.titulo, tone: "amber" as const }))}
+          footer={`${kpis.cienciasPendentes} documento${kpis.cienciasPendentes === 1 ? "" : "s"} no total`}
+        />
+        <ConnectStatCard variant="terminal" label="Publicados de entregável" value={kpis.deEntregavel} />
       </div>
 
       <div className="flex flex-col md:flex-row gap-3">
@@ -255,13 +268,13 @@ export default function DocumentosPage() {
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
                   <span className="font-mono">{doc.versao}</span>
                   <span>·</span>
-                  <span className="font-data">{formatarData(doc.created_at)}</span>
+                  <span className="tabular-nums">{formatarData(doc.created_at)}</span>
                 </div>
 
                 <div className="text-xs text-muted-foreground">
-                  <span className="font-data">👁 {doc.visualizacoes}</span> visualizações
+                  <span className="tabular-nums">👁 {doc.visualizacoes}</span> visualizações
                   <span className="mx-1">·</span>
-                  <span className="font-data">✍ {doc.ciencias}</span> ciências
+                  <span className="tabular-nums">✍ {doc.ciencias}</span> ciências
                 </div>
 
                 <div className="flex items-center gap-1.5 pt-1 mt-auto">
@@ -369,7 +382,7 @@ export default function DocumentosPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setModalOpen(false)} className="rounded-[100px]">Cancelar</Button>
-            <Button onClick={salvar} className="rounded-[100px] bg-[#3B82F6] hover:bg-[#3B82F6]/90 text-white">Salvar</Button>
+            <Button onClick={salvar} className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground">Salvar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
