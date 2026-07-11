@@ -57,10 +57,10 @@ const TIPO_LABEL: Record<Tipo, string> = {
 
 function StatusPill({ s }: { s: StatusT }) {
   const map: Record<StatusT, { l: string; c: string }> = {
-    andamento: { l: "Em andamento", c: "bg-[#3B82F6]/15 text-[#3B82F6] border-[#3B82F6]/30" },
+    andamento: { l: "Em andamento", c: "bg-[hsl(var(--primary)/0.15)] text-primary border-[hsl(var(--primary)/0.30)]" },
     pendente:  { l: "Pendente",     c: "bg-amber-500/15 text-amber-500 border-amber-500/30" },
     concluido: { l: "Concluído",    c: "bg-emerald-500/15 text-emerald-500 border-emerald-500/30" },
-    atrasado:  { l: "Atrasado",     c: "bg-destructive/15 text-destructive border-destructive/30" },
+    atrasado:  { l: "Atrasado",     c: "bg-[hsl(var(--destructive)/0.15)] text-destructive border-[hsl(var(--destructive)/0.3)]" },
   };
   return <span className={cn("badge-pill", map[s].c)}>{map[s].l}</span>;
 }
@@ -144,7 +144,7 @@ function TrabalhosTab() {
         <div className={cn("rounded-xl border border-border bg-card overflow-hidden", selected && "lg:col-span-2")}>
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/40 hover:bg-muted/40">
+              <TableRow className="bg-[hsl(var(--muted)/0.4)] hover:bg-[hsl(var(--muted)/0.4)]">
                 {isVis("codigo")  && <TableHead className="w-[16%]">Código</TableHead>}
                 {isVis("empresa") && <TableHead className="w-[18%]">Empresa</TableHead>}
                 {isVis("nome")    && <TableHead>Trabalho</TableHead>}
@@ -160,11 +160,11 @@ function TrabalhosTab() {
                   <TableRow
                     key={t.id}
                     onClick={() => setSelected(t)}
-                    className={cn("cursor-pointer group", selected?.id === t.id && "bg-muted/40")}
+                    className={cn("cursor-pointer group", selected?.id === t.id && "bg-[hsl(var(--muted)/0.4)]")}
                   >
                     {isVis("codigo") && (
                       <TableCell>
-                        <span className="font-mono text-sm text-[#3B82F6]">{t.id}</span>
+                        <span className="text-sm text-primary">{t.id}</span>
                         <CopyBtn value={t.id} />
                       </TableCell>
                     )}
@@ -173,7 +173,7 @@ function TrabalhosTab() {
                     {isVis("tipo")    && (
                       <TableCell>
                         <span className="inline-flex items-center gap-1.5 text-sm">
-                          <Icon className="h-3.5 w-3.5 text-[#8B5CF6]" />
+                          <Icon className="h-3.5 w-3.5 text-highlight" />
                           {TIPO_LABEL[t.tipo]}
                         </span>
                       </TableCell>
@@ -192,7 +192,7 @@ function TrabalhosTab() {
             <div className="flex items-start justify-between gap-2 mb-3">
               <div>
                 <div className="text-xs text-muted-foreground inline-flex items-center gap-1.5 group">
-                  <span className="font-mono text-[#3B82F6]">{selected.id}</span>
+                  <span className="text-primary">{selected.id}</span>
                   <CopyBtn value={selected.id} />
                 </div>
                 <h3 className="font-semibold mt-1">{selected.nome}</h3>
@@ -217,7 +217,7 @@ function TrabalhosTab() {
                 <p className="text-sm text-muted-foreground">Sem registros.</p>
               )}
               {selected.historico.map((h, i) => (
-                <div key={i} className="rounded-lg border border-border bg-muted/30 p-2.5">
+                <div key={i} className="rounded-lg border border-border bg-[hsl(var(--muted)/0.3)] p-2.5">
                   <div className="flex items-center justify-between text-xs mb-0.5">
                     <span className="font-medium">{h.autor}</span>
                     <span className="text-muted-foreground">{h.quando}</span>
@@ -278,8 +278,8 @@ function ArquivoTab() {
       <div className="space-y-3">
         {grupos.map(([emp, docs]) => (
           <div key={emp} className="rounded-xl border border-border bg-card overflow-hidden">
-            <div className="px-5 py-3 bg-muted/40 flex items-center gap-3">
-              <div className="h-8 w-8 rounded-md bg-[#034C8B] text-white flex items-center justify-center text-xs font-semibold">
+            <div className="px-5 py-3 bg-[hsl(var(--muted)/0.4)] flex items-center gap-3">
+              <div className="h-8 w-8 rounded-md bg-primary text-white flex items-center justify-center text-xs font-semibold">
                 {emp.split(" ").map((p) => p[0]).slice(0, 2).join("")}
               </div>
               <span className="font-medium">{emp}</span>
@@ -287,8 +287,8 @@ function ArquivoTab() {
             </div>
             <div className="divide-y divide-border">
               {docs.map((d) => (
-                <Link key={d.id} to={d.href} className="flex items-center gap-3 px-5 py-3 hover:bg-muted/30 group">
-                  <div className="h-9 w-9 rounded-md bg-[#3B82F6]/10 text-[#3B82F6] flex items-center justify-center">
+                <Link key={d.id} to={d.href} className="flex items-center gap-3 px-5 py-3 hover:bg-[hsl(var(--muted)/0.3)] group">
+                  <div className="h-9 w-9 rounded-md bg-[hsl(var(--primary)/0.10)] text-primary flex items-center justify-center">
                     <FileText className="h-4 w-4" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -297,7 +297,7 @@ function ArquivoTab() {
                       <span className="font-mono">{d.id}</span><CopyBtn value={d.id} />
                     </div>
                   </div>
-                  <span className="badge-pill bg-[#8B5CF6]/15 text-[#8B5CF6] border-[#8B5CF6]/30 capitalize">{d.tipo}</span>
+                  <span className="badge-pill bg-[hsl(var(--highlight)/0.15)] text-highlight border-[hsl(var(--highlight)/0.30)] capitalize">{d.tipo}</span>
                 </Link>
               ))}
             </div>
@@ -335,7 +335,7 @@ function HistoricoTab() {
       <div className="rounded-xl border border-border bg-card overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-muted/40 hover:bg-muted/40">
+            <TableRow className="bg-[hsl(var(--muted)/0.4)] hover:bg-[hsl(var(--muted)/0.4)]">
               <TableHead>Data/Hora</TableHead>
               <TableHead>Usuário</TableHead>
               <TableHead>Ação</TableHead>
