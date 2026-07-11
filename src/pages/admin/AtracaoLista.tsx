@@ -4,7 +4,7 @@ import { SlaBar } from "@/components/SlaBar";
 import { vagas as vagasMock, type StatusKey } from "@/data/mock";
 import { criarVaga, publicarVaga, listarVagas, type VagaSupabase } from "@/services/vagasService";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, LayoutGrid, List, Filter, Info, AlertTriangle, Users, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, LayoutGrid, List, Filter, Info, AlertTriangle, Users, ChevronDown, ChevronRight, Megaphone } from "lucide-react";
 
 function supabaseToLocal(r: VagaSupabase): VagaLocal {
   return {
@@ -579,6 +579,7 @@ export default function AtracaoLista() {
             </DialogDescription>
           </DialogHeader>
           <div className="mt-6 space-y-5">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Informações básicas</p>
             {/* Título */}
             <div className="space-y-2">
               <Label htmlFor="nTitulo">Título da vaga *</Label>
@@ -599,7 +600,7 @@ export default function AtracaoLista() {
                     key={tipo}
                     type="button"
                     onClick={() => { setTipoEmpresa(tipo); setEmpresaCadastradaId(""); setNEmpresa(""); }}
-                    className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                    className={`flex-1 rounded-full border px-3 py-2 text-sm font-medium transition ${
                       tipoEmpresa === tipo
                         ? "border-primary bg-[hsl(var(--primary)/0.1)] text-primary"
                         : "border-border bg-background text-muted-foreground hover:bg-secondary"
@@ -661,6 +662,7 @@ export default function AtracaoLista() {
             )}
 
             {/* Tipo + Modalidade */}
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground pt-1">Detalhes da vaga</p>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label>Tipo *</Label>
@@ -760,13 +762,17 @@ export default function AtracaoLista() {
             </div>
 
             {/* Publicação no site */}
-            <div className="rounded-lg border border-border">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground pt-1">Publicação</p>
+            <div className="rounded-xl border border-border overflow-hidden">
               <button
                 type="button"
                 onClick={() => setPubAberto((x) => !x)}
-                className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium hover:bg-muted/30"
+                className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-muted/30"
               >
-                <span>📢 Informações para publicação no site</span>
+                <span className="h-8 w-8 rounded-lg bg-[hsl(var(--primary)/0.1)] text-primary flex items-center justify-center shrink-0">
+                  <Megaphone className="h-4 w-4" />
+                </span>
+                <span className="flex-1 text-sm font-medium">Informações para publicação no site</span>
                 <span className="text-xs text-muted-foreground">{pubAberto ? "Ocultar" : "Expandir"}</span>
               </button>
               {pubAberto && (
@@ -907,9 +913,10 @@ export default function AtracaoLista() {
                         />
                       </div>
 
-                      <div className="rounded-md bg-[hsl(var(--info)/0.1)] border border-[hsl(var(--info)/0.2)] px-3 py-2 text-xs text-info">
-                        ℹ️ Status inicial: <strong>Não publicada</strong>. Para tornar pública, use o botão
-                        "Publicar no site" na tela interna da vaga.
+                      <div className="rounded-md bg-[hsl(var(--info)/0.1)] border border-[hsl(var(--info)/0.2)] px-3 py-2 text-xs text-info flex items-start gap-2">
+                        <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                        <span>Status inicial: <strong>Não publicada</strong>. Para tornar pública, use o botão
+                        "Publicar no site" na tela interna da vaga.</span>
                       </div>
                     </div>
                   )}
