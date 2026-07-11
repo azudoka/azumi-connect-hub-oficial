@@ -9,7 +9,7 @@ import {
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/PageHeader";
-import { KpiCard } from "@/components/KpiCard";
+import { ConnectStatCard } from "@/components/ConnectStatCard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { EmptyState } from "@/components/EmptyState";
 
@@ -404,11 +404,11 @@ export default function ProjetosPage() {
       />
 
       {isConsultor && (
-        <div className="mb-5 rounded-xl border border-info/30 bg-info/10 px-4 py-3 flex items-start gap-3">
+        <div className="mb-5 rounded-xl border border-[hsl(var(--info)/0.3)] bg-[hsl(var(--info)/0.1)] px-4 py-3 flex items-start gap-3">
           <Briefcase className="h-4 w-4 text-info shrink-0 mt-0.5" />
           <div>
             <div className="text-sm font-medium text-info">Visão de consultor</div>
-            <div className="text-xs text-info/80 mt-0.5">
+            <div className="text-xs text-[hsl(var(--info)/0.8)] mt-0.5">
               Você está vendo apenas os projetos atribuídos a você.
             </div>
           </div>
@@ -425,10 +425,23 @@ export default function ProjetosPage() {
         {/* ───────── Projetos Vigentes ───────── */}
         <TabsContent value="vigentes" className="mt-0 space-y-5">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <KpiCard label="Total de projetos" value={kpis.total} icon={Briefcase} />
-            <KpiCard label="Em andamento" value={kpis.andamento} icon={Clock} />
-            <KpiCard label="Aguardando cliente" value={kpis.aguardando} icon={PauseCircle} />
-            <KpiCard label="Ajuste solicitado" value={kpis.ajuste} icon={AlertTriangle} />
+            <ConnectStatCard variant="terminal" label="Total de projetos" value={kpis.total} />
+            <ConnectStatCard
+              variant="radial"
+              label="Em andamento"
+              percent={kpis.total > 0 ? (kpis.andamento / kpis.total) * 100 : 0}
+              contextLabel={`${kpis.andamento} de ${kpis.total} projetos`}
+            />
+            <ConnectStatCard variant="terminal" label="Aguardando cliente" value={kpis.aguardando} />
+            <ConnectStatCard
+              variant="list"
+              label="Ajuste solicitado"
+              items={projetosVigentes
+                .filter((p) => p.status === "ajuste_solicitado")
+                .slice(0, 3)
+                .map((p) => ({ label: p.titulo, tone: "amber" as const }))}
+              footer={`${kpis.ajuste} projeto${kpis.ajuste === 1 ? "" : "s"} no total`}
+            />
           </div>
 
           {/* Filtros + toggle */}
@@ -476,12 +489,12 @@ export default function ProjetosPage() {
             </Select>
 
             {/* Toggle visualização */}
-            <div className="ml-auto inline-flex rounded-lg border border-border p-0.5 bg-secondary/40">
+            <div className="ml-auto inline-flex rounded-full border border-border p-0.5 bg-[hsl(var(--secondary)/0.4)]">
               <button
                 type="button"
                 onClick={() => setView("lista")}
                 className={cn(
-                  "h-8 px-3 rounded-md text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
+                  "h-8 px-3 rounded-full text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
                   view === "lista" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -491,7 +504,7 @@ export default function ProjetosPage() {
                 type="button"
                 onClick={() => setView("tabela")}
                 className={cn(
-                  "h-8 px-3 rounded-md text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
+                  "h-8 px-3 rounded-full text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
                   view === "tabela" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -501,7 +514,7 @@ export default function ProjetosPage() {
                 type="button"
                 onClick={() => setView("kanban")}
                 className={cn(
-                  "h-8 px-3 rounded-md text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
+                  "h-8 px-3 rounded-full text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
                   view === "kanban" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -610,7 +623,7 @@ export default function ProjetosPage() {
             <div className="bg-card border border-border rounded-xl overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-secondary/40 text-xs uppercase tracking-wider text-muted-foreground">
+                  <thead className="bg-[hsl(var(--secondary)/0.4)] text-xs uppercase tracking-wider text-muted-foreground">
                     <tr>
                       <th className="text-left font-medium px-4 py-3">Código</th>
                       <th className="text-left font-medium px-4 py-3">Projeto</th>
@@ -629,7 +642,7 @@ export default function ProjetosPage() {
                       return (
                         <tr
                           key={p.id}
-                          className="border-t border-border hover:bg-secondary/30 transition-colors"
+                          className="border-t border-border hover:bg-[hsl(var(--secondary)/0.3)] transition-colors"
                         >
                           <td className="px-4 py-3 font-data text-xs text-muted-foreground">
                             {p.codigo}
@@ -730,7 +743,7 @@ export default function ProjetosPage() {
                             <li key={p.id}>
                               <Link
                                 to={`/app/projetos/${p.id}`}
-                                className="block bg-background/60 border border-border rounded-lg p-3 hover:border-primary/40 transition-colors"
+                                className="block bg-[hsl(var(--background)/0.6)] border border-border rounded-lg p-3 hover:border-[hsl(var(--primary)/0.4)] transition-colors"
                               >
                                 <div className="text-[10px] font-data text-muted-foreground uppercase">{p.codigo}</div>
                                 <div className="text-sm font-medium truncate mt-0.5">{p.empresaNome}</div>
@@ -779,7 +792,7 @@ export default function ProjetosPage() {
             <div className="bg-card border border-border rounded-xl overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-secondary/40 text-xs uppercase tracking-wider text-muted-foreground">
+                  <thead className="bg-[hsl(var(--secondary)/0.4)] text-xs uppercase tracking-wider text-muted-foreground">
                     <tr>
                       <th className="text-left font-medium px-4 py-3">Código</th>
                       <th className="text-left font-medium px-4 py-3">Empresa</th>
@@ -791,7 +804,7 @@ export default function ProjetosPage() {
                   </thead>
                   <tbody>
                     {cronogramas.map((cr) => (
-                      <tr key={cr.id} className="border-t border-border hover:bg-secondary/30 transition-colors">
+                      <tr key={cr.id} className="border-t border-border hover:bg-[hsl(var(--secondary)/0.3)] transition-colors">
                         <td className="px-4 py-3 font-data text-xs">{cr.codigo}</td>
                         <td className="px-4 py-3 font-medium">{cr.empresaNome}</td>
                         <td className="px-4 py-3">{cr.consultorNome}</td>
@@ -847,7 +860,7 @@ export default function ProjetosPage() {
           ) : (
             <>
               {projetosEncerrados.some((p) => p.conclusao < 100) && (
-                <div className="mb-4 rounded-xl border border-warning/30 bg-warning/10 px-4 py-3 flex items-start gap-3">
+                <div className="mb-4 rounded-xl border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] px-4 py-3 flex items-start gap-3">
                   <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
                   <div className="text-xs">
                     <div className="font-semibold text-warning">
@@ -866,7 +879,7 @@ export default function ProjetosPage() {
                   key={p.id}
                   className="bg-card border border-border rounded-xl p-4 flex items-center gap-4 flex-wrap"
                 >
-                  <div className="h-10 w-10 rounded-lg bg-success/15 text-success flex items-center justify-center shrink-0">
+                  <div className="h-10 w-10 rounded-lg bg-[hsl(var(--success)/0.15)] text-success flex items-center justify-center shrink-0">
                     <CheckCircle2 className="h-5 w-5" />
                   </div>
                   <div className="min-w-0 flex-1">
