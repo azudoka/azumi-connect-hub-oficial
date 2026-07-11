@@ -1209,7 +1209,7 @@ export default function VagaDetalheAdmin() {
           {vaga.beneficios.map((b) => (
             <span
               key={b}
-              className="inline-flex items-center rounded-full border border-border bg-secondary px-2.5 py-0.5 text-xs font-medium text-foreground"
+              className="inline-flex items-center rounded-full border border-[hsl(var(--teal)/0.3)] bg-[hsl(var(--teal)/0.1)] px-2.5 py-0.5 text-xs font-medium text-teal"
             >
               {BENEFICIO_LABEL[b] ?? b}
             </span>
@@ -1219,33 +1219,39 @@ export default function VagaDetalheAdmin() {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
         {/* Timeline */}
-        <div className="lg:col-span-3 bg-card border border-border rounded-xl p-5 card-hover">
-          <h3 className="font-display font-semibold mb-4">Timeline da vaga</h3>
-          <ol className="relative grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="lg:col-span-3 bg-card border border-border rounded-xl p-4 card-hover">
+          <h3 className="font-display font-semibold mb-3">Timeline da vaga</h3>
+          <div className="flex items-start overflow-x-auto pb-1 -mx-1 px-1">
             {etapasVaga.map((e, idx) => {
               const done = e.status === "concluida";
               const active = e.status === "andamento";
+              const isLast = idx === etapasVaga.length - 1;
               return (
-                <li key={idx} className="relative">
-                  <div className={cn(
-                    "h-8 w-8 rounded-full flex items-center justify-center font-data text-xs",
-                    done && "bg-success text-success-foreground",
-                    active && "bg-primary text-primary-foreground animate-soft-pulse",
-                    !done && !active && "bg-muted text-muted-foreground"
-                  )}>
-                    {done ? <CheckCircle2 className="h-4 w-4" /> : idx + 1}
-                  </div>
-                  <div className="mt-2">
-                    <div className="text-sm font-medium leading-tight">{e.nome}</div>
-                    <div className="text-[11px] text-muted-foreground font-data mt-0.5">
-                      {e.inicio} → {e.fim}
+                <div key={idx} className={cn("flex items-start", !isLast && "flex-1 min-w-[84px]")}>
+                  <div className="flex flex-col items-center w-[84px] shrink-0">
+                    <div className={cn(
+                      "h-7 w-7 rounded-full flex items-center justify-center text-xs shrink-0",
+                      done && "bg-success text-success-foreground",
+                      active && "bg-primary text-primary-foreground animate-soft-pulse",
+                      !done && !active && "bg-muted text-muted-foreground"
+                    )}>
+                      {done ? <CheckCircle2 className="h-3.5 w-3.5" /> : idx + 1}
+                    </div>
+                    <div className="mt-1.5 text-center px-0.5">
+                      <div className="text-[11px] font-medium leading-tight">{e.nome}</div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5 tabular-nums">
+                        {e.inicio} → {e.fim}
+                      </div>
                     </div>
                   </div>
-                </li>
+                  {!isLast && (
+                    <div className={cn("h-0.5 flex-1 mt-3.5 rounded-full", done ? "bg-success" : "bg-border")} />
+                  )}
+                </div>
               );
             })}
-          </ol>
-          <div className="mt-5">
+          </div>
+          <div className="mt-4">
             <SlaBar percent={vaga.sla} label={`SLA da vaga · ${vaga.diasAbertos}/${vaga.diasPrevistos} dias`} />
           </div>
         </div>
@@ -1261,7 +1267,7 @@ export default function VagaDetalheAdmin() {
                 <li key={f.etapa}>
                   <div className="flex justify-between text-xs mb-1">
                     <span className="text-muted-foreground">{f.etapa}</span>
-                    <span className="font-data tabular-nums">{f.n}</span>
+                    <span className="tabular-nums font-medium">{f.n}</span>
                   </div>
                   <div className="h-2 rounded-full bg-muted overflow-hidden">
                     <div
@@ -1826,7 +1832,7 @@ export default function VagaDetalheAdmin() {
             <div className="space-y-3">
               {candidaturasSite.map((c) => (
                 <div key={c.id} className="rounded-lg border border-border bg-background p-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[hsl(var(--primary)/0.1)] text-primary font-semibold text-sm">
                     {c.nome.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -2020,7 +2026,7 @@ export default function VagaDetalheAdmin() {
               return (
                 <li key={c.id} className="relative flex gap-3 pl-0">
                   <div className={cn(
-                    "h-8 w-8 rounded-full flex items-center justify-center text-[10px] font-semibold shrink-0 z-10 border",
+                    "h-8 w-8 rounded-lg flex items-center justify-center text-[10px] font-semibold shrink-0 z-10 border",
                     isSistema ? "bg-muted text-muted-foreground border-border"
                       : c.azumi ? "bg-gradient-brand text-white border-transparent"
                       : "bg-secondary text-foreground border-border"
@@ -2032,7 +2038,7 @@ export default function VagaDetalheAdmin() {
                       {isSistema ? <Bot className="h-3 w-3" /> : <User className="h-3 w-3" />}
                       <span className="font-medium text-foreground">{c.autor}</span>
                       <span>· {c.role} ·</span>
-                      <span className="font-data">{c.quando}</span>
+                      <span className="tabular-nums">{c.quando}</span>
                     </div>
                     <div className={cn(
                       "rounded-xl px-3 py-2 text-sm border",
