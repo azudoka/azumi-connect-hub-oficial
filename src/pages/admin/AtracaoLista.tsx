@@ -405,6 +405,16 @@ export default function AtracaoLista() {
                     <ul className="space-y-2">
                       {items.map((v) => {
                         const critico = isSlaCritico(v.etapaFunil, v.sla);
+                        const corUrgencia =
+                          v.sla >= 90 ? "hsl(var(--destructive))" :
+                          v.sla >= 70 ? "hsl(var(--warning))" : "hsl(var(--success))";
+                        const consultorIniciais = v.consultor
+                          .split(" ")
+                          .filter(Boolean)
+                          .slice(0, 2)
+                          .map((p) => p[0])
+                          .join("")
+                          .toUpperCase();
                         return (
                           <li
                             key={v.id}
@@ -418,8 +428,9 @@ export default function AtracaoLista() {
                               setDraggingId(null);
                               setDragOverCol(null);
                             }}
+                            style={{ borderLeftColor: corUrgencia }}
                             className={cn(
-                              "block bg-background/60 border border-border rounded-lg p-3 transition-colors cursor-grab active:cursor-grabbing hover:border-[hsl(var(--primary)/0.4)]",
+                              "block bg-card border border-border border-l-[3px] rounded-lg p-3 transition-colors cursor-grab active:cursor-grabbing hover:border-[hsl(var(--primary)/0.4)]",
                               draggingId === v.id && "opacity-50",
                             )}
                           >
@@ -445,6 +456,12 @@ export default function AtracaoLista() {
                                 <AlertTriangle className="h-3 w-3" /> SLA crítico
                               </div>
                             )}
+                            <div className="mt-3 pt-2 border-t border-border flex items-center gap-1.5">
+                              <span className="h-5 w-5 rounded-md bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center shrink-0">
+                                {consultorIniciais}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground truncate">{v.consultor}</span>
+                            </div>
                           </li>
                         );
                       })}
