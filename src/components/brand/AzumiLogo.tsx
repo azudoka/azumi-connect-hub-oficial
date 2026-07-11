@@ -61,7 +61,7 @@ export function AzumiLogo({
     const icon =
       product === "Hub"
         ? light ? hubIconeRosa : hubIconeClaro
-        : light ? connectIconeEscuro : connectIconeClaro;
+        : light ? connectIconeClaro : connectIconeEscuro;
     const glowColor = product === "Hub" ? "#A78BFA" : "#60A5FA";
     return (
       <div
@@ -90,7 +90,7 @@ export function AzumiLogo({
   const src =
     product === "Hub"
       ? light ? hubLogoBranco : hubLogoPreto
-      : light ? connectLogoEscuro : connectLogoClaro;
+      : light ? connectLogoClaro : connectLogoEscuro;
 
   return (
     <img

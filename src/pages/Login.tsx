@@ -54,7 +54,11 @@ export default function Login() {
         <div className="absolute inset-0 bg-black/10" />
 
         <div className="relative z-10 flex h-full flex-col justify-between p-12">
-          <AzumiLogo light size={34} />
+          <div className="flex items-center gap-6">
+            <AzumiLogo product="Connect" light size={44} />
+            <div className="h-8 w-px bg-white/20" />
+            <AzumiLogo product="Hub" light size={44} />
+          </div>
 
           <div className="max-w-sm">
             <p className="font-display text-2xl font-semibold leading-snug text-white">
@@ -71,8 +75,10 @@ export default function Login() {
       {/* ── COLUNA DIREITA — formulário ── */}
       <div className="flex items-center justify-center bg-background px-6 py-12">
         <div className="w-full max-w-sm">
-          <div className="mb-8 flex justify-center lg:hidden">
-            <AzumiLogo size={30} />
+          <div className="mb-8 flex items-center justify-center gap-5 lg:hidden">
+            <AzumiLogo product="Connect" size={30} />
+            <div className="h-7 w-px bg-border" />
+            <AzumiLogo product="Hub" size={30} />
           </div>
 
           <div className="mb-8 text-center lg:text-left">

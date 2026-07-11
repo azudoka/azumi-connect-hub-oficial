@@ -7,8 +7,9 @@ import {
   UserCircle2, Award, Grid3x3, Activity, ShieldAlert,
   ClipboardList, FileSignature, Route, Building2, Sparkles,
   Star, Receipt, Stethoscope, Gavel, Shield, KeyRound,
-  ThermometerSun, History, FlaskConical,
+  ThermometerSun, History, FlaskConical, ChevronLeft,
 } from "lucide-react";
+import { AzumiLogo } from "@/components/brand/AzumiLogo";
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useAuth, type ModuloSlug } from "@/context/AuthContext";
@@ -229,8 +230,6 @@ const ICON_COLOR = "hsl(var(--sidebar-primary))";
 
 export function SidebarHub({ profile }: { profile: HubProfile }) {
   const [collapsed, setCollapsed] = useState(false);
-  const [hovering, setHovering] = useState(false);
-  const isCollapsed = collapsed && !hovering;
   const { hasModulo, podeOperar, usuario, logout } = useAuth();
   const { isPaginaAtiva, isModuloAtivo, isEmTrial, diasRestantesTrial } = useModulos();
 
@@ -260,7 +259,7 @@ export function SidebarHub({ profile }: { profile: HubProfile }) {
 
   const renderItem = (it: NavItem, keyPrefix: string, extraBadge?: React.ReactNode) => (
     <li key={`${keyPrefix}-${it.label}`}>
-      {isCollapsed ? (
+      {collapsed ? (
         <NavLink
           to={it.to}
           onClick={(e) => e.stopPropagation()}
@@ -287,19 +286,16 @@ export function SidebarHub({ profile }: { profile: HubProfile }) {
 
   return (
     <aside
-      onClick={() => { if (isCollapsed) { setCollapsed(false); setHovering(false); } }}
-      onMouseEnter={() => setHovering(true)}
-      onMouseLeave={() => setHovering(false)}
-      className={cn("sidebar-hub-brand backdrop-blur-xl", isCollapsed ? "" : "bg-gradient-sidebar")}
+      className={cn("sidebar-hub-brand backdrop-blur-xl", collapsed ? "" : "bg-gradient-sidebar")}
       style={{
         display: "flex",
         flexDirection: "column",
         flexShrink: 0,
-        width: isCollapsed ? 64 : 240,
+        width: collapsed ? 64 : 240,
         transition: "width 0.3s ease",
         borderRight: "1px solid hsl(var(--sidebar-border))",
-        background: isCollapsed ? "hsl(var(--sidebar-background) / 0.88)" : undefined,
-        cursor: isCollapsed ? "pointer" : "default",
+        background: collapsed ? "hsl(var(--sidebar-background) / 0.88)" : undefined,
+        cursor: collapsed ? "pointer" : "default",
         height: "100svh",
         position: "sticky",
         top: 0,
@@ -307,17 +303,8 @@ export function SidebarHub({ profile }: { profile: HubProfile }) {
       aria-label="Navegação Hub"
     >
       {/* Logo */}
-      <div style={{ height: 80, display: "flex", alignItems: "center", padding: "0 16px", borderBottom: "1px solid hsl(var(--sidebar-border) / 0.6)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: isCollapsed ? 0 : 8 }}>
-          <div style={{ width: 28, height: 28, borderRadius: 8, background: "linear-gradient(135deg,#3B82F6,#031D38)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <span style={{ color: "white", fontSize: 13, fontWeight: 800, fontFamily: "'Urbanist',sans-serif" }}>A</span>
-          </div>
-          {!collapsed && (
-            <span style={{ fontSize: 16, fontWeight: 800, color: "hsl(var(--sidebar-foreground))", fontFamily: "'Urbanist',sans-serif", letterSpacing: "-0.03em" }}>
-              Hub
-            </span>
-          )}
-        </div>
+      <div style={{ height: 96, display: "flex", alignItems: "center", padding: "0 16px", borderBottom: "1px solid hsl(var(--sidebar-border) / 0.6)" }}>
+        <AzumiLogo product="Hub" collapsed={collapsed} light size={28} />
       </div>
 
       {/* Nav */}
@@ -393,6 +380,15 @@ export function SidebarHub({ profile }: { profile: HubProfile }) {
       </nav>
 
       {/* Footer / usuário */}
+      <div className="border-t border-sidebar-border/60">
+        <button
+          onClick={() => setCollapsed((c) => !c)}
+          className="w-full flex items-center justify-center py-2 text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-white/5 rounded-none transition-colors"
+          aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
+        >
+          <ChevronLeft className={cn("h-4 w-4 transition-transform", collapsed && "rotate-180")} />
+        </button>
+      </div>
       <div className="p-3 border-t border-sidebar-border/60">
         {!collapsed ? (
           <div className="bg-card/70 rounded-xl p-3 border border-border/60">

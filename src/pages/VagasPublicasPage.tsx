@@ -130,7 +130,7 @@ export default function VagasPublicasPage() {
         <div className="absolute inset-0 bg-black/15" />
 
         <div className="relative z-10 mx-auto flex max-w-6xl items-center justify-between py-3">
-          <AzumiLogo light product="Connect" size={20} hideSubtitle />
+          <AzumiLogo light product="Connect" size={28} hideSubtitle />
           <div className="flex items-center gap-3">
             <a
               href="https://www.instagram.com/azumirh/"
