@@ -441,7 +441,7 @@ export default function AtracaoLista() {
                             </div>
                             <div className="mt-3"><SlaBar percent={v.sla} /></div>
                             {critico && (
-                              <div className="mt-2 inline-flex items-center gap-1 rounded-full border border-warning/30 bg-warning/10 px-2 py-0.5 text-[10px] text-warning font-medium">
+                              <div className="mt-2 inline-flex items-center gap-1 rounded-full border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] px-2 py-0.5 text-[10px] text-warning font-medium">
                                 <AlertTriangle className="h-3 w-3" /> SLA crítico
                               </div>
                             )}
