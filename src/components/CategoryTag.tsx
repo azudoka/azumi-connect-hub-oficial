@@ -3,11 +3,11 @@ import { cn } from "@/lib/utils";
 export type TagCategoria = "modalidade" | "contrato" | "nivel" | "origem" | "urgencia";
 
 const CORES: Record<TagCategoria, string> = {
-  modalidade: "bg-primary/10 text-primary border-primary/30",
-  contrato:   "bg-info/10 text-info border-info/30",
-  nivel:      "bg-highlight/10 text-highlight border-highlight/30",
-  origem:     "bg-warning/10 text-warning border-warning/30",
-  urgencia:   "bg-destructive/10 text-destructive border-destructive/30",
+  modalidade: "bg-[hsl(var(--primary)/0.1)] text-primary border-[hsl(var(--primary)/0.3)]",
+  contrato:   "bg-[hsl(var(--info)/0.1)] text-info border-[hsl(var(--info)/0.3)]",
+  nivel:      "bg-[hsl(var(--highlight)/0.1)] text-highlight border-[hsl(var(--highlight)/0.3)]",
+  origem:     "bg-[hsl(var(--warning)/0.1)] text-warning border-[hsl(var(--warning)/0.3)]",
+  urgencia:   "bg-[hsl(var(--destructive)/0.1)] text-destructive border-[hsl(var(--destructive)/0.3)]",
 };
 
 export function CategoryTag({
