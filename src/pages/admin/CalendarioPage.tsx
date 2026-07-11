@@ -1,459 +1,508 @@
-import { useState, useMemo } from "react";
-import { createPortal } from "react-dom";
-import { Plus, X, Send, Eye, Upload, Link2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+  ChevronLeft, ChevronRight, Plus, X, MapPin, Clock, Users,
+  Download, ExternalLink, StickyNote,
+} from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 
-const U: React.CSSProperties = { fontFamily: "var(--font-body)" };
+/* ─── Tipos ─── */
+type EventoTipo = "feriado_nacional" | "feriado_obrigatorio" | "reuniao" | "entrevista" | "prazo" | "ferias" | "comunicado" | "outros";
+type Visibilidade = "interno" | "empresa" | "todos";
 
-type Categoria = "interno" | "externo";
-type TipoComunicado = "atualizacao" | "aviso" | "endomarketing" | "alerta" | "evento";
+interface ConviteResposta { status: "pendente" | "aceito" | "recusado"; justificativa?: string; }
+interface Convidado { nome: string; iniciais: string; resposta: ConviteResposta; }
 
-const TIPO_MAP: Record<TipoComunicado, { label: string; hex: string; bg: string; border: string }> = {
-  atualizacao:   { label: "Atualização",  hex: "hsl(var(--primary))", bg: "#EFF6FF", border: "#BFDBFE" },
-  aviso:         { label: "Aviso",        hex: "#F59E0B", bg: "#FFFBEB", border: "#FDE68A" },
-  endomarketing: { label: "Endomarketing",hex: "#EC4899", bg: "#FDF2F8", border: "#FBCFE8" },
-  alerta:        { label: "Alerta",       hex: "#EF4444", bg: "#FFF1F2", border: "#FECACA" },
-  evento:        { label: "Evento",       hex: "hsl(var(--highlight))", bg: "#F5F3FF", border: "#DDD6FE" },
-};
-
-const GRAD: Record<TipoComunicado, string> = {
-  endomarketing: "linear-gradient(135deg,#EC4899,hsl(var(--highlight)))",
-  evento:        "linear-gradient(135deg,hsl(var(--highlight)),hsl(var(--primary)))",
-  alerta:        "linear-gradient(135deg,#EF4444,#F97316)",
-  aviso:         "linear-gradient(135deg,#F59E0B,#EF4444)",
-  atualizacao:   "linear-gradient(135deg,hsl(var(--connect-ink)),hsl(var(--primary)))",
-};
-
-const REACOES_LIST = ["❤️","👍","😂","🎉","🔥"] as const;
-
-interface Comentario { id: string; autor: string; iniciais: string; texto: string; hora: string; }
-interface Leitor { nome: string; iniciais: string; vistEm: string; }
-interface Comunicado {
+interface Evento {
   id: string;
   titulo: string;
-  corpo: string;
-  coverUrl?: string;
-  categoria: Categoria;
-  tipo: TipoComunicado;
-  autor: string;
-  iniciais: string;
   data: string;
-  leitores: Leitor[];
-  comentarios: Comentario[];
-  reacoes: Record<string, number>;
-  minhasReacoes: string[];
+  hora?: string;
+  local?: string;
+  descricao?: string;
+  nota?: string;
+  coverUrl?: string;
+  tipo: EventoTipo;
+  outrosNome?: string;
+  outrosCor?: string;
+  visibilidade: Visibilidade;
+  empresa?: string;
+  convidados?: Convidado[];
 }
 
-let NEXT_ID = 6;
-const MOCK_INICIAL: Comunicado[] = [
-  {
-    id: "C-001",
-    titulo: "Atualização da política de férias 2026",
-    corpo: "Comunicamos que a política de férias foi atualizada para 2026. Os colaboradores poderão fracionar em até 3 períodos, com mínimo de 5 dias corridos cada.",
-    coverUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80",
-    categoria: "interno",
-    tipo: "atualizacao",
-    autor: "Patricia Lima",
-    iniciais: "PL",
-    data: "20/04/2026",
-    leitores: [
-      { nome: "Ana Beatriz", iniciais: "AB", vistEm: "20/04 09:30" },
-      { nome: "Rafael Lima", iniciais: "RL", vistEm: "20/04 11:10" },
-      { nome: "Camila Souza", iniciais: "CS", vistEm: "21/04 08:00" },
-    ],
-    comentarios: [
-      { id: "cm1", autor: "Ana Beatriz", iniciais: "AB", texto: "Ótima notícia! Muito mais flexibilidade.", hora: "09:32" },
-      { id: "cm2", autor: "Rafael Lima",  iniciais: "RL", texto: "Perfeito, obrigado pela comunicação.", hora: "11:15" },
-    ],
-    reacoes: { "❤️": 5, "👍": 8, "😂": 0, "🎉": 3, "🔥": 1 },
-    minhasReacoes: ["👍"],
-  },
-  {
-    id: "C-002",
-    titulo: "Boas-vindas à Kentaki Foods!",
-    corpo: "Damos as boas-vindas à Kentaki Foods como novo cliente Ongoing da Azumi. Estamos felizes em fazer parte dessa jornada!",
-    coverUrl: "https://images.unsplash.com/photo-1567521464027-f127ff144326?w=600&q=80",
-    categoria: "externo",
-    tipo: "endomarketing",
-    autor: "Patricia Lima",
-    iniciais: "PL",
-    data: "18/04/2026",
-    leitores: [
-      { nome: "Mariana Souza", iniciais: "MS", vistEm: "18/04 14:00" },
-    ],
-    comentarios: [
-      { id: "cm3", autor: "Mariana Souza", iniciais: "MS", texto: "Que alegria fazer parte da Azumi!", hora: "14:05" },
-    ],
-    reacoes: { "❤️": 12, "👍": 7, "😂": 2, "🎉": 9, "🔥": 4 },
-    minhasReacoes: ["❤️", "🎉"],
-  },
-  {
-    id: "C-003",
-    titulo: "Reunião geral — quarta às 10h",
-    corpo: "Pauta: resultados de Q1, diretrizes para Q2 e apresentação dos novos clientes. Presença obrigatória para todo o time.",
-    categoria: "interno",
-    tipo: "aviso",
-    autor: "Ana Beatriz",
-    iniciais: "AB",
-    data: "22/04/2026",
-    leitores: [
-      { nome: "Patricia Lima", iniciais: "PL", vistEm: "22/04 09:00" },
-    ],
-    comentarios: [],
-    reacoes: { "❤️": 1, "👍": 5, "😂": 0, "🎉": 0, "🔥": 0 },
-    minhasReacoes: [],
-  },
+const TIPO_LABEL: Record<EventoTipo, string> = {
+  feriado_nacional:    "Feriado nacional",
+  feriado_obrigatorio: "Feriado obrigatório",
+  reuniao:             "Reunião",
+  entrevista:          "Entrevista",
+  prazo:               "Prazo de entregável",
+  ferias:              "Férias",
+  comunicado:          "Comunicado/Evento",
+  outros:              "Outros",
+};
+
+const TIPO_HEX: Record<EventoTipo, string> = {
+  feriado_nacional:    "#EC4899",
+  feriado_obrigatorio: "#EF4444",
+  reuniao:             "hsl(var(--primary))",
+  entrevista:          "hsl(var(--highlight))",
+  prazo:               "#F97316",
+  ferias:              "#10B981",
+  comunicado:          "#06B6D4",
+  outros:              "#64748B",
+};
+
+const HOJE = new Date();
+const Y0 = HOJE.getFullYear();
+const M0 = HOJE.getMonth();
+const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const NOMES_MES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const DIAS_SEM  = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+const EMPRESAS  = ["Kentaki Foods","Tech Plural","Grupo Maverick","Studio Mira","Alvo Digital"];
+const USUARIOS  = [
+  { nome: "Mariana Souza",   iniciais: "MS" },
+  { nome: "Rafael Lima",     iniciais: "RL" },
+  { nome: "Ana Beatriz",     iniciais: "AB" },
+  { nome: "Camila Torres",   iniciais: "CT" },
+];
+const ANOS = [Y0 - 1, Y0, Y0 + 1];
+
+let NEXT_ID = 12;
+const MOCK_EVENTOS: Evento[] = [
+  { id:"EV-1",  titulo:"Reunião de Planejamento Q2",     data:fmt(new Date(Y0,M0,3)),  hora:"10:00", tipo:"reuniao",             visibilidade:"interno",  convidados:[{ nome:"Ana Beatriz", iniciais:"AB", resposta:{ status:"aceito" } },{ nome:"Rafael Lima", iniciais:"RL", resposta:{ status:"pendente" } }] },
+  { id:"EV-2",  titulo:"Entrevista — Dev Pleno",         data:fmt(new Date(Y0,M0,5)),  hora:"14:30", tipo:"entrevista",          visibilidade:"interno" },
+  { id:"EV-3",  titulo:"Prazo Diagnóstico DISC",         data:fmt(new Date(Y0,M0,10)),               tipo:"prazo",               visibilidade:"empresa",  empresa:"Kentaki Foods" },
+  { id:"EV-4",  titulo:"Feriado — Tiradentes",           data:fmt(new Date(Y0,M0,21)),               tipo:"feriado_nacional",    visibilidade:"todos" },
+  { id:"EV-5",  titulo:"Reunião com Kentaki Foods",      data:fmt(new Date(Y0,M0,14)), hora:"09:00", tipo:"reuniao",             visibilidade:"empresa",  empresa:"Kentaki Foods" },
+  { id:"EV-6",  titulo:"Férias — Ana Beatriz",           data:fmt(new Date(Y0,M0,18)),               tipo:"ferias",              visibilidade:"interno" },
+  { id:"EV-7",  titulo:"Entrevista — Designer Sênior",   data:fmt(new Date(Y0,M0,22)), hora:"16:00", tipo:"entrevista",          visibilidade:"interno" },
+  { id:"EV-8",  titulo:"Prazo entrega Relatório Q1",     data:fmt(new Date(Y0,M0,28)),               tipo:"prazo",               visibilidade:"empresa",  empresa:"Grupo Maverick" },
+  { id:"EV-9",  titulo:"Convenção Coletiva",             data:fmt(new Date(Y0,M0,26)),               tipo:"feriado_obrigatorio", visibilidade:"todos" },
+  { id:"EV-10", titulo:"Wellbeing Day",                  data:fmt(new Date(Y0,M0,5)),  hora:"15:00", tipo:"comunicado",          visibilidade:"todos",    descricao:"Evento de bem-estar para toda a equipe." },
+  { id:"EV-11", titulo:"Team Building",                  data:fmt(new Date(Y0,M0,5)),  hora:"18:00", tipo:"outros",              outrosNome:"Confraternização", outrosCor:"#F59E0B", visibilidade:"interno" },
 ];
 
-function Av({ ini, size = 28 }: { ini: string; size?: number }) {
+function startOfWeek(d: Date) { const r = new Date(d); r.setDate(d.getDate()-d.getDay()); return r; }
+function getCor(e: Evento): string { return e.tipo === "outros" && e.outrosCor ? e.outrosCor : TIPO_HEX[e.tipo]; }
+function getLabel(e: Evento): string { return e.tipo === "outros" && e.outrosNome ? e.outrosNome : TIPO_LABEL[e.tipo]; }
+
+function googleCalendarUrl(ev: Evento): string {
+  const base = "https://calendar.google.com/calendar/render?action=TEMPLATE";
+  const d = ev.data.replace(/-/g,"");
+  const dates = ev.hora
+    ? `${d}T${ev.hora.replace(":","")}00/${d}T${ev.hora.replace(":","")}00`
+    : `${d}/${d}`;
+  return `${base}&text=${encodeURIComponent(ev.titulo)}&dates=${dates}${ev.local ? `&location=${encodeURIComponent(ev.local)}` : ""}${ev.descricao ? `&details=${encodeURIComponent(ev.descricao)}` : ""}`;
+}
+
+function downloadICS(ev: Evento) {
+  const d = ev.data.replace(/-/g,"");
+  const dtstart = ev.hora ? `${d}T${ev.hora.replace(":","")}00` : d;
+  const ics = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:${ev.titulo}\nDTSTART:${dtstart}\nDTEND:${dtstart}\n${ev.local?`LOCATION:${ev.local}\n`:""}${ev.descricao?`DESCRIPTION:${ev.descricao}\n`:""}END:VEVENT\nEND:VCALENDAR`;
+  const blob = new Blob([ics],{type:"text/calendar"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${ev.titulo}.ics`; a.click();
+}
+
+function EventoTooltip({ ev }: { ev: Evento }) {
+  const cor = getCor(ev);
   return (
-    <div style={{ width: size, height: size, borderRadius: "50%", background: "hsl(var(--connect-ink))", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.4, fontWeight: 700, flexShrink: 0, ...U }}>
-      {ini}
+    <div style={{ position:"absolute", bottom:"calc(100% + 6px)", left:0, zIndex:50, minWidth:200, maxWidth:260, background:"white", border:"1px solid #E4E6EA", borderRadius:10, padding:10, boxShadow:"0 8px 24px rgba(0,0,0,.12)", fontFamily:"var(--font-body)", pointerEvents:"none" }}>
+      <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:6 }}>
+        <span style={{ width:8, height:8, borderRadius:2, background:cor }} />
+        <span style={{ fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:".06em", color:cor }}>{getLabel(ev)}</span>
+      </div>
+      <div style={{ fontSize:13, fontWeight:600, color:"#0F172A", marginBottom:4 }}>{ev.titulo}</div>
+      {ev.hora && <div style={{ fontSize:11, color:"#64748B" }}>🕐 {ev.hora}</div>}
+      {ev.local && <div style={{ fontSize:11, color:"#64748B" }}>📍 {ev.local}</div>}
+      {ev.empresa && <div style={{ fontSize:11, color:"#64748B" }}>🏢 {ev.empresa}</div>}
     </div>
   );
 }
 
-function PostCard({ c, onSelect, onReagir }: { c: Comunicado; onSelect: () => void; onReagir: (emoji: string) => void }) {
-  const tipo = TIPO_MAP[c.tipo];
-  const [hovered, setHovered] = useState(false);
-
+function EventoBtn({ ev, onClick }: { ev: Evento; onClick: () => void }) {
+  const [hov, setHov] = useState(false);
+  const cor = getCor(ev);
   return (
-    <div
-      onClick={onSelect}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{ background: "white", borderRadius: 14, border: "1px solid #E4E6EA", overflow: "hidden", cursor: "pointer", transition: "all .15s", boxShadow: hovered ? "0 8px 24px rgba(3,29,56,.10)" : "0 1px 2px rgba(3,29,56,.04)", transform: hovered ? "translateY(-2px)" : "none", display: "flex", flexDirection: "column" }}
-    >
-      <div style={{ position: "relative", width: "100%", aspectRatio: "1/1", background: GRAD[c.tipo] }}>
-        {c.coverUrl ? (
-          <img src={c.coverUrl} alt={c.titulo} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-        ) : (
-          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 48 }}>📢</div>
-        )}
-        <div style={{ position: "absolute", top: 10, left: 10, display: "flex", gap: 6 }}>
-          <span style={{ padding: "3px 9px", borderRadius: 20, background: tipo.bg, color: tipo.hex, fontSize: 10, fontWeight: 700, border: `1px solid ${tipo.border}`, ...U }}>{tipo.label}</span>
-          <span style={{ padding: "3px 9px", borderRadius: 20, background: "rgba(255,255,255,.95)", color: "hsl(var(--connect-ink))", fontSize: 10, fontWeight: 700, ...U }}>
-            {c.categoria === "interno" ? "Interno" : "Externo"}
-          </span>
-        </div>
-      </div>
-
-      <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: "#64748B", ...U }}>
-          <Av ini={c.iniciais} size={22} />
-          <span style={{ fontWeight: 600, color: "hsl(var(--connect-ink))" }}>{c.autor}</span>
-          <span>·</span>
-          <span>{c.data}</span>
-        </div>
-
-        <div style={{ fontSize: 14, fontWeight: 700, color: "hsl(var(--connect-ink))", lineHeight: 1.3, ...U }}>{c.titulo}</div>
-        <div style={{ fontSize: 12, color: "#64748B", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", ...U }}>{c.corpo}</div>
-
-        <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-          {REACOES_LIST.map(emoji => {
-            const count = c.reacoes[emoji] ?? 0;
-            const ativo = c.minhasReacoes.includes(emoji);
-            return (
-              <button key={emoji} onClick={e => { e.stopPropagation(); onReagir(emoji); }}
-                style={{ display: "flex", alignItems: "center", gap: 3, padding: "2px 7px", borderRadius: 20, border: `1px solid ${ativo ? "hsl(var(--primary))" : "#E4E6EA"}`, background: ativo ? "#EFF6FF" : "white", cursor: "pointer", fontSize: 12, fontWeight: 600, color: ativo ? "hsl(var(--primary))" : "#64748B", transition: "all .15s", ...U }}>
-                {emoji}{count > 0 && <span>{count}</span>}
-              </button>
-            );
-          })}
-        </div>
-
-        <div style={{ display: "flex", gap: 14, fontSize: 11, color: "#94A3B8", paddingTop: 6, borderTop: "1px solid #F0F5FF", ...U }}>
-          <span>💬 {c.comentarios.length}</span>
-          <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Eye size={12} /> {c.leitores.length}</span>
-        </div>
-      </div>
+    <div style={{ position:"relative" }} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}>
+      <button onClick={onClick} style={{ width:"100%", textAlign:"left", padding:"3px 6px", borderRadius:6, border:`1px solid ${cor}33`, background:`${cor}14`, fontSize:11, cursor:"pointer", display:"flex", alignItems:"center", gap:5, fontFamily:"var(--font-body)", overflow:"hidden" }}>
+        <span style={{ width:6, height:6, borderRadius:2, background:cor, flexShrink:0 }} />
+        {ev.hora && <span style={{ color:"#64748B", fontWeight:600 }}>{ev.hora}</span>}
+        <span style={{ color:"#0F172A", fontWeight:600, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{ev.titulo}</span>
+      </button>
+      {hov && <EventoTooltip ev={ev} />}
     </div>
   );
 }
 
-function DetalheModal({ c, onClose, onReagir, onAddComentario }: {
-  c: Comunicado; onClose: () => void;
-  onReagir: (emoji: string) => void;
-  onAddComentario: (texto: string) => void;
-}) {
-  const [novoComent, setNovoComent] = useState("");
-  const tipo = TIPO_MAP[c.tipo];
-
-  const enviar = () => {
-    if (!novoComent.trim()) return;
-    onAddComentario(novoComent.trim());
-    setNovoComent("");
-  };
-
-  const isNarrow = typeof window !== "undefined" && window.innerWidth < 820;
-  return createPortal(
-    <div onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-      style={{ position: "fixed", inset: 0, background: "rgba(3,29,56,.6)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, overflowY: "auto" }}>
-      <div style={{ background: "white", borderRadius: 14, width: "100%", maxWidth: 720, maxHeight: "90vh", display: "grid", gridTemplateColumns: isNarrow ? "1fr" : "1fr 340px", overflow: "hidden", boxShadow: "0 20px 50px rgba(0,0,0,.25)" }}>
-        <div style={{ background: GRAD[c.tipo], display: "flex", alignItems: "center", justifyContent: "center", minHeight: isNarrow ? 180 : "auto" }}>
-          {c.coverUrl ? (
-            <img src={c.coverUrl} alt={c.titulo} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          ) : (
-            <div style={{ fontSize: 80 }}>📢</div>
-          )}
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", maxHeight: isNarrow ? "60vh" : "90vh" }}>
-          <div style={{ padding: 16, borderBottom: "1px solid #F0F5FF", display: "flex", gap: 10 }}>
-            <Av ini={c.iniciais} size={36} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "hsl(var(--connect-ink))", ...U }}>{c.autor}</span>
-                <span style={{ padding: "2px 7px", borderRadius: 20, background: tipo.bg, color: tipo.hex, fontSize: 10, fontWeight: 700, border: `1px solid ${tipo.border}`, ...U }}>{tipo.label}</span>
-                <span style={{ padding: "2px 7px", borderRadius: 20, background: "#F0F5FF", color: "hsl(var(--connect-ink))", fontSize: 10, fontWeight: 700, ...U }}>
-                  {c.categoria === "interno" ? "Interno" : "Externo"}
-                </span>
-              </div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "hsl(var(--connect-ink))", marginTop: 4, ...U }}>{c.titulo}</div>
-              <div style={{ fontSize: 12, color: "#64748B", marginTop: 4, lineHeight: 1.5, ...U }}>{c.corpo}</div>
-            </div>
-            <button onClick={onClose} style={{ background: "transparent", border: "none", cursor: "pointer", color: "#64748B", padding: 4, height: "fit-content" }}>
-              <X size={18} />
-            </button>
-          </div>
-
-          <div style={{ padding: "10px 16px", borderBottom: "1px solid #F0F5FF", display: "flex", gap: 4, flexWrap: "wrap" }}>
-            {REACOES_LIST.map(emoji => {
-              const count = c.reacoes[emoji] ?? 0;
-              const ativo = c.minhasReacoes.includes(emoji);
-              return (
-                <button key={emoji} onClick={() => onReagir(emoji)}
-                  style={{ display: "flex", alignItems: "center", gap: 3, padding: "3px 9px", borderRadius: 20, border: `1px solid ${ativo ? "hsl(var(--primary))" : "#E4E6EA"}`, background: ativo ? "#EFF6FF" : "white", cursor: "pointer", fontSize: 12, fontWeight: 700, color: ativo ? "hsl(var(--primary))" : "#64748B", transition: "all .15s", ...U }}>
-                  {emoji}{count > 0 && <span>{count}</span>}
-                </button>
-              );
-            })}
-          </div>
-
-          <div style={{ flex: 1, overflowY: "auto", padding: 16 }}>
-            <div style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 8, display: "flex", alignItems: "center", gap: 6, ...U }}>
-                <Eye size={12} /> {c.leitores.length} visualizações
-              </div>
-              <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                {c.leitores.map((l, i) => (
-                  <div key={i} title={`${l.nome} — ${l.vistEm}`}>
-                    <Av ini={l.iniciais} size={26} />
-                  </div>
-                ))}
-                {c.leitores.length === 0 && <span style={{ fontSize: 12, color: "#94A3B8", ...U }}>Ninguém viu ainda.</span>}
-              </div>
-            </div>
-
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 8, ...U }}>
-              💬 {c.comentarios.length} comentário{c.comentarios.length !== 1 ? "s" : ""}
-            </div>
-            {c.comentarios.length === 0 && (
-              <div style={{ fontSize: 12, color: "#94A3B8", ...U }}>Seja o primeiro a comentar.</div>
-            )}
-            {c.comentarios.map(cm => (
-              <div key={cm.id} style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-                <Av ini={cm.iniciais} size={28} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ background: "#F0F5FF", borderRadius: 12, padding: "7px 10px" }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: "hsl(var(--connect-ink))", ...U }}>{cm.autor}</span>{" "}
-                    <span style={{ fontSize: 12, color: "#374151", ...U }}>{cm.texto}</span>
-                  </div>
-                  <span style={{ fontSize: 10, color: "#94A3B8", marginLeft: 10, ...U }}>{cm.hora}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ padding: 12, borderTop: "1px solid #F0F5FF", display: "flex", gap: 6 }}>
-            <input value={novoComent} onChange={e => setNovoComent(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); enviar(); } }}
-              placeholder="Escreva um comentário…"
-              style={{ flex: 1, height: 34, borderRadius: 8, border: "1px solid #E4E6EA", padding: "0 10px", fontSize: 13, fontFamily: "var(--font-body)", outline: "none" }}
-            />
-            <button onClick={enviar} style={{ height: 34, width: 34, borderRadius: 8, background: "hsl(var(--primary))", border: "none", color: "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Send size={14} />
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>,
-    document.body
-  );
-
-}
-
-function CriarModal({ onClose, onCreate }: { onClose: () => void; onCreate: (c: Omit<Comunicado, "id" | "leitores" | "comentarios" | "reacoes" | "minhasReacoes">) => void }) {
-  const [titulo, setTitulo]       = useState("");
-  const [corpo, setCorpo]         = useState("");
-  const [tipo, setTipo]           = useState<TipoComunicado>("atualizacao");
-  const [categoria, setCategoria] = useState<Categoria>("interno");
-  const [coverUrl, setCoverUrl]   = useState("");
-  const [coverMode, setCoverMode] = useState<"url" | "upload">("url");
-
-  const salvar = () => {
-    if (!titulo.trim() || !corpo.trim()) return;
-    const hoje = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
-    onCreate({ titulo: titulo.trim(), corpo: corpo.trim(), tipo, categoria, coverUrl: coverUrl.trim() || undefined, autor: "Patricia Lima", iniciais: "PL", data: hoje });
-    onClose();
-  };
-
-  const lbl: React.CSSProperties = { fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: "#64748B", letterSpacing: ".06em", display: "block", marginBottom: 5, ...U };
-  const inp: React.CSSProperties = { width: "100%", height: 36, borderRadius: 8, border: "1px solid #E4E6EA", padding: "0 10px", fontSize: 13, fontFamily: "var(--font-body)", outline: "none", boxSizing: "border-box" };
-
+function Modal({ open, onClose, title, children, maxWidth = 520 }: { open:boolean; onClose:()=>void; title:string; children:React.ReactNode; maxWidth?:number }) {
+  if (!open) return null;
   return (
-    <div onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-      style={{ position: "fixed", inset: 0, background: "rgba(3,29,56,.6)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <div style={{ background: "white", borderRadius: 14, width: "100%", maxWidth: 520, maxHeight: "90vh", overflowY: "auto" }}>
-        <div style={{ padding: 16, borderBottom: "1px solid #F0F5FF", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: "hsl(var(--connect-ink))", ...U }}>Novo comunicado</div>
-          <button onClick={onClose} style={{ background: "transparent", border: "none", cursor: "pointer", color: "#64748B" }}><X size={18} /></button>
+    <div onClick={(e) => { if(e.target===e.currentTarget) onClose(); }}
+      style={{ position:"fixed", inset:0, background:"rgba(15,23,42,.5)", zIndex:100, display:"flex", alignItems:"center", justifyContent:"center", padding:16 }}>
+      <div style={{ background:"white", borderRadius:16, width:"100%", maxWidth, maxHeight:"90vh", overflow:"auto", boxShadow:"0 24px 60px rgba(0,0,0,.25)" }}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"16px 20px", borderBottom:"1px solid #F0F5FF" }}>
+          <h3 style={{ margin:0, fontSize:16, fontWeight:700, color:"#0F172A", fontFamily:"var(--font-body)" }}>{title}</h3>
+          <button onClick={onClose} style={{ background:"transparent", border:"none", cursor:"pointer", padding:4, borderRadius:6, color:"#64748B" }}><X size={18} /></button>
         </div>
-        <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
-          <div>
-            <label style={lbl}>Tipo</label>
-            <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
-              {(Object.keys(TIPO_MAP) as TipoComunicado[]).map(t => {
-                const m = TIPO_MAP[t]; const ativo = tipo === t;
-                return <button key={t} onClick={() => setTipo(t)} style={{ height: 26, padding: "0 10px", borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: "pointer", border: `1px solid ${ativo ? m.border : "#E4E6EA"}`, background: ativo ? m.bg : "white", color: ativo ? m.hex : "#64748B", ...U }}>{m.label}</button>;
-              })}
-            </div>
-          </div>
-          <div>
-            <label style={lbl}>Categoria</label>
-            <div style={{ display: "flex", gap: 5 }}>
-              {(["interno","externo"] as Categoria[]).map(cat => (
-                <button key={cat} onClick={() => setCategoria(cat)} style={{ height: 28, padding: "0 14px", borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: "pointer", border: "1px solid", background: categoria === cat ? "hsl(var(--connect-ink))" : "white", color: categoria === cat ? "white" : "#64748B", borderColor: categoria === cat ? "hsl(var(--connect-ink))" : "#E4E6EA", ...U }}>
-                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <label style={lbl}>Título *</label>
-            <input value={titulo} onChange={e => setTitulo(e.target.value)} style={inp} placeholder="Ex.: Novidade importante" />
-          </div>
-          <div>
-            <label style={lbl}>Conteúdo *</label>
-            <textarea value={corpo} onChange={e => setCorpo(e.target.value)} rows={4} style={{ ...inp, height: "auto", padding: "8px 10px", resize: "vertical" }} placeholder="Escreva o comunicado…" />
-          </div>
-          <div>
-            <label style={lbl}>Imagem de capa <span style={{ fontWeight: 400, textTransform: "none" }}>— 1:1 recomendado</span></label>
-            <div style={{ display: "flex", gap: 5, marginBottom: 7 }}>
-              {([["url","URL",Link2],["upload","Upload",Upload]] as const).map(([m, l, Icon]) => (
-                <button key={m} onClick={() => setCoverMode(m)} style={{ height: 26, padding: "0 10px", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", border: "1px solid", display: "flex", alignItems: "center", gap: 3, background: coverMode === m ? "hsl(var(--connect-ink))" : "white", color: coverMode === m ? "white" : "#64748B", borderColor: coverMode === m ? "hsl(var(--connect-ink))" : "#E4E6EA", ...U }}>
-                  <Icon size={10} />{l}
-                </button>
-              ))}
-            </div>
-            <input value={coverUrl} onChange={e => setCoverUrl(e.target.value)} style={inp} placeholder={coverMode === "url" ? "https://..." : "Upload disponível em breve"} disabled={coverMode === "upload"} />
-            {coverUrl && <img src={coverUrl} alt="preview" style={{ marginTop: 8, width: "100%", aspectRatio: "1/1", objectFit: "cover", borderRadius: 10, border: "1px solid #E4E6EA" }} />}
-          </div>
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, paddingTop: 8, borderTop: "1px solid #F0F5FF" }}>
-            <button onClick={onClose} style={{ height: 34, padding: "0 14px", borderRadius: 8, background: "white", border: "1px solid #E4E6EA", fontSize: 13, cursor: "pointer", color: "#374151", ...U }}>Cancelar</button>
-            <button onClick={salvar} disabled={!titulo.trim() || !corpo.trim()} style={{ height: 34, padding: "0 18px", borderRadius: 8, background: "hsl(var(--connect-ink))", border: "none", color: "white", fontSize: 13, fontWeight: 700, cursor: "pointer", opacity: (!titulo.trim() || !corpo.trim()) ? 0.5 : 1, ...U }}>Publicar</button>
-          </div>
-        </div>
+        <div style={{ padding:20 }}>{children}</div>
       </div>
     </div>
   );
 }
 
-export default function ComunicadosPage() {
-  const [lista, setLista]         = useState<Comunicado[]>(MOCK_INICIAL);
-  const [detalhe, setDetalhe]     = useState<Comunicado | null>(null);
-  const [criarOpen, setCriarOpen] = useState(false);
-  const [filtroTipo, setFiltroTipo]   = useState<TipoComunicado | "todos">("todos");
-  const [filtroCateg, setFiltroCateg] = useState<Categoria | "todos">("todos");
+const inp: React.CSSProperties = { width:"100%", height:36, borderRadius:8, border:"1px solid #E4E6EA", padding:"0 10px", fontSize:13, fontFamily:"var(--font-body)", outline:"none", boxSizing:"border-box" };
+const lbl: React.CSSProperties = { fontSize:11, fontWeight:700, textTransform:"uppercase" as const, color:"#64748B", letterSpacing:".06em", display:"block", marginBottom:5, fontFamily:"var(--font-body)" };
+const sel: React.CSSProperties = { ...inp, cursor:"pointer", background:"white" };
 
-  const filtrados = useMemo(() => lista.filter(c => {
-    if (filtroTipo !== "todos" && c.tipo !== filtroTipo) return false;
-    if (filtroCateg !== "todos" && c.categoria !== filtroCateg) return false;
-    return true;
-  }), [lista, filtroTipo, filtroCateg]);
+export default function CalendarioPage() {
+  const [view, setView]     = useState<"mes"|"semana">("mes");
+  const [cursor, setCursor] = useState(new Date(Y0, M0, 1));
+  const [anoFiltro, setAnoFiltro] = useState<number>(Y0);
+  const [eventos, setEventos] = useState<Evento[]>(MOCK_EVENTOS);
+  const [evSel, setEvSel]   = useState<Evento | null>(null);
+  const [novoOpen, setNovoOpen] = useState(false);
 
-  const reagir = (id: string, emoji: string) => {
-    setLista(prev => prev.map(c => {
-      if (c.id !== id) return c;
-      const ja = c.minhasReacoes.includes(emoji);
-      return {
-        ...c,
-        reacoes: { ...c.reacoes, [emoji]: Math.max(0, (c.reacoes[emoji] ?? 0) + (ja ? -1 : 1)) },
-        minhasReacoes: ja ? c.minhasReacoes.filter(e => e !== emoji) : [...c.minhasReacoes, emoji],
-      };
+  const [fTitulo, setFTitulo]     = useState("");
+  const [fData, setFData]         = useState("");
+  const [fHora, setFHora]         = useState("");
+  const [fTipo, setFTipo]         = useState<EventoTipo>("reuniao");
+  const [fOutrosNome, setFOutrosNome] = useState("");
+  const [fOutrosCor, setFOutrosCor]   = useState("#64748B");
+  const [fVis, setFVis]           = useState<Visibilidade>("interno");
+  const [fEmpresa, setFEmpresa]   = useState("");
+  const [fLocal, setFLocal]       = useState("");
+  const [fDesc, setFDesc]         = useState("");
+  const [fNota, setFNota]         = useState("");
+  const [fCoverUrl, setFCoverUrl] = useState("");
+  const [fConvidados, setFConvidados] = useState<string[]>([]);
+
+  const [convidadoModal, setConvidadoModal] = useState<{ ev: Evento; convidado: Convidado } | null>(null);
+  const [justificativa, setJustificativa]   = useState("");
+
+  const eventosPorData = useMemo(() => {
+    const m = new Map<string, Evento[]>();
+    eventos.forEach(e => { const arr = m.get(e.data) ?? []; arr.push(e); m.set(e.data, arr); });
+    return m;
+  }, [eventos]);
+
+  function nav(delta: number) {
+    const r = new Date(cursor);
+    if (view === "mes") r.setMonth(r.getMonth()+delta);
+    else r.setDate(r.getDate()+delta*7);
+    setCursor(r);
+  }
+
+  function irParaAno(ano: number) {
+    setAnoFiltro(ano);
+    setCursor(new Date(ano, cursor.getMonth(), 1));
+  }
+
+  const cells = useMemo(() => {
+    if (view === "mes") {
+      const ini = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+      const fim = new Date(cursor.getFullYear(), cursor.getMonth()+1, 0);
+      const start = startOfWeek(ini);
+      const total = Math.ceil((fim.getDate()+ini.getDay())/7)*7;
+      return Array.from({length:total},(_,i) => { const d=new Date(start); d.setDate(start.getDate()+i); return d; });
+    } else {
+      const start = startOfWeek(cursor);
+      return Array.from({length:7},(_,i) => { const d=new Date(start); d.setDate(start.getDate()+i); return d; });
+    }
+  }, [view, cursor]);
+
+  const titulo = view === "mes"
+    ? `${NOMES_MES[cursor.getMonth()]} ${cursor.getFullYear()}`
+    : (() => { const s=startOfWeek(cursor); const e=new Date(s); e.setDate(s.getDate()+6); return `${s.getDate()}/${s.getMonth()+1} – ${e.getDate()}/${e.getMonth()+1}, ${e.getFullYear()}`; })();
+
+  function criarEvento() {
+    if (!fTitulo.trim() || !fData) return;
+    const novo: Evento = {
+      id: `EV-${NEXT_ID++}`,
+      titulo: fTitulo.trim(),
+      data: fData,
+      hora: fHora || undefined,
+      tipo: fTipo,
+      outrosNome: fTipo==="outros" ? fOutrosNome : undefined,
+      outrosCor:  fTipo==="outros" ? fOutrosCor  : undefined,
+      visibilidade: fVis,
+      empresa: fVis==="empresa" ? fEmpresa : undefined,
+      local: fLocal || undefined,
+      descricao: fDesc || undefined,
+      nota: fNota || undefined,
+      coverUrl: fCoverUrl || undefined,
+      convidados: fConvidados.map(nome => {
+        const u = USUARIOS.find(u => u.nome === nome)!;
+        return { nome: u.nome, iniciais: u.iniciais, resposta:{ status:"pendente" as const } };
+      }),
+    };
+    setEventos(prev => [...prev, novo]);
+    setNovoOpen(false);
+    setFTitulo(""); setFData(""); setFHora(""); setFTipo("reuniao"); setFOutrosNome(""); setFOutrosCor("#64748B");
+    setFVis("interno"); setFEmpresa(""); setFLocal(""); setFDesc(""); setFNota(""); setFCoverUrl(""); setFConvidados([]);
+  }
+
+  function responderConvite(aceitar: boolean) {
+    if (!convidadoModal) return;
+    const novaResp: ConviteResposta = { status: aceitar?"aceito":"recusado", justificativa: aceitar?undefined:justificativa };
+    setEventos(prev => prev.map(e => {
+      if (e.id !== convidadoModal.ev.id) return e;
+      return { ...e, convidados: (e.convidados??[]).map(c => c.nome!==convidadoModal.convidado.nome ? c : { ...c, resposta: novaResp }) };
     }));
-    setDetalhe(prev => {
-      if (!prev || prev.id !== id) return prev;
-      const ja = prev.minhasReacoes.includes(emoji);
-      return {
-        ...prev,
-        reacoes: { ...prev.reacoes, [emoji]: Math.max(0, (prev.reacoes[emoji] ?? 0) + (ja ? -1 : 1)) },
-        minhasReacoes: ja ? prev.minhasReacoes.filter(e => e !== emoji) : [...prev.minhasReacoes, emoji],
-      };
+    setEvSel(prev => {
+      if (!prev || prev.id!==convidadoModal.ev.id) return prev;
+      return { ...prev, convidados: (prev.convidados??[]).map(c => c.nome!==convidadoModal.convidado.nome ? c : { ...c, resposta: novaResp }) };
     });
-  };
+    setConvidadoModal(null); setJustificativa("");
+  }
 
-  const addComentario = (id: string, texto: string) => {
-    const novo: Comentario = { id: crypto.randomUUID(), autor: "Patricia Lima", iniciais: "PL", texto, hora: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) };
-    setLista(prev => prev.map(c => c.id !== id ? c : { ...c, comentarios: [...c.comentarios, novo] }));
-    setDetalhe(prev => prev?.id === id ? { ...prev, comentarios: [...prev.comentarios, novo] } : prev);
-  };
-
-  const criar = (dados: Omit<Comunicado, "id" | "leitores" | "comentarios" | "reacoes" | "minhasReacoes">) => {
-    const novo: Comunicado = { id: `C-00${NEXT_ID++}`, ...dados, leitores: [], comentarios: [], reacoes: { "❤️": 0, "👍": 0, "😂": 0, "🎉": 0, "🔥": 0 }, minhasReacoes: [] };
-    setLista(prev => [novo, ...prev]);
-  };
+  const MAX_VIS = view==="mes" ? 3 : 12;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20, paddingBottom: 40 }}>
+    <div className="space-y-6">
       <PageHeader
-        title="Comunicados"
-        subtitle="Feed de comunicações internas e externas"
+        title="Calendário"
+        subtitle="Eventos, prazos, entrevistas e feriados"
         actions={
-          <button onClick={() => setCriarOpen(true)} style={{ height: 36, padding: "0 16px", borderRadius: 100, background: "hsl(var(--primary))", border: "none", color: "white", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, fontFamily: "var(--font-body)" }}>
-            <Plus size={14} /> Novo comunicado
+          <button onClick={() => setNovoOpen(true)}
+            style={{ height:36, padding:"0 18px", borderRadius:100, background:"hsl(var(--primary))", border:"none", color:"white", fontSize:13, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", gap:6, fontFamily:"var(--font-body)" }}>
+            <Plus size={16} /> Novo evento
           </button>
         }
       />
 
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-        {(["todos","interno","externo"] as const).map(cat => (
-          <button key={cat} onClick={() => setFiltroCateg(cat)}
-            style={{ height: 28, padding: "0 12px", borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: "pointer", border: "1px solid", background: filtroCateg === cat ? "hsl(var(--connect-ink))" : "white", color: filtroCateg === cat ? "white" : "#64748B", borderColor: filtroCateg === cat ? "hsl(var(--connect-ink))" : "#E4E6EA", fontFamily: "var(--font-body)" }}>
-            {cat === "todos" ? "Todos" : cat.charAt(0).toUpperCase() + cat.slice(1)}
-          </button>
-        ))}
-        <div style={{ width: 1, background: "#E4E6EA", margin: "0 4px" }} />
-        {([{ value: "todos" as const, label: "Todos os tipos" }, ...(Object.entries(TIPO_MAP) as [TipoComunicado, typeof TIPO_MAP[TipoComunicado]][]).map(([v, m]) => ({ value: v, label: m.label }))]).map(t => (
-          <button key={t.value} onClick={() => setFiltroTipo(t.value as TipoComunicado | "todos")}
-            style={{ height: 28, padding: "0 12px", borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: "pointer", border: "1px solid", background: filtroTipo === t.value ? "hsl(var(--primary))" : "white", color: filtroTipo === t.value ? "white" : "#64748B", borderColor: filtroTipo === t.value ? "hsl(var(--primary))" : "#E4E6EA", fontFamily: "var(--font-body)" }}>
-            {t.label}
-          </button>
+      <div style={{ display:"flex", flexWrap:"wrap", gap:12, alignItems:"center", justifyContent:"space-between" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
+          <select value={anoFiltro} onChange={(e) => irParaAno(Number(e.target.value))}
+            style={{ height:34, borderRadius:100, border:"1px solid #E4E6EA", padding:"0 12px", fontSize:13, fontFamily:"var(--font-body)", outline:"none", background:"white", cursor:"pointer" }}>
+            {ANOS.map(a => <option key={a} value={a}>{a}</option>)}
+          </select>
+          <button onClick={() => nav(-1)} style={{ height:34, width:34, borderRadius:100, border:"1px solid #E4E6EA", background:"white", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}><ChevronLeft size={16} /></button>
+          <div style={{ minWidth:180, textAlign:"center", fontWeight:700, fontSize:14, fontFamily:"var(--font-body)", color:"#0F172A" }}>{titulo}</div>
+          <button onClick={() => nav(1)} style={{ height:34, width:34, borderRadius:100, border:"1px solid #E4E6EA", background:"white", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}><ChevronRight size={16} /></button>
+          <button onClick={() => setCursor(new Date())}
+            style={{ height:34, padding:"0 14px", borderRadius:100, border:"1px solid #E4E6EA", background:"white", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"var(--font-body)" }}>Hoje</button>
+        </div>
+
+        <div style={{ display:"inline-flex", padding:3, background:"#F1F5F9", borderRadius:100 }}>
+          {(["mes","semana"] as const).map(v => (
+            <button key={v} onClick={() => setView(v)}
+              style={{ height:28, padding:"0 14px", borderRadius:100, border:"none", fontSize:12, fontWeight:600, cursor:"pointer", background:view===v?"white":"transparent", color:view===v?"#0F172A":"#64748B", boxShadow:view===v?"0 1px 4px rgba(0,0,0,.08)":"none", fontFamily:"var(--font-body)" }}>
+              {v==="mes"?"Mês":"Semana"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ borderRadius:12, border:"1px solid #E4E6EA", background:"white", overflow:"hidden" }}>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", background:"#F8FAFC" }}>
+          {DIAS_SEM.map(d => (
+            <div key={d} style={{ padding:"8px 10px", fontSize:11, fontWeight:700, color:"#64748B", textAlign:"center", textTransform:"uppercase", letterSpacing:".06em", fontFamily:"var(--font-body)" }}>{d}</div>
+          ))}
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)" }}>
+          {cells.map((d, i) => {
+            const key = fmt(d);
+            const evs = eventosPorData.get(key) ?? [];
+            const sameMonth = view==="semana" || d.getMonth()===cursor.getMonth();
+            const isHoje = key===fmt(new Date());
+            return (
+              <div key={i} style={{ borderTop:"1px solid #F0F5FF", borderLeft:i%7===0?"none":"1px solid #F0F5FF", padding:6, minHeight:view==="semana"?260:100, display:"flex", flexDirection:"column", gap:4, background:sameMonth?"white":"#F8FAFC" }}>
+                <div style={{ display:"flex", justifyContent:"flex-end" }}>
+                  <span style={{ height:24, width:24, display:"inline-flex", alignItems:"center", justifyContent:"center", borderRadius:6, fontSize:12, fontWeight:600, background:isHoje?"hsl(var(--primary))":"transparent", color:isHoje?"white":sameMonth?"#0F172A":"#94A3B8", fontFamily:"var(--font-body)" }}>{d.getDate()}</span>
+                </div>
+                <div style={{ display:"flex", flexDirection:"column", gap:3, overflow:"hidden" }}>
+                  {evs.slice(0, MAX_VIS).map(e => (
+                    <EventoBtn key={e.id} ev={e} onClick={() => setEvSel(e)} />
+                  ))}
+                  {evs.length > MAX_VIS && (
+                    <span style={{ fontSize:10, color:"#64748B", padding:"0 6px", fontFamily:"var(--font-body)" }}>+{evs.length-MAX_VIS} mais</span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div style={{ display:"flex", flexWrap:"wrap", gap:12, padding:14, borderRadius:12, border:"1px solid #E4E6EA", background:"white" }}>
+        {(Object.keys(TIPO_LABEL) as EventoTipo[]).filter(t => t!=="outros").map(t => (
+          <span key={t} style={{ display:"inline-flex", alignItems:"center", gap:6, fontSize:12, color:"#374151", fontFamily:"var(--font-body)" }}>
+            <span style={{ width:10, height:10, borderRadius:3, background:TIPO_HEX[t] }} />
+            {TIPO_LABEL[t]}
+          </span>
         ))}
       </div>
 
-      {filtrados.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "60px 20px", color: "#94A3B8", fontFamily: "var(--font-body)", fontSize: 13 }}>
-          Nenhum comunicado encontrado.
-        </div>
-      ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-          {filtrados.map(c => (
-            <PostCard key={c.id} c={c} onSelect={() => setDetalhe(c)} onReagir={emoji => reagir(c.id, emoji)} />
-          ))}
-        </div>
-      )}
+      <Modal open={!!evSel} onClose={() => setEvSel(null)} title={evSel?.titulo ?? ""} maxWidth={560}>
+        {evSel && (() => {
+          const cor = getCor(evSel);
+          return (
+            <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+              {evSel.coverUrl && (
+                <img src={evSel.coverUrl} alt="capa" style={{ width:"100%", height:160, objectFit:"cover", borderRadius:10, border:"1px solid #E4E6EA" }} onError={(e) => (e.currentTarget.style.display="none")} />
+              )}
 
-      {detalhe && (
-        <DetalheModal
-          c={detalhe}
-          onClose={() => setDetalhe(null)}
-          onReagir={emoji => reagir(detalhe.id, emoji)}
-          onAddComentario={texto => addComentario(detalhe.id, texto)}
-        />
-      )}
+              <div style={{ display:"flex", flexWrap:"wrap", gap:8, alignItems:"center" }}>
+                <span style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"4px 10px", borderRadius:100, background:`${cor}14`, color:cor, fontSize:11, fontWeight:700, textTransform:"uppercase", letterSpacing:".06em", fontFamily:"var(--font-body)" }}>
+                  <span style={{ width:8, height:8, borderRadius:2, background:cor }} />
+                  {getLabel(evSel)}
+                </span>
+                <span style={{ padding:"4px 10px", borderRadius:100, background:"#F1F5F9", color:"#475569", fontSize:11, fontWeight:600, fontFamily:"var(--font-body)" }}>
+                  {evSel.visibilidade==="interno"?"Interno":evSel.visibilidade==="empresa"?`Empresa: ${evSel.empresa}`:"Para todos"}
+                </span>
+              </div>
 
-      {criarOpen && <CriarModal onClose={() => setCriarOpen(false)} onCreate={criar} />}
+              <div style={{ display:"flex", flexDirection:"column", gap:6, fontSize:13, color:"#374151", fontFamily:"var(--font-body)" }}>
+                <div style={{ display:"flex", alignItems:"center", gap:6 }}><Clock size={14} color="#64748B" /> {evSel.data}{evSel.hora ? ` · ${evSel.hora}` : ""}</div>
+                {evSel.local && <div style={{ display:"flex", alignItems:"center", gap:6 }}><MapPin size={14} color="#64748B" /> {evSel.local}</div>}
+                {evSel.descricao && <p style={{ margin:0, color:"#475569", lineHeight:1.5 }}>{evSel.descricao}</p>}
+                {evSel.nota && (
+                  <div style={{ display:"flex", gap:6, padding:10, borderRadius:8, background:"#FEF3C7", color:"#78350F", fontSize:12 }}>
+                    <StickyNote size={14} /> {evSel.nota}
+                  </div>
+                )}
+              </div>
+
+              {(evSel.convidados??[]).length > 0 && (
+                <div>
+                  <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:11, fontWeight:700, textTransform:"uppercase", letterSpacing:".06em", color:"#64748B", marginBottom:8, fontFamily:"var(--font-body)" }}>
+                    <Users size={12} /> Convidados
+                  </div>
+                  <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                    {(evSel.convidados??[]).map((c,i) => (
+                      <div key={i} style={{ display:"flex", alignItems:"center", gap:8, padding:8, borderRadius:8, border:"1px solid #F0F5FF", fontFamily:"var(--font-body)" }}>
+                        <span style={{ width:26, height:26, borderRadius:6, background:"linear-gradient(135deg,hsl(var(--connect-ink)),hsl(var(--primary)))", display:"inline-flex", alignItems:"center", justifyContent:"center", color:"white", fontSize:10, fontWeight:700 }}>{c.iniciais}</span>
+                        <span style={{ fontSize:13, color:"#0F172A", fontWeight:600 }}>{c.nome}</span>
+                        <span style={{ marginLeft:"auto", fontSize:11, fontWeight:700, color: c.resposta.status==="aceito"?"#10B981":c.resposta.status==="recusado"?"#EF4444":"#94A3B8" }}>
+                          {c.resposta.status==="aceito"?"Aceitou":c.resposta.status==="recusado"?"Recusou":"Pendente"}
+                        </span>
+                        {c.resposta.status==="pendente" && (
+                          <button onClick={() => { setConvidadoModal({ev:evSel,convidado:c}); setJustificativa(""); }}
+                            style={{ fontSize:11, height:24, padding:"0 8px", borderRadius:6, border:"1px solid #E4E6EA", background:"white", cursor:"pointer", fontFamily:"var(--font-body)" }}>Responder</button>
+                        )}
+                        {c.resposta.justificativa && <span style={{ fontSize:11, color:"#94A3B8", fontStyle:"italic" }}>"{c.resposta.justificativa.slice(0,20)}…"</span>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display:"flex", gap:8, flexWrap:"wrap", paddingTop:10, borderTop:"1px solid #F0F5FF" }}>
+                <a href={googleCalendarUrl(evSel)} target="_blank" rel="noopener noreferrer"
+                  style={{ display:"flex", alignItems:"center", gap:5, height:32, padding:"0 12px", borderRadius:8, border:"1px solid #E4E6EA", background:"white", fontSize:12, fontWeight:600, color:"#374151", textDecoration:"none", fontFamily:"var(--font-body)" }}>
+                  <ExternalLink size={14} /> Google Calendar
+                </a>
+                <button onClick={() => downloadICS(evSel)}
+                  style={{ display:"flex", alignItems:"center", gap:5, height:32, padding:"0 12px", borderRadius:8, border:"1px solid #E4E6EA", background:"white", fontSize:12, fontWeight:600, color:"#374151", cursor:"pointer", fontFamily:"var(--font-body)" }}>
+                  <Download size={14} /> Apple / .ics
+                </button>
+                <button onClick={() => setEvSel(null)}
+                  style={{ marginLeft:"auto", height:32, padding:"0 14px", borderRadius:8, border:"1px solid #E4E6EA", background:"white", fontSize:13, fontWeight:600, cursor:"pointer", color:"#374151", fontFamily:"var(--font-body)" }}>Fechar</button>
+              </div>
+            </div>
+          );
+        })()}
+      </Modal>
+
+      <Modal open={!!convidadoModal} onClose={() => setConvidadoModal(null)} title="Responder convite" maxWidth={400}>
+        {convidadoModal && (
+          <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+            <p style={{ margin:0, fontSize:13, color:"#475569", fontFamily:"var(--font-body)" }}>
+              Responda ao convite para <strong>{convidadoModal.ev.titulo}</strong> em nome de <strong>{convidadoModal.convidado.nome}</strong>.
+            </p>
+            <div>
+              <label style={lbl}>Justificativa (obrigatória para recusar)</label>
+              <textarea value={justificativa} onChange={e => setJustificativa(e.target.value)} rows={3}
+                style={{ ...inp, height:"auto", padding:"8px 10px", resize:"vertical" as const }} placeholder="Ex: Conflito de agenda, reunião interna…" />
+            </div>
+            <div style={{ display:"flex", gap:8, justifyContent:"flex-end" }}>
+              <button onClick={() => setConvidadoModal(null)} style={{ height:34, padding:"0 14px", borderRadius:8, border:"1px solid #E4E6EA", background:"white", fontSize:13, cursor:"pointer", color:"#374151", fontFamily:"var(--font-body)" }}>Cancelar</button>
+              <button onClick={() => responderConvite(false)} disabled={!justificativa.trim()}
+                style={{ height:34, padding:"0 14px", borderRadius:8, border:"none", background:"#EF4444", color:"white", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"var(--font-body)", opacity:!justificativa.trim()?0.5:1 }}>Recusar</button>
+              <button onClick={() => responderConvite(true)}
+                style={{ height:34, padding:"0 14px", borderRadius:8, border:"none", background:"#10B981", color:"white", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"var(--font-body)" }}>Aceitar</button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <Modal open={novoOpen} onClose={() => setNovoOpen(false)} title="Novo evento" maxWidth={540}>
+        <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+          <div><label style={lbl}>Título *</label><input value={fTitulo} onChange={e => setFTitulo(e.target.value)} style={inp} placeholder="Nome do evento" /></div>
+
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+            <div><label style={lbl}>Data *</label><input type="date" value={fData} onChange={e => setFData(e.target.value)} style={inp} /></div>
+            <div><label style={lbl}>Hora</label><input type="time" value={fHora} onChange={e => setFHora(e.target.value)} style={inp} /></div>
+          </div>
+
+          <div>
+            <label style={lbl}>Tipo</label>
+            <select value={fTipo} onChange={e => setFTipo(e.target.value as EventoTipo)} style={sel}>
+              {(Object.keys(TIPO_LABEL) as EventoTipo[]).map(t => (
+                <option key={t} value={t}>{TIPO_LABEL[t]}</option>
+              ))}
+            </select>
+          </div>
+
+          {fTipo==="outros" && (
+            <div style={{ display:"grid", gridTemplateColumns:"1fr auto", gap:10, alignItems:"end" }}>
+              <div><label style={lbl}>Nome do tipo *</label><input value={fOutrosNome} onChange={e => setFOutrosNome(e.target.value)} style={inp} placeholder="Ex: Confraternização" /></div>
+              <div>
+                <label style={lbl}>Cor</label>
+                <input type="color" value={fOutrosCor} onChange={e => setFOutrosCor(e.target.value)}
+                  style={{ width:36, height:36, borderRadius:8, border:"1px solid #E4E6EA", padding:2, cursor:"pointer" }} />
+              </div>
+            </div>
+          )}
+
+          <div>
+            <label style={lbl}>Visibilidade</label>
+            <select value={fVis} onChange={e => setFVis(e.target.value as Visibilidade)} style={sel}>
+              <option value="interno">Time interno</option>
+              <option value="empresa">Empresa específica</option>
+              <option value="todos">Para todos</option>
+            </select>
+          </div>
+
+          {fVis==="empresa" && (
+            <div>
+              <label style={lbl}>Empresa *</label>
+              <select value={fEmpresa} onChange={e => setFEmpresa(e.target.value)} style={sel}>
+                <option value="">Selecione a empresa</option>
+                {EMPRESAS.map(em => <option key={em} value={em}>{em}</option>)}
+              </select>
+            </div>
+          )}
+
+          <div><label style={lbl}>Local</label><input value={fLocal} onChange={e => setFLocal(e.target.value)} style={inp} placeholder="Ex: Sala de reunião, Google Meet…" /></div>
+
+          <div><label style={lbl}>Descrição</label><textarea value={fDesc} onChange={e => setFDesc(e.target.value)} rows={3} style={{ ...inp, height:"auto", padding:"8px 10px", resize:"vertical" as const }} placeholder="Detalhes do evento…" /></div>
+
+          <div><label style={lbl}>Nota interna <span style={{ fontWeight:400, textTransform:"none" as const }}>(só visível para o time)</span></label><textarea value={fNota} onChange={e => setFNota(e.target.value)} rows={2} style={{ ...inp, height:"auto", padding:"8px 10px", resize:"vertical" as const }} placeholder="Ex: Confirmar sala antes do evento…" /></div>
+
+          <div><label style={lbl}>Imagem de capa <span style={{ fontWeight:400, textTransform:"none" as const }}>(URL)</span></label><input value={fCoverUrl} onChange={e => setFCoverUrl(e.target.value)} style={inp} placeholder="https://…" />
+            {fCoverUrl && <img src={fCoverUrl} alt="preview" style={{ marginTop:7, width:"100%", height:100, objectFit:"cover", borderRadius:8, border:"1px solid #E4E6EA" }} onError={(e) => (e.currentTarget.style.display="none")} />}
+          </div>
+
+          <div>
+            <label style={lbl}>Convidar usuários da plataforma</label>
+            <div style={{ display:"flex", flexDirection:"column", gap:5 }}>
+              {USUARIOS.map(u => (
+                <label key={u.nome} style={{ display:"flex", alignItems:"center", gap:8, cursor:"pointer", fontSize:13, color:"#374151", fontFamily:"var(--font-body)" }}>
+                  <input type="checkbox" checked={fConvidados.includes(u.nome)} onChange={e => setFConvidados(prev => e.target.checked ? [...prev,u.nome] : prev.filter(n=>n!==u.nome))} style={{ width:14, height:14 }} />
+                  <span style={{ width:24, height:24, borderRadius:6, background:"linear-gradient(135deg,hsl(var(--connect-ink)),hsl(var(--primary)))", display:"inline-flex", alignItems:"center", justifyContent:"center", color:"white", fontSize:9, fontWeight:700 }}>{u.iniciais}</span>
+                  {u.nome}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display:"flex", justifyContent:"flex-end", gap:8, paddingTop:8, borderTop:"1px solid #F0F5FF" }}>
+            <button onClick={() => setNovoOpen(false)} style={{ height:34, padding:"0 14px", borderRadius:8, border:"1px solid #E4E6EA", background:"white", fontSize:13, cursor:"pointer", color:"#374151", fontFamily:"var(--font-body)" }}>Cancelar</button>
+            <button onClick={criarEvento} disabled={!fTitulo.trim()||!fData}
+              style={{ height:34, padding:"0 18px", borderRadius:8, border:"none", background:"hsl(var(--primary))", color:"white", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"var(--font-body)", opacity:(!fTitulo.trim()||!fData)?0.5:1 }}>Criar evento</button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
