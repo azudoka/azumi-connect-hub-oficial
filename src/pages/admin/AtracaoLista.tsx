@@ -60,6 +60,7 @@ import {
   type FunilEtapa,
 } from "@/constants/funil";
 import { toast } from "sonner";
+import { CategoryTag } from "@/components/CategoryTag";
 
 // Datas mock por etapa (usadas no cabeçalho da timeline horizontal acima do kanban).
 // Quando uma vaga não tem data para uma etapa, mostramos "—" alinhado.
@@ -151,6 +152,10 @@ export default function AtracaoLista() {
   const [nBeneficios, setNBeneficios] = useState<string[]>([]);
   const [nOutrosBeneficios, setNOutrosBeneficios] = useState("");
   const [nDescricao, setNDescricao] = useState("");
+  const [avulsaContatoNome, setAvulsaContatoNome] = useState("");
+  const [avulsaContatoCargo, setAvulsaContatoCargo] = useState("");
+  const [avulsaContatoTelefone, setAvulsaContatoTelefone] = useState("");
+  const [avulsaContatoEmail, setAvulsaContatoEmail] = useState("");
 
   // ---- Publicação no site (mock — não publica automaticamente) ----
   const [pubAberto, setPubAberto] = useState(false);
@@ -178,6 +183,7 @@ export default function AtracaoLista() {
     setNTitulo(""); setNEmpresa(""); setNFilial("");
     setNTipo("operacional"); setNModalidade("presencial");
     setNPosicoes("1"); setNBeneficios([]); setNOutrosBeneficios(""); setNDescricao("");
+    setAvulsaContatoNome(""); setAvulsaContatoCargo(""); setAvulsaContatoTelefone(""); setAvulsaContatoEmail("");
     setPubAberto(false); setPubPublicar(false); setPubConfidencial(false);
     setPubLocal(""); setPubModalidade("presencial"); setPubNivel("pleno");
     setPubTurno("integral"); setPubContrato("clt"); setPubCarga("");
@@ -430,7 +436,7 @@ export default function AtracaoLista() {
                             <div className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1.5">
                               {v.empresa}
                               {v.is_avulsa && (
-                                <span className="rounded-full border border-border bg-muted px-1.5 py-px text-[9px] font-medium uppercase tracking-wide text-muted-foreground">Avulso</span>
+                                <CategoryTag categoria="origem">Avulso</CategoryTag>
                               )}
                             </div>
                             <div className="mt-3"><SlaBar percent={v.sla} /></div>
@@ -474,7 +480,7 @@ export default function AtracaoLista() {
                     <span className="flex items-center gap-1.5">
                       {v.empresa}
                       {v.is_avulsa && (
-                        <span className="rounded-full border border-border bg-muted px-1.5 py-px text-[9px] font-medium uppercase tracking-wide text-muted-foreground">Avulso</span>
+                        <CategoryTag categoria="origem">Avulso</CategoryTag>
                       )}
                     </span>
                   </td>
@@ -524,7 +530,7 @@ export default function AtracaoLista() {
                         <span className="flex items-center gap-1.5">
                           {v.empresa}
                           {v.is_avulsa && (
-                            <span className="rounded-full border border-border bg-muted px-1.5 py-px text-[9px] font-medium uppercase tracking-wide text-muted-foreground">Avulso</span>
+                            <CategoryTag categoria="origem">Avulso</CategoryTag>
                           )}
                         </span>
                       </td>
@@ -623,6 +629,19 @@ export default function AtracaoLista() {
                 />
               </div>
             </div>
+
+            {/* Contato do solicitante — só avulso */}
+            {tipoEmpresa === "avulsa" && (
+              <div className="space-y-2">
+                <Label>Contato do solicitante *</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Input placeholder="Nome do contato" value={avulsaContatoNome} onChange={(e) => setAvulsaContatoNome(e.target.value)} />
+                  <Input placeholder="Cargo do contato" value={avulsaContatoCargo} onChange={(e) => setAvulsaContatoCargo(e.target.value)} />
+                  <Input placeholder="WhatsApp / Telefone" value={avulsaContatoTelefone} onChange={(e) => setAvulsaContatoTelefone(e.target.value)} />
+                  <Input placeholder="E-mail" type="email" value={avulsaContatoEmail} onChange={(e) => setAvulsaContatoEmail(e.target.value)} />
+                </div>
+              </div>
+            )}
 
             {/* Tipo + Modalidade */}
             <div className="grid grid-cols-2 gap-3">
@@ -888,7 +907,12 @@ export default function AtracaoLista() {
             </Button>
             <Button
               className="rounded-full"
-              disabled={!nTitulo.trim() || (tipoEmpresa === "avulsa" ? !nEmpresa.trim() : !empresaCadastradaId) || huntBloqueado}
+              disabled={
+                !nTitulo.trim() ||
+                (tipoEmpresa === "avulsa" ? !nEmpresa.trim() : !empresaCadastradaId) ||
+                (tipoEmpresa === "avulsa" && (!avulsaContatoNome.trim() || !avulsaContatoCargo.trim() || !avulsaContatoTelefone.trim() || !avulsaContatoEmail.trim())) ||
+                huntBloqueado
+              }
               onClick={async () => {
                 const titulo = nTitulo.trim();
                 const outrosExtras = nOutrosBeneficios
@@ -905,6 +929,10 @@ export default function AtracaoLista() {
                     is_avulsa: tipoEmpresa === "avulsa",
                     empresa: tipoEmpresa === "avulsa" ? nEmpresa.trim() : "",
                     empresa_id: tipoEmpresa === "cadastrada" ? empresaCadastradaId : undefined,
+                    avulsa_solicitante_nome: tipoEmpresa === "avulsa" ? avulsaContatoNome.trim() : null,
+                    avulsa_solicitante_cargo: tipoEmpresa === "avulsa" ? avulsaContatoCargo.trim() : null,
+                    avulsa_solicitante_telefone: tipoEmpresa === "avulsa" ? avulsaContatoTelefone.trim() : null,
+                    avulsa_solicitante_email: tipoEmpresa === "avulsa" ? avulsaContatoEmail.trim() : null,
                     filial: nFilial.trim() || undefined,
                     tipo: nTipo || undefined,
                     modalidade: pubModalidade || nModalidade || undefined,

@@ -3165,6 +3165,10 @@ function EditVagaModal({
   const [slaDias, setSlaDias] = useState(String(vaga.sla_dias ?? 30));
   const [confidencial, setConfidencial] = useState(vaga.confidencial ?? false);
   const [salarioFixo, setSalarioFixo] = useState(vaga.salario_fixo ?? false);
+  const [contatoNome, setContatoNome] = useState(vaga.avulsa_solicitante_nome ?? "");
+  const [contatoCargo, setContatoCargo] = useState(vaga.avulsa_solicitante_cargo ?? "");
+  const [contatoTelefone, setContatoTelefone] = useState(vaga.avulsa_solicitante_telefone ?? "");
+  const [contatoEmail, setContatoEmail] = useState(vaga.avulsa_solicitante_email ?? "");
   const [saving, setSaving] = useState(false);
 
   const inputCls = "w-full h-9 px-3 rounded-md border border-border bg-background text-sm";
@@ -3196,6 +3200,12 @@ function EditVagaModal({
         sla_dias: parseInt(slaDias) || 30,
         confidencial,
         salario_fixo: salarioFixo,
+        ...(vaga.is_avulsa && {
+          avulsa_solicitante_nome: contatoNome.trim() || null,
+          avulsa_solicitante_cargo: contatoCargo.trim() || null,
+          avulsa_solicitante_telefone: contatoTelefone.trim() || null,
+          avulsa_solicitante_email: contatoEmail.trim() || null,
+        }),
       };
       await atualizarVaga(vaga.id, input);
       await onSaved();
@@ -3220,6 +3230,18 @@ function EditVagaModal({
             <input value={filial} onChange={(e) => setFilial(e.target.value)} placeholder="SP, RJ…" className={inputCls} />
           </Field>
         </div>
+
+        {vaga.is_avulsa && (
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Contato do solicitante</label>
+            <div className="grid grid-cols-2 gap-3">
+              <input value={contatoNome} onChange={(e) => setContatoNome(e.target.value)} placeholder="Nome do contato" className={inputCls} />
+              <input value={contatoCargo} onChange={(e) => setContatoCargo(e.target.value)} placeholder="Cargo do contato" className={inputCls} />
+              <input value={contatoTelefone} onChange={(e) => setContatoTelefone(e.target.value)} placeholder="WhatsApp / Telefone" className={inputCls} />
+              <input value={contatoEmail} onChange={(e) => setContatoEmail(e.target.value)} placeholder="E-mail" type="email" className={inputCls} />
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-3">
           <Field label="Tipo">

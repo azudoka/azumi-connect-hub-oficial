@@ -33,6 +33,10 @@ export type VagaSupabase = {
   confidencial: boolean;
   salario_fixo: boolean;
   is_avulsa: boolean;
+  avulsa_solicitante_nome: string | null;
+  avulsa_solicitante_cargo: string | null;
+  avulsa_solicitante_telefone: string | null;
+  avulsa_solicitante_email: string | null;
   excluida_em: string | null;    // ← encerrada_em
   motivo_exclusao: string | null;// ← motivo_encerramento
 };
@@ -84,6 +88,10 @@ function jsToVaga(row: any): VagaSupabase {
     confidencial: row.confidencial ?? false,
     salario_fixo: row.salario_fixo ?? false,
     is_avulsa: row.is_avulsa ?? true,
+    avulsa_solicitante_nome: row.avulsa_solicitante_nome ?? null,
+    avulsa_solicitante_cargo: row.avulsa_solicitante_cargo ?? null,
+    avulsa_solicitante_telefone: row.avulsa_solicitante_telefone ?? null,
+    avulsa_solicitante_email: row.avulsa_solicitante_email ?? null,
     excluida_em: row.encerrada_em ?? null,
     motivo_exclusao: row.motivo_encerramento ?? null,
   };
@@ -114,6 +122,10 @@ export type CriarVagaInput = {
   confidencial?: boolean;
   salario_fixo?: boolean;
   is_avulsa?: boolean;
+  avulsa_solicitante_nome?: string | null;
+  avulsa_solicitante_cargo?: string | null;
+  avulsa_solicitante_telefone?: string | null;
+  avulsa_solicitante_email?: string | null;
 };
 
 // Converte CriarVagaInput → colunas de job_solicitations
@@ -142,6 +154,10 @@ function inputToJs(input: Partial<CriarVagaInput>): Record<string, unknown> {
   if (input.confidencial !== undefined) out.confidencial = input.confidencial;
   if (input.salario_fixo !== undefined) out.salario_fixo = input.salario_fixo;
   if (input.is_avulsa !== undefined) out.is_avulsa = input.is_avulsa;
+  if (input.avulsa_solicitante_nome !== undefined) out.avulsa_solicitante_nome = input.avulsa_solicitante_nome ?? null;
+  if (input.avulsa_solicitante_cargo !== undefined) out.avulsa_solicitante_cargo = input.avulsa_solicitante_cargo ?? null;
+  if (input.avulsa_solicitante_telefone !== undefined) out.avulsa_solicitante_telefone = input.avulsa_solicitante_telefone ?? null;
+  if (input.avulsa_solicitante_email !== undefined) out.avulsa_solicitante_email = input.avulsa_solicitante_email ?? null;
   return out;
 }
 
@@ -211,6 +227,10 @@ export async function criarVaga(input: CriarVagaInput): Promise<VagaSupabase> {
       prazo_entrega_dias: input.sla_dias ?? 30,
       confidencial: input.confidencial ?? false,
       salario_fixo: input.salario_fixo ?? false,
+      avulsa_solicitante_nome: input.avulsa_solicitante_nome ?? null,
+      avulsa_solicitante_cargo: input.avulsa_solicitante_cargo ?? null,
+      avulsa_solicitante_telefone: input.avulsa_solicitante_telefone ?? null,
+      avulsa_solicitante_email: input.avulsa_solicitante_email ?? null,
     })
     .select()
     .single();

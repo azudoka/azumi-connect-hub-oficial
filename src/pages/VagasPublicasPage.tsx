@@ -14,6 +14,7 @@ import {
 import { listarVagasPublicadas, type VagaSupabase } from "@/services/vagasService";
 import CandidaturaModal from "@/components/candidatura/CandidaturaModal";
 import { AzumiLogo } from "@/components/brand/AzumiLogo";
+import { CategoryTag } from "@/components/CategoryTag";
 
 function supabaseToPublica(r: VagaSupabase): VagaPublica {
   return {
@@ -294,17 +295,17 @@ export default function VagasPublicasPage() {
                       </div>
 
                       <div className="mt-3 flex flex-wrap gap-1.5">
-                        <span className="rounded-full bg-accent px-2 py-0.5 font-sans text-xs font-medium text-accent-foreground">
+                        <CategoryTag categoria="modalidade">
                           {MODALIDADE_LABEL[v.modalidade] ?? v.modalidade}
-                        </span>
-                        <span className="rounded-full bg-muted px-2 py-0.5 font-sans text-xs font-medium text-muted-foreground">
+                        </CategoryTag>
+                        <CategoryTag categoria="nivel">
                           {NIVEL_LABEL[v.nivel] ?? v.nivel}
-                        </span>
-                        <span className="rounded-full bg-muted px-2 py-0.5 font-sans text-xs font-medium text-muted-foreground">
+                        </CategoryTag>
+                        <CategoryTag categoria="contrato">
                           {CONTRATO_LABEL[v.tipo_contrato] ?? v.tipo_contrato}
-                        </span>
+                        </CategoryTag>
                         {v.tem_comissao && (
-                          <span className="rounded-full bg-[hsl(var(--success)/0.12)] px-2 py-0.5 font-sans text-xs font-medium text-success">
+                          <span className="rounded-full border border-success/30 bg-success/10 px-2 py-0.5 font-sans text-xs font-medium text-success">
                             + Comissão
                           </span>
                         )}

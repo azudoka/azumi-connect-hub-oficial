@@ -13,6 +13,7 @@ import {
 import { getVaga } from "@/services/vagasService";
 import CandidaturaModal from "@/components/candidatura/CandidaturaModal";
 import { AzumiLogo } from "@/components/brand/AzumiLogo";
+import { CategoryTag } from "@/components/CategoryTag";
 
 function Header() {
   return (
@@ -179,15 +180,15 @@ export default function VagaPublicaDetalhePage() {
                   </p>
                   <h1 className="font-display text-2xl font-semibold text-foreground">{vaga.titulo}</h1>
                   <div className="mt-2 flex flex-wrap gap-1.5">
-                    <span className="rounded-full bg-accent px-2 py-0.5 font-sans text-xs font-medium text-accent-foreground">
+                    <CategoryTag categoria="modalidade">
                       {MODALIDADE_LABEL[vaga.modalidade] ?? vaga.modalidade}
-                    </span>
-                    <span className="rounded-full bg-muted px-2 py-0.5 font-sans text-xs font-medium text-muted-foreground">
+                    </CategoryTag>
+                    <CategoryTag categoria="nivel">
                       {NIVEL_LABEL[vaga.nivel] ?? vaga.nivel}
-                    </span>
-                    <span className="rounded-full bg-muted px-2 py-0.5 font-sans text-xs font-medium text-muted-foreground">
+                    </CategoryTag>
+                    <CategoryTag categoria="contrato">
                       {CONTRATO_LABEL[vaga.tipo_contrato] ?? vaga.tipo_contrato}
-                    </span>
+                    </CategoryTag>
                   </div>
                 </div>
               </div>
