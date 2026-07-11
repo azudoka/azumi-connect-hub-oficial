@@ -19,7 +19,7 @@ export function SlaBar({ percent, label, className }: SlaBarProps) {
     <div className={cn("space-y-1", className)}>
       <div className="flex items-center justify-between text-xs">
         <span className="text-muted-foreground">{label ?? "SLA"}</span>
-        <span className="font-data tabular-nums">{Math.min(percent, 999)}% · {text}</span>
+        <span className="tabular-nums font-medium">{Math.min(percent, 999)}% · {text}</span>
       </div>
       <div className="h-1.5 rounded-full bg-muted overflow-hidden">
         <div
