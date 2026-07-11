@@ -38,9 +38,9 @@ type Invoice = {
 type Empresa = { id: string; nome: string };
 
 const statusInvoice: Record<string, { label: string; cls: string; icon: React.ElementType }> = {
-  pago:      { label: "Pago",      cls: "bg-success/15 text-success border-success/30",            icon: Check },
-  pendente:  { label: "Em aberto", cls: "bg-warning/15 text-warning border-warning/30",             icon: ClockIcon },
-  atrasado:  { label: "Atrasado",  cls: "bg-destructive/15 text-destructive border-destructive/30", icon: AlertTriangle },
+  pago:      { label: "Pago",      cls: "bg-[hsl(var(--success)/0.15)] text-success border-[hsl(var(--success)/0.3)]",            icon: Check },
+  pendente:  { label: "Em aberto", cls: "bg-[hsl(var(--warning)/0.15)] text-warning border-[hsl(var(--warning)/0.3)]",             icon: ClockIcon },
+  atrasado:  { label: "Atrasado",  cls: "bg-[hsl(var(--destructive)/0.15)] text-destructive border-[hsl(var(--destructive)/0.3)]", icon: AlertTriangle },
   cancelado: { label: "Cancelado", cls: "bg-muted text-muted-foreground border-border",             icon: X },
 };
 
@@ -222,11 +222,11 @@ export default function GestaoConta() {
           </div>
 
           {temAtrasado && (
-            <div className="rounded-xl border border-warning/30 bg-warning/10 p-4 mb-4 flex items-start gap-3">
+            <div className="rounded-xl border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] p-4 mb-4 flex items-start gap-3">
               <AlertTriangle className="h-5 w-5 text-warning shrink-0" />
               <div className="text-sm">
                 <span className="font-medium text-warning">Atenção: </span>
-                <span className="text-warning/80">Existem boletos vencidos ou próximos do vencimento.</span>
+                <span className="text-[hsl(var(--warning)/0.8)]">Existem boletos vencidos ou próximos do vencimento.</span>
               </div>
             </div>
           )}
@@ -243,7 +243,7 @@ export default function GestaoConta() {
           ) : (
             <div className="bg-card border border-border rounded-xl overflow-hidden">
               <table className="w-full text-sm">
-                <thead className="bg-secondary/40 text-xs uppercase tracking-wider text-muted-foreground">
+                <thead className="bg-[hsl(var(--secondary)/0.4)] text-xs uppercase tracking-wider text-muted-foreground">
                   <tr>
                     <th className="text-left font-medium px-4 py-3">Empresa</th>
                     <th className="text-left font-medium px-4 py-3">Período</th>
@@ -266,19 +266,19 @@ export default function GestaoConta() {
                     const empNome = (inv.empresa as { nome: string } | null)?.nome ?? "—";
 
                     return (
-                      <tr key={inv.id} className="border-t border-border hover:bg-secondary/30">
+                      <tr key={inv.id} className="border-t border-border hover:bg-[hsl(var(--secondary)/0.3)]">
                         <td className="px-4 py-3 font-medium">{empNome}</td>
-                        <td className="px-4 py-3 font-data text-xs">{fmtMonthRef(inv.reference_month)}</td>
-                        <td className="px-4 py-3 text-right font-data">
+                        <td className="px-4 py-3 text-xs tabular-nums">{fmtMonthRef(inv.reference_month)}</td>
+                        <td className="px-4 py-3 text-right tabular-nums">
                           R$ {inv.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                         </td>
-                        <td className="px-4 py-3 font-data">
+                        <td className="px-4 py-3 tabular-nums">
                           <div>{fmtDate(inv.due_date)}</div>
                           {!isPago && !isCancelado && diffDias === 0 && (
-                            <span className="text-[10px] bg-destructive/15 text-destructive px-1.5 py-0.5 rounded-full">Vence hoje</span>
+                            <span className="text-[10px] bg-[hsl(var(--destructive)/0.15)] text-destructive px-1.5 py-0.5 rounded-full">Vence hoje</span>
                           )}
                           {!isPago && !isCancelado && diffDias > 0 && diffDias <= 5 && (
-                            <span className="text-[10px] bg-warning/15 text-warning px-1.5 py-0.5 rounded-full">Vence em {diffDias}d</span>
+                            <span className="text-[10px] bg-[hsl(var(--warning)/0.15)] text-warning px-1.5 py-0.5 rounded-full">Vence em {diffDias}d</span>
                           )}
                         </td>
                         <td className="px-4 py-3">
@@ -351,7 +351,7 @@ export default function GestaoConta() {
 
       {/* ── Modal Detalhes ────────────────────────────────────────────── */}
       {detalhesOpen && detalhesInvoice && (
-        <div className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm flex items-center justify-center animate-fade-in p-4">
+        <div className="fixed inset-0 z-50 bg-[hsl(var(--background)/0.7)] backdrop-blur-sm flex items-center justify-center animate-fade-in p-4">
           <div className="bg-card border border-border rounded-2xl shadow-elevated p-6 w-full max-w-md">
             <div className="flex items-start justify-between mb-4">
               <div>
@@ -378,7 +378,7 @@ export default function GestaoConta() {
               ] as [string, string][]).map(([k, v]) => (
                 <div key={k}>
                   <dt className="text-xs text-muted-foreground">{k}</dt>
-                  <dd className="font-medium font-data">{v}</dd>
+                  <dd className="font-medium tabular-nums">{v}</dd>
                 </div>
               ))}
               {detalhesInvoice.notes && (
@@ -391,7 +391,7 @@ export default function GestaoConta() {
                 const atr = calcularAtraso(detalhesInvoice);
                 if (!atr) return null;
                 return (
-                  <div className="col-span-2 rounded-lg bg-destructive/10 border border-destructive/20 p-3">
+                  <div className="col-span-2 rounded-lg bg-[hsl(var(--destructive)/0.1)] border border-[hsl(var(--destructive)/0.2)] p-3">
                     <p className="text-xs text-destructive font-medium">
                       {atr.diasAtraso}d de atraso — Total devido estimado:{" "}
                       R$ {atr.totalDevido.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
@@ -432,7 +432,7 @@ export default function GestaoConta() {
                   required
                   step="0.01"
                   min="0"
-                  className="w-full h-10 px-3 rounded-lg bg-secondary border border-input focus:border-primary outline-none text-sm font-data"
+                  className="w-full h-10 px-3 rounded-lg bg-secondary border border-input focus:border-primary outline-none text-sm"
                 />
               </Field>
               <Field label="Mês de referência">
@@ -440,7 +440,7 @@ export default function GestaoConta() {
                   type="month"
                   value={formMes}
                   onChange={(e) => setFormMes(e.target.value)}
-                  className="w-full h-10 px-3 rounded-lg bg-secondary border border-input focus:border-primary outline-none text-sm font-data"
+                  className="w-full h-10 px-3 rounded-lg bg-secondary border border-input focus:border-primary outline-none text-sm"
                 />
               </Field>
               <Field label="Vencimento *">
@@ -449,7 +449,7 @@ export default function GestaoConta() {
                   value={formVenc}
                   onChange={(e) => setFormVenc(e.target.value)}
                   required
-                  className="w-full h-10 px-3 rounded-lg bg-secondary border border-input focus:border-primary outline-none text-sm font-data"
+                  className="w-full h-10 px-3 rounded-lg bg-secondary border border-input focus:border-primary outline-none text-sm"
                 />
               </Field>
               <Field label="URL do boleto">
