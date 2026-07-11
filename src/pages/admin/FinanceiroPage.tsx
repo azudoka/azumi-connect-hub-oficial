@@ -18,7 +18,7 @@ import {
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/PageHeader";
-import { KpiCard } from "@/components/KpiCard";
+import { ConnectStatCard } from "@/components/ConnectStatCard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { EmptyState } from "@/components/EmptyState";
 
@@ -374,10 +374,32 @@ export default function FinanceiroPage() {
         {/* =================== FATURAS =================== */}
         <TabsContent value="faturas" className="space-y-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <KpiCard label="Total faturado" value={formatBRL(kpisFaturas.total)} icon={CircleDollarSign} />
-            <KpiCard label="A receber" value={formatBRL(kpisFaturas.aReceber)} icon={Clock} />
-            <KpiCard label="Recebido" value={formatBRL(kpisFaturas.recebido)} icon={CheckCircle2} />
-            <KpiCard label="Em atraso" value={formatBRL(kpisFaturas.atraso)} icon={AlertTriangle} />
+            <ConnectStatCard variant="terminal" label="Total faturado" value={formatBRL(kpisFaturas.total)} />
+            <ConnectStatCard
+              className="sm:col-span-2 lg:col-span-3"
+              variant="stack"
+              label="Composição do total faturado"
+              segments={[
+                {
+                  label: "Recebido",
+                  value: formatBRL(kpisFaturas.recebido),
+                  percent: kpisFaturas.total > 0 ? (kpisFaturas.recebido / kpisFaturas.total) * 100 : 0,
+                  tone: "green",
+                },
+                {
+                  label: "A receber no prazo",
+                  value: formatBRL(kpisFaturas.aReceber - kpisFaturas.atraso),
+                  percent: kpisFaturas.total > 0 ? ((kpisFaturas.aReceber - kpisFaturas.atraso) / kpisFaturas.total) * 100 : 0,
+                  tone: "blue",
+                },
+                {
+                  label: "Em atraso",
+                  value: formatBRL(kpisFaturas.atraso),
+                  percent: kpisFaturas.total > 0 ? (kpisFaturas.atraso / kpisFaturas.total) * 100 : 0,
+                  tone: "red",
+                },
+              ]}
+            />
           </div>
 
           {/* Filtros */}
@@ -491,10 +513,10 @@ export default function FinanceiroPage() {
                     const meta = faturaStatusMap[f.status];
                     return (
                       <TableRow key={f.id}>
-                        <TableCell className="font-data text-xs">{f.numero}</TableCell>
+                        <TableCell className="text-xs tabular-nums">{f.numero}</TableCell>
                         <TableCell className="font-medium">{f.empresa}</TableCell>
                         <TableCell className="text-muted-foreground">{f.referencia}</TableCell>
-                        <TableCell className="text-right font-data tabular-nums">{formatBRL(f.valor)}</TableCell>
+                        <TableCell className="text-right tabular-nums">{formatBRL(f.valor)}</TableCell>
                         <TableCell className={cn(atrasada && "text-destructive font-medium")}>
                           {formatDateBR(f.vencimento)}
                         </TableCell>
@@ -545,9 +567,18 @@ export default function FinanceiroPage() {
         {/* =================== REPASSES =================== */}
         <TabsContent value="repasses" className="space-y-5">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <KpiCard label="Total a repassar" value={formatBRL(kpisRepasses.totalARepassar)} icon={Wallet} />
-            <KpiCard label="Repassado" value={formatBRL(kpisRepasses.repassado)} icon={CheckCircle2} />
-            <KpiCard label="Pendente" value={formatBRL(kpisRepasses.pendente)} icon={Clock} />
+            <ConnectStatCard variant="terminal" label="Total a repassar" value={formatBRL(kpisRepasses.totalARepassar)} />
+            <ConnectStatCard
+              variant="radial"
+              label="Repassado"
+              percent={
+                kpisRepasses.repassado + kpisRepasses.totalARepassar > 0
+                  ? (kpisRepasses.repassado / (kpisRepasses.repassado + kpisRepasses.totalARepassar)) * 100
+                  : 0
+              }
+              contextLabel={formatBRL(kpisRepasses.repassado)}
+            />
+            <ConnectStatCard variant="terminal" label="Pendente" value={formatBRL(kpisRepasses.pendente)} />
           </div>
 
           <Card className="overflow-hidden">
@@ -580,11 +611,11 @@ export default function FinanceiroPage() {
                       <TableRow key={r.id}>
                         <TableCell className="text-sm">{r.periodo}</TableCell>
                         <TableCell className="font-medium">{r.consultor}</TableCell>
-                        <TableCell className="text-right font-data tabular-nums">{r.horas}h</TableCell>
-                        <TableCell className="text-right font-data tabular-nums">{formatBRL(r.taxa)}</TableCell>
-                        <TableCell className="text-right font-data tabular-nums">{formatBRL(r.bruto)}</TableCell>
+                        <TableCell className="text-right tabular-nums">{r.horas}h</TableCell>
+                        <TableCell className="text-right tabular-nums">{formatBRL(r.taxa)}</TableCell>
+                        <TableCell className="text-right tabular-nums">{formatBRL(r.bruto)}</TableCell>
                         <TableCell className="text-right text-muted-foreground">{r.desconto}%</TableCell>
-                        <TableCell className="text-right font-data font-semibold tabular-nums">{formatBRL(r.liquido)}</TableCell>
+                        <TableCell className="text-right font-semibold tabular-nums">{formatBRL(r.liquido)}</TableCell>
                         <TableCell>
                           <StatusBadge status={meta.key}>{meta.label}</StatusBadge>
                         </TableCell>
@@ -638,15 +669,17 @@ export default function FinanceiroPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <KpiCard label="Faturamento bruto" value={formatBRL(resumoData.bruto)} icon={TrendingUp} />
-            <KpiCard label="Total de repasses" value={formatBRL(resumoData.totalRepasses)} icon={Wallet} />
-            <KpiCard
+            <ConnectStatCard variant="terminal" label="Faturamento bruto" value={formatBRL(resumoData.bruto)} />
+            <ConnectStatCard variant="terminal" label="Total de repasses" value={formatBRL(resumoData.totalRepasses)} />
+            <ConnectStatCard
+              variant="delta"
               label="Resultado líquido"
               value={formatBRL(resumoData.liquido)}
-              icon={CircleDollarSign}
-              trend={{ value: `${resumoData.liquido >= 0 ? "+" : ""}${((resumoData.liquido / (resumoData.bruto || 1)) * 100).toFixed(1)}% margem`, positive: resumoData.liquido >= 0 }}
+              previousLabel={`sobre ${formatBRL(resumoData.bruto)} faturado`}
+              deltaValue={`${resumoData.liquido >= 0 ? "+" : ""}${((resumoData.liquido / (resumoData.bruto || 1)) * 100).toFixed(1)}% margem`}
+              positive={resumoData.liquido >= 0}
             />
-            <KpiCard label="Projetos ativos" value={String(resumoData.projetosAtivos)} icon={FileText} />
+            <ConnectStatCard variant="terminal" label="Projetos ativos" value={String(resumoData.projetosAtivos)} />
           </div>
 
           <Card className="overflow-hidden">
@@ -674,9 +707,9 @@ export default function FinanceiroPage() {
                     return (
                       <TableRow key={b.empresa}>
                         <TableCell className="font-medium">{b.empresa}</TableCell>
-                        <TableCell className="text-right font-data tabular-nums">{formatBRL(b.faturamento)}</TableCell>
-                        <TableCell className="text-right font-data tabular-nums text-muted-foreground">{formatBRL(b.repasse)}</TableCell>
-                        <TableCell className={cn("text-right font-data font-semibold tabular-nums", result >= 0 ? "text-success" : "text-destructive")}>
+                        <TableCell className="text-right tabular-nums">{formatBRL(b.faturamento)}</TableCell>
+                        <TableCell className="text-right tabular-nums text-muted-foreground">{formatBRL(b.repasse)}</TableCell>
+                        <TableCell className={cn("text-right font-semibold tabular-nums", result >= 0 ? "text-success" : "text-destructive")}>
                           {formatBRL(result)}
                         </TableCell>
                       </TableRow>
