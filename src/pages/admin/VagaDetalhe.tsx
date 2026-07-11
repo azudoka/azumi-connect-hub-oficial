@@ -1,5 +1,6 @@
 import { createPortal } from "react-dom";
 import { publicarVaga, despublicarVaga, getVaga, atualizarVaga, definirStatusVaga, excluirVaga, type VagaSupabase, type CriarVagaInput } from "@/services/vagasService";
+import { criarLinkCurto } from "@/services/shortLinkService";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
@@ -581,6 +582,7 @@ export default function VagaDetalheAdmin() {
   const [whatsTemplateOpen, setWhatsTemplateOpen] = useState<{ candidatoId: string; questionarioId?: string } | null>(null);
   
   const [discWhatsOpen, setDiscWhatsOpen] = useState<string | null>(null);
+  const [linkDiscCurto, setLinkDiscCurto] = useState<string | null>(null);
   const [associarQuestOpen, setAssociarQuestOpen] = useState<string | null>(null);
   const [declinarOpen, setDeclinarOpen] = useState<string | null>(null);
   const [agendarOpen, setAgendarOpen] = useState<string | null>(null);
@@ -665,6 +667,12 @@ export default function VagaDetalheAdmin() {
     document.addEventListener("mousedown", onDocClick);
     return () => document.removeEventListener("mousedown", onDocClick);
   }, [statusMenuOpen]);
+
+  useEffect(() => {
+    if (!discWhatsOpen) { setLinkDiscCurto(null); return; }
+    const urlCompleta = `${window.location.origin}/disc/${discWhatsOpen}`;
+    criarLinkCurto(urlCompleta, "disc").then(setLinkDiscCurto);
+  }, [discWhatsOpen]);
 
   async function recarregarVaga() {
     if (!id || vagaMock) return;
@@ -2675,14 +2683,17 @@ export default function VagaDetalheAdmin() {
       {/* ── Modal: Solicitar DISC via WhatsApp ───────────────────── */}
       {discWhatsOpen && (() => {
         const c = candidatosVaga.find((x) => x.id === discWhatsOpen);
+        const linkFinal = linkDiscCurto ?? "Gerando link…";
         return (
           <ModalShell title="Solicitar DISC via WhatsApp" onClose={() => setDiscWhatsOpen(null)}>
             <div className="text-sm space-y-3">
               <p>Enviar link do questionário DISC para <strong>{c?.nome}</strong>.</p>
               <textarea
-                defaultValue={`Olá ${c?.nome ?? ""}, segue o link para o teste DISC: ${window.location.origin}/disc/${c?.id ?? ""}`}
+                value={`Olá ${c?.nome ?? ""}, segue o link para o teste DISC: ${linkFinal}`}
+                readOnly={!linkDiscCurto}
                 rows={3}
                 className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm"
+                onChange={() => {}}
               />
               <div className="flex justify-end gap-2">
                 <button
