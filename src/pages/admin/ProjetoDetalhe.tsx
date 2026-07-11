@@ -145,8 +145,8 @@ const statusToBadge: Record<EntregavelStatus, "ativa" | "andamento" | "aguardand
 
 const complexidadeStyle: Record<Complexidade, string> = {
   C1: "bg-muted text-muted-foreground border-border",
-  C2: "bg-warning/15 text-warning border-warning/30",
-  C3: "bg-primary/15 text-primary border-primary/30",
+  C2: "bg-[hsl(var(--warning)/0.15)] text-warning border-[hsl(var(--warning)/0.3)]",
+  C3: "bg-[hsl(var(--primary)/0.15)] text-primary border-[hsl(var(--primary)/0.3)]",
 };
 
 // Sequência permitida (usada no Select de status)
@@ -395,8 +395,8 @@ export default function ProjetoDetalhe() {
                 <span className={cn(
                   "badge-pill border",
                   horasRest <= 12
-                    ? "bg-destructive/15 text-destructive border-destructive/30"
-                    : "bg-warning/15 text-warning border-warning/30"
+                    ? "bg-[hsl(var(--destructive)/0.15)] text-destructive border-[hsl(var(--destructive)/0.3)]"
+                    : "bg-[hsl(var(--warning)/0.15)] text-warning border-[hsl(var(--warning)/0.3)]"
                 )}>
                   <Clock className="h-3 w-3" />
                   {horasRest}h restantes
@@ -413,7 +413,7 @@ export default function ProjetoDetalhe() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="gap-1.5 border-info/40 text-info hover:bg-info/10"
+                      className="gap-1.5 border-[hsl(var(--info)/0.4)] text-info hover:bg-[hsl(var(--info)/0.1)]"
                       onClick={() =>
                         setConfirmAvancarOpen({
                           open: true,
@@ -545,7 +545,7 @@ export default function ProjetoDetalhe() {
         }}
         onClick={() => setPanelOpen({ open: true, entId: e.id })}
         className={cn(
-          "bg-background/60 border border-border rounded-lg p-3 transition-colors cursor-pointer hover:border-primary/40",
+          "bg-[hsl(var(--background)/0.6)] border border-border rounded-lg p-3 transition-colors cursor-pointer hover:border-[hsl(var(--primary)/0.4)]",
           bloqueado && "opacity-90"
         )}
       >
@@ -556,7 +556,7 @@ export default function ProjetoDetalhe() {
         <div className="text-sm font-medium leading-tight mt-0.5 line-clamp-2">{e.nome}</div>
 
         {e.status === "aprovacao_interna" && (
-          <div className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-medium text-info bg-info/15 border border-info/30 rounded-full px-2 py-0.5">
+          <div className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-medium text-info bg-[hsl(var(--info)/0.15)] border border-[hsl(var(--info)/0.3)] rounded-full px-2 py-0.5">
             <CheckCircle2 className="h-3 w-3" />
             Aguarda aprovação interna
           </div>
@@ -647,7 +647,7 @@ export default function ProjetoDetalhe() {
 
       {/* Alerta: entregáveis cancelados com horas registradas */}
       {canceladosComHoras.length > 0 && (
-        <div className="mb-6 rounded-xl border border-warning/30 bg-warning/10 px-4 py-3 flex items-start gap-3">
+        <div className="mb-6 rounded-xl border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] px-4 py-3 flex items-start gap-3">
           <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
           <div className="text-xs">
             <div className="font-semibold text-warning">
@@ -671,7 +671,7 @@ export default function ProjetoDetalhe() {
       <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
         <h3 className="font-display font-semibold">Entregáveis</h3>
         <div className="flex items-center gap-2">
-          <div className="inline-flex rounded-lg border border-border p-0.5 bg-secondary/40">
+          <div className="inline-flex rounded-lg border border-border p-0.5 bg-[hsl(var(--secondary)/0.4)]">
             <button
               type="button"
               onClick={() => setView("lista")}
@@ -728,7 +728,7 @@ export default function ProjetoDetalhe() {
                 }}
                 className={cn(
                   "bg-card border rounded-xl p-3 min-h-[200px] transition-colors",
-                  isOver ? "border-primary ring-2 ring-primary/20" : "border-border"
+                  isOver ? "border-primary ring-2 ring-[hsl(var(--primary)/0.2)]" : "border-border"
                 )}
               >
                 <div className="flex items-center justify-between px-1 mb-3">
@@ -1349,7 +1349,7 @@ function CancelarDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="rounded-lg border border-warning/30 bg-warning/10 p-3 text-xs text-warning flex items-start gap-2">
+        <div className="rounded-lg border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] p-3 text-xs text-warning flex items-start gap-2">
           <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
           <div>
             <div className="font-semibold">Atenção: as horas já gastas não serão devolvidas.</div>
@@ -1844,7 +1844,7 @@ function EntregavelPanelSheet({
             </TabsList>
 
             <TabsContent value="interno" className="mt-3">
-              <div className="rounded-md border border-warning/30 bg-warning/10 px-3 py-2 text-[11px] text-warning mb-3">
+              <div className="rounded-md border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] px-3 py-2 text-[11px] text-warning mb-3">
                 Esta conversa não é visível para o cliente.
               </div>
               <ChatLista
@@ -1863,7 +1863,7 @@ function EntregavelPanelSheet({
             </TabsContent>
 
             <TabsContent value="cliente" className="mt-3">
-              <div className="rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-[11px] text-primary mb-3">
+              <div className="rounded-md border border-[hsl(var(--primary)/0.3)] bg-[hsl(var(--primary)/0.1)] px-3 py-2 text-[11px] text-primary mb-3">
                 Mensagens aqui são compartilhadas com o cliente.
               </div>
               <ChatLista
@@ -1905,7 +1905,7 @@ function EntregavelPanelSheet({
               </div>
             )}
             {anexoPendente && (
-              <div className="mt-2 flex items-center gap-2 text-xs bg-secondary/40 border border-border rounded-md px-2 py-1.5">
+              <div className="mt-2 flex items-center gap-2 text-xs bg-[hsl(var(--secondary)/0.4)] border border-border rounded-md px-2 py-1.5">
                 <Paperclip className="h-3.5 w-3.5" />
                 <span className="font-data">{anexoPendente}</span>
                 <button
@@ -1930,7 +1930,7 @@ function EntregavelPanelSheet({
         </div>
 
         {entregavel.motivoCancelamento && (
-          <div className="mt-6 text-xs rounded-md border border-destructive/30 bg-destructive/10 p-3">
+          <div className="mt-6 text-xs rounded-md border border-[hsl(var(--destructive)/0.3)] bg-[hsl(var(--destructive)/0.1)] p-3">
             <div className="font-semibold text-destructive flex items-center gap-1.5">
               <XCircle className="h-3.5 w-3.5" /> Cancelado
             </div>
@@ -1975,7 +1975,7 @@ function ChatLista({
             <li key={m.id} className="flex justify-end">
               <div className="max-w-[78%] self-end flex flex-col gap-1">
                 <textarea
-                  className="text-sm rounded-xl px-3 py-2 bg-primary/10 border border-primary/30 resize-none w-full min-h-[60px] focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="text-sm rounded-xl px-3 py-2 bg-[hsl(var(--primary)/0.1)] border border-[hsl(var(--primary)/0.3)] resize-none w-full min-h-[60px] focus:outline-none focus:ring-1 focus:ring-primary"
                   value={textoEditado}
                   onChange={(e) => setTextoEditado(e.target.value)}
                   rows={2}
@@ -2038,7 +2038,7 @@ function ChatLista({
                       "mt-1.5 inline-flex items-center gap-1.5 text-xs rounded px-2 py-0.5 border",
                       isMe
                         ? "bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground"
-                        : "bg-primary/10 border-primary/20 text-primary"
+                        : "bg-[hsl(var(--primary)/0.1)] border-[hsl(var(--primary)/0.2)] text-primary"
                     )}
                   >
                     <FileText className="h-3 w-3" />
