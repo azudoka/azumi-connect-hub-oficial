@@ -2,15 +2,15 @@ import { cn } from "@/lib/utils";
 import type { StatusKey } from "@/data/mock";
 
 const styles: Record<StatusKey, { label: string; cls: string }> = {
-  ativa: { label: "Ativa", cls: "bg-success/15 text-success border-success/30" },
-  andamento: { label: "Em andamento", cls: "bg-success/15 text-success border-success/30" },
-  aguardando: { label: "Aguardando", cls: "bg-warning/15 text-warning border-warning/30" },
-  bloqueada: { label: "Bloqueada", cls: "bg-destructive/15 text-destructive border-destructive/30" },
-  atrasada: { label: "Atrasada", cls: "bg-destructive/15 text-destructive border-destructive/30" },
+  ativa: { label: "Ativa", cls: "bg-[hsl(var(--success)/0.15)] text-success border-[hsl(var(--success)/0.3)]" },
+  andamento: { label: "Em andamento", cls: "bg-[hsl(var(--success)/0.15)] text-success border-[hsl(var(--success)/0.3)]" },
+  aguardando: { label: "Aguardando", cls: "bg-[hsl(var(--warning)/0.15)] text-warning border-[hsl(var(--warning)/0.3)]" },
+  bloqueada: { label: "Bloqueada", cls: "bg-[hsl(var(--destructive)/0.15)] text-destructive border-[hsl(var(--destructive)/0.3)]" },
+  atrasada: { label: "Atrasada", cls: "bg-[hsl(var(--destructive)/0.15)] text-destructive border-[hsl(var(--destructive)/0.3)]" },
   concluida: { label: "Concluída", cls: "bg-muted text-muted-foreground border-border" },
   cancelada: { label: "Cancelada", cls: "bg-muted text-muted-foreground border-border line-through" },
-  standby:   { label: "Standby",   cls: "bg-warning/15 text-warning border-warning/30" },
-  analise: { label: "Em análise", cls: "bg-info/15 text-info border-info/30" },
+  standby:   { label: "Standby",   cls: "bg-[hsl(var(--warning)/0.15)] text-warning border-[hsl(var(--warning)/0.3)]" },
+  analise: { label: "Em análise", cls: "bg-[hsl(var(--info)/0.15)] text-info border-[hsl(var(--info)/0.3)]" },
 };
 
 interface StatusBadgeProps {
