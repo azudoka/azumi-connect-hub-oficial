@@ -258,31 +258,19 @@ function AdminDashboard() {
 
   return (
     <div>
-      <div className="relative overflow-hidden rounded-2xl p-6 sm:p-7 text-primary-foreground bg-[image:radial-gradient(circle_at_1px_1px,hsl(0_0%_100%/0.14)_1px,transparent_0),linear-gradient(120deg,hsl(var(--primary)),hsl(var(--primary-glow)))] [background-size:16px_16px,100%_100%]">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <p className="font-display text-2xl sm:text-[28px] font-bold leading-tight">
-              {saudacao}, {usuario?.nome?.split(" ")[0] ?? "Ana"} 👋
-            </p>
-            <p className="text-sm text-primary-foreground/80 mt-1">{dataCapitalizada}</p>
+      <div className="rounded-xl p-7 text-primary-foreground bg-primary">
+        <p className="font-display text-xl font-semibold">
+          {saudacao}, {usuario?.nome?.split(" ")[0] ?? "Ana"} 👋
+        </p>
+        <p className="text-sm text-primary-foreground/80 mt-1 mb-5">{dataCapitalizada}</p>
+        <div className="flex flex-wrap gap-3">
+          <div className="bg-[hsl(var(--primary-glow))] rounded-full px-6 py-3">
+            <div className="font-display text-lg font-bold leading-none">6</div>
+            <div className="text-xs text-primary-foreground/80 mt-1">Projetos ativos</div>
           </div>
-          {/* Ações rápidas — atalho pros 4 fluxos mais usados, dentro do hero */}
-          <div className="flex flex-wrap gap-2">
-            {[
-              { label: "Nova vaga", icon: Briefcase, to: "/app/atracao" },
-              { label: "Lançar horas", icon: Clock, to: "/app/horas" },
-              { label: "Nova fatura", icon: CircleDollarSign, to: "/app/financeiro" },
-              { label: "Novo entregável", icon: FileText, to: "/app/projetos" },
-            ].map((a) => (
-              <button
-                key={a.label}
-                type="button"
-                onClick={() => navigate(a.to)}
-                className="inline-flex items-center gap-1.5 rounded-full bg-card text-foreground px-3.5 py-1.5 text-xs font-medium hover:bg-card/90 transition-colors shadow-sm"
-              >
-                <a.icon className="h-3.5 w-3.5 text-primary" /> {a.label}
-              </button>
-            ))}
+          <div className="bg-[hsl(var(--primary-glow))] rounded-full px-6 py-3">
+            <div className="font-display text-lg font-bold leading-none">115h</div>
+            <div className="text-xs text-primary-foreground/80 mt-1">Horas no mês</div>
           </div>
         </div>
       </div>
@@ -296,33 +284,19 @@ function AdminDashboard() {
         {/* ── ABA VISÃO GERAL ── */}
         <TabsContent value="visao-geral" className="mt-0 space-y-6">
 
-          {/* 1. KPIs — estrutura MaterialM: 1 card largo + 3 cards de estatística circular */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-start">
+          {/* 1. KPIs — 4 cards de estatística, todos no mesmo formato (sem card largo, sem gráfico embutido) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
             {pode("financeiro.ver_valores") && (
               <ConnectStatCard
-                variant="highlight"
+                variant="stat"
                 icon={CircleDollarSign}
-                title="Faturamento do mês"
-                description={`${ocultar(formatBRL(fin.faturado))} de meta ${ocultar(formatBRL(fin.metaFaturamento))}`}
-                metricValue={`${pctFaturamento}%`}
-                metricLabel="da meta batida"
-                actionLabel="Ver →"
-                onAction={() => navigate("/app/financeiro")}
+                tone="teal"
+                label="Faturamento do mês"
+                value={`${pctFaturamento}%`}
+                deltaValue={ocultar(formatBRL(fin.faturado))}
+                positive={pctFaturamento >= 80}
+                barPercent={pctFaturamento}
                 onClick={() => navigate("/app/financeiro")}
-                className="lg:col-span-2"
-                chart={
-                  <div className="flex items-end gap-4">
-                    {[
-                      { label: "Faturado", v: fin.faturado, max: fin.metaFaturamento },
-                      { label: "Meta", v: fin.metaFaturamento, max: fin.metaFaturamento },
-                    ].map((b) => (
-                      <div key={b.label} className="flex flex-col items-center gap-1">
-                        <div className="w-6 rounded-t-md bg-primary-foreground/85" style={{ height: `${Math.max(6, (b.v / b.max) * 36)}px` }} />
-                        <span className="text-[9px] text-primary-foreground/70">{b.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                }
               />
             )}
             <ConnectStatCard
