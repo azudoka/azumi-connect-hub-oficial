@@ -507,7 +507,7 @@ export default function ProjetoDetalhe() {
 
         <div className="mt-4 flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-md bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white">
+            <div className="h-7 w-7 rounded-md bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))] flex items-center justify-center text-[10px] font-semibold text-white">
               {e.responsavelIniciais}
             </div>
             <span className="text-xs text-muted-foreground">{e.responsavelNome}</span>
@@ -580,7 +580,7 @@ export default function ProjetoDetalhe() {
         </div>
 
         <div className="mt-2 flex items-center gap-1.5">
-          <div className="h-5 w-5 rounded-md bg-gradient-brand flex items-center justify-center text-[8px] font-semibold text-white">
+          <div className="h-5 w-5 rounded-md bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))] flex items-center justify-center text-[8px] font-semibold text-white">
             {e.responsavelIniciais}
           </div>
           <span className="text-[10px] text-muted-foreground truncate">{e.responsavelNome}</span>
@@ -624,7 +624,7 @@ export default function ProjetoDetalhe() {
           <div>
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Consultor responsável</div>
             <div className="mt-1 flex items-center gap-2">
-              <div className="h-7 w-7 rounded-lg bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white">AB</div>
+              <div className="h-7 w-7 rounded-lg bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))] flex items-center justify-center text-[10px] font-semibold text-white">AB</div>
               <span className="text-sm">Ana Beatriz</span>
             </div>
           </div>
@@ -2011,7 +2011,7 @@ function ChatLista({
         return (
           <li key={m.id} className={cn("flex gap-2 items-end group", isMe && "flex-row-reverse")}>
             {!isMe && (
-              <div className="h-7 w-7 rounded-lg bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white shrink-0">
+              <div className="h-7 w-7 rounded-lg bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))] flex items-center justify-center text-[10px] font-semibold text-white shrink-0">
                 {m.iniciais}
               </div>
             )}
