@@ -71,6 +71,7 @@ import VagaPublicaDetalhePage from "./pages/VagaPublicaDetalhePage";
 import RedirecionadorPage from "./pages/RedirecionadorPage";
 import QuestionarioRespostaPage from "./pages/QuestionarioRespostaPage";
 import CandidatarConvitePage from "./pages/CandidatarConvitePage";
+import ConvitePage from "./pages/ConvitePage";
 
 import LiderPainelPage from "./pages/hub/lider/LiderPainelPage";
 import MeuTimePage from "./pages/hub/lider/MeuTimePage";
@@ -192,6 +193,7 @@ const AppRoutes = () => (
     <Route path="/l/:codigo" element={<RedirecionadorPage />} />
     <Route path="/questionario-resposta/:token" element={<QuestionarioRespostaPage />} />
     <Route path="/candidatar-convite/:token" element={<CandidatarConvitePage />} />
+    <Route path="/convite/:token" element={<ConvitePage />} />
 
     {/* Admin / Consultor */}
     <Route

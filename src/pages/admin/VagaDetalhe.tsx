@@ -3525,7 +3525,7 @@ function ConvidarLinkForm({
   questionariosVaga: { id: string; nome: string }[];
   onClose: () => void;
 }) {
-  const [questSelecionado, setQuestSelecionado] = useState("");
+  const [questSelecionado, setQuestSelecionado] = useState("nenhum");
   const [gerando, setGerando] = useState(false);
   const [linkGerado, setLinkGerado] = useState("");
 
@@ -3533,41 +3533,35 @@ function ConvidarLinkForm({
     setGerando(true);
     setLinkGerado("");
 
-    if (questSelecionado) {
-      // Cria registro de convite com questionário vinculado
-      const { data: cqRow, error } = await supabase
-        .from("candidate_questionnaires")
-        .insert({
-          job_id: vagaId,
-          questionnaire_id: questSelecionado,
-          token: crypto.randomUUID(),
-          status: "pendente",
-          enviado_em: new Date().toISOString(),
-        })
-        .select("token")
-        .single();
+    const token = crypto.randomUUID();
+    const { error } = await supabase
+      .from("candidate_questionnaires")
+      .insert({
+        job_id: vagaId,
+        questionnaire_id: questSelecionado === "nenhum" ? null : questSelecionado,
+        token,
+        status: "pendente",
+        enviado_em: new Date().toISOString(),
+      });
 
-      if (error || !cqRow) {
-        toast.error("Erro ao gerar convite.");
-        setGerando(false);
-        return;
-      }
-      const urlCompleta = `${window.location.origin}/candidatar-convite/${(cqRow as any).token}`;
-      const link = await criarLinkCurto(urlCompleta, "convite_vaga");
-      setLinkGerado(link);
-    } else {
-      // Convite simples sem questionário
-      const urlCompleta = `${window.location.origin}/aplicar/${vagaId}?ref=convite`;
-      const link = await criarLinkCurto(urlCompleta, "convite_vaga");
-      setLinkGerado(link);
+    if (error) {
+      toast.error("Erro ao gerar convite: " + error.message);
+      setGerando(false);
+      return;
     }
 
+    const urlCompleta = `${window.location.origin}/convite/${token}`;
+    const link = await criarLinkCurto(urlCompleta, "convite_vaga");
+    setLinkGerado(link);
     setGerando(false);
   }
 
   return (
     <div className="space-y-4 text-sm">
-      <p className="text-muted-foreground">Gere um link de convite para o candidato se inscrever diretamente nesta vaga.</p>
+      <p className="text-muted-foreground">
+        Gera um link único para essa vaga. Quem abrir preenche os dados, faz o teste DISC
+        {questionariosVaga.length > 0 ? " e responde o questionário selecionado" : ""}.
+      </p>
 
       {questionariosVaga.length > 0 && (
         <div className="space-y-1.5">
@@ -3577,14 +3571,14 @@ function ConvidarLinkForm({
             onChange={(e) => setQuestSelecionado(e.target.value)}
             className="w-full h-9 rounded-md border border-border bg-background px-3 text-sm"
           >
-            <option value="">Sem questionário</option>
+            <option value="nenhum">Sem questionário (só DISC)</option>
             {questionariosVaga.map((q) => (
               <option key={q.id} value={q.id}>{q.nome}</option>
             ))}
           </select>
-          {questSelecionado && (
+          {questSelecionado !== "nenhum" && (
             <p className="text-[11px] text-muted-foreground">
-              Após preencher a candidatura, o candidato será redirecionado para responder o questionário.
+              Após o DISC, o candidato responderá o questionário antes de concluir.
             </p>
           )}
         </div>
