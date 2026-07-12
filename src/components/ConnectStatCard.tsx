@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 
 /**
  * ConnectStatCard — Kit de Marca Connect v1
@@ -268,10 +269,12 @@ interface HighlightProps extends BaseProps {
   icon: LucideIcon;
   title: string;
   description: string;
-  metricValue: string | number;
-  metricLabel: string;
+  metricValue?: string | number;
+  metricLabel?: string;
   actionLabel: string;
   onAction?: () => void;
+  /** Conteúdo visual opcional (ex: mini gráfico de coluna) entre a descrição e o rodapé */
+  chart?: ReactNode;
 }
 
 function HighlightCard({
@@ -282,14 +285,18 @@ function HighlightCard({
   metricLabel,
   actionLabel,
   onAction,
+  chart,
   className,
+  onClick,
 }: HighlightProps) {
   return (
     <div
+      onClick={onClick}
       className={cn(
-        "relative rounded-2xl p-5 overflow-hidden text-primary-foreground",
+        "relative rounded-2xl p-5 overflow-hidden text-primary-foreground flex flex-col",
         "bg-[image:radial-gradient(circle_at_1px_1px,hsl(0_0%_100%/0.18)_1px,transparent_0),linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))]",
         "[background-size:14px_14px,100%_100%]",
+        onClick && "cursor-pointer hover:brightness-[1.04] transition-[filter]",
         className
       )}
     >
@@ -299,20 +306,25 @@ function HighlightCard({
       >
         <Icon className="h-4 w-4" />
       </div>
-      <h3 className="font-display text-xl font-bold max-w-[78%] leading-tight">{title}</h3>
-      <p className="mt-1 text-xs text-primary-foreground/85 max-w-[80%] leading-relaxed">{description}</p>
-      <div className="my-4 h-px bg-primary-foreground/25" />
-      <div className="flex items-end justify-between">
-        <div>
-          <p className="font-sans text-2xl font-bold tabular-nums">{metricValue}</p>
-          <p className="text-[11px] text-primary-foreground/75">{metricLabel}</p>
+      <h3 className="font-display text-lg font-bold max-w-[78%] leading-tight">{title}</h3>
+      <p className="mt-1 text-xs text-primary-foreground/85 max-w-[85%] leading-relaxed">{description}</p>
+      {chart && <div className="mt-3">{chart}</div>}
+      <div className="mt-auto">
+        <div className="my-4 h-px bg-primary-foreground/25" />
+        <div className="flex items-end justify-between gap-2">
+          <div className="min-w-0">
+            {metricValue !== undefined && (
+              <p className="font-sans text-2xl font-bold tabular-nums truncate">{metricValue}</p>
+            )}
+            {metricLabel && <p className="text-[11px] text-primary-foreground/75">{metricLabel}</p>}
+          </div>
+          <button
+            onClick={(e) => { e.stopPropagation(); onAction?.(); }}
+            className="shrink-0 bg-primary-foreground/25 backdrop-blur-sm text-xs font-bold px-4 py-2 rounded-full hover:bg-primary-foreground/35 transition-colors"
+          >
+            {actionLabel}
+          </button>
         </div>
-        <button
-          onClick={onAction}
-          className="bg-primary-foreground/25 backdrop-blur-sm text-xs font-bold px-4 py-2 rounded-full hover:bg-primary-foreground/35 transition-colors"
-        >
-          {actionLabel}
-        </button>
       </div>
     </div>
   );
