@@ -69,7 +69,6 @@ import {
   Copy, FileText, MessageCircle, Download, ListChecks, ThumbsDown, CalendarPlus,
   CalendarDays, Globe, Paperclip, X as XIcon, Plus, Mail, Phone, Briefcase, Circle,
   Pencil, Trash2, GripVertical, Star, BookOpen, PauseCircle, ShieldOff, Ban,
-  Camera,
 } from "lucide-react";
 
 const DISC_CONFIG = {
@@ -2906,7 +2905,6 @@ export default function VagaDetalheAdmin() {
         onSimularResposta={simularRespostaQuestionario}
         onConvidarParaVaga={(id) => { setConvidarVagaCandId(id); setConvidarVagaOpen(true); }}
         onRecarregarCandidaturas={recarregarCandidaturas}
-        onAtualizarFoto={(id, url) => setCandidatosExtras((prev) => prev.map((x) => x.id === id ? { ...x, foto_url: url } : x))}
       />
 
       {/* ── Modal: Convidar para outra vaga ──────────────────────── */}
@@ -4725,7 +4723,6 @@ function CandidatoDetailSheet({
   onSimularResposta,
   onConvidarParaVaga,
   onRecarregarCandidaturas,
-  onAtualizarFoto,
 }: {
   open: boolean;
   candidato: CandidatoBase | null;
@@ -4749,36 +4746,11 @@ function CandidatoDetailSheet({
   onSimularResposta?: (candidatoId: string, questionarioId: string) => void;
   onConvidarParaVaga?: (candidatoId: string) => void;
   onRecarregarCandidaturas?: () => void;
-  onAtualizarFoto?: (id: string, fotoUrl: string) => void;
 }) {
   useScrollLock(open);
   const { id: vagaIdParam } = useParams();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [fichaTab, setFichaTab] = useState<"dados" | "disc" | "processos">("dados");
-  const [fotoUrlLocal, setFotoUrlLocal] = useState<string | null>(candidatoExtra?.foto_url ?? null);
-  const [uploadandoFoto, setUploadandoFoto] = useState(false);
-  const fotoInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    setFotoUrlLocal(candidatoExtra?.foto_url ?? null);
-  }, [candidatoExtra?.foto_url]);
-
-  async function uploadFoto(file: File, candidatoId: string) {
-    if (!file || uploadandoFoto) return;
-    setUploadandoFoto(true);
-    const ext = file.name.split(".").pop() ?? "jpg";
-    const path = `fotos/${candidatoId}/${Date.now()}.${ext}`;
-    const { data: upData, error: upErr } = await supabase.storage
-      .from("public-applications")
-      .upload(path, file, { upsert: true });
-    if (upErr || !upData) { setUploadandoFoto(false); return; }
-    const { data: urlData } = supabase.storage.from("public-applications").getPublicUrl(upData.path);
-    const url = urlData.publicUrl;
-    await supabase.from("candidates").update({ foto_url: url }).eq("id", candidatoId);
-    setFotoUrlLocal(url);
-    onAtualizarFoto?.(candidatoId, url);
-    setUploadandoFoto(false);
-  }
   const [editarCandOpen, setEditarCandOpen] = useState(false);
   const [editForm, setEditForm] = useState({
     nome: candidatoExtra?.nome ?? "",
@@ -4888,38 +4860,13 @@ function CandidatoDetailSheet({
         {/* Header fixo */}
         <header className="px-5 pt-5 pb-4 border-b border-border bg-card">
           <div className="flex items-start gap-3">
-            <div className="relative group shrink-0">
-              {fotoUrlLocal ? (
-                <img src={fotoUrlLocal} alt="" className="h-12 w-12 rounded-md object-cover" />
-              ) : (
-                <div className="h-12 w-12 rounded-md bg-gradient-brand flex items-center justify-center text-sm font-semibold text-white">
-                  {iniciais}
-                </div>
-              )}
-              <button
-                type="button"
-                onClick={() => fotoInputRef.current?.click()}
-                disabled={uploadandoFoto}
-                title={fotoUrlLocal ? "Alterar foto" : "Adicionar foto"}
-                className="absolute inset-0 flex items-center justify-center rounded-md bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                {uploadandoFoto
-                  ? <Loader2 className="h-4 w-4 text-white animate-spin" />
-                  : <Camera className="h-4 w-4 text-white" />
-                }
-              </button>
-              <input
-                ref={fotoInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f && cand?.id) uploadFoto(f, cand.id);
-                  e.target.value = "";
-                }}
-              />
-            </div>
+            {candidatoExtra?.foto_url ? (
+              <img src={candidatoExtra.foto_url} alt="" className="h-12 w-12 rounded-md object-cover shrink-0" />
+            ) : (
+              <div className="h-12 w-12 rounded-md bg-gradient-brand flex items-center justify-center text-sm font-semibold text-white shrink-0">
+                {iniciais}
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="font-display text-xl font-semibold truncate">{cand.nome}</h2>
