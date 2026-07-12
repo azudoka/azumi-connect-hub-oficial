@@ -28,15 +28,12 @@ export function AppLayout({ variant: variantOverride }: AppLayoutProps) {
     <div className="product-connect flex h-full w-full bg-background text-foreground">
       <SidebarConnect variant={variant} />
       <div className="flex-1 flex flex-col min-w-0">
-        <Header context="connect" />
+        <Header context="connect" variant={variant} />
         {isTrial && <MockDataBanner />}
         {isTrial && (
-          <div
-            className="border-b border-[#DDD6FE] px-6 py-2 flex items-center gap-3 text-sm"
-            style={{ background: "#EDE9FE", fontFamily: "'Urbanist',sans-serif" }}
-          >
-            <Sparkles className="h-4 w-4 text-[#8B5CF6] shrink-0" />
-            <span className="text-[#031D38]">
+          <div className="border-b border-[hsl(var(--highlight)/0.25)] bg-[hsl(var(--highlight)/0.1)] px-6 py-2 flex items-center gap-3 text-sm">
+            <Sparkles className="h-4 w-4 text-highlight shrink-0" />
+            <span className="text-foreground">
               Você está em <strong>modo trial</strong> — explore a plataforma e fale com nossa equipe para contratar.
             </span>
           </div>
