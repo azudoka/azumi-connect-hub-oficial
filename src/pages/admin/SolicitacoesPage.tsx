@@ -191,7 +191,7 @@ function MensagemChat({
   return (
     <div className={cn("flex gap-2 items-end group", isMe && "flex-row-reverse")}>
       {!isMe && (
-        <div className="h-7 w-7 rounded-md bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white shrink-0">
+        <div className="h-7 w-7 rounded-md bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))] flex items-center justify-center text-[10px] font-semibold text-white shrink-0">
           {mensagem.autor.charAt(0)}
         </div>
       )}
@@ -465,7 +465,7 @@ function AdminView() {
                 <TableCell className="text-muted-foreground text-sm">{s.data}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <div className="h-6 w-6 rounded-md bg-gradient-brand flex items-center justify-center text-[9px] font-semibold text-white shrink-0">
+                    <div className="h-6 w-6 rounded-md bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))] flex items-center justify-center text-[9px] font-semibold text-white shrink-0">
                       {s.consultor.split(" ").map((n) => n[0]).slice(0, 2).join("")}
                     </div>
                     <span className="text-sm">{s.consultor}</span>
@@ -736,7 +736,7 @@ function AdminView() {
                     : "border-border hover:bg-[hsl(var(--secondary)/0.5)]"
                 )}
               >
-                <span className="h-8 w-8 rounded-full bg-gradient-brand text-white flex items-center justify-center text-xs font-semibold">
+                <span className="h-8 w-8 rounded-lg bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))] text-white flex items-center justify-center text-xs font-semibold">
                   {c.nome.split(" ").map((n) => n[0]).slice(0, 2).join("")}
                 </span>
                 {c.nome}
