@@ -833,13 +833,6 @@ export default function VagaDetalheAdmin() {
   }
 
   function tentarMover(candId: string, coluna: Coluna): boolean {
-    const timerAtivo = localStorage.getItem("azumi_timer_ativo") === "true";
-    if (!timerAtivo && coluna !== "Recebido") {
-      setAlertaPlayCandId(candId);
-      setAlertaPlayDestino(coluna);
-      setAlertaPlayOpen(true);
-      return true;
-    }
     return tentarMoverSemAlerta(candId, coluna);
   }
 
