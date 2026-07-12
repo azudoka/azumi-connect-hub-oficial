@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Building2, Users, Briefcase, Clock, MessagesSquare, Target,
   BarChart3, Wallet, FileText, ShieldCheck, Calendar, Megaphone, BookOpen,
-  Settings, LogOut, ChevronLeft, Sparkles, UserCog, Heart,
-  ExternalLink, Mail, Phone
+  Settings, LogOut, Menu, Sparkles, UserCog, Heart,
+  ExternalLink, Mail, Phone,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -27,6 +27,16 @@ const PERMISSAO_POR_ROTA: Record<string, Permissao> = {
   "/app/usuarios": "usuarios.gerenciar",
   "/app/clientes": "clientes.gerenciar",
   "/app/auditoria": "auditoria.ver",
+};
+
+// Ícone de rail por grupo — cada grupo do menu tem um representante no rail fixo.
+const GROUP_RAIL_ICON: Record<string, string> = {
+  "Principal": "solar:widget-2-bold-duotone",
+  "Visão Geral": "solar:widget-2-bold-duotone",
+  "Operações": "solar:case-round-bold-duotone",
+  "Inteligência": "solar:chart-2-bold-duotone",
+  "Gestão": "solar:wallet-bold-duotone",
+  "Plataforma": "solar:calendar-bold-duotone",
 };
 
 const adminGroups = [
@@ -105,6 +115,7 @@ const clienteGroups = [
 ];
 
 export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
+  // collapsed = true -> flyout fechado (só o rail de 80px aparece)
   const [collapsed, setCollapsed] = useState(false);
   const inactivityRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const resetInactivity = () => {
@@ -128,14 +139,6 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
   const consultorIniciais = empresaInfo?.consultorIniciais ?? "AB";
   const consultorEmail = empresaInfo?.consultorEmail ?? "ana.beatriz@azumirh.com.br";
   const { pode } = usePermissao();
-  const papelLabel =
-    user?.papel === "admin"
-      ? "Administrador"
-      : user?.papel === "consultor"
-      ? "Consultor"
-      : user?.papel === "cliente"
-      ? "Cliente"
-      : "";
   const handleLogout = () => {
     logout();
     navigate("/login");
@@ -153,126 +156,149 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
     }))
     .filter((g) => g.items.length > 0);
 
+  const [activeGroup, setActiveGroup] = useState<string | null>(groups[0]?.label ?? null);
+
+  function openGroup(label: string) {
+    setActiveGroup(label);
+    setCollapsed(false);
+    resetInactivity();
+  }
+
+  const pillClass =
+    "group flex items-center gap-3 rounded-full px-4 py-3 text-[15px] text-sidebar-foreground " +
+    "transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:translate-x-1 " +
+    "hover:bg-[hsl(var(--primary)/0.12)] hover:text-primary";
+  const pillActiveClass = "!bg-[hsl(var(--primary)/0.12)] !text-primary";
+
   return (
-    <aside
-      className={cn(
-        "sidebar-connect-brand flex flex-col shrink-0 border-r border-sidebar-border bg-gradient-sidebar backdrop-blur-xl transition-all duration-300",
-        collapsed ? "w-16" : "w-60"
-      )}
-      aria-label="Navegação principal"
-    >
-      {/* Logo */}
-      <div className="h-24 flex items-center px-4 border-b border-sidebar-border/60">
-        <AzumiLogo product="Connect" collapsed={collapsed} light size={28} />
-      </div>
+    <div className="relative flex shrink-0">
+      {/* Rail fixo — 80px, sempre visível */}
+      <aside className="sidebar-connect-brand w-20 h-full flex flex-col items-center bg-gradient-sidebar border-r border-sidebar-border py-4 gap-1" aria-label="Navegação — atalhos">
+        <div className="mb-4">
+          <AzumiLogo product="Connect" collapsed light size={26} />
+        </div>
 
-      {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-5">
-        {groups.map((g) => (
-          <div key={g.label}>
-            {!collapsed && (
-              <div className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
-                {g.label}
+        <button
+          onClick={() => setCollapsed((c) => !c)}
+          className="h-11 w-11 rounded-full flex items-center justify-center text-sidebar-foreground/70 hover:bg-white/10 hover:text-sidebar-foreground transition-colors mb-2"
+          aria-label={collapsed ? "Abrir menu" : "Fechar menu"}
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+
+        <div className="flex-1 flex flex-col gap-1 overflow-y-auto">
+          {groups.map((g) => (
+            <button
+              key={g.label}
+              onClick={() => openGroup(g.label)}
+              title={g.label}
+              className={cn(
+                "h-11 w-11 rounded-full flex items-center justify-center transition-colors",
+                activeGroup === g.label && !collapsed
+                  ? "bg-[hsl(var(--primary)/0.18)] text-primary"
+                  : "text-sidebar-foreground/70 hover:bg-white/10 hover:text-sidebar-foreground"
+              )}
+            >
+              <iconify-icon icon={GROUP_RAIL_ICON[g.label] ?? "solar:widget-2-bold-duotone"} width="22" height="22" />
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={handleLogout}
+          className="h-11 w-11 rounded-full flex items-center justify-center text-sidebar-foreground/70 hover:bg-white/10 hover:text-destructive transition-colors"
+          aria-label="Sair"
+        >
+          <LogOut className="h-5 w-5" />
+        </button>
+      </aside>
+
+      {/* Flyout — 260px, desliza por cima via `left`, não empurra o conteúdo */}
+      <aside
+        className="absolute top-0 h-full w-[260px] bg-card border-r border-border flex flex-col z-40 transition-[left] duration-[400ms] ease-in-out"
+        style={{
+          left: collapsed ? "-260px" : "80px",
+          boxShadow: collapsed ? "none" : "7px 7px 10px rgba(0,0,0,0.03)",
+        }}
+        aria-label="Navegação principal"
+      >
+        <div className="h-24 flex items-center px-5 border-b border-border">
+          <AzumiLogo product="Connect" size={26} />
+        </div>
+
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-5">
+          {groups
+            .filter((g) => g.label === activeGroup)
+            .map((g) => (
+              <div key={g.label}>
+                <div className="px-4 mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
+                  {g.label}
+                </div>
+                <ul className="space-y-0.5">
+                  {g.items.map((it) => (
+                    <li key={it.to}>
+                      <NavLink to={it.to} className={pillClass} activeClassName={pillActiveClass}>
+                        <it.icon className="h-4 w-4 shrink-0" />
+                        <span className="truncate">{it.label}</span>
+                      </NavLink>
+                    </li>
+                  ))}
+                </ul>
               </div>
-            )}
-            <ul className="space-y-0.5">
-              {g.items.map((it) => (
-                <li key={it.to}>
-                  <NavLink
-                    to={it.to}
-                    className={cn(
-                      "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground transition-all duration-250",
-                      collapsed && "justify-center px-0"
-                    )}
-                    activeClassName="!bg-primary/25 !text-foreground border-l-[3px] border-primary rounded-l-none ml-[3px]"
-                  >
-                    <it.icon className="h-4 w-4 shrink-0" />
-                    {!collapsed && <span className="truncate">{it.label}</span>}
-                  </NavLink>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+            ))}
 
-        {variant === "admin" && (
-          <div>
-            {!collapsed && (
-              <div className="px-3 mb-1.5 flex items-center gap-2">
+          {variant === "admin" && activeGroup === "Plataforma" && (
+            <div>
+              <div className="px-4 mb-1.5 flex items-center gap-2">
                 <Sparkles className="h-3 w-3 text-highlight" />
                 <span className="text-[10px] font-semibold uppercase tracking-widest text-highlight">Hub</span>
               </div>
-            )}
-            <ul className="space-y-0.5">
-              {[
-                { to: "/hub/lider/painel", icon: UserCog, label: "Meu Time (Líder)" },
-                { to: "/hub/colaborador/inicio", icon: Heart, label: "Colaborador" },
-                { to: "/hub/ceo/dashboard", icon: BarChart3, label: "CEO" },
-              ].map((it) => (
-                <li key={it.to}>
-                  <NavLink
-                    to={it.to}
-                    className={cn(
-                      "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground transition-all duration-250",
-                      collapsed && "justify-center px-0"
-                    )}
-                    activeClassName="!bg-primary/25 !text-foreground"
-                  >
-                    <it.icon className="h-4 w-4 shrink-0" />
-                    {!collapsed && <span className="truncate">{it.label}</span>}
-                  </NavLink>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+              <ul className="space-y-0.5">
+                {[
+                  { to: "/hub/lider/painel", icon: UserCog, label: "Meu Time (Líder)" },
+                  { to: "/hub/colaborador/inicio", icon: Heart, label: "Colaborador" },
+                  { to: "/hub/ceo/dashboard", icon: BarChart3, label: "CEO" },
+                ].map((it) => (
+                  <li key={it.to}>
+                    <NavLink to={it.to} className={pillClass} activeClassName={pillActiveClass}>
+                      <it.icon className="h-4 w-4 shrink-0" />
+                      <span className="truncate">{it.label}</span>
+                    </NavLink>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-        {/* Configurações — sempre no final */}
-        <div className="pt-2 mt-2 border-t border-sidebar-border/60">
-          {(() => {
-            const configHref = variant === "cliente" ? "/cliente/gestao-conta" : "/app/configuracoes";
-            return (
-              <NavLink
-                to={configHref}
-                className={cn(
-                  "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground transition-all duration-250",
-                  collapsed && "justify-center px-0"
-                )}
-                activeClassName="!bg-primary/25 !text-foreground"
-              >
-                <Settings className="h-4 w-4 shrink-0" />
-                {!collapsed && <span className="truncate">Configurações</span>}
-              </NavLink>
-            );
-          })()}
+          <div className="pt-2 mt-2 border-t border-border">
+            {(() => {
+              const configHref = variant === "cliente" ? "/cliente/gestao-conta" : "/app/configuracoes";
+              return (
+                <NavLink to={configHref} className={pillClass} activeClassName={pillActiveClass}>
+                  <Settings className="h-4 w-4 shrink-0" />
+                  <span className="truncate">Configurações</span>
+                </NavLink>
+              );
+            })()}
 
-          {pode("portal_cliente.acessar") && (
-            <>
-              <div className="my-2 h-px bg-sidebar-border/60" />
+            {pode("portal_cliente.acessar") && (
               <button
                 type="button"
                 onClick={() => navigate("/portal")}
-                className={cn(
-                  "group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground transition-all duration-250",
-                  collapsed ? "justify-center px-0" : "text-xs text-muted-foreground"
-                )}
+                className={cn(pillClass, "w-full text-xs text-muted-foreground")}
                 aria-label="Acessar Portal do Cliente"
               >
                 <ExternalLink className="h-4 w-4 shrink-0" />
-                {!collapsed && (
-                  <span className="truncate">Acessar Portal do Cliente</span>
-                )}
+                <span className="truncate">Acessar Portal do Cliente</span>
               </button>
-            </>
-          )}
-        </div>
-      </nav>
+            )}
+          </div>
+        </nav>
 
-      {/* Footer card */}
-      <div className="p-3 border-t border-sidebar-border/60">
-        {!collapsed ? (
-          <div className="bg-card/60 backdrop-blur rounded-xl p-3 border border-border/60">
-            {user?.papel === "cliente" && (
+        {/* Cartão de rodapé — consultor (visão cliente) */}
+        {user?.papel === "cliente" && (
+          <div className="p-3 border-t border-border">
+            <div className="bg-muted rounded-xl p-3">
               <div className="flex items-center gap-3">
                 <div className="relative">
                   <div className="h-9 w-9 rounded-lg bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))] flex items-center justify-center text-xs font-semibold text-white">
@@ -285,57 +311,17 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
                   <div className="text-sm font-medium truncate">{consultorNome}</div>
                 </div>
               </div>
-            )}
-            <div className={cn("flex items-center gap-2", user?.papel === "cliente" && "mt-3")}>
-              {user?.papel === "cliente" ? (
-                <button
-                  type="button"
-                  onClick={() => setConsultorOpen(true)}
-                  className="flex-1 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 px-2 py-1.5 rounded-md hover:bg-secondary"
-                >
-                  <Mail className="h-3.5 w-3.5" /> Falar com consultor
-                </button>
-              ) : (
-                <NavLink to="/app/configuracoes" className="flex-1 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 px-2 py-1.5 rounded-md hover:bg-secondary">
-                  <Settings className="h-3.5 w-3.5" /> Config.
-                </NavLink>
-              )}
               <button
                 type="button"
-                onClick={handleLogout}
-                className="text-xs text-muted-foreground hover:text-destructive flex items-center gap-1.5 px-2 py-1.5 rounded-md hover:bg-secondary"
+                onClick={() => setConsultorOpen(true)}
+                className="mt-3 w-full text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 px-2 py-1.5 rounded-md hover:bg-secondary"
               >
-                <LogOut className="h-3.5 w-3.5" /> Sair
+                <Mail className="h-3.5 w-3.5" /> Falar com consultor
               </button>
             </div>
           </div>
-        ) : (
-          <div className="flex flex-col items-center gap-2">
-            {user?.papel === "cliente" && (
-              <div className="relative">
-                <div className="h-8 w-8 rounded-lg bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))] flex items-center justify-center text-[10px] font-semibold text-white">{consultorIniciais}</div>
-                <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-success ring-2 ring-sidebar" />
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={handleLogout}
-              aria-label="Sair"
-              className="text-muted-foreground hover:text-destructive"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
-          </div>
         )}
-        {/* Botão colapsar/expandir — fixo no rodapé */}
-        <button
-          onClick={() => setCollapsed((c) => !c)}
-          className="mt-2 w-full flex items-center justify-center py-2 text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-white/5 rounded-lg transition-colors"
-          aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
-        >
-          <ChevronLeft className={cn("h-4 w-4 transition-transform", collapsed && "rotate-180")} />
-        </button>
-      </div>
+      </aside>
 
       <Dialog open={consultorOpen} onOpenChange={setConsultorOpen}>
         <DialogContent>
@@ -357,6 +343,6 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
           </div>
         </DialogContent>
       </Dialog>
-    </aside>
+    </div>
   );
 }
