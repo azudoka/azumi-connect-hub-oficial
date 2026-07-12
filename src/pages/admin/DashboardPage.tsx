@@ -263,14 +263,14 @@ function AdminDashboard() {
           {saudacao}, {usuario?.nome?.split(" ")[0] ?? "Ana"} 👋
         </p>
         <p className="text-sm text-primary-foreground/80 mt-1 mb-5">{dataCapitalizada}</p>
-        <div className="flex flex-wrap gap-3">
-          <div className="bg-[hsl(var(--primary-glow))] rounded-full px-6 py-3">
+        <div className="inline-flex bg-[hsl(var(--primary-glow))] rounded-full overflow-hidden">
+          <div className="px-6 py-3 border-r border-primary-foreground/15">
             <div className="font-display text-lg font-bold leading-none">6</div>
-            <div className="text-xs text-primary-foreground/80 mt-1">Projetos ativos</div>
+            <div className="text-xs text-primary-foreground/80 mt-1 whitespace-nowrap">Projetos ativos</div>
           </div>
-          <div className="bg-[hsl(var(--primary-glow))] rounded-full px-6 py-3">
+          <div className="px-6 py-3">
             <div className="font-display text-lg font-bold leading-none">115h</div>
-            <div className="text-xs text-primary-foreground/80 mt-1">Horas no mês</div>
+            <div className="text-xs text-primary-foreground/80 mt-1 whitespace-nowrap">Horas no mês</div>
           </div>
         </div>
       </div>
@@ -289,7 +289,7 @@ function AdminDashboard() {
             {pode("financeiro.ver_valores") && (
               <ConnectStatCard
                 variant="stat"
-                icon={CircleDollarSign}
+                icon="solar:dollar-bold-duotone"
                 tone="teal"
                 label="Faturamento do mês"
                 value={`${pctFaturamento}%`}
@@ -301,7 +301,7 @@ function AdminDashboard() {
             )}
             <ConnectStatCard
               variant="stat"
-              icon={Briefcase}
+              icon="solar:case-round-bold-duotone"
               tone="blue"
               label="Projetos ativos"
               value="6"
@@ -311,7 +311,7 @@ function AdminDashboard() {
             />
             <ConnectStatCard
               variant="stat"
-              icon={Clock}
+              icon="solar:clock-circle-bold-duotone"
               tone="violet"
               label="Horas no mês"
               value="115h"
@@ -321,7 +321,7 @@ function AdminDashboard() {
             />
             <ConnectStatCard
               variant="stat"
-              icon={AlertTriangle}
+              icon="solar:danger-triangle-bold-duotone"
               tone={atrasados > 0 ? "red" : "green"}
               label="Entregáveis em atraso"
               value={atrasados}
@@ -503,7 +503,7 @@ function AdminDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
               <ConnectStatCard
                 variant="stat"
-                icon={TrendingUp}
+                icon="solar:graph-up-bold-duotone"
                 tone="blue"
                 label={`Faturado — meta ${ocultar(formatBRL(fin.metaFaturamento))}`}
                 value={ocultar(formatBRL(fin.faturado))}
@@ -515,7 +515,7 @@ function AdminDashboard() {
 
               <ConnectStatCard
                 variant="stat"
-                icon={CheckCircle2}
+                icon="solar:check-circle-bold-duotone"
                 tone="green"
                 label={`Recebido — pendente ${ocultar(formatBRL(fin.pendente))}`}
                 value={ocultar(formatBRL(fin.recebido))}
@@ -527,7 +527,7 @@ function AdminDashboard() {
 
               <ConnectStatCard
                 variant="stat"
-                icon={Wallet}
+                icon="solar:wallet-money-bold-duotone"
                 tone="teal"
                 label={`Repasses — já repassado ${ocultar(formatBRL(fin.repassado))}`}
                 value={ocultar(formatBRL(fin.repassesPendentes))}
