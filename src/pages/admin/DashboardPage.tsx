@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   AlertTriangle,
+  ArrowRight,
   Briefcase,
   CheckCircle2,
   CircleDollarSign,
@@ -256,29 +257,32 @@ function AdminDashboard() {
   return (
     <div>
       <div className="relative overflow-hidden rounded-2xl p-6 sm:p-7 text-primary-foreground bg-[image:radial-gradient(circle_at_1px_1px,hsl(0_0%_100%/0.14)_1px,transparent_0),linear-gradient(120deg,hsl(var(--primary)),hsl(var(--primary-glow)))] [background-size:16px_16px,100%_100%]">
-        <p className="font-display text-2xl sm:text-[28px] font-bold leading-tight">
-          {saudacao}, {usuario?.nome?.split(" ")[0] ?? "Ana"} 👋
-        </p>
-        <p className="text-sm text-primary-foreground/80 mt-1">{dataCapitalizada}</p>
-      </div>
-
-      {/* Ações rápidas — atalho pros 4 fluxos mais usados no dia a dia */}
-      <div className="flex flex-wrap gap-2 mt-4">
-        {[
-          { label: "Nova vaga", icon: Briefcase, to: "/app/atracao" },
-          { label: "Lançar horas", icon: Clock, to: "/app/horas" },
-          { label: "Nova fatura", icon: CircleDollarSign, to: "/app/financeiro" },
-          { label: "Novo entregável", icon: FileText, to: "/app/projetos" },
-        ].map((a) => (
-          <button
-            key={a.label}
-            type="button"
-            onClick={() => navigate(a.to)}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-xs font-medium hover:border-primary hover:text-primary transition-colors"
-          >
-            <a.icon className="h-3.5 w-3.5" /> {a.label}
-          </button>
-        ))}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div>
+            <p className="font-display text-2xl sm:text-[28px] font-bold leading-tight">
+              {saudacao}, {usuario?.nome?.split(" ")[0] ?? "Ana"} 👋
+            </p>
+            <p className="text-sm text-primary-foreground/80 mt-1">{dataCapitalizada}</p>
+          </div>
+          {/* Ações rápidas — atalho pros 4 fluxos mais usados, dentro do hero */}
+          <div className="flex flex-wrap gap-2">
+            {[
+              { label: "Nova vaga", icon: Briefcase, to: "/app/atracao" },
+              { label: "Lançar horas", icon: Clock, to: "/app/horas" },
+              { label: "Nova fatura", icon: CircleDollarSign, to: "/app/financeiro" },
+              { label: "Novo entregável", icon: FileText, to: "/app/projetos" },
+            ].map((a) => (
+              <button
+                key={a.label}
+                type="button"
+                onClick={() => navigate(a.to)}
+                className="inline-flex items-center gap-1.5 rounded-full bg-card text-foreground px-3.5 py-1.5 text-xs font-medium hover:bg-card/90 transition-colors shadow-sm"
+              >
+                <a.icon className="h-3.5 w-3.5 text-primary" /> {a.label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <Tabs defaultValue="visao-geral" className="w-full mt-6">
@@ -290,71 +294,75 @@ function AdminDashboard() {
         {/* ── ABA VISÃO GERAL ── */}
         <TabsContent value="visao-geral" className="mt-0 space-y-6">
 
-          {/* Destaque — o item mais urgente do dia, se houver */}
-          {ALERTAS.some((a) => a.severidade === "critical") && (() => {
-            const top = ALERTAS.find((a) => a.severidade === "critical")!;
-            return (
-              <div className="max-w-md">
-                <ConnectStatCard
-                  variant="highlight"
-                  icon={AlertTriangle}
-                  title={top.titulo}
-                  description={top.descricao.match(/R\$/) ? ocultar(top.descricao) : top.descricao}
-                  metricValue={String(ALERTAS.filter((a) => a.severidade === "critical").length)}
-                  metricLabel="alertas críticos agora"
-                  actionLabel="Resolver →"
-                  onAction={() => navigate(top.to)}
-                />
-              </div>
-            );
-          })()}
-
-          {/* 1. KPIs */}
+          {/* 1. KPIs — todos no modelo de card aprovado (destaque) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
             <ConnectStatCard
-              variant="terminal"
-              label="Projetos ativos"
-              value="6"
-              deltaLabel="+1 desde semana passada"
+              variant="highlight"
+              icon={Briefcase}
+              title="Projetos ativos"
+              description="+1 desde a semana passada"
+              metricValue="6"
+              metricLabel="em andamento agora"
+              actionLabel="Ver →"
+              onAction={() => navigate("/app/projetos")}
               onClick={() => navigate("/app/projetos")}
             />
             <ConnectStatCard
-              variant="delta"
-              label="Horas no mês"
-              value="115h"
-              previousLabel="98h mês anterior"
-              deltaValue="+17%"
-              positive
+              variant="highlight"
+              icon={Clock}
+              title="Horas no mês"
+              description="98h no mês anterior · +17%"
+              metricValue="115h"
+              metricLabel="lançadas até agora"
+              actionLabel="Ver →"
+              onAction={() => navigate("/app/horas")}
               onClick={() => navigate("/app/horas")}
             />
             {pode("financeiro.ver_valores") && (
               <ConnectStatCard
-                variant="radial"
-                label="Faturamento do mês"
-                percent={pctFaturamento}
-                contextLabel={`${ocultar(formatBRL(fin.faturado))} de meta ${ocultar(formatBRL(fin.metaFaturamento))}`}
+                variant="highlight"
+                icon={CircleDollarSign}
+                title="Faturamento do mês"
+                description={`${ocultar(formatBRL(fin.faturado))} de meta ${ocultar(formatBRL(fin.metaFaturamento))}`}
+                actionLabel="Ver →"
+                onAction={() => navigate("/app/financeiro")}
                 onClick={() => navigate("/app/financeiro")}
+                chart={
+                  <div className="flex items-end gap-3 h-14">
+                    {[
+                      { label: "Faturado", v: fin.faturado, max: fin.metaFaturamento },
+                      { label: "Meta", v: fin.metaFaturamento, max: fin.metaFaturamento },
+                    ].map((b) => (
+                      <div key={b.label} className="flex flex-col items-center gap-1">
+                        <div className="w-7 rounded-t-md bg-primary-foreground/85" style={{ height: `${Math.max(6, (b.v / b.max) * 56)}px` }} />
+                        <span className="text-[9px] text-primary-foreground/70">{b.label}</span>
+                      </div>
+                    ))}
+                    <span className="text-lg font-bold tabular-nums ml-1">{pctFaturamento}%</span>
+                  </div>
+                }
               />
             )}
             <ConnectStatCard
-              variant="terminal"
-              label="Entregáveis em atraso"
-              value={atrasados}
-              deltaLabel={atrasados > 0 ? "Requer atenção imediata" : "Tudo no prazo"}
+              variant="highlight"
+              icon={AlertTriangle}
+              title="Entregáveis em atraso"
+              description={atrasados > 0 ? "Requer atenção imediata" : "Tudo no prazo, sem pendências"}
+              metricValue={atrasados}
+              metricLabel="em atraso agora"
+              actionLabel="Ver →"
+              onAction={() => navigate("/app/projetos")}
               onClick={() => navigate("/app/projetos")}
             />
           </div>
 
           {/* 2. Atividade + Alertas */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
-            <Card className="lg:col-span-3 p-5 border-t-[3px] border-t-primary">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className="font-display text-lg font-semibold">Últimas atualizações</h2>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Movimentações recentes da operação
-                  </p>
-                </div>
+            <Card className="lg:col-span-3 p-6 border-t-[3px] border-t-primary">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                  Últimas atualizações
+                </h2>
                 <button
                   type="button"
                   onClick={() => navigate("/app/horas")}
@@ -370,19 +378,23 @@ function AdminDashboard() {
                   description="As últimas atualizações da operação aparecerão aqui."
                 />
               ) : (
-                <ul className="space-y-3">
-                  {ATIVIDADES.map((a) => {
+                <ul className="space-y-5">
+                  {ATIVIDADES.map((a, i) => {
                     const meta = ATIVIDADE_META[a.icon];
                     const Icon = meta.Icon;
                     return (
-                      <li key={a.id} className="flex items-start gap-3">
-                        <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center shrink-0", meta.cls)}>
+                      <li
+                        key={a.id}
+                        style={{ animationDelay: `${i * 70}ms`, animationFillMode: "backwards" }}
+                        className="flex items-center gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500"
+                      >
+                        <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center shrink-0", meta.cls)}>
                           <Icon className="h-4 w-4" />
                         </div>
-                        <div className="min-w-0 flex-1 pt-1">
-                          <p className="text-sm leading-snug">{a.texto}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">{a.quando}</p>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium leading-snug">{a.texto}</p>
                         </div>
+                        <span className="shrink-0 text-xs text-muted-foreground">{a.quando}</span>
                       </li>
                     );
                   })}
@@ -390,14 +402,12 @@ function AdminDashboard() {
               )}
             </Card>
 
-            <Card className="lg:col-span-2 p-5 border-t-[3px] border-t-destructive">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <h2 className="font-display text-lg font-semibold">Alertas ativos</h2>
-                  <span className="badge-pill bg-[hsl(var(--destructive)/0.15)] text-destructive border border-[hsl(var(--destructive)/0.3)] text-xs">
-                    {ALERTAS.length}
-                  </span>
-                </div>
+            <Card className="lg:col-span-2 p-6 border-t-[3px] border-t-destructive">
+              <div className="flex items-center gap-2 mb-2">
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Alertas ativos</h2>
+                <span className="badge-pill bg-[hsl(var(--destructive)/0.15)] text-destructive border border-[hsl(var(--destructive)/0.3)] text-xs">
+                  {ALERTAS.length}
+                </span>
               </div>
               {ALERTAS.length === 0 ? (
                 <EmptyState
@@ -406,35 +416,31 @@ function AdminDashboard() {
                   description="Tudo certo por aqui!"
                 />
               ) : (
-                <ul className="space-y-3">
+                <div className="flex flex-col">
+                  <div className="h-px bg-border" />
                   {ALERTAS.map((al) => {
                     const isCritical = al.severidade === "critical";
                     return (
-                      <li key={al.id}>
-                        <Link
-                          to={al.to}
-                          className={cn(
-                            "flex items-start gap-2 rounded-lg border p-3 transition-colors hover:brightness-95",
-                            isCritical
-                              ? "border-[hsl(var(--destructive)/0.3)] bg-[hsl(var(--destructive)/0.05)]"
-                              : "border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.05)]"
-                          )}
-                        >
-                          <AlertTriangle
-                            className={cn(
-                              "h-4 w-4 shrink-0 mt-0.5",
-                              isCritical ? "text-destructive" : "text-warning"
-                            )}
-                          />
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium leading-snug">{al.titulo}</p>
-                            <p className="text-xs text-muted-foreground mt-0.5">{al.descricao.match(/R\$/) ? ocultar(al.descricao) : al.descricao}</p>
-                          </div>
-                        </Link>
-                      </li>
+                      <Link key={al.id} to={al.to} className="group flex items-center gap-3 py-3.5 hover:bg-muted/30 transition-colors -mx-1 px-1 rounded-md">
+                        <span className={cn(
+                          "h-10 w-10 rounded-lg flex items-center justify-center shrink-0",
+                          isCritical ? "bg-[hsl(var(--destructive)/0.12)] text-destructive" : "bg-[hsl(var(--warning)/0.12)] text-warning"
+                        )}>
+                          <AlertTriangle className="h-4 w-4" />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium leading-snug truncate">{al.titulo}</p>
+                          <p className={cn("text-[11px] font-medium mt-0.5", isCritical ? "text-destructive" : "text-warning")}>
+                            {isCritical ? "Crítico" : "Atenção"}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{al.descricao.match(/R\$/) ? ocultar(al.descricao) : al.descricao}</p>
+                        </div>
+                        <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                      </Link>
                     );
                   })}
-                </ul>
+                  <div className="h-px bg-border" />
+                </div>
               )}
             </Card>
           </div>
@@ -508,62 +514,59 @@ function AdminDashboard() {
                 Ir para Financeiro →
               </Link>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="p-5">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">Faturado</p>
-                    <p className="text-2xl font-semibold tabular-nums mt-1">{ocultar(formatBRL(fin.faturado))}</p>
-                    <p className="text-xs text-muted-foreground mt-1">Meta: {ocultar(formatBRL(fin.metaFaturamento))}</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+              <ConnectStatCard
+                variant="highlight"
+                icon={TrendingUp}
+                title="Faturado"
+                description={`Meta: ${ocultar(formatBRL(fin.metaFaturamento))}`}
+                metricValue={ocultar(formatBRL(fin.faturado))}
+                metricLabel={`${pctFaturamento.toFixed(1)}% da meta`}
+                actionLabel="Ver →"
+                onAction={() => navigate("/app/financeiro")}
+                onClick={() => navigate("/app/financeiro")}
+                chart={
+                  <div className="h-1.5 rounded-full bg-primary-foreground/20 overflow-hidden">
+                    <div className="h-full rounded-full bg-primary-foreground" style={{ width: `${Math.min(100, pctFaturamento)}%` }} />
                   </div>
-                  <div className="h-9 w-9 rounded-lg bg-[hsl(var(--primary)/0.1)] text-primary flex items-center justify-center">
-                    <TrendingUp className="h-4 w-4" />
-                  </div>
-                </div>
-                <SlaBar percent={pctFaturamento} label={ocultar(`${pctFaturamento.toFixed(1)}% da meta`)} className="mt-4" />
-              </Card>
+                }
+              />
 
-              <Card className="p-5">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">Recebido</p>
-                    <p className="text-2xl font-semibold tabular-nums mt-1">{ocultar(formatBRL(fin.recebido))}</p>
-                    <p className="text-xs text-muted-foreground mt-1">Pendente: {ocultar(formatBRL(fin.pendente))}</p>
+              <ConnectStatCard
+                variant="highlight"
+                icon={CheckCircle2}
+                title="Recebido"
+                description={`Pendente: ${ocultar(formatBRL(fin.pendente))}`}
+                metricValue={ocultar(formatBRL(fin.recebido))}
+                metricLabel={`${pctRecebido.toFixed(1)}% recebido`}
+                actionLabel="Ver →"
+                onAction={() => navigate("/app/financeiro")}
+                onClick={() => navigate("/app/financeiro")}
+                chart={
+                  <div className="h-1.5 rounded-full bg-primary-foreground/20 overflow-hidden">
+                    <div className="h-full rounded-full bg-primary-foreground" style={{ width: `${Math.min(100, pctRecebido)}%` }} />
                   </div>
-                  <div className="h-9 w-9 rounded-lg bg-[hsl(var(--success)/0.15)] text-success flex items-center justify-center">
-                    <CheckCircle2 className="h-4 w-4" />
-                  </div>
-                </div>
-                <div className="mt-4 space-y-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">Taxa de recebimento</span>
-                    <span className="tabular-nums">{pctRecebido.toFixed(1)}%</span>
-                  </div>
-                  <Progress value={pctRecebido} className="h-1.5" />
-                </div>
-              </Card>
+                }
+              />
 
-              <Card className="p-5">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">Repasses pendentes</p>
-                    <p className="text-2xl font-semibold tabular-nums mt-1">{ocultar(formatBRL(fin.repassesPendentes))}</p>
-                    <p className="text-xs text-muted-foreground mt-1">Repassado: {ocultar(formatBRL(fin.repassado))}</p>
+              <ConnectStatCard
+                variant="highlight"
+                icon={Wallet}
+                title="Repasses pendentes"
+                description={`Repassado: ${ocultar(formatBRL(fin.repassado))}`}
+                metricValue={ocultar(formatBRL(fin.repassesPendentes))}
+                metricLabel={`${pctRepassado.toFixed(1)}% já repassado`}
+                actionLabel="Ver →"
+                onAction={() => navigate("/app/financeiro")}
+                onClick={() => navigate("/app/financeiro")}
+                chart={
+                  <div className="h-1.5 rounded-full bg-primary-foreground/20 overflow-hidden">
+                    <div className="h-full rounded-full bg-primary-foreground" style={{ width: `${Math.min(100, pctRepassado)}%` }} />
                   </div>
-                  <div className="h-9 w-9 rounded-lg bg-[hsl(var(--info)/0.15)] text-info flex items-center justify-center">
-                    <Wallet className="h-4 w-4" />
-                  </div>
-                </div>
-                <div className="mt-4 space-y-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">% já repassado</span>
-                    <span className="tabular-nums">{pctRepassado.toFixed(1)}%</span>
-                  </div>
-                  <Progress value={pctRepassado} className="h-1.5" />
-                </div>
-              </Card>
+                }
+              />
             </div>
-          </div>
+            </div>
 
         </TabsContent>
 
