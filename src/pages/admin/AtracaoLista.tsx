@@ -301,7 +301,7 @@ export default function AtracaoLista() {
       />
 
       {/* Painel de visão geral — substitui o banner solto de SLA crítico por dado de verdade */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3 items-start">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
         <ConnectStatCard variant="terminal" label="Vagas ativas" value={vagasAtivas.length} />
         <ConnectStatCard
           variant="list"
@@ -367,16 +367,12 @@ export default function AtracaoLista() {
               const d = DATAS_FASE_MOCK[etapa];
               const inicio = d.inicio || "—";
               const fim = d.fim || "—";
-              const corEtapa = (["#264478", "#6B3FBF", "#12786B", "#B4740E", "#1E8A4C"] as const)[
-                FUNIL_ETAPAS.indexOf(etapa) % 5
-              ];
               return (
                 <div
                   key={`hdr-${etapa}`}
-                  style={{ background: `${corEtapa}14`, borderColor: `${corEtapa}40` }}
-                  className="min-w-0 flex flex-col gap-0.5 rounded-md border px-2 py-1.5"
+                  className="min-w-0 flex flex-col gap-0.5 rounded-md border border-border/60 bg-muted/30 px-2 py-1.5"
                 >
-                  <span className="text-[10px] font-semibold uppercase tracking-wider truncate" style={{ color: corEtapa }}>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-foreground/70 truncate">
                     {FUNIL_ETAPA_LABEL[etapa]}
                   </span>
                   <span className="text-[10px] text-muted-foreground tabular-nums">
