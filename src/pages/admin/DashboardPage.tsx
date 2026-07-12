@@ -262,6 +262,25 @@ function AdminDashboard() {
         <p className="text-sm text-primary-foreground/80 mt-1">{dataCapitalizada}</p>
       </div>
 
+      {/* Ações rápidas — atalho pros 4 fluxos mais usados no dia a dia */}
+      <div className="flex flex-wrap gap-2 mt-4">
+        {[
+          { label: "Nova vaga", icon: Briefcase, to: "/app/atracao" },
+          { label: "Lançar horas", icon: Clock, to: "/app/horas" },
+          { label: "Nova fatura", icon: CircleDollarSign, to: "/app/financeiro" },
+          { label: "Novo entregável", icon: FileText, to: "/app/projetos" },
+        ].map((a) => (
+          <button
+            key={a.label}
+            type="button"
+            onClick={() => navigate(a.to)}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-xs font-medium hover:border-primary hover:text-primary transition-colors"
+          >
+            <a.icon className="h-3.5 w-3.5" /> {a.label}
+          </button>
+        ))}
+      </div>
+
       <Tabs defaultValue="visao-geral" className="w-full mt-6">
         <TabsList className="mb-6">
           <TabsTrigger value="visao-geral">Visão geral</TabsTrigger>
@@ -270,6 +289,25 @@ function AdminDashboard() {
 
         {/* ── ABA VISÃO GERAL ── */}
         <TabsContent value="visao-geral" className="mt-0 space-y-6">
+
+          {/* Destaque — o item mais urgente do dia, se houver */}
+          {ALERTAS.some((a) => a.severidade === "critical") && (() => {
+            const top = ALERTAS.find((a) => a.severidade === "critical")!;
+            return (
+              <div className="max-w-md">
+                <ConnectStatCard
+                  variant="highlight"
+                  icon={AlertTriangle}
+                  title={top.titulo}
+                  description={top.descricao.match(/R\$/) ? ocultar(top.descricao) : top.descricao}
+                  metricValue={String(ALERTAS.filter((a) => a.severidade === "critical").length)}
+                  metricLabel="alertas críticos agora"
+                  actionLabel="Resolver →"
+                  onAction={() => navigate(top.to)}
+                />
+              </div>
+            );
+          })()}
 
           {/* 1. KPIs */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
@@ -308,8 +346,8 @@ function AdminDashboard() {
           </div>
 
           {/* 2. Atividade + Alertas */}
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-            <Card className="lg:col-span-3 p-5">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
+            <Card className="lg:col-span-3 p-5 border-t-[3px] border-t-primary">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="font-display text-lg font-semibold">Últimas atualizações</h2>
@@ -352,7 +390,7 @@ function AdminDashboard() {
               )}
             </Card>
 
-            <Card className="lg:col-span-2 p-5">
+            <Card className="lg:col-span-2 p-5 border-t-[3px] border-t-destructive">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <h2 className="font-display text-lg font-semibold">Alertas ativos</h2>
@@ -442,7 +480,7 @@ function AdminDashboard() {
                         <TableCell>{e.empresa}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <div className="h-6 w-6 rounded-md bg-gradient-brand flex items-center justify-center text-[9px] font-semibold text-white shrink-0">
+                            <div className="h-6 w-6 rounded-md bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))] flex items-center justify-center text-[9px] font-semibold text-white shrink-0">
                               {e.responsavel.split(" ").map((n) => n[0]).slice(0, 2).join("")}
                             </div>
                             <span className="text-sm">{e.responsavel}</span>
