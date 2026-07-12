@@ -1217,9 +1217,9 @@ export default function VagaDetalheAdmin() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
         {/* Timeline */}
-        <div className="lg:col-span-3 bg-card border border-border rounded-xl p-4 card-hover">
+        <div className="lg:col-span-2 bg-card border border-border rounded-xl p-4 card-hover">
           <h3 className="font-display font-semibold mb-3">Timeline da vaga</h3>
           <div className="flex items-start overflow-x-auto pb-1 -mx-1 px-1">
             {etapasVaga.map((e, idx) => {
@@ -1410,6 +1410,9 @@ export default function VagaDetalheAdmin() {
                   (c) => colunasEstado[c.id] === col && !desclassificados.has(c.id)
                 );
                 const isOver = dragOverCol === col;
+                const corCol = (["#264478", "#6B3FBF", "#12786B", "#B4740E", "#1E8A4C", "#5B6B85"] as const)[
+                  colunas.indexOf(col) % 6
+                ];
                 return (
                   <div
                     key={col}
@@ -1424,14 +1427,20 @@ export default function VagaDetalheAdmin() {
                       e.preventDefault();
                       handleDrop(col);
                     }}
+                    style={{ borderTopColor: corCol }}
                     className={cn(
-                      "bg-card border rounded-xl p-3 min-h-[280px] w-[300px] shrink-0 transition-colors",
-                      isOver ? "border-primary bg-primary/5" : "border-border"
+                      "bg-card border border-t-[3px] rounded-xl p-3 min-h-[280px] w-[300px] shrink-0 transition-colors",
+                      isOver ? "border-primary bg-[hsl(var(--primary)/0.05)]" : "border-border"
                     )}
                   >
                   <div className="flex items-center justify-between mb-3 px-1">
                     <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{col}</span>
-                    <span className="font-data text-xs text-muted-foreground">{candidatosNaColuna.length}</span>
+                    <span
+                      className="text-[10px] font-semibold tabular-nums rounded-full px-1.5 py-0.5"
+                      style={{ background: `${corCol}1A`, color: corCol }}
+                    >
+                      {candidatosNaColuna.length}
+                    </span>
                   </div>
                   {candidatosNaColuna.length > 0 ? (
                     <ul className="space-y-2">
