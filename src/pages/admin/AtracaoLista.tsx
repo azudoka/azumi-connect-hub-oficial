@@ -6,6 +6,7 @@ import { vagas as vagasMock, type StatusKey } from "@/data/mock";
 import { criarVaga, publicarVaga, listarVagas, atualizarEtapa, type VagaSupabase } from "@/services/vagasService";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, LayoutGrid, List, Filter, Info, AlertTriangle, Users, ChevronDown, ChevronRight, Megaphone } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell } from "recharts";
 
 function supabaseToLocal(r: VagaSupabase): VagaLocal {
   return {
@@ -301,7 +302,31 @@ export default function AtracaoLista() {
 
       {/* Painel de visão geral — substitui o banner solto de SLA crítico por dado de verdade */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3 items-start">
-        <ConnectStatCard variant="stat" icon="solar:target-bold-duotone" tone="blue" label="Vagas ativas" value={vagasAtivas.length} />
+        <div className="bg-card rounded-xl p-6" style={{ boxShadow: "0 1px 4px rgba(133,146,173,0.2)" }}>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">
+            Candidatos por etapa — {vagasAtivas.length} vagas ativas
+          </p>
+          <ResponsiveContainer width="100%" height={110}>
+            <BarChart
+              data={[
+                { etapa: "Triagem", n: vagasAtivas.reduce((s, v) => s + v.candidatosTriagem, 0), tone: "#264478" },
+                { etapa: "Entrevista", n: vagasAtivas.reduce((s, v) => s + v.candidatosEntrevista, 0), tone: "#6B3FBF" },
+                { etapa: "Enviados", n: vagasAtivas.reduce((s, v) => s + v.candidatosEnviados, 0), tone: "#12786B" },
+                { etapa: "Contratados", n: vagasAtivas.reduce((s, v) => s + v.candidatosContratados, 0), tone: "#1E8A4C" },
+              ]}
+              margin={{ top: 4, right: 4, left: -24, bottom: 0 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+              <XAxis dataKey="etapa" fontSize={10} tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" />
+              <YAxis fontSize={10} tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" allowDecimals={false} width={28} />
+              <Bar dataKey="n" radius={[4, 4, 0, 0]}>
+                {[0, 1, 2, 3].map((i) => (
+                  <Cell key={i} fill={["#264478", "#6B3FBF", "#12786B", "#1E8A4C"][i]} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
         <ConnectStatCard
           variant="list"
           label="SLA crítico"
