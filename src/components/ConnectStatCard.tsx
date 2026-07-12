@@ -54,33 +54,37 @@ function StatCard({ icon: Icon, label, value, deltaValue, positive = true, tone,
   return (
     <div
       onClick={onClick}
-      style={{ background: `${color}14` }}
+      style={{ background: `${color}1F`, boxShadow: "0 1px 4px hsl(var(--foreground)/0.08)" }}
       className={cn(
-        "rounded-2xl p-5",
+        "rounded-xl p-6",
         onClick && "cursor-pointer hover:brightness-[0.98] transition-[filter]",
         className
       )}
     >
       <div
-        className="h-11 w-11 rounded-full flex items-center justify-center mb-4"
+        className="h-12 w-12 rounded-full flex items-center justify-center mb-4"
         style={{ background: color }}
       >
         <Icon className="h-5 w-5 text-white" />
       </div>
       <div className="flex items-center gap-2">
-        <span className="font-display text-2xl font-bold tabular-nums" style={{ color }}>
+        <span className="font-display text-lg font-semibold text-foreground tabular-nums">
           {value}
         </span>
         {deltaValue && (
-          <span className={cn(
-            "text-[11px] font-semibold px-1.5 py-0.5 rounded-full",
-            positive ? "bg-[hsl(var(--success)/0.15)] text-success" : "bg-[hsl(var(--destructive)/0.15)] text-destructive"
-          )}>
+          <span
+            className={cn(
+              "text-xs font-semibold px-2.5 py-0.5 rounded-full border",
+              positive
+                ? "text-success border-[hsl(var(--success)/0.2)]"
+                : "text-destructive border-[hsl(var(--destructive)/0.2)]"
+            )}
+          >
             {deltaValue}
           </span>
         )}
       </div>
-      <p className="text-sm text-muted-foreground mt-1">{label}</p>
+      <p className="text-sm font-medium text-muted-foreground mt-1">{label}</p>
     </div>
   );
 }
