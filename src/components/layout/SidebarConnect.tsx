@@ -275,7 +275,7 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
             {user?.papel === "cliente" && (
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  <div className="h-9 w-9 rounded-lg bg-gradient-brand flex items-center justify-center text-xs font-semibold text-white">
+                  <div className="h-9 w-9 rounded-lg bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))] flex items-center justify-center text-xs font-semibold text-white">
                     {consultorIniciais}
                   </div>
                   <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-success ring-2 ring-card animate-soft-pulse" />
@@ -313,7 +313,7 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
           <div className="flex flex-col items-center gap-2">
             {user?.papel === "cliente" && (
               <div className="relative">
-                <div className="h-8 w-8 rounded-lg bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white">{consultorIniciais}</div>
+                <div className="h-8 w-8 rounded-lg bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))] flex items-center justify-center text-[10px] font-semibold text-white">{consultorIniciais}</div>
                 <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-success ring-2 ring-sidebar" />
               </div>
             )}
@@ -344,7 +344,7 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
             <DialogDescription>Fale diretamente com quem cuida da sua conta.</DialogDescription>
           </DialogHeader>
           <div className="flex items-center gap-3 mt-2">
-            <div className="h-12 w-12 rounded-lg bg-gradient-brand flex items-center justify-center text-sm font-semibold text-white">{consultorIniciais}</div>
+            <div className="h-12 w-12 rounded-lg bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))] flex items-center justify-center text-sm font-semibold text-white">{consultorIniciais}</div>
             <div>
               <div className="text-base font-semibold">{consultorNome}</div>
               <div className="text-xs text-muted-foreground">Consultor(a) — Azumi RH</div>
