@@ -300,8 +300,8 @@ export default function AtracaoLista() {
       />
 
       {/* Painel de visão geral — substitui o banner solto de SLA crítico por dado de verdade */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
-        <ConnectStatCard variant="terminal" label="Vagas ativas" value={vagasAtivas.length} />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3 items-start">
+        <ConnectStatCard variant="stat" icon="solar:target-bold-duotone" tone="blue" label="Vagas ativas" value={vagasAtivas.length} />
         <ConnectStatCard
           variant="list"
           label="SLA crítico"
