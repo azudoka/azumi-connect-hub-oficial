@@ -59,7 +59,7 @@ export function Header({ showSwitcher = true, context = "connect" }: HeaderProps
   const totalAlertas = consumoNotificacoes.filter((n) => n.severidade !== "info").length;
 
   return (
-    <header className="h-16 shrink-0 border-b border-border bg-background/80 backdrop-blur sticky top-0 z-30">
+    <header className="h-16 shrink-0 border-b border-border bg-[hsl(var(--background)/0.8)] backdrop-blur sticky top-0 z-30">
       <div className="h-full flex items-center gap-3 px-6">
         {/* Search — em breve */}
         <div className="flex-1 max-w-md relative">
@@ -70,9 +70,7 @@ export function Header({ showSwitcher = true, context = "connect" }: HeaderProps
             placeholder="Busca global — em breve"
             className={cn(
               "w-full h-9 pl-9 pr-4 rounded-lg border outline-none text-sm placeholder:text-muted-foreground/50 cursor-not-allowed opacity-60 backdrop-blur-md transition-all",
-              context === "hub"
-                ? "bg-purple-500/10 border-purple-300/30"
-                : "bg-blue-500/10 border-blue-300/30"
+              "bg-[hsl(var(--primary)/0.08)] border-[hsl(var(--primary)/0.25)]"
             )}
           />
         </div>
@@ -83,7 +81,7 @@ export function Header({ showSwitcher = true, context = "connect" }: HeaderProps
               onClick={switchContext}
               className={cn(
                 "h-9 rounded-full px-1 flex items-center gap-1 border text-xs font-medium transition-colors",
-                "border-border bg-secondary/40"
+                "border-border bg-[hsl(var(--secondary)/0.4)]"
               )}
               aria-label="Trocar contexto"
             >
@@ -107,7 +105,7 @@ export function Header({ showSwitcher = true, context = "connect" }: HeaderProps
             >
               <Bell className="h-4 w-4" />
               {totalAlertas > 0 && (
-                <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[9px] font-data font-semibold flex items-center justify-center ring-2 ring-background">
+                <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[9px] font-semibold flex items-center justify-center ring-2 ring-background">
                   {totalAlertas}
                 </span>
               )}
@@ -120,7 +118,7 @@ export function Header({ showSwitcher = true, context = "connect" }: HeaderProps
                     <AlertTriangle className="h-4 w-4 text-warning" />
                     <h4 className="font-display font-semibold text-sm">Alertas de consumo</h4>
                   </div>
-                  <span className="text-[11px] text-muted-foreground font-data">{totalAlertas} ativos</span>
+                  <span className="text-[11px] text-muted-foreground">{totalAlertas} ativos</span>
                 </div>
 
                 <ul className="max-h-[360px] overflow-y-auto">
@@ -129,23 +127,23 @@ export function Header({ showSwitcher = true, context = "connect" }: HeaderProps
                       <Link
                         to={linkFor(n.empresaId)}
                         onClick={() => setOpenNotif(false)}
-                        className="group block px-4 py-3 hover:bg-secondary/50 transition-colors"
+                        className="group block px-4 py-3 hover:bg-[hsl(var(--secondary)/0.5)] transition-colors"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="text-sm font-medium truncate">{n.empresa}</span>
                               <span className={cn(
-                                "text-[10px] font-data font-semibold px-1.5 py-0.5 rounded",
-                                n.severidade === "critical" && "bg-destructive/15 text-destructive",
-                                n.severidade === "warning" && "bg-warning/15 text-warning",
-                                n.severidade === "info" && "bg-info/15 text-info",
+                                "text-[10px] font-semibold px-1.5 py-0.5 rounded",
+                                n.severidade === "critical" && "bg-[hsl(var(--destructive)/0.15)] text-destructive",
+                                n.severidade === "warning" && "bg-[hsl(var(--warning)/0.15)] text-warning",
+                                n.severidade === "info" && "bg-[hsl(var(--info)/0.15)] text-info",
                               )}>
                                 {n.percent}%
                               </span>
                             </div>
                             <p className="text-[11px] text-muted-foreground mt-0.5">
-                              <span className="font-data">{n.consumido}h / {n.contratadas}h</span> consumidas · {n.quando}
+                              <span className="">{n.consumido}h / {n.contratadas}h</span> consumidas · {n.quando}
                             </p>
                             <div className="mt-1.5 h-1 rounded-full bg-muted overflow-hidden">
                               <div
@@ -166,7 +164,7 @@ export function Header({ showSwitcher = true, context = "connect" }: HeaderProps
                   ))}
                 </ul>
 
-                <div className="px-4 py-2.5 border-t border-border bg-secondary/20">
+                <div className="px-4 py-2.5 border-t border-border bg-[hsl(var(--secondary)/0.2)]">
                   <Link
                     to={isCliente ? "/cliente/gestao-conta" : "/app/gestao-de-conta"}
                     onClick={() => setOpenNotif(false)}
@@ -188,14 +186,14 @@ export function Header({ showSwitcher = true, context = "connect" }: HeaderProps
               "h-8 w-8 rounded-md flex items-center justify-center transition-colors",
               visivel
                 ? "text-muted-foreground hover:text-foreground hover:bg-muted"
-                : "text-warning bg-warning/10 hover:bg-warning/20"
+                : "text-warning bg-[hsl(var(--warning)/0.1)] hover:bg-[hsl(var(--warning)/0.2)]"
             )}
           >
             {visivel ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
           </button>
 
           <button className="flex items-center gap-2 h-9 px-2 pr-3 rounded-lg hover:bg-secondary">
-            <div className="h-7 w-7 rounded-lg bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white">
+            <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center text-[10px] font-semibold text-primary-foreground">
               {usuario?.nome
                 ? usuario.nome.split(" ").filter(Boolean).slice(0, 2).map((n) => n[0]).join("").toUpperCase()
                 : "VC"}
