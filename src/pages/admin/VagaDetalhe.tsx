@@ -836,6 +836,25 @@ export default function VagaDetalheAdmin() {
     return tentarMoverSemAlerta(candId, coluna);
   }
 
+  async function gerarLinkQuestionarioDireto(questionnaireId: string) {
+    if (!vaga?.id) return;
+    const token = crypto.randomUUID();
+    const { error } = await supabase.from("candidate_questionnaires").insert({
+      questionnaire_id: questionnaireId,
+      job_id: vaga.id,
+      token,
+      status: "pendente",
+    });
+    if (error) {
+      toast.error("Erro ao gerar link: " + error.message);
+      return;
+    }
+    const urlCompleta = `${window.location.origin}/candidatar-convite/${token}`;
+    const linkCurto = await criarLinkCurto(urlCompleta, "questionario_direto");
+    navigator.clipboard.writeText(linkCurto);
+    toast.success("Link copiado!", { description: linkCurto });
+  }
+
   /** Gera link público (mock) para o candidato responder o questionário. */
   function gerarLinkQuestionario(questionarioId: string, candidatoId: string) {
     return `${window.location.origin}/questionario/${questionarioId}?cand=${candidatoId}&vaga=${vaga?.id ?? ""}`;
@@ -2137,6 +2156,15 @@ export default function VagaDetalheAdmin() {
                         <td className="px-3 py-2.5 text-muted-foreground">{q.criadoEm}</td>
                         <td className="px-3 py-2.5">
                           <div className="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); gerarLinkQuestionarioDireto(q.id); }}
+                              className="h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-secondary text-muted-foreground"
+                              aria-label="Copiar link direto"
+                              title="Copiar link direto"
+                            >
+                              <Link2 className="h-3.5 w-3.5" />
+                            </button>
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); setEditorQuestId(q.id); }}
