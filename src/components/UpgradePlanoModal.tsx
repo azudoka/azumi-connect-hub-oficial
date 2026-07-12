@@ -101,19 +101,19 @@ export function UpgradePlanoModal({ open, onClose, planoAtual }: UpgradePlanoMod
       : "Expanda sua operação com mais horas, frentes e benefícios";
 
   const gradientByKey: Record<PlanoKey, string> = {
-    start: "bg-gradient-to-br from-[#031D38] to-[#1e3a5f]",
-    ongoing: "bg-gradient-to-br from-[#1D4E89] to-[#3B82F6]",
-    growth: "bg-gradient-to-br from-[#5B21B6] to-[#8B5CF6]",
+    start: "bg-[image:linear-gradient(135deg,hsl(var(--connect-ink)),hsl(var(--connect-graphite)))]",
+    ongoing: "bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))]",
+    growth: "bg-[image:linear-gradient(135deg,hsl(var(--highlight)),hsl(var(--primary-glow)))]",
   };
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent
         className="max-w-3xl max-h-[90vh] overflow-y-auto p-0 gap-0 border-0"
-        style={{ fontFamily: "'Urbanist', sans-serif" }}
+        
       >
         {/* Header escuro */}
-        <div className="px-6 py-5" style={{ background: "#031D38", color: "white" }}>
+        <div className="px-6 py-5 text-white" style={{ background: "hsl(var(--connect-ink))" }}>
           <div className="flex items-center gap-2 mb-1.5 text-[11px] uppercase tracking-widest opacity-70">
             <Sparkles className="h-3 w-3" /> Azumi Connect
           </div>
@@ -138,14 +138,11 @@ export function UpgradePlanoModal({ open, onClose, planoAtual }: UpgradePlanoMod
                 <div
                   key={p.key}
                   className={`relative rounded-2xl p-4 flex flex-col text-white ${gradientByKey[p.key]} ${
-                    destaque ? "ring-2 ring-[#8B5CF6] shadow-lg sm:-mt-2 sm:mb-2" : ""
+                    destaque ? "ring-2 ring-primary shadow-lg sm:-mt-2 sm:mb-2" : ""
                   }`}
                 >
                   {destaque && (
-                    <div
-                      className="absolute -top-3 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-white flex items-center gap-1"
-                      style={{ background: "#8B5CF6" }}
-                    >
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-white flex items-center gap-1 bg-primary">
                       <Star className="h-2.5 w-2.5 fill-white" /> Mais escolhido
                     </div>
                   )}
@@ -176,7 +173,7 @@ export function UpgradePlanoModal({ open, onClose, planoAtual }: UpgradePlanoMod
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={onClose}
-                    className="w-full h-10 rounded-lg flex items-center justify-center gap-2 text-xs font-semibold bg-white text-[#031D38] hover:bg-white/90 transition-colors"
+                    className="w-full h-10 rounded-lg flex items-center justify-center gap-2 text-xs font-semibold bg-white text-primary hover:bg-white/90 transition-colors"
                   >
                     Contratar {p.nome} →
                   </a>
