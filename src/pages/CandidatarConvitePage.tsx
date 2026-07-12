@@ -1,50 +1,30 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { X, Upload, Check, ChevronRight, FileText, Loader2 } from "lucide-react";
+import { Check, ChevronRight, Loader2, UserCheck } from "lucide-react";
 import DiscTeste from "@/components/disc/DiscTeste";
 import type { DiscDim, DiscScores } from "@/components/disc/discQuestions";
 import { supabase } from "@/integrations/supabase/client";
 import { AzumiLogo } from "@/components/brand/AzumiLogo";
+import { toast } from "sonner";
 
 const EMAIL_API = "https://azumi-email-api.vercel.app/api/send-email";
 
 const ESCOLARIDADES = [
-  "Ensino Fundamental",
-  "Ensino Médio",
-  "Técnico/Tecnólogo",
-  "Superior incompleto",
-  "Superior completo",
-  "Pós-graduação/MBA",
-  "Mestrado/Doutorado",
+  "Ensino Fundamental", "Ensino Médio", "Técnico/Tecnólogo",
+  "Superior incompleto", "Superior completo", "Pós-graduação/MBA", "Mestrado/Doutorado",
 ];
 
-const ORIGENS = ["LinkedIn", "Instagram", "Indicação", "Google", "Site Azumi", "Outro"];
-
 interface Cadastro {
-  foto: File | null;
-  fotoPreview: string | null;
   nome: string;
   email: string;
   telefone: string;
   cpf: string;
-  nascimento: string;
-  cidadeEstado: string;
-  bairro: string;
   escolaridade: string;
-  filhos: "nao_informar" | "nao" | "sim" | "";
-  linkedin: string;
-  portfolio: string;
-  origem: string;
-  curriculo: File | null;
-  mensagem: string;
   aceitePrivacidade: boolean;
 }
 
 const INIT: Cadastro = {
-  foto: null, fotoPreview: null, nome: "", email: "", telefone: "", cpf: "",
-  nascimento: "", cidadeEstado: "", bairro: "", escolaridade: "", filhos: "",
-  linkedin: "", portfolio: "", origem: "", curriculo: null, mensagem: "",
-  aceitePrivacidade: false,
+  nome: "", email: "", telefone: "", cpf: "", escolaridade: "", aceitePrivacidade: false,
 };
 
 export default function CandidatarConvitePage() {
@@ -63,12 +43,17 @@ export default function CandidatarConvitePage() {
   const [erroForm, setErroForm] = useState("");
   const [enviando, setEnviando] = useState(false);
 
+  // CPF — reaproveitamento de candidato existente
+  const cpfBuscadoRef = useRef("");
+  const [candidatoExistenteId, setCandidatoExistenteId] = useState<string | null>(null);
+
+  // T3 — select inclui candidate_id
   useEffect(() => {
     if (!token) { setErro("Link inválido."); setCarregando(false); return; }
     (async () => {
       const { data, error } = await supabase
         .from("candidate_questionnaires")
-        .select("id, job_id, questionnaire_id, status, job_solicitations(titulo, empresa)")
+        .select("id, job_id, questionnaire_id, status, candidate_id, job_solicitations(titulo, empresa)")
         .eq("token", token)
         .maybeSingle();
       if (error || !data) { setErro("Convite não encontrado ou expirado."); setCarregando(false); return; }
@@ -86,17 +71,39 @@ export default function CandidatarConvitePage() {
     setC((p) => ({ ...p, [k]: v }));
   }
 
+  // T2 — lookup de CPF com reaproveitamento real
+  async function verificarCpf() {
+    const cpfTrim = c.cpf.trim();
+    if (!cpfTrim || cpfTrim === cpfBuscadoRef.current) return;
+    cpfBuscadoRef.current = cpfTrim;
+    const { data } = await supabase
+      .from("candidates")
+      .select("id, nome, email, telefone, escolaridade")
+      .eq("cpf", cpfTrim)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (data) {
+      setCandidatoExistenteId(data.id);
+      setC((p) => ({
+        ...p,
+        nome: data.nome ?? p.nome,
+        email: data.email ?? p.email,
+        telefone: data.telefone ?? p.telefone,
+        escolaridade: (data.escolaridade as string) ?? p.escolaridade,
+      }));
+      toast.info(`Bem-vindo(a) de volta, ${data.nome}! Seus dados foram carregados automaticamente.`);
+    } else {
+      setCandidatoExistenteId(null);
+    }
+  }
+
+  // T1 — validação enxuta
   function validar(): string {
     if (!c.nome.trim()) return "Informe seu nome completo.";
     if (!c.email.trim()) return "Informe o email.";
     if (!c.telefone.trim()) return "Informe o telefone.";
     if (!c.cpf.trim()) return "Informe o CPF.";
-    if (!c.nascimento) return "Informe a data de nascimento.";
-    if (!c.cidadeEstado.trim()) return "Informe cidade/estado.";
-    if (!c.bairro.trim()) return "Informe o bairro.";
-    if (!c.escolaridade) return "Selecione a escolaridade.";
-    if (!c.origem) return "Como ficou sabendo desta vaga?";
-    if (!c.curriculo) return "Anexe seu currículo.";
     if (!c.aceitePrivacidade) return "Aceite a Política de Privacidade para continuar.";
     return "";
   }
@@ -112,60 +119,46 @@ export default function CandidatarConvitePage() {
     if (!jobId || !cqId) return;
     setEnviando(true);
 
-    let curriculoUrl: string | null = null;
-    if (c.curriculo) {
-      const ext = c.curriculo.name.split(".").pop() ?? "pdf";
-      const path = `${jobId}/${Date.now()}_${c.nome.replace(/\s+/g, "_")}.${ext}`;
-      const { data: upData, error: upError } = await supabase.storage
-        .from("curriculos")
-        .upload(path, c.curriculo, { upsert: false });
-      if (!upError && upData) {
-        const { data: urlData } = supabase.storage.from("curriculos").getPublicUrl(upData.path);
-        curriculoUrl = urlData.publicUrl;
+    let candidatoId: string;
+
+    if (candidatoExistenteId) {
+      // T2 — reaproveitar candidato existente, sem duplicar
+      candidatoId = candidatoExistenteId;
+    } else {
+      // Criar novo candidato
+      const { data: candidatoInserido, error } = await supabase
+        .from("candidates")
+        .insert({
+          job_id: jobId,
+          nome: c.nome,
+          email: c.email,
+          telefone: c.telefone,
+          cpf: c.cpf || null,
+          escolaridade: c.escolaridade || null,
+          origem: "convite",
+          banco_talentos: false,
+          etapa_azumi: "recebido",
+          lgpd_aceite: c.aceitePrivacidade,
+          lgpd_aceite_at: c.aceitePrivacidade ? new Date().toISOString() : null,
+        })
+        .select("id")
+        .single();
+
+      if (error || !candidatoInserido) {
+        console.error("[convite] candidato:", error?.message);
+        setEnviando(false);
+        return;
       }
+      candidatoId = candidatoInserido.id;
     }
 
-    const row = {
-      job_id: jobId,
-      nome: c.nome,
-      email: c.email,
-      telefone: c.telefone,
-      cpf: c.cpf || null,
-      data_nascimento: c.nascimento || null,
-      cidade: c.cidadeEstado || null,
-      bairro: c.bairro || null,
-      escolaridade: c.escolaridade || null,
-      possui_filhos: c.filhos || null,
-      linkedin: c.linkedin || null,
-      portfolio_url: c.portfolio || null,
-      origem: c.origem || null,
-      observacoes: c.mensagem || null,
-      curriculo_nome: c.curriculo?.name ?? null,
-      curriculo_url: curriculoUrl,
-      banco_talentos: false,
-      etapa_azumi: "recebido",
-      lgpd_aceite: c.aceitePrivacidade,
-      lgpd_aceite_at: c.aceitePrivacidade ? new Date().toISOString() : null,
-    };
-
-    const { data: candidatoInserido, error } = await supabase
-      .from("candidates")
-      .insert(row)
-      .select("id")
-      .single();
-
-    if (error || !candidatoInserido) {
-      console.error("[convite] candidato:", error?.message);
-      setEnviando(false);
-      return;
-    }
-
+    // DISC — múltiplos resultados por pessoa ao longo do tempo é OK
     const entries = (["D", "I", "S", "C"] as const)
       .map((k) => ({ k, v: scores[k] }))
       .sort((a, b) => b.v - a.v);
 
     await supabase.from("disc_resultado_candidato").insert({
-      candidato_id: candidatoInserido.id,
+      candidato_id: candidatoId,
       score_d: scores.D,
       score_i: scores.I,
       score_s: scores.S,
@@ -174,27 +167,27 @@ export default function CandidatarConvitePage() {
       fator_secundario: entries[1]?.k ?? null,
     });
 
-    // Vincula candidato ao convite
+    // Vincular candidato ao convite
     await supabase
       .from("candidate_questionnaires")
-      .update({ candidate_id: candidatoInserido.id })
+      .update({ candidate_id: candidatoId })
       .eq("id", cqId);
 
-    // Notifica por email
-    const html = `
-      <h2 style="color:#031D38">Nova candidatura via convite</h2>
-      <table cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:14px">
-        <tr><td><strong>Vaga</strong></td><td>${jobTitulo}</td></tr>
-        <tr><td><strong>Nome</strong></td><td>${c.nome}</td></tr>
-        <tr><td><strong>Email</strong></td><td>${c.email}</td></tr>
-        <tr><td><strong>Telefone</strong></td><td>${c.telefone}</td></tr>
-        <tr><td><strong>DISC</strong></td><td>D:${scores.D} I:${scores.I} S:${scores.S} C:${scores.C} — ${perfilDim}</td></tr>
-      </table>
-    `;
+    // Email de notificação
     fetch(EMAIL_API, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ subject: `Nova candidatura (convite): ${c.nome} → ${jobTitulo}`, html }),
+      body: JSON.stringify({
+        subject: `Nova candidatura (convite): ${c.nome} → ${jobTitulo}`,
+        html: `<h2 style="color:#031D38">Nova candidatura via convite</h2>
+          <table cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:14px">
+            <tr><td><strong>Vaga</strong></td><td>${jobTitulo}</td></tr>
+            <tr><td><strong>Nome</strong></td><td>${c.nome}</td></tr>
+            <tr><td><strong>Email</strong></td><td>${c.email}</td></tr>
+            <tr><td><strong>Telefone</strong></td><td>${c.telefone}</td></tr>
+            <tr><td><strong>DISC</strong></td><td>D:${scores.D} I:${scores.I} S:${scores.S} C:${scores.C} — ${perfilDim}</td></tr>
+          </table>`,
+      }),
     }).catch(() => {});
 
     setEnviando(false);
@@ -255,113 +248,59 @@ export default function CandidatarConvitePage() {
         <div className="flex-1 overflow-y-auto px-6 py-6">
           {step === 1 && (
             <div className="mx-auto max-w-2xl space-y-5">
-              {/* Foto */}
-              <div>
-                <label className="mb-1 block font-sans text-xs font-medium text-foreground">Foto (opcional)</label>
-                <div className="flex items-center gap-4">
-                  <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-border bg-muted font-sans text-xs text-muted-foreground">
-                    {c.fotoPreview ? <img src={c.fotoPreview} alt="" className="h-full w-full object-cover" /> : "Sem foto"}
-                  </div>
-                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border px-3 py-2 font-sans text-xs text-foreground hover:bg-muted">
-                    <Upload className="h-3.5 w-3.5" /> Enviar foto
-                    <input type="file" accept="image/jpeg,image/png" className="hidden"
-                      onChange={(e) => {
-                        const f = e.target.files?.[0] ?? null;
-                        if (f && f.size > 5 * 1024 * 1024) { setErroForm("Foto maior que 5MB"); return; }
-                        if (f) {
-                          const reader = new FileReader();
-                          reader.onload = () => setC((p) => ({ ...p, foto: f, fotoPreview: reader.result as string }));
-                          reader.readAsDataURL(f);
-                        }
-                      }}
-                    />
-                  </label>
+
+              {/* Banner CPF encontrado */}
+              {candidatoExistenteId && (
+                <div className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
+                  <UserCheck className="h-4 w-4 shrink-0 text-primary" />
+                  <p className="font-sans text-sm text-foreground">
+                    Cadastro encontrado — seus dados foram preenchidos automaticamente.
+                  </p>
                 </div>
-              </div>
+              )}
 
               <Grid2>
                 <Field label="Nome completo *"><FInput value={c.nome} onChange={(v) => up("nome", v)} /></Field>
                 <Field label="Email *"><FInput type="email" value={c.email} onChange={(v) => up("email", v)} /></Field>
               </Grid2>
               <Grid2>
-                <Field label="Telefone *"><FInput value={c.telefone} onChange={(v) => up("telefone", v)} placeholder="(00) 00000-0000" /></Field>
-                <Field label="CPF *"><FInput value={c.cpf} onChange={(v) => up("cpf", v)} placeholder="000.000.000-00" /></Field>
-              </Grid2>
-              <Grid2>
-                <Field label="Data de nascimento *"><FInput type="date" value={c.nascimento} onChange={(v) => up("nascimento", v)} /></Field>
-                <Field label="Cidade / Estado *"><FInput value={c.cidadeEstado} onChange={(v) => up("cidadeEstado", v)} placeholder="Ex.: Curitiba, PR" /></Field>
-              </Grid2>
-              <Grid2>
-                <Field label="Bairro *"><FInput value={c.bairro} onChange={(v) => up("bairro", v)} /></Field>
-                <Field label="Escolaridade *">
-                  <FSelect value={c.escolaridade} onChange={(v) => up("escolaridade", v)}>
-                    <option value="">Selecione...</option>
-                    {ESCOLARIDADES.map((e) => <option key={e} value={e}>{e}</option>)}
-                  </FSelect>
+                <Field label="Telefone *">
+                  <FInput value={c.telefone} onChange={(v) => up("telefone", v)} placeholder="(00) 00000-0000" />
+                </Field>
+                <Field label="CPF *">
+                  <FInput
+                    value={c.cpf}
+                    onChange={(v) => {
+                      up("cpf", v);
+                      setCandidatoExistenteId(null);
+                      cpfBuscadoRef.current = "";
+                    }}
+                    placeholder="000.000.000-00"
+                    onBlur={verificarCpf}
+                  />
                 </Field>
               </Grid2>
 
-              <Field label="Possui filhos?">
-                <div className="flex flex-wrap gap-2">
-                  {[{ v: "nao_informar", l: "Prefiro não informar" }, { v: "nao", l: "Não" }, { v: "sim", l: "Sim" }].map((o) => (
-                    <button key={o.v} type="button" onClick={() => up("filhos", o.v as Cadastro["filhos"])}
-                      className={`rounded-full border px-3 py-1.5 font-sans text-xs font-medium ${
-                        c.filhos === o.v ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background text-foreground hover:bg-muted"
-                      }`}>{o.l}</button>
-                  ))}
-                </div>
-              </Field>
-
-              <Grid2>
-                <Field label="LinkedIn"><FInput value={c.linkedin} onChange={(v) => up("linkedin", v)} placeholder="linkedin.com/in/..." /></Field>
-                <Field label="Portfólio ou link adicional"><FInput value={c.portfolio} onChange={(v) => up("portfolio", v)} /></Field>
-              </Grid2>
-
-              <Field label="Como ficou sabendo desta vaga? *">
-                <div className="flex flex-wrap gap-2">
-                  {ORIGENS.map((o) => (
-                    <button key={o} type="button" onClick={() => up("origem", o)}
-                      className={`rounded-full border px-3 py-1.5 font-sans text-xs font-medium ${
-                        c.origem === o ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background text-foreground hover:bg-muted"
-                      }`}>{o}</button>
-                  ))}
-                </div>
-              </Field>
-
-              <Field label="Currículo *">
-                <label className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed px-4 py-6 text-center transition ${
-                  c.curriculo ? "border-success bg-[hsl(var(--success)/0.08)]" : "border-border bg-muted/50 hover:bg-muted"
-                }`}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) { if (f.size > 5 * 1024 * 1024) { setErroForm("Currículo maior que 5MB"); return; } up("curriculo", f); } }}
-                >
-                  {c.curriculo ? (
-                    <div className="flex items-center gap-2 font-sans text-sm text-success"><FileText className="h-4 w-4" />{c.curriculo.name}</div>
-                  ) : (
-                    <>
-                      <Upload className="mb-2 h-5 w-5 text-muted-foreground" />
-                      <p className="font-sans text-sm font-medium text-foreground">Arraste o arquivo aqui ou clique para selecionar</p>
-                      <p className="mt-0.5 font-sans text-xs text-muted-foreground">PDF, DOC ou DOCX — máx 5MB</p>
-                    </>
-                  )}
-                  <input type="file" accept=".pdf,.doc,.docx" className="hidden"
-                    onChange={(e) => { const f = e.target.files?.[0] ?? null; if (f && f.size > 5 * 1024 * 1024) { setErroForm("Currículo maior que 5MB"); return; } up("curriculo", f); }}
-                  />
-                </label>
-              </Field>
-
-              <Field label="Mensagem (opcional)">
-                <textarea rows={3} maxLength={500} value={c.mensagem} onChange={(e) => up("mensagem", e.target.value)}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground focus:border-primary focus:outline-none" />
-                <p className="mt-1 text-right font-sans text-[10px] text-muted-foreground">{c.mensagem.length}/500</p>
+              <Field label="Escolaridade (opcional)">
+                <FSelect value={c.escolaridade} onChange={(v) => up("escolaridade", v)}>
+                  <option value="">Selecione...</option>
+                  {ESCOLARIDADES.map((e) => <option key={e} value={e}>{e}</option>)}
+                </FSelect>
               </Field>
 
               <label className="flex items-start gap-2 font-sans text-xs text-foreground">
-                <input type="checkbox" checked={c.aceitePrivacidade} onChange={(e) => up("aceitePrivacidade", e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-border" />
+                <input
+                  type="checkbox"
+                  checked={c.aceitePrivacidade}
+                  onChange={(e) => up("aceitePrivacidade", e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-border"
+                />
                 <span>
-                  Li e aceito a <a className="underline" href="https://azumirh.com.br/privacidade" target="_blank" rel="noreferrer">Política de Privacidade</a>.
-                  Autorizo o tratamento dos meus dados pela Azumi RH para fins de recrutamento, em conformidade com a LGPD.
+                  Li e aceito a{" "}
+                  <a className="underline" href="https://azumirh.com.br/privacidade" target="_blank" rel="noreferrer">
+                    Política de Privacidade
+                  </a>
+                  . Autorizo o tratamento dos meus dados pela Azumi RH para fins de recrutamento, em conformidade com a LGPD.
                 </span>
               </label>
 
@@ -422,17 +361,28 @@ function Grid2({ children }: { children: React.ReactNode }) {
   return <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{children}</div>;
 }
 
-function FInput({ value, onChange, type = "text", placeholder }: { value: string; onChange: (v: string) => void; type?: string; placeholder?: string }) {
+function FInput({ value, onChange, type = "text", placeholder, onBlur }: {
+  value: string; onChange: (v: string) => void; type?: string; placeholder?: string; onBlur?: () => void;
+}) {
   return (
-    <input type={type} value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground focus:border-primary focus:outline-none" />
+    <input
+      type={type}
+      value={value}
+      placeholder={placeholder}
+      onChange={(e) => onChange(e.target.value)}
+      onBlur={onBlur}
+      className="w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground focus:border-primary focus:outline-none"
+    />
   );
 }
 
 function FSelect({ value, onChange, children }: { value: string; onChange: (v: string) => void; children: React.ReactNode }) {
   return (
-    <select value={value} onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground focus:border-primary focus:outline-none">
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground focus:border-primary focus:outline-none"
+    >
       {children}
     </select>
   );

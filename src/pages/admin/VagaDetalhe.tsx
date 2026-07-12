@@ -3605,7 +3605,7 @@ function ConvidarLinkForm({
       return;
     }
 
-    const urlCompleta = `${window.location.origin}/convite/${token}`;
+    const urlCompleta = `${window.location.origin}/candidatar-convite/${token}`;
     const link = await criarLinkCurto(urlCompleta, "convite_vaga");
     setLinkGerado(link);
     setGerando(false);

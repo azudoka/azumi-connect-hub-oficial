@@ -172,6 +172,11 @@ function PortalProjetoRedirect() {
   return <Navigate to={`/cliente/projetos/${id ?? ""}`} replace />;
 }
 
+function ConviteRedirect() {
+  const { token } = useParams<{ token: string }>();
+  return <Navigate to={`/candidatar-convite/${token ?? ""}`} replace />;
+}
+
 // Redireciona /aplicar/:id → /vagas/:id preservando query params (ex: ?ref=convite)
 function AplicarRedirect() {
   const { id } = useParams<{ id: string }>();
@@ -193,7 +198,7 @@ const AppRoutes = () => (
     <Route path="/l/:codigo" element={<RedirecionadorPage />} />
     <Route path="/questionario-resposta/:token" element={<QuestionarioRespostaPage />} />
     <Route path="/candidatar-convite/:token" element={<CandidatarConvitePage />} />
-    <Route path="/convite/:token" element={<ConvitePage />} />
+    <Route path="/convite/:token" element={<ConviteRedirect />} />
 
     {/* Admin / Consultor */}
     <Route
