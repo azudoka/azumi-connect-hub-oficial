@@ -1423,7 +1423,7 @@ export default function VagaDetalheAdmin() {
                     onClick={() => setFichaCandidatoId(c.id)}
                     className="border border-border rounded-md p-2 flex items-center gap-2 bg-background/40 cursor-pointer hover:border-primary/50 hover:bg-secondary/40 transition-colors"
                   >
-                    <div className="h-7 w-7 rounded-md bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white">
+                    <div className="h-7 w-7 rounded-md bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))] flex items-center justify-center text-[10px] font-semibold text-white">
                       {c.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -1505,7 +1505,7 @@ export default function VagaDetalheAdmin() {
                           <div className="p-3 space-y-2">
                             {/* Linha 1: Avatar + Nome + Mais ações */}
                             <div className="flex items-start gap-2.5">
-                              <div className="h-10 w-10 shrink-0 rounded-md bg-gradient-brand flex items-center justify-center text-xs font-semibold text-white">
+                              <div className="h-10 w-10 shrink-0 rounded-md bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))] flex items-center justify-center text-xs font-semibold text-white">
                                 {c.nome.split(" ").map(n => n[0]).join("").slice(0, 2)}
                               </div>
                               <div className="min-w-0 flex-1">
@@ -1922,7 +1922,7 @@ export default function VagaDetalheAdmin() {
               return (
                 <li key={c.id} className="border border-border rounded-lg p-3 bg-background/40">
                   <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-md bg-gradient-brand flex items-center justify-center text-[10px] font-semibold text-white">
+                    <div className="h-9 w-9 rounded-md bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))] flex items-center justify-center text-[10px] font-semibold text-white">
                       {c.nome.split(" ").map(n => n[0]).join("").slice(0, 2)}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -2069,7 +2069,7 @@ export default function VagaDetalheAdmin() {
                   <div className={cn(
                     "h-8 w-8 rounded-lg flex items-center justify-center text-[10px] font-semibold shrink-0 z-10 border",
                     isSistema ? "bg-muted text-muted-foreground border-border"
-                      : c.azumi ? "bg-gradient-brand text-white border-transparent"
+                      : c.azumi ? "bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))] text-white border-transparent"
                       : "bg-secondary text-foreground border-border"
                   )}>
                     {isSistema ? <Bot className="h-4 w-4" /> : c.autor.split(" ").map((n) => n[0]).join("").slice(0, 2)}
@@ -4895,7 +4895,7 @@ function CandidatoDetailSheet({
             {candidatoExtra?.foto_url ? (
               <img src={candidatoExtra.foto_url} alt="" className="h-12 w-12 rounded-md object-cover shrink-0" />
             ) : (
-              <div className="h-12 w-12 rounded-md bg-gradient-brand flex items-center justify-center text-sm font-semibold text-white shrink-0">
+              <div className="h-12 w-12 rounded-md bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))] flex items-center justify-center text-sm font-semibold text-white shrink-0">
                 {iniciais}
               </div>
             )}
