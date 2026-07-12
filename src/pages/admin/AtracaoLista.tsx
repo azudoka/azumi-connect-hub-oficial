@@ -29,6 +29,7 @@ function supabaseToLocal(r: VagaSupabase): VagaLocal {
     modalidade: r.modalidade ?? "—",
     beneficios: r.beneficios ?? [],
     is_avulsa: r.is_avulsa,
+    etapaAtualizadoEm: r.etapaAtualizadoEm,
   } as unknown as VagaLocal;
 }
 import BancoTalentosDrawer from "@/components/atracao/BancoTalentosDrawer";
@@ -63,16 +64,6 @@ import {
 import { toast } from "sonner";
 import { CategoryTag } from "@/components/CategoryTag";
 
-// Datas mock por etapa (usadas no cabeçalho da timeline horizontal acima do kanban).
-// Quando uma vaga não tem data para uma etapa, mostramos "—" alinhado.
-const DATAS_FASE_MOCK: Record<FunilEtapa, { inicio: string; fim: string }> = {
-  briefing:        { inicio: "01/04", fim: "02/04" },
-  triagem:         { inicio: "06/04", fim: "12/04" },
-  entrevista:      { inicio: "15/04", fim: "22/04" },
-  perfis_enviados: { inicio: "23/04", fim: "—"    },
-  decisao:         { inicio: "—",    fim: "—"    },
-};
-
 // SLA crítico: > 80% de SLA consumido em "perfis_enviados" → badge de alerta no card
 function isSlaCritico(etapa: FunilEtapa, sla: number) {
   return etapa === "perfis_enviados" && sla >= 80;
@@ -87,7 +78,7 @@ const STATUS_ORDEM: Record<string, number> = {
   cancelada: 4,
 };
 
-type VagaLocal = (typeof vagasMock)[number] & { etapaFunil: FunilEtapa; is_avulsa?: boolean };
+type VagaLocal = (typeof vagasMock)[number] & { etapaFunil: FunilEtapa; is_avulsa?: boolean; etapaAtualizadoEm?: string | null };
 
 export default function AtracaoLista() {
   const [view, setView] = useState<"kanban" | "list">("kanban");
@@ -227,7 +218,7 @@ export default function AtracaoLista() {
 
     setVagas((prev) =>
       prev
-        .map((v) => (v.id === vagaId ? { ...v, etapaFunil: destino } : v))
+        .map((v) => (v.id === vagaId ? { ...v, etapaFunil: destino, etapaAtualizadoEm: new Date().toISOString() } : v))
         .sort((a, b) => {
           const pa = STATUS_ORDEM[a.status] ?? 99;
           const pb = STATUS_ORDEM[b.status] ?? 99;
@@ -369,28 +360,6 @@ export default function AtracaoLista() {
 
       {!loadingVagas && vagas.length > 0 && (view === "kanban" ? (
         <>
-          {/* Header de fases — uma "fatia" por coluna, alinhada com o grid abaixo */}
-          <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-5 gap-4 mb-2 px-1">
-            {FUNIL_ETAPAS.map((etapa) => {
-              const d = DATAS_FASE_MOCK[etapa];
-              const inicio = d.inicio || "—";
-              const fim = d.fim || "—";
-              return (
-                <div
-                  key={`hdr-${etapa}`}
-                  className="min-w-0 flex flex-col gap-0.5 rounded-md border border-border/60 bg-muted/30 px-2 py-1.5"
-                >
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-foreground/70 truncate">
-                    {FUNIL_ETAPA_LABEL[etapa]}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground tabular-nums">
-                    {inicio} <span className="text-foreground/40">→</span> {fim}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {FUNIL_ETAPAS.map((etapa) => {
               const items = vagasAtivas.filter((v) => v.etapaFunil === etapa);
@@ -487,6 +456,14 @@ export default function AtracaoLista() {
                               )}
                             </div>
                             <div className="mt-3"><SlaBar percent={v.sla} /></div>
+                            {v.etapaAtualizadoEm && (() => {
+                              const dias = Math.floor((Date.now() - new Date(v.etapaAtualizadoEm).getTime()) / (1000 * 60 * 60 * 24));
+                              return (
+                                <div className="text-[10px] text-muted-foreground mt-0.5">
+                                  Há {dias} dia{dias === 1 ? "" : "s"} nesta etapa
+                                </div>
+                              );
+                            })()}
                             {critico && (
                               <div className="mt-2 inline-flex items-center gap-1 rounded-full border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] px-2 py-0.5 text-[10px] text-warning font-medium">
                                 <AlertTriangle className="h-3 w-3" /> SLA crítico

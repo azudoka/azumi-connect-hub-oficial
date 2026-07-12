@@ -39,6 +39,7 @@ export type VagaSupabase = {
   avulsa_solicitante_email: string | null;
   excluida_em: string | null;    // ← encerrada_em
   motivo_exclusao: string | null;// ← motivo_encerramento
+  etapaAtualizadoEm: string | null;
 };
 
 // ── Mapeamento DB → VagaSupabase ─────────────────────────────────────────────
@@ -94,6 +95,7 @@ function jsToVaga(row: any): VagaSupabase {
     avulsa_solicitante_email: row.avulsa_solicitante_email ?? null,
     excluida_em: row.encerrada_em ?? null,
     motivo_exclusao: row.motivo_encerramento ?? null,
+    etapaAtualizadoEm: row.etapa_connect_atualizado_em ?? null,
   };
 }
 
@@ -265,7 +267,7 @@ export async function fecharVaga(id: string): Promise<void> {
 export async function atualizarEtapa(id: string, etapa: string): Promise<void> {
   const { error } = await supabase
     .from("job_solicitations")
-    .update({ etapa_connect: etapa })
+    .update({ etapa_connect: etapa, etapa_connect_atualizado_em: new Date().toISOString() })
     .eq("id", id);
   if (error) throw error;
 }
