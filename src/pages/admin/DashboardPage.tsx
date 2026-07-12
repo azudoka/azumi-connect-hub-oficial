@@ -263,12 +263,12 @@ function AdminDashboard() {
           {saudacao}, {usuario?.nome?.split(" ")[0] ?? "Ana"} 👋
         </p>
         <p className="text-sm text-primary-foreground/80 mt-1 mb-5">{dataCapitalizada}</p>
-        <div className="inline-flex bg-[hsl(var(--primary-glow))] rounded-full overflow-hidden">
-          <div className="px-6 py-3 border-r border-primary-foreground/15">
+        <div className="flex flex-wrap gap-3">
+          <div className="bg-[hsl(var(--primary-glow))] rounded-full px-6 py-3">
             <div className="font-display text-lg font-bold leading-none">6</div>
             <div className="text-xs text-primary-foreground/80 mt-1 whitespace-nowrap">Projetos ativos</div>
           </div>
-          <div className="px-6 py-3">
+          <div className="bg-[hsl(var(--primary-glow))] rounded-full px-6 py-3">
             <div className="font-display text-lg font-bold leading-none">115h</div>
             <div className="text-xs text-primary-foreground/80 mt-1 whitespace-nowrap">Horas no mês</div>
           </div>
@@ -447,47 +447,50 @@ function AdminDashboard() {
                 description="Nenhum entregável com prazo nos próximos 30 dias."
               />
             ) : (
-              <div className="p-3 space-y-2">
-                <div className="hidden md:grid grid-cols-[1.6fr_1fr_1fr_1fr_0.8fr] gap-4 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  <span>Entregável</span>
-                  <span>Empresa</span>
-                  <span>Responsável</span>
-                  <span>Prazo</span>
-                  <span className="text-right">Status</span>
-                </div>
-                {ENTREGAVEIS.map((e) => {
-                  const atrasada = e.prazo < hojeISO;
-                  return (
-                    <Link
-                      key={e.id}
-                      to="/app/projetos"
-                      className={cn(
-                        "grid grid-cols-1 md:grid-cols-[1.6fr_1fr_1fr_1fr_0.8fr] items-center gap-2 md:gap-4 rounded-xl border p-4 transition-colors",
-                        e.destaque
-                          ? "border-[hsl(var(--warning)/0.35)] bg-[hsl(var(--warning)/0.08)] hover:bg-[hsl(var(--warning)/0.14)]"
-                          : "border-border bg-card hover:bg-muted/30"
-                      )}
-                    >
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold truncate">{e.nome}</p>
-                        <p className="text-xs text-muted-foreground truncate">{e.projeto}</p>
-                      </div>
-                      <span className="text-sm text-muted-foreground truncate">{e.empresa}</span>
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="h-6 w-6 rounded-md bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))] flex items-center justify-center text-[9px] font-semibold text-white shrink-0">
-                          {e.responsavel.split(" ").map((n) => n[0]).slice(0, 2).join("")}
-                        </div>
-                        <span className="text-sm truncate">{e.responsavel}</span>
-                      </div>
-                      <span className={cn("text-sm tabular-nums", atrasada && "text-destructive font-semibold")}>
-                        {formatDateBR(e.prazo)}
-                      </span>
-                      <div className="md:text-right">
-                        <StatusBadge status={e.status}>{e.statusLabel}</StatusBadge>
-                      </div>
-                    </Link>
-                  );
-                })}
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[720px]">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left font-semibold text-sm px-4 py-3">Responsável</th>
+                      <th className="text-left font-semibold text-sm px-4 py-3">Entregável</th>
+                      <th className="text-left font-semibold text-sm px-4 py-3">Empresa</th>
+                      <th className="text-left font-semibold text-sm px-4 py-3">Prazo</th>
+                      <th className="text-left font-semibold text-sm px-4 py-3">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ENTREGAVEIS.map((e) => {
+                      const atrasada = e.prazo < hojeISO;
+                      return (
+                        <tr
+                          key={e.id}
+                          onClick={() => navigate("/app/projetos")}
+                          className="border-b border-border last:border-0 hover:bg-muted/40 cursor-pointer transition-colors"
+                        >
+                          <td className="px-4 py-3.5">
+                            <div className="flex items-center gap-2.5">
+                              <div className="h-9 w-9 rounded-lg bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))] flex items-center justify-center text-[10px] font-semibold text-white shrink-0">
+                                {e.responsavel.split(" ").map((n) => n[0]).slice(0, 2).join("")}
+                              </div>
+                              <span className="text-sm font-medium truncate">{e.responsavel}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <p className="text-sm font-semibold truncate">{e.nome}</p>
+                            <p className="text-xs text-muted-foreground truncate">{e.projeto}</p>
+                          </td>
+                          <td className="px-4 py-3.5 text-sm text-muted-foreground">{e.empresa}</td>
+                          <td className={cn("px-4 py-3.5 text-sm tabular-nums", atrasada && "text-destructive font-semibold")}>
+                            {formatDateBR(e.prazo)}
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <StatusBadge status={e.status}>{e.statusLabel}</StatusBadge>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             )}
           </Card>
