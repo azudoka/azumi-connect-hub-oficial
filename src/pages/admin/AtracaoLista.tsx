@@ -529,7 +529,10 @@ export default function AtracaoLista() {
                 <tr key={v.id} className="border-b border-border last:border-0 hover:bg-muted/40 transition-colors">
                   <td className="px-4 py-3.5">
                     <Link to={`/app/atracao/${v.id}`} className="flex items-center gap-3 group">
-                      <div className="h-10 w-10 rounded-lg bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))] flex items-center justify-center text-[10px] font-semibold text-white shrink-0">
+                      <div
+                        title={v.consultor ?? "Azumi"}
+                        className="h-[52px] w-[52px] rounded-lg bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))] flex items-center justify-center text-sm font-semibold text-white shrink-0"
+                      >
                         {v.consultor?.split(" ").map((n) => n[0]).slice(0, 2).join("") ?? "AZ"}
                       </div>
                       <div className="min-w-0">
