@@ -273,48 +273,42 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
         }
       }
 
-      // Se candidato anterior e não quer alterar dados → reusar ID existente
-      const candidatoExistenteId = candidatoAnterior && querAlterarDados === false ? candidatoAnterior.id : null;
+      // Sempre INSERT — reaproveitamos os DADOS do candidato anterior (nome, email, etc.)
+      // mas cada candidatura a uma vaga é uma linha nova com seu próprio job_id.
+      const row = {
+        job_id: vagaId ?? null,
+        nome: c.nome,
+        email: c.email,
+        telefone: c.telefone,
+        cpf: c.cpf || null,
+        data_nascimento: c.nascimento || null,
+        cidade: c.cidadeEstado || null,
+        bairro: c.bairro || null,
+        escolaridade: c.escolaridade || null,
+        possui_filhos: c.filhos || null,
+        linkedin: c.linkedin || null,
+        portfolio_url: c.portfolio || null,
+        origem: c.origem || null,
+        observacoes: c.mensagem || null,
+        curriculo_nome: c.curriculo?.name ?? null,
+        curriculo_url: curriculoUrl,
+        disponibilidade_inicio: modo === "banco" ? (c.disponibilidade || null) : null,
+        banco_talentos: modo === "banco",
+        etapa_azumi: "recebido",
+        lgpd_aceite: c.aceitePrivacidade,
+        lgpd_aceite_at: c.aceitePrivacidade ? new Date().toISOString() : null,
+      };
 
-      let candidatoId: string;
+      const { data: candidatoInserido, error } = await supabase
+        .from("candidates")
+        .insert(row)
+        .select("id")
+        .single();
 
-      if (candidatoExistenteId) {
-        candidatoId = candidatoExistenteId;
-      } else {
-        const row = {
-          job_id: vagaId ?? null,
-          nome: c.nome,
-          email: c.email,
-          telefone: c.telefone,
-          cpf: c.cpf || null,
-          data_nascimento: c.nascimento || null,
-          cidade: c.cidadeEstado || null,
-          bairro: c.bairro || null,
-          escolaridade: c.escolaridade || null,
-          possui_filhos: c.filhos || null,
-          linkedin: c.linkedin || null,
-          portfolio_url: c.portfolio || null,
-          origem: c.origem || null,
-          observacoes: c.mensagem || null,
-          curriculo_nome: c.curriculo?.name ?? null,
-          curriculo_url: curriculoUrl,
-          disponibilidade_inicio: modo === "banco" ? (c.disponibilidade || null) : null,
-          banco_talentos: modo === "banco",
-          etapa_azumi: "recebido",
-          lgpd_aceite: c.aceitePrivacidade,
-          lgpd_aceite_at: c.aceitePrivacidade ? new Date().toISOString() : null,
-        };
+      const candidatoId = candidatoInserido?.id ?? null;
 
-        const { data: candidatoInserido, error } = await supabase
-          .from("candidates")
-          .insert(row)
-          .select("id")
-          .single();
-
-        if (error || !candidatoInserido) {
-          throw new Error(error?.message ?? "Não foi possível salvar sua candidatura.");
-        }
-        candidatoId = candidatoInserido.id;
+      if (error || !candidatoInserido) {
+        throw new Error(error?.message ?? "Não foi possível salvar sua candidatura.");
       }
 
       // DISC — gravar sempre (mesmo reaproveitando candidato, pula se reutilizando disc anterior sem refazer)
