@@ -664,12 +664,7 @@ export default function ProjetosPage() {
                             </span>
                           </td>
                           <td className="px-4 py-3 w-32">
-                            <div className="flex items-center gap-2">
-                              <Progress value={p.conclusao} className="h-1.5 flex-1" />
-                              <span className="text-xs tabular-nums shrink-0">
-                                {p.conclusao}%
-                              </span>
-                            </div>
+                            <p className="text-sm tabular-nums">{p.conclusao}%</p>
                           </td>
                           <td className={cn(
                             "px-4 py-3 text-xs tabular-nums",
