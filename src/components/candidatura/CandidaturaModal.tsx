@@ -45,6 +45,13 @@ interface CandidatoAnterior {
   email: string;
   telefone: string;
   escolaridade: string;
+  data_nascimento: string | null;
+  cidade: string | null;
+  bairro: string | null;
+  possui_filhos: string | null;
+  linkedin: string | null;
+  portfolio_url: string | null;
+  foto_url: string | null;
 }
 
 interface DiscAnterior {
@@ -135,7 +142,7 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
     try {
       const { data } = await supabase
         .from("candidates")
-        .select("id, nome, email, telefone, escolaridade, disc_resultado_candidato(score_d, score_i, score_s, score_c, fator_predominante, fator_secundario, created_at)")
+        .select("id, nome, email, telefone, escolaridade, data_nascimento, cidade, bairro, possui_filhos, linkedin, portfolio_url, foto_url, disc_resultado_candidato(score_d, score_i, score_s, score_c, fator_predominante, fator_secundario, created_at)")
         .eq("cpf", cpf)
         .order("created_at", { ascending: false })
         .limit(1)
@@ -148,6 +155,13 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
           email: data.email ?? "",
           telefone: data.telefone ?? "",
           escolaridade: (data.escolaridade as string) ?? "",
+          data_nascimento: (data.data_nascimento as string) ?? null,
+          cidade: (data.cidade as string) ?? null,
+          bairro: (data.bairro as string) ?? null,
+          possui_filhos: (data.possui_filhos as string) ?? null,
+          linkedin: (data.linkedin as string) ?? null,
+          portfolio_url: (data.portfolio_url as string) ?? null,
+          foto_url: (data.foto_url as string) ?? null,
         };
         setCandidatoAnterior(anterior);
 
@@ -168,33 +182,36 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
         // Perguntas serão mostradas progressivamente na tela 0
       } else {
         // CPF novo — avança direto pro formulário sem perguntas
-        avancarParaFormulario(null, cpf);
+        avancarParaFormulario(cpf, null);
       }
     } finally {
       setBuscandoCpf(false);
     }
   }
 
-  function avancarParaFormulario(anterior: CandidatoAnterior | null, cpf: string) {
+  function avancarParaFormulario(cpf: string, ant: CandidatoAnterior | null = candidatoAnterior) {
     setC((p) => ({
       ...p,
       cpf,
-      nome: anterior?.nome ?? p.nome,
-      email: anterior?.email ?? p.email,
-      telefone: anterior?.telefone ?? p.telefone,
-      escolaridade: anterior?.escolaridade ?? p.escolaridade,
+      ...(ant ? {
+        nome: ant.nome,
+        email: ant.email,
+        telefone: ant.telefone,
+        escolaridade: ant.escolaridade || p.escolaridade,
+        nascimento: ant.data_nascimento ?? p.nascimento,
+        cidadeEstado: ant.cidade ?? p.cidadeEstado,
+        bairro: ant.bairro ?? p.bairro,
+        filhos: (ant.possui_filhos as Cadastro["filhos"]) || p.filhos,
+        linkedin: ant.linkedin ?? p.linkedin,
+        portfolio: ant.portfolio_url ?? p.portfolio,
+        fotoPreview: ant.foto_url ?? p.fotoPreview,
+      } : {}),
     }));
     setStep(1);
   }
 
-  // Chamado quando o usuário respondeu todas as perguntas no step 0
   function confirmarStep0() {
-    // Se discValido e não quer refazer: pular step 2 → direto pro "concluirSemDisc"
-    // Se não discValido ou quer refazer: step normal (1 → 2)
-    avancarParaFormulario(
-      querAlterarDados === false ? candidatoAnterior : null,
-      cpfInicial.trim()
-    );
+    avancarParaFormulario(cpfInicial.trim());
   }
 
   // Determina se todas as perguntas do step 0 foram respondidas
@@ -362,7 +379,7 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
     }
   }
 
-  // ── Stepper label helper ─────────────────────────────────────────────────────
+  const dadosTravados = candidatoAnterior !== null && querAlterarDados === false;
   const stepNum = step === 0 ? 0 : step === 1 ? 1 : step === 2 ? 2 : 3;
 
   return (
@@ -531,15 +548,15 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
 
               <Grid2>
                 <Field label="Nome completo *">
-                  <Input value={c.nome} onChange={(v) => up("nome", v)} readOnly={candidatoAnterior !== null && querAlterarDados === false} />
+                  <Input value={c.nome} onChange={(v) => up("nome", v)} readOnly={dadosTravados} />
                 </Field>
                 <Field label="Email *">
-                  <Input type="email" value={c.email} onChange={(v) => up("email", v)} readOnly={candidatoAnterior !== null && querAlterarDados === false} />
+                  <Input type="email" value={c.email} onChange={(v) => up("email", v)} readOnly={dadosTravados} />
                 </Field>
               </Grid2>
               <Grid2>
                 <Field label="Telefone *">
-                  <Input value={c.telefone} onChange={(v) => up("telefone", v)} placeholder="(00) 00000-0000" readOnly={candidatoAnterior !== null && querAlterarDados === false} />
+                  <Input value={c.telefone} onChange={(v) => up("telefone", v)} placeholder="(00) 00000-0000" readOnly={dadosTravados} />
                 </Field>
                 <Field label="CPF *">
                   <Input value={c.cpf} onChange={(v) => up("cpf", v)} placeholder="000.000.000-00" readOnly />
@@ -547,18 +564,18 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
               </Grid2>
               <Grid2>
                 <Field label="Data de nascimento *">
-                  <Input type="date" value={c.nascimento} onChange={(v) => up("nascimento", v)} />
+                  <Input type="date" value={c.nascimento} onChange={(v) => up("nascimento", v)} readOnly={dadosTravados} />
                 </Field>
                 <Field label="Cidade / Estado *">
-                  <Input value={c.cidadeEstado} onChange={(v) => up("cidadeEstado", v)} placeholder="Ex.: Curitiba, PR" />
+                  <Input value={c.cidadeEstado} onChange={(v) => up("cidadeEstado", v)} placeholder="Ex.: Curitiba, PR" readOnly={dadosTravados} />
                 </Field>
               </Grid2>
               <Grid2>
                 <Field label="Bairro *">
-                  <Input value={c.bairro} onChange={(v) => up("bairro", v)} />
+                  <Input value={c.bairro} onChange={(v) => up("bairro", v)} readOnly={dadosTravados} />
                 </Field>
                 <Field label="Escolaridade *">
-                  <Select value={c.escolaridade} onChange={(v) => up("escolaridade", v)}>
+                  <Select value={c.escolaridade} onChange={(v) => up("escolaridade", v)} disabled={dadosTravados}>
                     <option value="">Selecione...</option>
                     {ESCOLARIDADES.map((e) => <option key={e} value={e}>{e}</option>)}
                   </Select>
@@ -575,10 +592,12 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
                     <button
                       key={o.v}
                       type="button"
-                      onClick={() => up("filhos", o.v as Cadastro["filhos"])}
+                      onClick={() => { if (!dadosTravados) up("filhos", o.v as Cadastro["filhos"]); }}
                       className={`rounded-full border px-3 py-1.5 font-sans text-xs font-medium ${
                         c.filhos === o.v
                           ? "border-primary bg-primary text-primary-foreground"
+                          : dadosTravados
+                          ? "border-border bg-muted text-muted-foreground cursor-default"
                           : "border-border bg-background text-foreground hover:bg-muted"
                       }`}
                     >
@@ -590,10 +609,10 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
 
               <Grid2>
                 <Field label="LinkedIn">
-                  <Input value={c.linkedin} onChange={(v) => up("linkedin", v)} placeholder="linkedin.com/in/..." />
+                  <Input value={c.linkedin} onChange={(v) => up("linkedin", v)} placeholder="linkedin.com/in/..." readOnly={dadosTravados} />
                 </Field>
                 <Field label="Portfólio ou link adicional">
-                  <Input value={c.portfolio} onChange={(v) => up("portfolio", v)} />
+                  <Input value={c.portfolio} onChange={(v) => up("portfolio", v)} readOnly={dadosTravados} />
                 </Field>
               </Grid2>
 
@@ -804,12 +823,13 @@ function Input({ value, onChange, type = "text", placeholder, readOnly, onKeyDow
   );
 }
 
-function Select({ value, onChange, children }: { value: string; onChange: (v: string) => void; children: React.ReactNode }) {
+function Select({ value, onChange, children, disabled }: { value: string; onChange: (v: string) => void; children: React.ReactNode; disabled?: boolean }) {
   return (
     <select
       value={value}
+      disabled={disabled}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground focus:border-primary focus:outline-none"
+      className={`w-full rounded-lg border border-border px-3 py-2 font-sans text-sm text-foreground focus:border-primary focus:outline-none ${disabled ? "bg-muted text-muted-foreground cursor-default" : "bg-background"}`}
     >
       {children}
     </select>
