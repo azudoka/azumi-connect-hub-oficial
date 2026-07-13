@@ -9,7 +9,7 @@ import { SectionDivider } from "@/components/SectionDivider";
 import { SlaBar } from "@/components/SlaBar";
 import { DiscBars } from "@/components/DiscBars";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { vagas, candidatos, comentariosVaga, getGestorDaVaga, type JanelaDisponibilidade } from "@/data/mock";
+import { vagas, comentariosVaga, getGestorDaVaga, type JanelaDisponibilidade } from "@/data/mock";
 import { getParecerCliente, getFeedback1aLeva, resetSeedDemo } from "@/data/atracaoClienteStore";
 import {
   criarAgendamento,
@@ -85,7 +85,6 @@ import { ScrollLock } from "@/components/ScrollLock";
 
 const tabs = [
   { key: "candidatos", label: "Candidatos", icon: Users },
-  { key: "site", label: "Candidaturas do site", icon: Globe },
   { key: "perfis", label: "Perfis enviados", icon: Send },
   { key: "questionarios", label: "Questionários", icon: FileQuestion },
   { key: "agenda", label: "Agenda", icon: CalendarDays },
@@ -304,16 +303,6 @@ export default function VagaDetalheAdmin() {
   const [justificativaExcesso, setJustificativaExcesso] = useState("");
   const [excedeuOpen, setExcedeuOpen] = useState(false);
 
-  const funil = [
-    { etapa: "Currículos", n: vaga?.candidatosTotal ?? 0 },
-    { etapa: "Triagem", n: vaga?.candidatosTriagem ?? 0 },
-    { etapa: "Entrevista", n: vaga?.candidatosEntrevista ?? 0 },
-    { etapa: "Enviados", n: vaga?.candidatosEnviados ?? 0 },
-    { etapa: "Contratados", n: vaga?.candidatosContratados ?? 0 },
-  ];
-  const max = Math.max(...funil.map((f) => f.n), 1);
-
-  const candidatosVagaMock = candidatos.filter((c) => c.vagaId === (vaga?.id ?? ""));
   const colunas = [
     "Recebido",
     "Triagem",
@@ -355,10 +344,8 @@ export default function VagaDetalheAdmin() {
   // Posições da vaga (Doc Mestre — Etapa 6: bloquear contratações além do total).
   const posicoesVaga: number = (vaga as unknown as { posicoes?: number } | null)?.posicoes ?? 1;
 
-  // Estado do Kanban: candidato -> coluna (todos começam em "Recebido")
-  const [colunasEstado, setColunasEstado] = useState<Record<string, Coluna>>(
-    () => Object.fromEntries(candidatosVagaMock.map((c) => [c.id, "Recebido" as Coluna]))
-  );
+  // Estado do Kanban: candidato -> coluna
+  const [colunasEstado, setColunasEstado] = useState<Record<string, Coluna>>({});
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<Coluna | null>(null);
 
@@ -410,24 +397,28 @@ export default function VagaDetalheAdmin() {
 
   const [candidatosExtras, setCandidatosExtras] = useState<CandidatoExtra[]>([]);
 
-  const candidatosVaga = [
-    ...candidatosVagaMock,
-    ...candidatosExtras
-      .filter((c) => c.origem === "site")
-      .map((c) => ({
-        id: c.id,
-        nome: c.nome,
-        cargo: c.cargo,
-        vagaId: vaga?.id ?? "",
-        disc: c.disc_d != null
-          ? { D: c.disc_d, I: c.disc_i ?? 0, S: c.disc_s ?? 0, C: c.disc_c ?? 0 }
-          : undefined,
-        perfilDom: c.disc_perfil ?? undefined,
-        parecer: c.mensagem ?? undefined,
-        enviado: false,
-        status: "novo" as const,
-      })),
+  const candidatosVaga = candidatosExtras.map((c) => ({
+    id: c.id,
+    nome: c.nome,
+    cargo: c.cargo,
+    vagaId: vaga?.id ?? "",
+    origem: c.origem,
+    disc: c.disc_d != null
+      ? { D: c.disc_d, I: c.disc_i ?? 0, S: c.disc_s ?? 0, C: c.disc_c ?? 0 }
+      : undefined,
+    perfilDom: c.disc_perfil ?? undefined,
+    parecer: c.mensagem ?? undefined,
+    enviado: false,
+    status: "novo" as const,
+  }));
+  const funil = [
+    { etapa: "Currículos", n: candidatosVaga.length },
+    { etapa: "Triagem", n: candidatosVaga.filter((c) => colunasEstado[c.id] === "Triagem").length },
+    { etapa: "Entrevista", n: candidatosVaga.filter((c) => (["Entrevista Azumi", "Teste Técnico"] as string[]).includes(colunasEstado[c.id])).length },
+    { etapa: "Enviados", n: candidatosVaga.filter((c) => colunasEstado[c.id] === "Entrevista Cliente").length },
+    { etapa: "Contratados", n: candidatosVaga.filter((c) => colunasEstado[c.id] === "Contratado").length },
   ];
+  const max = Math.max(...funil.map((f) => f.n), 1);
 
   // Candidaturas vindas do site (Supabase — tabela candidates)
   type CandidaturaSite = {
@@ -435,7 +426,7 @@ export default function VagaDetalheAdmin() {
     cpf: string | null; cidade: string | null; escolaridade: string | null; linkedin: string | null;
     created_at: string; curriculo_nome: string | null; curriculo_url: string | null; foto_url: string | null;
     observacoes: string | null; banco_talentos: boolean; etapa_azumi: string | null;
-    avaliacao_estrelas: number | null;
+    avaliacao_estrelas: number | null; origem: string | null;
     disc_resultado_candidato?: Array<{
       score_d: number | null; score_i: number | null;
       score_s: number | null; score_c: number | null;
@@ -458,15 +449,16 @@ export default function VagaDetalheAdmin() {
         if (!error && data) {
           const rows = data as CandidaturaSite[];
           setCandidaturasSite(rows);
-          const extrasDoSite: CandidatoExtra[] = rows.map((row) => {
+          const extrasSupabase: CandidatoExtra[] = rows.map((row) => {
             const disc = row.disc_resultado_candidato?.[0];
+            const origemDB = (row.origem ?? "site") as "manual" | "convite" | "site";
             return {
               id: row.id,
               nome: row.nome,
               email: row.email ?? undefined,
               telefone: row.telefone ?? undefined,
               cargo: vaga?.titulo ?? "—",
-              origem: "site" as const,
+              origem: origemDB,
               disc_d: disc?.score_d ?? null,
               disc_i: disc?.score_i ?? null,
               disc_s: disc?.score_s ?? null,
@@ -482,8 +474,8 @@ export default function VagaDetalheAdmin() {
             };
           });
           setCandidatosExtras((prev) => [
-            ...prev.filter((c) => c.origem !== "site"),
-            ...extrasDoSite,
+            ...prev.filter((c) => c.id.startsWith("cx-")),
+            ...extrasSupabase,
           ]);
           setColunasEstado((prev) => ({
             ...prev,
@@ -524,9 +516,9 @@ export default function VagaDetalheAdmin() {
   const etapaPersistidaRef = useRef<Record<string, string>>({});
 
   useEffect(() => {
-    const idsSite = new Set(candidatosExtras.filter((c) => c.origem === "site").map((c) => c.id));
+    const idsSupabase = new Set(candidatosExtras.filter((c) => !c.id.startsWith("cx-")).map((c) => c.id));
     Object.entries(colunasEstado).forEach(([id, coluna]) => {
-      if (!idsSite.has(id)) return;
+      if (!idsSupabase.has(id)) return;
       if (etapaPersistidaRef.current[id] === coluna) return;
       etapaPersistidaRef.current[id] = coluna;
       const update = coluna === "Banco de Talentos"
@@ -1415,33 +1407,6 @@ export default function VagaDetalheAdmin() {
             );
           })()}
 
-          {/* Candidatos adicionados manualmente / convidados (site já aparece no Kanban) */}
-          {candidatosExtras.filter((c) => c.origem !== "site").length > 0 && (
-            <div className="mb-4 rounded-lg border border-dashed border-border bg-card p-3">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-                Adicionados recentemente ({candidatosExtras.filter((c) => c.origem !== "site").length})
-              </div>
-              <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                {candidatosExtras.filter((c) => c.origem !== "site").map((c) => (
-                  <li
-                    key={c.id}
-                    onClick={() => setFichaCandidatoId(c.id)}
-                    className="border border-border rounded-md p-2 flex items-center gap-2 bg-[hsl(var(--background)/0.4)] cursor-pointer hover:border-[hsl(var(--primary)/0.5)] hover:bg-[hsl(var(--secondary)/0.4)] transition-colors"
-                  >
-                    <div className="h-7 w-7 rounded-md bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))] flex items-center justify-center text-[10px] font-semibold text-white">
-                      {c.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-xs font-medium truncate">{c.nome}</div>
-                      <div className="text-[10px] text-muted-foreground truncate">
-                        {c.cargo} · {c.origem === "manual" ? "Adicionado manualmente" : c.origem === "convite" ? "Convidado" : "Site"}
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
           <div className="-mx-2 overflow-x-auto pb-3 kanban-scroll">
             <div className="flex gap-3 px-2 min-w-max">
               {colunas.map((col) => {
@@ -1526,6 +1491,11 @@ export default function VagaDetalheAdmin() {
                                 <div className="text-xs text-muted-foreground truncate mt-0.5" title={c.cargo}>
                                   {c.cargo}
                                 </div>
+                                {"origem" in c && c.origem && (
+                                  <span className="text-[9px] uppercase tracking-wide text-muted-foreground/70">
+                                    {c.origem === "convite" ? "Convite" : c.origem === "manual" ? "Manual" : "Site"}
+                                  </span>
+                                )}
                               </div>
                               {!isContratado && (
                               <DropdownMenu open={menuAberto} onOpenChange={(v) => setMenuAbertoId(v ? c.id : null)}>
@@ -1656,8 +1626,8 @@ export default function VagaDetalheAdmin() {
                                         e.stopPropagation();
                                         const novaNota = nota === n ? 0 : n;
                                         setAvaliacaoEstrelas((prev) => ({ ...prev, [c.id]: novaNota }));
-                                        const ehSite = candidatosExtras.some((ex) => ex.id === c.id && ex.origem === "site");
-                                        if (ehSite) {
+                                        const ehReal = !c.id.startsWith("cx-");
+                                        if (ehReal) {
                                           supabase.from("candidates").update({ avaliacao_estrelas: novaNota }).eq("id", c.id)
                                             .then(({ error }) => { if (error) console.error("[estrelas]", error.message); });
                                         }
@@ -1858,49 +1828,6 @@ export default function VagaDetalheAdmin() {
           mensagens={mensagens}
           onSend={(m) => setMensagens((prev) => [...prev, m])}
         />
-      )}
-
-      {tab === "site" && (
-        <div className="bg-card rounded-xl shadow-[0_1px_4px_rgba(133,146,173,0.2)] p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-display font-semibold">Candidaturas recebidas pelo site</h3>
-            <span className="text-sm text-muted-foreground">{candidaturasSite.length} candidatura(s)</span>
-          </div>
-          {loadingSite ? (
-            <div className="flex items-center gap-2 text-muted-foreground py-8 justify-center">
-              <Loader2 className="h-4 w-4 animate-spin" /> Carregando…
-            </div>
-          ) : candidaturasSite.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">
-              {vaga.id.startsWith("v-") ? "Salve a vaga no Supabase primeiro para receber candidaturas." : "Nenhuma candidatura recebida ainda."}
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {candidaturasSite.map((c) => (
-                <div key={c.id} className="rounded-lg border border-border bg-background p-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[hsl(var(--primary)/0.1)] text-primary font-semibold text-sm">
-                    {c.nome.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm">{c.nome}</p>
-                    <p className="text-xs text-muted-foreground">{c.email} {c.telefone ? `· ${c.telefone}` : ""}</p>
-                    {c.cidade && <p className="text-xs text-muted-foreground">{c.cidade}</p>}
-                    {c.disc_resultado_candidato?.[0]?.fator_predominante && (
-                      <p className="text-xs mt-1">DISC: <strong>{c.disc_resultado_candidato[0].fator_predominante}</strong> — D{c.disc_resultado_candidato[0].score_d} I{c.disc_resultado_candidato[0].score_i} S{c.disc_resultado_candidato[0].score_s} C{c.disc_resultado_candidato[0].score_c}</p>
-                    )}
-                    {c.observacoes && <p className="text-xs mt-1 text-muted-foreground italic">"{c.observacoes}"</p>}
-                  </div>
-                  <div className="text-xs text-muted-foreground whitespace-nowrap">
-                    {new Date(c.created_at).toLocaleDateString("pt-BR")}
-                    {c.curriculo_nome && (
-                      <p className="mt-1 flex items-center gap-1"><FileText className="h-3 w-3" /> {c.curriculo_nome}</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
       )}
 
       {tab === "perfis" && (
