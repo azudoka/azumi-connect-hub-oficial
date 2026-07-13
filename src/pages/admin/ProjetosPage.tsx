@@ -424,15 +424,15 @@ export default function ProjetosPage() {
 
         {/* ───────── Projetos Vigentes ───────── */}
         <TabsContent value="vigentes" className="mt-0 space-y-5">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <ConnectStatCard variant="terminal" label="Total de projetos" value={kpis.total} />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+            <ConnectStatCard variant="stat" icon="solar:folder-bold-duotone" tone="blue" label="Total de projetos" value={kpis.total} />
             <ConnectStatCard
               variant="radial"
               label="Em andamento"
               percent={kpis.total > 0 ? (kpis.andamento / kpis.total) * 100 : 0}
               contextLabel={`${kpis.andamento} de ${kpis.total} projetos`}
             />
-            <ConnectStatCard variant="terminal" label="Aguardando cliente" value={kpis.aguardando} />
+            <ConnectStatCard variant="stat" icon="solar:hourglass-bold-duotone" tone="amber" label="Aguardando cliente" value={kpis.aguardando} />
             <ConnectStatCard
               variant="list"
               label="Ajuste solicitado"
@@ -445,7 +445,7 @@ export default function ProjetosPage() {
           </div>
 
           {/* Filtros + toggle */}
-          <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-3 flex-wrap">
+          <div className="bg-card rounded-xl shadow-[0_1px_4px_rgba(133,146,173,0.2)] p-4 flex items-center gap-3 flex-wrap">
             <Filter className="h-4 w-4 text-muted-foreground" />
 
             <Select value={fEmpresa} onValueChange={setFEmpresa}>
@@ -535,7 +535,7 @@ export default function ProjetosPage() {
               {filtrados.map((p) => {
                 const atrasado = isAtrasado(p);
                 return (
-                  <div key={p.id} className="bg-card border border-border rounded-xl p-5 card-hover">
+                  <div key={p.id} className="bg-card rounded-xl shadow-[0_1px_4px_rgba(133,146,173,0.2)] p-5 card-hover">
                     <div className="flex items-start justify-between gap-3 flex-wrap">
                       <div className="min-w-0">
                         <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{p.codigo}</div>
@@ -620,20 +620,20 @@ export default function ProjetosPage() {
               })}
             </div>
           ) : view === "tabela" ? (
-            <div className="bg-card border border-border rounded-xl overflow-hidden">
+            <div className="bg-card rounded-xl shadow-[0_1px_4px_rgba(133,146,173,0.2)] overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-[hsl(var(--secondary)/0.4)] text-xs uppercase tracking-wider text-muted-foreground">
-                    <tr>
-                      <th className="text-left font-medium px-4 py-3">Código</th>
-                      <th className="text-left font-medium px-4 py-3">Projeto</th>
-                      <th className="text-left font-medium px-4 py-3">Empresa</th>
-                      <th className="text-left font-medium px-4 py-3">Consultor</th>
-                      <th className="text-left font-medium px-4 py-3">Frente</th>
-                      <th className="text-left font-medium px-4 py-3 w-32">Conclusão</th>
-                      <th className="text-left font-medium px-4 py-3">Prazo</th>
-                      <th className="text-left font-medium px-4 py-3">Status</th>
-                      <th className="text-right font-medium px-4 py-3">Ações</th>
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left font-semibold px-4 py-4">Código</th>
+                      <th className="text-left font-semibold px-4 py-4">Projeto</th>
+                      <th className="text-left font-semibold px-4 py-4">Empresa</th>
+                      <th className="text-left font-semibold px-4 py-4">Consultor</th>
+                      <th className="text-left font-semibold px-4 py-4">Frente</th>
+                      <th className="text-left font-semibold px-4 py-4 w-32">Conclusão</th>
+                      <th className="text-left font-semibold px-4 py-4">Prazo</th>
+                      <th className="text-left font-semibold px-4 py-4">Status</th>
+                      <th className="text-right font-semibold px-4 py-4">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -642,7 +642,7 @@ export default function ProjetosPage() {
                       return (
                         <tr
                           key={p.id}
-                          className="border-t border-border hover:bg-[hsl(var(--secondary)/0.3)] transition-colors"
+                          className="border-b border-border last:border-0 hover:bg-muted/40 transition-colors"
                         >
                           <td className="px-4 py-3 text-xs text-muted-foreground">
                             {p.codigo}
@@ -722,7 +722,7 @@ export default function ProjetosPage() {
               {colunasKanban.map((col) => {
                 const itens = filtrados.filter((p) => p.status === col.status);
                 return (
-                  <div key={col.status} className="bg-card border border-border rounded-xl p-3 min-h-[200px]">
+                  <div key={col.status} className="bg-card rounded-xl shadow-[0_1px_4px_rgba(133,146,173,0.2)] p-3 min-h-[200px]">
                     <div className="flex items-center justify-between px-1 mb-3">
                       <div className="inline-flex items-center gap-1.5">
                         <col.icon className="h-3.5 w-3.5 text-muted-foreground" />
@@ -789,22 +789,22 @@ export default function ProjetosPage() {
               }
             />
           ) : (
-            <div className="bg-card border border-border rounded-xl overflow-hidden">
+            <div className="bg-card rounded-xl shadow-[0_1px_4px_rgba(133,146,173,0.2)] overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-[hsl(var(--secondary)/0.4)] text-xs uppercase tracking-wider text-muted-foreground">
-                    <tr>
-                      <th className="text-left font-medium px-4 py-3">Código</th>
-                      <th className="text-left font-medium px-4 py-3">Empresa</th>
-                      <th className="text-left font-medium px-4 py-3">Consultor</th>
-                      <th className="text-left font-medium px-4 py-3">Status</th>
-                      <th className="text-left font-medium px-4 py-3">Criado em</th>
-                      <th className="text-right font-medium px-4 py-3">Ação</th>
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left font-semibold px-4 py-4">Código</th>
+                      <th className="text-left font-semibold px-4 py-4">Empresa</th>
+                      <th className="text-left font-semibold px-4 py-4">Consultor</th>
+                      <th className="text-left font-semibold px-4 py-4">Status</th>
+                      <th className="text-left font-semibold px-4 py-4">Criado em</th>
+                      <th className="text-right font-semibold px-4 py-4">Ação</th>
                     </tr>
                   </thead>
                   <tbody>
                     {cronogramas.map((cr) => (
-                      <tr key={cr.id} className="border-t border-border hover:bg-[hsl(var(--secondary)/0.3)] transition-colors">
+                      <tr key={cr.id} className="border-b border-border last:border-0 hover:bg-muted/40 transition-colors">
                         <td className="px-4 py-3 text-xs">{cr.codigo}</td>
                         <td className="px-4 py-3 font-medium">{cr.empresaNome}</td>
                         <td className="px-4 py-3">{cr.consultorNome}</td>
@@ -877,7 +877,7 @@ export default function ProjetosPage() {
               {projetosEncerrados.map((p) => (
                 <li
                   key={p.id}
-                  className="bg-card border border-border rounded-xl p-4 flex items-center gap-4 flex-wrap"
+                  className="bg-card rounded-xl shadow-[0_1px_4px_rgba(133,146,173,0.2)] p-4 flex items-center gap-4 flex-wrap"
                 >
                   <div className="h-10 w-10 rounded-lg bg-[hsl(var(--success)/0.15)] text-success flex items-center justify-center shrink-0">
                     <CheckCircle2 className="h-5 w-5" />
