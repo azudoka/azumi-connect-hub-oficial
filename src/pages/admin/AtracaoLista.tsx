@@ -386,7 +386,7 @@ export default function AtracaoLista() {
 
       {!loadingVagas && vagas.length > 0 && (view === "kanban" ? (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin-invisible">
             {FUNIL_ETAPAS.map((etapa) => {
               const items = vagasAtivas.filter((v) => v.etapaFunil === etapa);
               const isOver = dragOverCol === etapa;
@@ -413,7 +413,7 @@ export default function AtracaoLista() {
                   }}
                   style={{ borderTopColor: corEtapa }}
                   className={cn(
-                    "bg-card border border-t-[3px] rounded-xl p-3 min-h-[280px] transition-colors",
+                    "w-[280px] shrink-0 bg-card border border-t-[3px] rounded-xl p-3 min-h-[280px] transition-colors",
                     isOver ? "border-primary ring-2 ring-[hsl(var(--primary)/0.2)]" : "border-border",
                   )}
                 >
