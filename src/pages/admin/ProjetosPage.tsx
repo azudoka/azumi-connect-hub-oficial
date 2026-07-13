@@ -711,11 +711,11 @@ export default function ProjetosPage() {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin-invisible">
               {colunasKanban.map((col) => {
                 const itens = filtrados.filter((p) => p.status === col.status);
                 return (
-                  <div key={col.status} className="bg-card rounded-xl shadow-[0_1px_4px_rgba(133,146,173,0.2)] p-3 min-h-[200px]">
+                  <div key={col.status} className="w-[280px] shrink-0 bg-card rounded-xl shadow-[0_1px_4px_rgba(133,146,173,0.2)] p-3 min-h-[200px]">
                     <div className="flex items-center justify-between px-1 mb-3">
                       <div className="inline-flex items-center gap-1.5">
                         <col.icon className="h-3.5 w-3.5 text-muted-foreground" />
