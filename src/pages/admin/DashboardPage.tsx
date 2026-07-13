@@ -10,6 +10,7 @@ import {
   CircleDollarSign,
   Clock,
   FileText,
+  MoreVertical,
   Plus,
   Send,
   Star,
@@ -17,6 +18,7 @@ import {
   TrendingUp,
   Wallet,
 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import {
   BarChart,
   Bar,
@@ -456,6 +458,7 @@ function AdminDashboard() {
                       <th className="text-left font-semibold text-sm px-4 py-3">Empresa</th>
                       <th className="text-left font-semibold text-sm px-4 py-3">Prazo</th>
                       <th className="text-left font-semibold text-sm px-4 py-3">Status</th>
+                      <th className="w-10"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -485,6 +488,26 @@ function AdminDashboard() {
                           </td>
                           <td className="px-4 py-3.5">
                             <StatusBadge status={e.status}>{e.statusLabel}</StatusBadge>
+                          </td>
+                          <td className="px-2 py-3.5" onClick={(ev) => ev.stopPropagation()}>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button
+                                  className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-[hsl(var(--primary)/0.1)] hover:text-primary text-muted-foreground transition-colors"
+                                  aria-label="Ações"
+                                >
+                                  <MoreVertical className="h-4 w-4" />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-40">
+                                <DropdownMenuItem onClick={() => navigate("/app/projetos")} className="gap-2">
+                                  <iconify-icon icon="solar:eye-bold-duotone" width="16" height="16" /> Ver projeto
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => navigate("/app/horas")} className="gap-2">
+                                  <iconify-icon icon="solar:clock-circle-bold-duotone" width="16" height="16" /> Lançar horas
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </td>
                         </tr>
                       );
