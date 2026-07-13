@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -19,6 +19,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   BarChart,
   Bar,
@@ -187,6 +188,7 @@ export default function DashboardPage() {
 }
 
 function AdminDashboard() {
+  const [periodoProdutividade, setPeriodoProdutividade] = useState<"atual" | "anterior">("atual");
   const navigate = useNavigate();
   const { usuario } = useAuth();
   const { pode } = usePermissao();
@@ -228,6 +230,12 @@ function AdminDashboard() {
     { semana: "Sem 2", ana: 28,   camila: 22, rafael: 18 },
     { semana: "Sem 3", ana: 22,   camila: 26, rafael: 12 },
     { semana: "Sem 4", ana: 28.5, camila: 14, rafael: 22 },
+  ];
+  const PRODUTIVIDADE_SEMANAS_MES_ANTERIOR = [
+    { semana: "Sem 1", ana: 20,   camila: 24, rafael: 10 },
+    { semana: "Sem 2", ana: 24,   camila: 19, rafael: 15 },
+    { semana: "Sem 3", ana: 26,   camila: 21, rafael: 16 },
+    { semana: "Sem 4", ana: 19,   camila: 25, rafael: 20 },
   ];
 
   const NPS_MESES = [
@@ -574,7 +582,7 @@ function AdminDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
             {/* Bloco 1: Tarefas em atraso */}
-            <Card className="p-5">
+            <Card className="p-5 rounded-xl border-0" style={{ boxShadow: "0 1px 4px rgba(133,146,173,0.2)" }}>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-display text-base font-semibold flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4 text-destructive" />
@@ -617,7 +625,7 @@ function AdminDashboard() {
             </Card>
 
             {/* Bloco 2: Engajamento do cliente */}
-            <Card className="p-5">
+            <Card className="p-5 rounded-xl border-0" style={{ boxShadow: "0 1px 4px rgba(133,146,173,0.2)" }}>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-display text-base font-semibold flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-primary" />
@@ -683,28 +691,38 @@ function AdminDashboard() {
             </Card>
           </div>
 
-          {/* LINHA 2: Produtividade */}
-          <Card className="p-5">
+          {/* LINHA 2: Produtividade — portado do RevenueForecast.tsx da referência */}
+          <Card className="p-5 rounded-xl border-0" style={{ boxShadow: "0 1px 4px rgba(133,146,173,0.2)" }}>
             <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="font-display text-base font-semibold">Produtividade dos consultores</h2>
-                <p className="text-xs text-muted-foreground mt-0.5">Horas registradas — últimas 4 semanas</p>
-              </div>
-              <div className="flex items-center gap-4">
-                {[
-                  { label: "Ana B.",    cor: "hsl(var(--primary))" },
-                  { label: "Camila T.", cor: "hsl(var(--highlight))" },
-                  { label: "Rafael M.", cor: "#06B6D4" },
-                ].map((c) => (
-                  <span key={c.label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <span className="h-2 w-2 rounded-sm inline-block" style={{ background: c.cor }} />
-                    {c.label}
-                  </span>
-                ))}
-              </div>
+              <h2 className="font-display text-base font-semibold">Produtividade dos consultores</h2>
+              <Select value={periodoProdutividade} onValueChange={(v) => setPeriodoProdutividade(v as "atual" | "anterior")}>
+                <SelectTrigger className="w-[160px] h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="atual">Últimas 4 semanas</SelectItem>
+                  <SelectItem value="anterior">Mês anterior</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-4 mb-2">
+              {[
+                { label: "Ana B.",    cor: "hsl(var(--primary))" },
+                { label: "Camila T.", cor: "hsl(var(--highlight))" },
+                { label: "Rafael M.", cor: "#06B6D4" },
+              ].map((c) => (
+                <span key={c.label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <span className="h-2 w-2 rounded-sm inline-block" style={{ background: c.cor }} />
+                  {c.label}
+                </span>
+              ))}
             </div>
             <ResponsiveContainer width="100%" height={160}>
-              <BarChart data={PRODUTIVIDADE_SEMANAS} barGap={4} barCategoryGap="30%">
+              <BarChart
+                data={periodoProdutividade === "atual" ? PRODUTIVIDADE_SEMANAS : PRODUTIVIDADE_SEMANAS_MES_ANTERIOR}
+                barGap={4}
+                barCategoryGap="30%"
+              >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                 <XAxis dataKey="semana" fontSize={11} tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" />
                 <YAxis fontSize={11} tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" tickFormatter={(v: number) => `${v}h`} />
@@ -715,9 +733,9 @@ function AdminDashboard() {
                     name === "ana" ? "Ana B." : name === "camila" ? "Camila T." : "Rafael M.",
                   ]}
                 />
-                <Bar dataKey="ana"    fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
-                <Bar dataKey="camila" fill="hsl(var(--highlight))" radius={[3, 3, 0, 0]} />
-                <Bar dataKey="rafael" fill="#06B6D4" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="ana"    fill="hsl(var(--primary))" radius={[5, 5, 0, 0]} />
+                <Bar dataKey="camila" fill="hsl(var(--highlight))" radius={[5, 5, 0, 0]} />
+                <Bar dataKey="rafael" fill="#06B6D4" radius={[5, 5, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </Card>
@@ -726,7 +744,7 @@ function AdminDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
             {/* Bloco 4: NPS */}
-            <Card className="p-5">
+            <Card className="p-5 rounded-xl border-0" style={{ boxShadow: "0 1px 4px rgba(133,146,173,0.2)" }}>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-display text-base font-semibold flex items-center gap-2">
                   <Star className="h-4 w-4 text-warning" />
@@ -770,7 +788,7 @@ function AdminDashboard() {
             </Card>
 
             {/* Bloco 5: SLA Vagas */}
-            <Card className="p-5">
+            <Card className="p-5 rounded-xl border-0" style={{ boxShadow: "0 1px 4px rgba(133,146,173,0.2)" }}>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-display text-base font-semibold flex items-center gap-2">
                   <Target className="h-4 w-4 text-primary" />
