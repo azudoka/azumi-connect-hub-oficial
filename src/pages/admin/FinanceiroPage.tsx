@@ -373,8 +373,8 @@ export default function FinanceiroPage() {
 
         {/* =================== FATURAS =================== */}
         <TabsContent value="faturas" className="space-y-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <ConnectStatCard variant="terminal" label="Total faturado" value={formatBRL(kpisFaturas.total)} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+            <ConnectStatCard variant="stat" icon="solar:bill-list-bold-duotone" tone="blue" label="Total faturado" value={formatBRL(kpisFaturas.total)} />
             <ConnectStatCard
               className="sm:col-span-2 lg:col-span-3"
               variant="stack"
@@ -485,7 +485,7 @@ export default function FinanceiroPage() {
           </Card>
 
           {/* Tabela */}
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden rounded-xl border-0 shadow-[0_1px_4px_rgba(133,146,173,0.2)]">
             {faturasFiltradas.length === 0 ? (
               <EmptyState
                 icon={Receipt}
@@ -566,8 +566,8 @@ export default function FinanceiroPage() {
 
         {/* =================== REPASSES =================== */}
         <TabsContent value="repasses" className="space-y-5">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <ConnectStatCard variant="terminal" label="Total a repassar" value={formatBRL(kpisRepasses.totalARepassar)} />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start">
+            <ConnectStatCard variant="stat" icon="solar:wallet-money-bold-duotone" tone="violet" label="Total a repassar" value={formatBRL(kpisRepasses.totalARepassar)} />
             <ConnectStatCard
               variant="radial"
               label="Repassado"
@@ -578,10 +578,10 @@ export default function FinanceiroPage() {
               }
               contextLabel={formatBRL(kpisRepasses.repassado)}
             />
-            <ConnectStatCard variant="terminal" label="Pendente" value={formatBRL(kpisRepasses.pendente)} />
+            <ConnectStatCard variant="stat" icon="solar:hourglass-bold-duotone" tone="amber" label="Pendente" value={formatBRL(kpisRepasses.pendente)} />
           </div>
 
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden rounded-xl border-0 shadow-[0_1px_4px_rgba(133,146,173,0.2)]">
             {repasses.length === 0 ? (
               <EmptyState
                 icon={Wallet}
@@ -668,9 +668,9 @@ export default function FinanceiroPage() {
             </Popover>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <ConnectStatCard variant="terminal" label="Faturamento bruto" value={formatBRL(resumoData.bruto)} />
-            <ConnectStatCard variant="terminal" label="Total de repasses" value={formatBRL(resumoData.totalRepasses)} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
+            <ConnectStatCard variant="stat" icon="solar:graph-new-up-bold-duotone" tone="blue" label="Faturamento bruto" value={formatBRL(resumoData.bruto)} />
+            <ConnectStatCard variant="stat" icon="solar:wallet-money-bold-duotone" tone="violet" label="Total de repasses" value={formatBRL(resumoData.totalRepasses)} />
             <ConnectStatCard
               variant="delta"
               label="Resultado líquido"
@@ -679,10 +679,10 @@ export default function FinanceiroPage() {
               deltaValue={`${resumoData.liquido >= 0 ? "+" : ""}${((resumoData.liquido / (resumoData.bruto || 1)) * 100).toFixed(1)}% margem`}
               positive={resumoData.liquido >= 0}
             />
-            <ConnectStatCard variant="terminal" label="Projetos ativos" value={String(resumoData.projetosAtivos)} />
+            <ConnectStatCard variant="stat" icon="solar:case-round-bold-duotone" tone="teal" label="Projetos ativos" value={String(resumoData.projetosAtivos)} />
           </div>
 
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden rounded-xl border-0 shadow-[0_1px_4px_rgba(133,146,173,0.2)]">
             <div className="p-4 border-b border-border">
               <h3 className="font-display text-base font-semibold">Breakdown por empresa</h3>
               <p className="text-xs text-muted-foreground mt-0.5">
