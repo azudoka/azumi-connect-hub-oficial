@@ -213,15 +213,17 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
         </button>
       </aside>
 
-      {/* Flyout — 260px, desliza por cima via `left`, não empurra o conteúdo */}
-      <aside
-        className="absolute top-0 h-full w-[260px] bg-card border-r border-border flex flex-col z-40 transition-[left] duration-[400ms] ease-in-out"
-        style={{
-          left: collapsed ? "-260px" : "80px",
-          boxShadow: collapsed ? "none" : "7px 7px 10px rgba(0,0,0,0.03)",
-        }}
-        aria-label="Navegação principal"
+      {/* Flyout — faz parte do fluxo normal agora: a largura anima, então o conteúdo ao lado
+          é empurrado/reduzido de verdade, não fica coberto por cima. */}
+      <div
+        className="h-full overflow-hidden shrink-0 transition-[width] duration-[400ms] ease-in-out"
+        style={{ width: collapsed ? "0px" : "260px" }}
       >
+        <aside
+          className="h-full w-[260px] bg-card border-r border-border flex flex-col"
+          style={{ boxShadow: collapsed ? "none" : "7px 7px 10px rgba(0,0,0,0.03)" }}
+          aria-label="Navegação principal"
+        >
         <div className="h-24 flex items-center px-5 border-b border-border">
           <AzumiLogo product="Connect" size={26} />
         </div>
@@ -321,7 +323,8 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
             </div>
           </div>
         )}
-      </aside>
+        </aside>
+      </div>
 
       <Dialog open={consultorOpen} onOpenChange={setConsultorOpen}>
         <DialogContent>
