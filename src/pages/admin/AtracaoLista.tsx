@@ -269,7 +269,7 @@ export default function AtracaoLista() {
                   view === "kanban" && "bg-card shadow-card text-foreground",
                 )}
               >
-                <LayoutGrid className="h-3.5 w-3.5" /> Kanban
+                <iconify-icon icon="solar:widget-2-bold-duotone" width="14" height="14" /> Kanban
               </button>
               <button
                 onClick={() => setView("list")}
@@ -278,23 +278,23 @@ export default function AtracaoLista() {
                   view === "list" && "bg-card shadow-card text-foreground",
                 )}
               >
-                <List className="h-3.5 w-3.5" /> Lista
+                <iconify-icon icon="solar:checklist-bold-duotone" width="14" height="14" /> Lista
               </button>
             </div>
             <button className="h-9 px-3 rounded-full border border-border hover:bg-secondary text-sm flex items-center gap-1.5">
-              <Filter className="h-4 w-4" /> Filtros
+              <iconify-icon icon="solar:tuning-2-bold-duotone" width="16" height="16" /> Filtros
             </button>
             <button
               onClick={() => setBancoOpen(true)}
               className="h-9 px-3 rounded-full border border-border hover:bg-secondary text-sm font-medium flex items-center gap-1.5"
             >
-              <Users className="h-4 w-4" /> Banco de Talentos
+              <iconify-icon icon="solar:users-group-rounded-bold-duotone" width="16" height="16" /> Banco de Talentos
             </button>
             <button
               onClick={() => setNovaVagaOpen(true)}
               className="h-9 px-3 rounded-full bg-primary text-primary-foreground text-sm font-medium flex items-center gap-1.5"
             >
-              <Plus className="h-4 w-4" /> Nova vaga
+              <iconify-icon icon="solar:add-circle-bold-duotone" width="16" height="16" /> Nova vaga
             </button>
           </>
         }
