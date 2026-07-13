@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import SolicitacoesClientePage from "@/pages/SolicitacoesClientePage";
 import { PageHeader } from "@/components/PageHeader";
+import { ConnectStatCard } from "@/components/ConnectStatCard";
 import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -380,20 +381,11 @@ function AdminView() {
         }
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          { label: "Total", value: kpis.total, cor: "text-foreground" },
-          { label: "Abertas", value: kpis.abertas, cor: "text-info" },
-          { label: "Em andamento", value: kpis.andamento, cor: "text-warning" },
-          { label: "Finalizadas", value: kpis.finalizadas, cor: "text-success" },
-        ].map((k) => (
-          <div key={k.label} className="rounded-xl border border-border bg-card p-4">
-            <div className={cn("text-2xl font-semibold ", k.cor)}>
-              {k.value}
-            </div>
-            <div className="text-xs text-muted-foreground mt-1">{k.label}</div>
-          </div>
-        ))}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 items-start">
+        <ConnectStatCard variant="stat" icon="solar:inbox-bold-duotone" tone="blue" label="Total" value={kpis.total} />
+        <ConnectStatCard variant="stat" icon="solar:letter-unread-bold-duotone" tone="teal" label="Abertas" value={kpis.abertas} />
+        <ConnectStatCard variant="stat" icon="solar:hourglass-bold-duotone" tone="amber" label="Em andamento" value={kpis.andamento} />
+        <ConnectStatCard variant="stat" icon="solar:check-circle-bold-duotone" tone="green" label="Finalizadas" value={kpis.finalizadas} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
@@ -436,7 +428,7 @@ function AdminView() {
         </Select>
       </div>
 
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <div className="rounded-xl bg-card shadow-[0_1px_4px_rgba(133,146,173,0.2)] overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="bg-[hsl(var(--muted)/0.4)] hover:bg-[hsl(var(--muted)/0.4)]">
