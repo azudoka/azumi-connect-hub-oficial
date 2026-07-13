@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { X, Upload, Check, ChevronRight, FileText, Loader2 } from "lucide-react";
+import { X, Upload, Check, ChevronRight, FileText, Loader2, UserCheck, RefreshCw } from "lucide-react";
 import DiscTeste from "@/components/disc/DiscTeste";
 import type { DiscDim, DiscScores } from "@/components/disc/discQuestions";
 import { supabase } from "@/integrations/supabase/client";
 
 const EMAIL_API = "https://azumi-email-api.vercel.app/api/send-email";
+const DISC_VALIDADE_MS = 1000 * 60 * 60 * 24 * 30 * 6; // 6 meses
 
 export type CandidaturaModo = "vaga" | "banco";
 
@@ -36,6 +37,23 @@ interface Cadastro {
   aceitePrivacidade: boolean;
   contratoDesejado: string;
   disponibilidade: string;
+}
+
+interface CandidatoAnterior {
+  id: string;
+  nome: string;
+  email: string;
+  telefone: string;
+  escolaridade: string;
+}
+
+interface DiscAnterior {
+  score_d: number;
+  score_i: number;
+  score_s: number;
+  score_c: number;
+  fator_predominante: string;
+  fator_secundario: string | null;
 }
 
 const CADASTRO_INIT: Cadastro = {
@@ -73,10 +91,21 @@ const ESCOLARIDADES = [
 const ORIGENS = ["LinkedIn", "Instagram", "Indicação", "Google", "Site Azumi", "Outro"];
 
 export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vagaId }: Props) {
-  const [step, setStep] = useState<1 | 2 | "ok">(1);
+  // step 0 = CPF lookup; 1 = formulário; 2 = DISC; "ok" = sucesso
+  const [step, setStep] = useState<0 | 1 | 2 | "ok">(0);
   const [c, setC] = useState<Cadastro>(CADASTRO_INIT);
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
+
+  // Step 0 — CPF lookup
+  const [cpfInicial, setCpfInicial] = useState("");
+  const [buscandoCpf, setBuscandoCpf] = useState(false);
+  const [candidatoAnterior, setCandidatoAnterior] = useState<CandidatoAnterior | null>(null);
+  const [discAnterior, setDiscAnterior] = useState<DiscAnterior | null>(null);
+  const [discValido, setDiscValido] = useState(false);
+  // null = não respondeu ainda; true/false = respondeu
+  const [querAlterarDados, setQuerAlterarDados] = useState<boolean | null>(null);
+  const [querRefazerDisc, setQuerRefazerDisc] = useState<boolean | null>(null);
 
   if (!open) return null;
 
@@ -85,12 +114,96 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
   }
 
   function close() {
-    setStep(1);
+    setStep(0);
     setC(CADASTRO_INIT);
     setErro("");
+    setCpfInicial("");
+    setCandidatoAnterior(null);
+    setDiscAnterior(null);
+    setDiscValido(false);
+    setQuerAlterarDados(null);
+    setQuerRefazerDisc(null);
     onClose();
   }
 
+  // ── Step 0: busca CPF ────────────────────────────────────────────────────────
+  async function buscarCpf() {
+    const cpf = cpfInicial.trim();
+    if (!cpf) { setErro("Informe o CPF para continuar."); return; }
+    setErro("");
+    setBuscandoCpf(true);
+    try {
+      const { data } = await supabase
+        .from("candidates")
+        .select("id, nome, email, telefone, escolaridade, disc_resultado_candidato(score_d, score_i, score_s, score_c, fator_predominante, fator_secundario, created_at)")
+        .eq("cpf", cpf)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (data) {
+        const anterior: CandidatoAnterior = {
+          id: data.id,
+          nome: data.nome ?? "",
+          email: data.email ?? "",
+          telefone: data.telefone ?? "",
+          escolaridade: (data.escolaridade as string) ?? "",
+        };
+        setCandidatoAnterior(anterior);
+
+        const discs = (data.disc_resultado_candidato as any[]) ?? [];
+        const ultimo = discs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+        const valido = !!ultimo && (Date.now() - new Date(ultimo.created_at).getTime()) < DISC_VALIDADE_MS;
+        if (ultimo) {
+          setDiscAnterior({
+            score_d: ultimo.score_d,
+            score_i: ultimo.score_i,
+            score_s: ultimo.score_s,
+            score_c: ultimo.score_c,
+            fator_predominante: ultimo.fator_predominante,
+            fator_secundario: ultimo.fator_secundario ?? null,
+          });
+        }
+        setDiscValido(valido);
+        // Perguntas serão mostradas progressivamente na tela 0
+      } else {
+        // CPF novo — avança direto pro formulário sem perguntas
+        avancarParaFormulario(null, cpf);
+      }
+    } finally {
+      setBuscandoCpf(false);
+    }
+  }
+
+  function avancarParaFormulario(anterior: CandidatoAnterior | null, cpf: string) {
+    setC((p) => ({
+      ...p,
+      cpf,
+      nome: anterior?.nome ?? p.nome,
+      email: anterior?.email ?? p.email,
+      telefone: anterior?.telefone ?? p.telefone,
+      escolaridade: anterior?.escolaridade ?? p.escolaridade,
+    }));
+    setStep(1);
+  }
+
+  // Chamado quando o usuário respondeu todas as perguntas no step 0
+  function confirmarStep0() {
+    // Se discValido e não quer refazer: pular step 2 → direto pro "concluirSemDisc"
+    // Se não discValido ou quer refazer: step normal (1 → 2)
+    avancarParaFormulario(
+      querAlterarDados === false ? candidatoAnterior : null,
+      cpfInicial.trim()
+    );
+  }
+
+  // Determina se todas as perguntas do step 0 foram respondidas
+  const todasPerguntasRespondidas =
+    candidatoAnterior !== null &&
+    querAlterarDados !== null &&
+    (!discValido || querRefazerDisc !== null);
+
+  // ── Step 1: validação ────────────────────────────────────────────────────────
   function validarStep1(): string {
     if (!c.nome.trim()) return "Informe seu nome completo.";
     if (!c.email.trim()) return "Informe o email.";
@@ -114,14 +227,20 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
     const e = validarStep1();
     if (e) { setErro(e); return; }
     setErro("");
-    setStep(2);
+    // Se DISC anterior válido e não quer refazer → pular step 2
+    if (discValido && querRefazerDisc === false && discAnterior) {
+      const scores: DiscScores = { D: discAnterior.score_d, I: discAnterior.score_i, S: discAnterior.score_s, C: discAnterior.score_c };
+      concluir(scores, discAnterior.fator_predominante as DiscDim);
+    } else {
+      setStep(2);
+    }
   }
 
+  // ── Conclusão ────────────────────────────────────────────────────────────────
   async function concluir(scores: DiscScores, perfilDim: DiscDim) {
     setEnviando(true);
     setErro("");
     try {
-      // Currículo — best effort, falha silenciosa não impede a candidatura
       let curriculoUrl: string | null = null;
       if (c.curriculo) {
         const ext = c.curriculo.name.split(".").pop() ?? "pdf";
@@ -137,59 +256,70 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
         }
       }
 
-      const row = {
-        job_id: vagaId ?? null,
-        nome: c.nome,
-        email: c.email,
-        telefone: c.telefone,
-        cpf: c.cpf || null,
-        data_nascimento: c.nascimento || null,
-        cidade: c.cidadeEstado || null,
-        bairro: c.bairro || null,
-        escolaridade: c.escolaridade || null,
-        possui_filhos: c.filhos || null,
-        linkedin: c.linkedin || null,
-        portfolio_url: c.portfolio || null,
-        origem: c.origem || null,
-        observacoes: c.mensagem || null,
-        curriculo_nome: c.curriculo?.name ?? null,
-        curriculo_url: curriculoUrl,
-        disponibilidade_inicio: modo === "banco" ? (c.disponibilidade || null) : null,
-        banco_talentos: modo === "banco",
-        etapa_azumi: "recebido",
-        lgpd_aceite: c.aceitePrivacidade,
-        lgpd_aceite_at: c.aceitePrivacidade ? new Date().toISOString() : null,
-      };
+      // Se candidato anterior e não quer alterar dados → reusar ID existente
+      const candidatoExistenteId = candidatoAnterior && querAlterarDados === false ? candidatoAnterior.id : null;
 
-      const { data: candidatoInserido, error } = await supabase
-        .from("candidates")
-        .insert(row)
-        .select("id")
-        .single();
+      let candidatoId: string;
 
-      // Candidato não foi salvo — jamais mostrar sucesso nesse caso
-      if (error || !candidatoInserido) {
-        throw new Error(error?.message ?? "Não foi possível salvar sua candidatura.");
+      if (candidatoExistenteId) {
+        candidatoId = candidatoExistenteId;
+      } else {
+        const row = {
+          job_id: vagaId ?? null,
+          nome: c.nome,
+          email: c.email,
+          telefone: c.telefone,
+          cpf: c.cpf || null,
+          data_nascimento: c.nascimento || null,
+          cidade: c.cidadeEstado || null,
+          bairro: c.bairro || null,
+          escolaridade: c.escolaridade || null,
+          possui_filhos: c.filhos || null,
+          linkedin: c.linkedin || null,
+          portfolio_url: c.portfolio || null,
+          origem: c.origem || null,
+          observacoes: c.mensagem || null,
+          curriculo_nome: c.curriculo?.name ?? null,
+          curriculo_url: curriculoUrl,
+          disponibilidade_inicio: modo === "banco" ? (c.disponibilidade || null) : null,
+          banco_talentos: modo === "banco",
+          etapa_azumi: "recebido",
+          lgpd_aceite: c.aceitePrivacidade,
+          lgpd_aceite_at: c.aceitePrivacidade ? new Date().toISOString() : null,
+        };
+
+        const { data: candidatoInserido, error } = await supabase
+          .from("candidates")
+          .insert(row)
+          .select("id")
+          .single();
+
+        if (error || !candidatoInserido) {
+          throw new Error(error?.message ?? "Não foi possível salvar sua candidatura.");
+        }
+        candidatoId = candidatoInserido.id;
       }
 
-      // DISC — best effort, falha não reverte a candidatura já criada
-      const entries = (["D", "I", "S", "C"] as const)
-        .map((k) => ({ k, v: scores[k] }))
-        .sort((a, b) => b.v - a.v);
-      const { error: discError } = await supabase
-        .from("disc_resultado_candidato")
-        .insert({
-          candidato_id: candidatoInserido.id,
-          score_d: scores.D,
-          score_i: scores.I,
-          score_s: scores.S,
-          score_c: scores.C,
-          fator_predominante: perfilDim,
-          fator_secundario: entries[1]?.k ?? null,
-        });
-      if (discError) console.error("[candidatura] DISC:", discError.message);
+      // DISC — gravar sempre (mesmo reaproveitando candidato, pula se reutilizando disc anterior sem refazer)
+      const reutilizandoDisc = discValido && querRefazerDisc === false && discAnterior;
+      if (!reutilizandoDisc) {
+        const entries = (["D", "I", "S", "C"] as const)
+          .map((k) => ({ k, v: scores[k] }))
+          .sort((a, b) => b.v - a.v);
+        const { error: discError } = await supabase
+          .from("disc_resultado_candidato")
+          .insert({
+            candidato_id: candidatoId,
+            score_d: scores.D,
+            score_i: scores.I,
+            score_s: scores.S,
+            score_c: scores.C,
+            fator_predominante: perfilDim,
+            fator_secundario: entries[1]?.k ?? null,
+          });
+        if (discError) console.error("[candidatura] DISC:", discError.message);
+      }
 
-      // Email — fire and forget, nunca bloqueia nem reverte
       const linhas = [
         `<tr><td><strong>Vaga</strong></td><td>${vagaTitulo ?? "Banco de talentos"}</td></tr>`,
         `<tr><td><strong>Modo</strong></td><td>${modo === "banco" ? "Banco de talentos" : "Candidatura"}</td></tr>`,
@@ -208,7 +338,7 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
         c.curriculo ? `<tr><td><strong>Currículo</strong></td><td>${c.curriculo.name}</td></tr>` : "",
         c.contratoDesejado ? `<tr><td><strong>Contrato desejado</strong></td><td>${c.contratoDesejado}</td></tr>` : "",
         c.disponibilidade ? `<tr><td><strong>Disponibilidade</strong></td><td>${c.disponibilidade}</td></tr>` : "",
-        `<tr><td><strong>DISC</strong></td><td>D:${scores.D} I:${scores.I} S:${scores.S} C:${scores.C} — Perfil: ${perfilDim}</td></tr>`,
+        `<tr><td><strong>DISC</strong></td><td>D:${scores.D} I:${scores.I} S:${scores.S} C:${scores.C} — Perfil: ${perfilDim}${reutilizandoDisc ? " (reaproveitado)" : ""}</td></tr>`,
       ].filter(Boolean).join("");
 
       fetch(EMAIL_API, {
@@ -225,14 +355,15 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
       setStep("ok");
     } catch (err: any) {
       console.error("[candidatura] Falha completa:", err);
-      setErro(
-        "Não conseguimos registrar sua candidatura agora. Tente novamente em instantes ou entre em contato com a Azumi RH."
-      );
+      setErro("Não conseguimos registrar sua candidatura agora. Tente novamente em instantes ou entre em contato com a Azumi RH.");
       setStep(1);
     } finally {
       setEnviando(false);
     }
   }
+
+  // ── Stepper label helper ─────────────────────────────────────────────────────
+  const stepNum = step === 0 ? 0 : step === 1 ? 1 : step === 2 ? 2 : 3;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-stretch justify-center overflow-y-auto bg-black/70 sm:items-center sm:p-6">
@@ -262,14 +393,114 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
         {/* Stepper */}
         {step !== "ok" && (
           <div className="flex items-center gap-3 border-b border-border bg-muted/50 px-6 py-3">
-            <StepItem n={1} label="Cadastro" active={step === 1} done={step === 2} />
+            <StepItem n={1} label="Identificação" active={step === 0} done={stepNum > 0} />
             <div className="h-px flex-1 bg-border" />
-            <StepItem n={2} label="Perfil DISC" active={step === 2} done={false} />
+            <StepItem n={2} label="Cadastro" active={step === 1} done={stepNum > 1} />
+            <div className="h-px flex-1 bg-border" />
+            <StepItem n={3} label="Perfil DISC" active={step === 2} done={false} />
           </div>
         )}
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-6">
+
+          {/* ── Step 0: CPF ── */}
+          {step === 0 && (
+            <div className="mx-auto max-w-sm space-y-5 py-4">
+              <div className="text-center">
+                <h3 className="font-display text-lg font-semibold text-foreground">Vamos começar pelo seu CPF</h3>
+                <p className="mt-1 font-sans text-sm text-muted-foreground">
+                  Se você já se candidatou antes, seus dados serão carregados automaticamente.
+                </p>
+              </div>
+
+              <Field label="CPF *">
+                <Input
+                  value={cpfInicial}
+                  onChange={(v) => { setCpfInicial(v); setCandidatoAnterior(null); setDiscAnterior(null); setQuerAlterarDados(null); setQuerRefazerDisc(null); setErro(""); }}
+                  placeholder="000.000.000-00"
+                  onKeyDown={(e) => { if (e.key === "Enter") buscarCpf(); }}
+                />
+              </Field>
+
+              {erro && <p className="font-sans text-sm text-destructive">{erro}</p>}
+
+              {/* Candidato encontrado — perguntas progressivas */}
+              {candidatoAnterior && (
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
+                    <UserCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <div className="min-w-0">
+                      <p className="font-sans text-sm font-medium text-foreground">Cadastro encontrado</p>
+                      <p className="font-sans text-xs text-muted-foreground">{candidatoAnterior.nome} · {candidatoAnterior.email}</p>
+                    </div>
+                  </div>
+
+                  {/* Pergunta 1: alterar dados? */}
+                  {querAlterarDados === null && (
+                    <div className="space-y-2">
+                      <p className="font-sans text-sm font-medium text-foreground">Deseja alterar alguma informação?</p>
+                      <div className="flex gap-2">
+                        <BtnOpcao onClick={() => setQuerAlterarDados(false)} label="Não, usar esses dados" />
+                        <BtnOpcao onClick={() => setQuerAlterarDados(true)} label="Sim, quero alterar" secondary />
+                      </div>
+                    </div>
+                  )}
+
+                  {querAlterarDados !== null && (
+                    <p className="font-sans text-xs text-muted-foreground">
+                      {querAlterarDados ? "Você poderá editar seus dados no próximo passo." : "Seus dados serão mantidos como estão."}
+                    </p>
+                  )}
+
+                  {/* Pergunta 2: refazer DISC? (só se disc válido e dados respondidos) */}
+                  {querAlterarDados !== null && discValido && discAnterior && querRefazerDisc === null && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <RefreshCw className="h-4 w-4 text-muted-foreground" />
+                        <p className="font-sans text-sm font-medium text-foreground">
+                          Você já fez nosso teste de perfil (DISC) há menos de 6 meses. Deseja refazer?
+                        </p>
+                      </div>
+                      <p className="font-sans text-xs text-muted-foreground">
+                        Perfil anterior: {discAnterior.fator_predominante}
+                        {discAnterior.fator_secundario ? ` / ${discAnterior.fator_secundario}` : ""}
+                      </p>
+                      <div className="flex gap-2">
+                        <BtnOpcao onClick={() => setQuerRefazerDisc(true)} label="Sim, refazer" secondary />
+                        <BtnOpcao onClick={() => setQuerRefazerDisc(false)} label="Não, usar resultado anterior" />
+                      </div>
+                    </div>
+                  )}
+
+                  {querRefazerDisc !== null && (
+                    <p className="font-sans text-xs text-muted-foreground">
+                      {querRefazerDisc ? "Você fará o teste DISC novamente." : "Usaremos seu resultado anterior do teste DISC."}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div className="flex justify-end pt-2">
+                {!candidatoAnterior ? (
+                  <button
+                    type="button"
+                    onClick={buscarCpf}
+                    disabled={buscandoCpf}
+                    className="btn-primary"
+                  >
+                    {buscandoCpf ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Continuar <ChevronRight className="h-4 w-4" /></>}
+                  </button>
+                ) : todasPerguntasRespondidas ? (
+                  <button type="button" onClick={confirmarStep0} className="btn-primary">
+                    Continuar <ChevronRight className="h-4 w-4" />
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          )}
+
+          {/* ── Step 1: formulário ── */}
           {step === 1 && (
             <div className="mx-auto max-w-2xl space-y-5">
               <div>
@@ -300,18 +531,18 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
 
               <Grid2>
                 <Field label="Nome completo *">
-                  <Input value={c.nome} onChange={(v) => up("nome", v)} />
+                  <Input value={c.nome} onChange={(v) => up("nome", v)} readOnly={candidatoAnterior !== null && querAlterarDados === false} />
                 </Field>
                 <Field label="Email *">
-                  <Input type="email" value={c.email} onChange={(v) => up("email", v)} />
+                  <Input type="email" value={c.email} onChange={(v) => up("email", v)} readOnly={candidatoAnterior !== null && querAlterarDados === false} />
                 </Field>
               </Grid2>
               <Grid2>
                 <Field label="Telefone *">
-                  <Input value={c.telefone} onChange={(v) => up("telefone", v)} placeholder="(00) 00000-0000" />
+                  <Input value={c.telefone} onChange={(v) => up("telefone", v)} placeholder="(00) 00000-0000" readOnly={candidatoAnterior !== null && querAlterarDados === false} />
                 </Field>
                 <Field label="CPF *">
-                  <Input value={c.cpf} onChange={(v) => up("cpf", v)} placeholder="000.000.000-00" />
+                  <Input value={c.cpf} onChange={(v) => up("cpf", v)} placeholder="000.000.000-00" readOnly />
                 </Field>
               </Grid2>
               <Grid2>
@@ -469,20 +700,25 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
 
               {erro && <p className="font-sans text-sm text-destructive">{erro}</p>}
 
-              <div className="flex justify-end pt-2">
+              <div className="flex items-center justify-between pt-2">
+                <button type="button" onClick={() => { setStep(0); setErro(""); }} className="font-sans text-sm text-muted-foreground hover:text-foreground">
+                  ← Voltar
+                </button>
                 <button type="button" onClick={avancar} className="btn-primary">
-                  Próximo <ChevronRight className="h-4 w-4" />
+                  {discValido && querRefazerDisc === false ? "Enviar candidatura" : <>Próximo <ChevronRight className="h-4 w-4" /></>}
                 </button>
               </div>
             </div>
           )}
 
+          {/* ── Step 2: DISC ── */}
           {step === 2 && (
             <div className="mx-auto max-w-2xl">
               <DiscTeste candidateName={c.nome || "Candidato"} onComplete={concluir} />
             </div>
           )}
 
+          {/* ── Sucesso ── */}
           {step === "ok" && (
             <div className="mx-auto max-w-md py-10 text-center">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[hsl(var(--success)/0.15)] text-success">
@@ -501,24 +737,34 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
   );
 }
 
+// ── Primitives ────────────────────────────────────────────────────────────────
+
 function StepItem({ n, label, active, done }: { n: number; label: string; active: boolean; done: boolean }) {
   return (
     <div className="flex items-center gap-2">
-      <div
-        className={`flex h-7 w-7 items-center justify-center rounded-full font-sans text-xs font-semibold ${
-          done
-            ? "bg-success text-success-foreground"
-            : active
-            ? "bg-primary text-primary-foreground"
-            : "bg-muted text-muted-foreground"
-        }`}
-      >
+      <div className={`flex h-7 w-7 items-center justify-center rounded-full font-sans text-xs font-semibold ${
+        done ? "bg-success text-success-foreground" : active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+      }`}>
         {done ? <Check className="h-4 w-4" /> : n}
       </div>
-      <span className={`font-sans text-sm font-medium ${active || done ? "text-foreground" : "text-muted-foreground"}`}>
-        {label}
-      </span>
+      <span className={`font-sans text-sm font-medium ${active || done ? "text-foreground" : "text-muted-foreground"}`}>{label}</span>
     </div>
+  );
+}
+
+function BtnOpcao({ onClick, label, secondary }: { onClick: () => void; label: string; secondary?: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-lg border px-3 py-2 font-sans text-xs font-medium transition ${
+        secondary
+          ? "border-border bg-background text-foreground hover:bg-muted"
+          : "border-primary bg-primary text-primary-foreground hover:bg-primary/90"
+      }`}
+    >
+      {label}
+    </button>
   );
 }
 
@@ -535,14 +781,25 @@ function Grid2({ children }: { children: React.ReactNode }) {
   return <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{children}</div>;
 }
 
-function Input({ value, onChange, type = "text", placeholder }: { value: string; onChange: (v: string) => void; type?: string; placeholder?: string }) {
+function Input({ value, onChange, type = "text", placeholder, readOnly, onKeyDown }: {
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+  placeholder?: string;
+  readOnly?: boolean;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+}) {
   return (
     <input
       type={type}
       value={value}
       placeholder={placeholder}
+      readOnly={readOnly}
+      onKeyDown={onKeyDown}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground focus:border-primary focus:outline-none"
+      className={`w-full rounded-lg border border-border px-3 py-2 font-sans text-sm text-foreground focus:border-primary focus:outline-none ${
+        readOnly ? "bg-muted text-muted-foreground cursor-default" : "bg-background"
+      }`}
     />
   );
 }
