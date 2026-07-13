@@ -1064,7 +1064,7 @@ export default function VagaDetalheAdmin() {
               onClick={() => navigate(`/app/horas?task_id=${vaga.id}&vaga=${encodeURIComponent(vaga.titulo)}`)}
               className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-border hover:bg-secondary text-xs font-medium text-muted-foreground transition-colors"
             >
-              <Play className="h-3.5 w-3.5" />
+              <iconify-icon icon="solar:play-bold-duotone" width="14" height="14" />
               Play
             </button>
           </>
@@ -1074,17 +1074,17 @@ export default function VagaDetalheAdmin() {
       {/* ─── Publicação no site de vagas Azumi ───
           TODO: aqui será plugada a automação real com o site de vagas / APIs.
           Hoje é só mock em memória. */}
-      <div className="mb-4 rounded-xl border border-border bg-card px-4 py-3 flex items-center gap-3 flex-wrap">
-        <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
+      <div className="mb-4 rounded-xl bg-card shadow-[0_1px_4px_rgba(133,146,173,0.2)] px-4 py-3 flex items-center gap-3 flex-wrap">
+        <iconify-icon icon="solar:global-bold-duotone" width="18" height="18" style={{ color: "hsl(var(--muted-foreground))" }} />
         <div className="text-xs">
           <span className="text-muted-foreground">Publicação:</span>{" "}
           {publicacao === "publicada" ? (
             <span className="inline-flex items-center gap-1 rounded-full border border-[hsl(var(--success)/0.3)] bg-[hsl(var(--success)/0.1)] px-2 py-0.5 text-success font-medium">
-              <CheckCircle2 className="h-3 w-3" /> Publicada no site da Azumi
+              <iconify-icon icon="solar:check-circle-bold-duotone" width="12" height="12" /> Publicada no site da Azumi
             </span>
           ) : publicacao === "em_revisao" ? (
             <span className="inline-flex items-center gap-1 rounded-full border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] px-2 py-0.5 text-warning font-medium">
-              <Clock className="h-3 w-3" /> Em revisão
+              <iconify-icon icon="solar:clock-circle-bold-duotone" width="12" height="12" /> Em revisão
             </span>
           ) : (
             <span className="inline-flex items-center gap-1 rounded-full border border-border bg-secondary px-2 py-0.5 text-muted-foreground font-medium">
@@ -1104,7 +1104,7 @@ export default function VagaDetalheAdmin() {
                 Status <ChevronDown className="h-3 w-3" />
               </button>
               {statusMenuOpen && (
-                <div className="absolute right-0 top-full mt-1 z-50 w-44 bg-card border border-border rounded-xl shadow-elevated py-1">
+                <div className="absolute right-0 top-full mt-1 z-50 w-44 bg-card rounded-xl shadow-[0_1px_4px_rgba(133,146,173,0.2)] shadow-elevated py-1">
                   {(["ativa", "standby", "cancelada"] as const)
                     .filter((s) => !(vagaSupabaseData.status === "cancelada" && s === "ativa"))
                     .map((s) => {
@@ -1224,7 +1224,7 @@ export default function VagaDetalheAdmin() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
         {/* Timeline */}
-        <div className="lg:col-span-2 bg-card border border-border rounded-xl p-4 card-hover">
+        <div className="lg:col-span-2 bg-card rounded-xl shadow-[0_1px_4px_rgba(133,146,173,0.2)] p-4 card-hover">
           <h3 className="font-display font-semibold mb-3">Timeline da vaga</h3>
           <div className="flex items-start overflow-x-auto pb-1 -mx-1 px-1">
             {(() => {
@@ -1296,7 +1296,7 @@ export default function VagaDetalheAdmin() {
         </div>
 
         {/* Funil */}
-        <div className="bg-card border border-border rounded-xl p-5 card-hover">
+        <div className="bg-card rounded-xl shadow-[0_1px_4px_rgba(133,146,173,0.2)] p-5 card-hover">
           <h3 className="font-display font-semibold mb-4">Funil</h3>
           <ul className="space-y-3">
             {funil.map((f, i) => {
@@ -1861,7 +1861,7 @@ export default function VagaDetalheAdmin() {
       )}
 
       {tab === "site" && (
-        <div className="bg-card border border-border rounded-xl p-5">
+        <div className="bg-card rounded-xl shadow-[0_1px_4px_rgba(133,146,173,0.2)] p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-display font-semibold">Candidaturas recebidas pelo site</h3>
             <span className="text-sm text-muted-foreground">{candidaturasSite.length} candidatura(s)</span>
@@ -1904,7 +1904,7 @@ export default function VagaDetalheAdmin() {
       )}
 
       {tab === "perfis" && (
-        <div className="bg-card border border-border rounded-xl p-5">
+        <div className="bg-card rounded-xl shadow-[0_1px_4px_rgba(133,146,173,0.2)] p-5">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
             <div>
               <h3 className="font-display font-semibold">Perfis selecionados para envio</h3>
@@ -2024,7 +2024,7 @@ export default function VagaDetalheAdmin() {
             empresaNome={vaga.empresa}
           />
 
-          <div className="bg-card border border-border rounded-xl p-5">
+          <div className="bg-card rounded-xl shadow-[0_1px_4px_rgba(133,146,173,0.2)] p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-display font-semibold">Outras entrevistas / eventos</h3>
               <span className="text-xs text-muted-foreground">{eventos.length} evento(s)</span>
@@ -2064,7 +2064,7 @@ export default function VagaDetalheAdmin() {
       )}
 
       {tab === "historico" && (
-        <div className="bg-card border border-border rounded-xl p-5 max-w-3xl">
+        <div className="bg-card rounded-xl shadow-[0_1px_4px_rgba(133,146,173,0.2)] p-5 max-w-3xl">
           <h3 className="font-display font-semibold mb-4">Histórico da vaga</h3>
           <ol className="relative space-y-4 before:absolute before:left-4 before:top-2 before:bottom-2 before:w-px before:bg-border">
             {comentariosVaga.map((c) => {
@@ -2102,7 +2102,7 @@ export default function VagaDetalheAdmin() {
       )}
 
       {tab === "questionarios" && (
-        <div className="bg-card border border-border rounded-xl p-5">
+        <div className="bg-card rounded-xl shadow-[0_1px_4px_rgba(133,146,173,0.2)] p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-display font-semibold">Gestão de questionários</h3>
             <button
@@ -4475,7 +4475,7 @@ function ChatVagaPanel({
   }
 
   return (
-    <div className="bg-card border border-border rounded-xl p-0 w-full flex flex-col" style={{ minHeight: 'calc(100vh - 280px)' }}>
+    <div className="bg-card rounded-xl shadow-[0_1px_4px_rgba(133,146,173,0.2)] p-0 w-full flex flex-col" style={{ minHeight: 'calc(100vh - 280px)' }}>
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-3 border-b border-border flex-wrap gap-2">
         <h3 className="font-display font-semibold">Conversas sobre esta vaga</h3>
@@ -6299,7 +6299,7 @@ function AgendamentoGestorPanel({
 }) {
   const origem = typeof window !== "undefined" ? window.location.origin : "https://connect.azumirh.com.br";
   return (
-    <div className="bg-card border border-border rounded-xl p-5">
+    <div className="bg-card rounded-xl shadow-[0_1px_4px_rgba(133,146,173,0.2)] p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="font-display font-semibold">Entrevistas com gestor e entrevistas finais</h3>
