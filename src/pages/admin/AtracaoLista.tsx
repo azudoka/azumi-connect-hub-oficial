@@ -5,7 +5,8 @@ import { SlaBar } from "@/components/SlaBar";
 import { vagas as vagasMock, type StatusKey } from "@/data/mock";
 import { criarVaga, publicarVaga, listarVagas, atualizarEtapa, type VagaSupabase } from "@/services/vagasService";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, LayoutGrid, List, Filter, Info, AlertTriangle, Users, ChevronDown, ChevronRight, Megaphone } from "lucide-react";
+import { Plus, LayoutGrid, List, Filter, Info, AlertTriangle, Users, ChevronDown, ChevronRight, Megaphone, MoreVertical } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell } from "recharts";
 
 function supabaseToLocal(r: VagaSupabase): VagaLocal {
@@ -458,9 +459,9 @@ export default function AtracaoLista() {
                               setDraggingId(null);
                               setDragOverCol(null);
                             }}
-                            style={{ borderLeftColor: corUrgencia }}
+                            style={{ borderLeftColor: corUrgencia, boxShadow: "0 1px 4px rgba(133,146,173,0.15)" }}
                             className={cn(
-                              "block bg-card border border-border border-l-[3px] rounded-lg p-3 transition-colors cursor-grab active:cursor-grabbing hover:border-[hsl(var(--primary)/0.4)]",
+                              "block bg-card border-l-[3px] rounded-lg p-3 transition-all cursor-grab active:cursor-grabbing hover:-translate-y-0.5",
                               draggingId === v.id && "opacity-50",
                             )}
                           >
@@ -491,7 +492,7 @@ export default function AtracaoLista() {
                             })()}
                             {critico && (
                               <div className="mt-2 inline-flex items-center gap-1 rounded-full border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] px-2 py-0.5 text-[10px] text-warning font-medium">
-                                <AlertTriangle className="h-3 w-3" /> SLA crítico
+                                <iconify-icon icon="solar:danger-triangle-bold-duotone" width="12" height="12" /> SLA crítico
                               </div>
                             )}
                             <div className="mt-3 pt-2 border-t border-border flex items-center gap-1.5">
@@ -511,38 +512,56 @@ export default function AtracaoLista() {
           </div>
         </>
       ) : (
-        <div className="bg-card border border-border rounded-xl overflow-hidden">
+        <div className="bg-card rounded-xl overflow-hidden" style={{ boxShadow: "0 1px 4px rgba(133,146,173,0.2)" }}>
           <table className="w-full text-sm">
-            <thead className="bg-secondary/40 text-xs uppercase tracking-wider text-muted-foreground">
-              <tr>
-                <th className="text-left font-medium px-4 py-3">Vaga</th>
-                <th className="text-left font-medium px-4 py-3">Empresa</th>
-                <th className="text-left font-medium px-4 py-3">Etapa</th>
-                <th className="text-left font-medium px-4 py-3">Status</th>
-                <th className="text-left font-medium px-4 py-3 w-48">SLA</th>
-                <th className="text-right font-medium px-4 py-3">Candidatos</th>
+            <thead>
+              <tr className="border-b border-border">
+                <th className="text-left font-semibold px-4 py-4">Vaga</th>
+                <th className="text-left font-semibold px-4 py-4">Etapa</th>
+                <th className="text-left font-semibold px-4 py-4">Status</th>
+                <th className="text-left font-semibold px-4 py-4 w-48">SLA</th>
+                <th className="text-right font-semibold px-4 py-4">Candidatos</th>
+                <th className="w-10"></th>
               </tr>
             </thead>
             <tbody>
               {vagasAtivas.map((v) => (
-                <tr key={v.id} className="border-t border-border hover:bg-secondary/30 transition-colors">
-                  <td className="px-4 py-3">
-                    <Link to={`/app/atracao/${v.id}`} className="font-medium hover:text-primary">
-                      {v.titulo}
+                <tr key={v.id} className="border-b border-border last:border-0 hover:bg-muted/40 transition-colors">
+                  <td className="px-4 py-3.5">
+                    <Link to={`/app/atracao/${v.id}`} className="flex items-center gap-3 group">
+                      <div className="h-10 w-10 rounded-lg bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))] flex items-center justify-center text-[10px] font-semibold text-white shrink-0">
+                        {v.consultor?.split(" ").map((n) => n[0]).slice(0, 2).join("") ?? "AZ"}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-medium truncate group-hover:text-primary transition-colors">{v.titulo}</p>
+                        <p className="text-xs text-muted-foreground truncate flex items-center gap-1.5">
+                          {v.empresa}
+                          {v.is_avulsa && <CategoryTag categoria="origem">Avulso</CategoryTag>}
+                        </p>
+                      </div>
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    <span className="flex items-center gap-1.5">
-                      {v.empresa}
-                      {v.is_avulsa && (
-                        <CategoryTag categoria="origem">Avulso</CategoryTag>
-                      )}
-                    </span>
+                  <td className="px-4 py-3.5 text-muted-foreground">{FUNIL_ETAPA_LABEL[v.etapaFunil]}</td>
+                  <td className="px-4 py-3.5"><StatusBadge status={v.status} /></td>
+                  <td className="px-4 py-3.5"><SlaBar percent={v.sla} /></td>
+                  <td className="px-4 py-3.5 text-right tabular-nums">{v.candidatosTotal}</td>
+                  <td className="px-2 py-3.5" onClick={(ev) => ev.stopPropagation()}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-[hsl(var(--primary)/0.1)] hover:text-primary text-muted-foreground transition-colors"
+                          aria-label="Ações"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40">
+                        <DropdownMenuItem className="gap-2" onClick={() => navigate(`/app/atracao/${v.id}`)}>
+                          <iconify-icon icon="solar:eye-bold-duotone" width="16" height="16" /> Ver vaga
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </td>
-                  <td className="px-4 py-3">{FUNIL_ETAPA_LABEL[v.etapaFunil]}</td>
-                  <td className="px-4 py-3"><StatusBadge status={v.status} /></td>
-                  <td className="px-4 py-3"><SlaBar percent={v.sla} /></td>
-                  <td className="px-4 py-3 text-right tabular-nums">{v.candidatosTotal}</td>
                 </tr>
               ))}
             </tbody>
@@ -562,26 +581,26 @@ export default function AtracaoLista() {
             Standby, Canceladas e Concluídas ({vagasInativas.length})
           </button>
           {inativasOpen && (
-            <div className="bg-card border border-border rounded-xl overflow-hidden">
+            <div className="bg-card rounded-xl overflow-hidden" style={{ boxShadow: "0 1px 4px rgba(133,146,173,0.2)" }}>
               <table className="w-full text-sm">
-                <thead className="bg-secondary/40 text-xs uppercase tracking-wider text-muted-foreground">
-                  <tr>
-                    <th className="text-left font-medium px-4 py-3">Vaga</th>
-                    <th className="text-left font-medium px-4 py-3">Empresa</th>
-                    <th className="text-left font-medium px-4 py-3">Etapa</th>
-                    <th className="text-left font-medium px-4 py-3">Status</th>
-                    <th className="text-left font-medium px-4 py-3 w-48">SLA</th>
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left font-semibold px-4 py-4">Vaga</th>
+                    <th className="text-left font-semibold px-4 py-4">Empresa</th>
+                    <th className="text-left font-semibold px-4 py-4">Etapa</th>
+                    <th className="text-left font-semibold px-4 py-4">Status</th>
+                    <th className="text-left font-semibold px-4 py-4 w-48">SLA</th>
                   </tr>
                 </thead>
                 <tbody>
                   {vagasInativas.map((v) => (
-                    <tr key={v.id} className="border-t border-border hover:bg-secondary/30 transition-colors opacity-70">
-                      <td className="px-4 py-3">
+                    <tr key={v.id} className="border-b border-border last:border-0 hover:bg-muted/40 transition-colors opacity-70">
+                      <td className="px-4 py-3.5">
                         <Link to={`/app/atracao/${v.id}`} className="font-medium hover:text-primary">
                           {v.titulo}
                         </Link>
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">
+                      <td className="px-4 py-3.5 text-muted-foreground">
                         <span className="flex items-center gap-1.5">
                           {v.empresa}
                           {v.is_avulsa && (
@@ -589,9 +608,9 @@ export default function AtracaoLista() {
                           )}
                         </span>
                       </td>
-                      <td className="px-4 py-3">{FUNIL_ETAPA_LABEL[v.etapaFunil]}</td>
-                      <td className="px-4 py-3"><StatusBadge status={v.status} /></td>
-                      <td className="px-4 py-3"><SlaBar percent={v.sla} /></td>
+                      <td className="px-4 py-3.5">{FUNIL_ETAPA_LABEL[v.etapaFunil]}</td>
+                      <td className="px-4 py-3.5"><StatusBadge status={v.status} /></td>
+                      <td className="px-4 py-3.5"><SlaBar percent={v.sla} /></td>
                     </tr>
                   ))}
                 </tbody>
