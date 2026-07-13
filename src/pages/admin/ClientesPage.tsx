@@ -16,7 +16,7 @@ import {
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/PageHeader";
-import { KpiCard } from "@/components/KpiCard";
+import { ConnectStatCard } from "@/components/ConnectStatCard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { EmptyState } from "@/components/EmptyState";
 
@@ -232,15 +232,18 @@ export default function ClientesPage() {
 
         {/* =================== EMPRESAS =================== */}
         <TabsContent value="empresas" className="space-y-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <KpiCard label="Empresas ativas" value={String(kpis.ativas)} icon={Building2} />
-            <KpiCard label="Projetos em andamento" value={String(kpis.projetos)} icon={Briefcase} />
-            <KpiCard label="Contratos vigentes" value={String(kpis.contratos)} icon={FileText} />
-            <KpiCard
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+            <ConnectStatCard variant="stat" icon="solar:buildings-2-bold-duotone" tone="blue" label="Empresas ativas" value={kpis.ativas} />
+            <ConnectStatCard variant="stat" icon="solar:case-round-bold-duotone" tone="violet" label="Projetos em andamento" value={kpis.projetos} />
+            <ConnectStatCard variant="stat" icon="solar:document-text-bold-duotone" tone="teal" label="Contratos vigentes" value={kpis.contratos} />
+            <ConnectStatCard
+              variant="list"
               label="Inadimplentes"
-              value={String(kpis.inadimplentes)}
-              icon={AlertTriangle}
-              className={cn(kpis.inadimplentes > 0 && "ring-1 ring-destructive/40")}
+              items={empresasList
+                .filter((e) => e.faturasAbertas > 0)
+                .slice(0, 3)
+                .map((e) => ({ label: `${e.nome} — ${e.faturasAbertas} fatura(s)`, tone: "red" as const }))}
+              footer={`${kpis.inadimplentes} empresa${kpis.inadimplentes === 1 ? "" : "s"} no total`}
             />
           </div>
 
@@ -311,7 +314,7 @@ export default function ClientesPage() {
               {empresasFiltradas.map((e) => {
                 const meta = empresaStatusMap[e.status];
                 return (
-                  <Card key={e.id} className="p-5 card-hover">
+                  <Card key={e.id} className="p-5 card-hover rounded-xl border-0 shadow-[0_1px_4px_rgba(133,146,173,0.2)]">
                     <div className="flex items-start gap-4">
                       <Avatar className="h-14 w-14 rounded-xl">
                         <AvatarFallback
@@ -430,7 +433,7 @@ export default function ClientesPage() {
             </div>
           </Card>
 
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden rounded-xl border-0 shadow-[0_1px_4px_rgba(133,146,173,0.2)]">
             {contatosFiltrados.length === 0 ? (
               <EmptyState
                 icon={UserCircle2}
