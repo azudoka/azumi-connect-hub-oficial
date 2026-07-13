@@ -180,7 +180,7 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
 
         <button
           onClick={() => setCollapsed((c) => !c)}
-          className="h-11 w-11 rounded-full flex items-center justify-center text-sidebar-foreground/70 hover:bg-white/10 hover:text-sidebar-foreground transition-colors mb-2"
+          className="h-11 w-11 rounded-full flex items-center justify-center text-white/90 hover:bg-white/15 hover:text-white transition-colors mb-2"
           aria-label={collapsed ? "Abrir menu" : "Fechar menu"}
         >
           <Menu className="h-5 w-5" />
@@ -195,8 +195,8 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
               className={cn(
                 "h-11 w-11 rounded-full flex items-center justify-center transition-colors",
                 activeGroup === g.label && !collapsed
-                  ? "bg-[hsl(var(--primary)/0.18)] text-primary"
-                  : "text-sidebar-foreground/70 hover:bg-white/10 hover:text-sidebar-foreground"
+                  ? "bg-[hsl(var(--primary-glow))] text-white shadow-sm"
+                  : "text-white/90 hover:bg-white/15 hover:text-white"
               )}
             >
               <iconify-icon icon={GROUP_RAIL_ICON[g.label] ?? "solar:widget-2-bold-duotone"} width="22" height="22" />
@@ -206,7 +206,7 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
 
         <button
           onClick={handleLogout}
-          className="h-11 w-11 rounded-full flex items-center justify-center text-sidebar-foreground/70 hover:bg-white/10 hover:text-destructive transition-colors"
+          className="h-11 w-11 rounded-full flex items-center justify-center text-white/90 hover:bg-white/15 hover:text-destructive transition-colors"
           aria-label="Sair"
         >
           <LogOut className="h-5 w-5" />
@@ -220,12 +220,12 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
         style={{ width: collapsed ? "0px" : "260px" }}
       >
         <aside
-          className="h-full w-[260px] bg-card border-r border-border flex flex-col"
+          className="h-full w-[260px] bg-[hsl(var(--primary)/0.07)] border-r border-border flex flex-col"
           style={{ boxShadow: collapsed ? "none" : "7px 7px 10px rgba(0,0,0,0.03)" }}
           aria-label="Navegação principal"
         >
-        <div className="h-24 flex items-center px-5 border-b border-border">
-          <AzumiLogo product="Connect" size={26} />
+        <div className="h-24 flex items-center justify-center px-5 border-b border-border">
+          <AzumiLogo product="Connect" size={30} />
         </div>
 
         <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-5">
