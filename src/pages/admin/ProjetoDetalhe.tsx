@@ -709,7 +709,7 @@ export default function ProjetoDetalhe() {
           {entregaveis.map(renderCardLista)}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin-invisible">
           {colunasKanban.map((col) => {
             const itens = entregaveis.filter((e) => e.status === col.status);
             const isOver = dragOverCol === col.status;
@@ -724,7 +724,7 @@ export default function ProjetoDetalhe() {
                   if (entId) onDropColuna(col.status, entId);
                 }}
                 className={cn(
-                  "bg-card border rounded-xl p-3 min-h-[200px] transition-colors",
+                  "w-[280px] shrink-0 bg-card border rounded-xl p-3 min-h-[200px] transition-colors",
                   isOver ? "border-primary ring-2 ring-[hsl(var(--primary)/0.2)]" : "border-border"
                 )}
               >
