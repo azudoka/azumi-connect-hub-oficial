@@ -18,13 +18,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import { StarRating } from "@/components/ui/StarRating";
 import { cn } from "@/lib/utils";
 import {
@@ -539,14 +532,14 @@ function EntregavelCard({
       </Dialog>
 
       {/* Conversa com consultor */}
-      <Sheet open={openConversa} onOpenChange={setOpenConversa}>
-        <SheetContent className="sm:max-w-md w-full flex flex-col">
-          <SheetHeader>
-            <SheetTitle>Conversa do entregável</SheetTitle>
-            <SheetDescription>
+      <Dialog open={openConversa} onOpenChange={setOpenConversa}>
+        <DialogContent className="sm:max-w-md w-full max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Conversa do entregável</DialogTitle>
+            <DialogDescription>
               {entregavel.codigo} · {entregavel.nome}
-            </SheetDescription>
-          </SheetHeader>
+            </DialogDescription>
+          </DialogHeader>
           <div className="flex-1 overflow-y-auto space-y-3 py-4 pr-1">
             {conversa.map((m, i) => {
               const isMe = m.autor === "cliente";
@@ -628,9 +621,8 @@ function EntregavelCard({
               Enviar
             </Button>
           </div>
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
-
