@@ -53,7 +53,7 @@ export default function CandidatarConvitePage() {
     (async () => {
       const { data, error } = await supabase
         .from("candidate_questionnaires")
-        .select("id, job_id, questionnaire_id, status, candidate_id, job_solicitations(titulo, empresa)")
+        .select("id, job_id, questionnaire_id, status, candidate_id, job_solicitations(cargo)")
         .eq("token", token)
         .maybeSingle();
       if (error || !data) { setErro("Convite não encontrado ou expirado."); setCarregando(false); return; }
@@ -62,7 +62,7 @@ export default function CandidatarConvitePage() {
       setJobId(data.job_id);
       setTemQuestionario(!!data.questionnaire_id);
       const js = data.job_solicitations as any;
-      setJobTitulo(js?.titulo ?? "Vaga");
+      setJobTitulo(js?.cargo ?? "Vaga");
       setCarregando(false);
     })();
   }, [token]);

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { toast } from "sonner";
 import { X, Search, Mail, Phone, MapPin, GraduationCap, Briefcase, Calendar, Link2, AlertCircle, Eye, Link as LinkIcon } from "lucide-react";
 import {
   STATUS_LABEL,
@@ -102,12 +103,16 @@ export default function BancoTalentosDrawer({ open, onClose }: Props) {
     setCarregando(true);
     supabase
       .from("candidates")
-      .select("id, nome, email, telefone, cidade, escolaridade, etapa_azumi, linkedin, updated_at, job_solicitations(cargo), disc_resultado_candidato(*)")
+      .select("id, nome, email, telefone, cidade, escolaridade, etapa_azumi, linkedin, updated_at, job_solicitations(cargo), disc_resultado_candidato(score_d, score_i, score_s, score_c, fator_predominante)")
       .eq("banco_talentos", true)
       .order("updated_at", { ascending: false })
       .then(({ data, error }) => {
         setCarregando(false);
-        if (error) { console.error("[bancoTalentos]", error.message); return; }
+        if (error) {
+          console.error("[bancoTalentos] erro completo:", JSON.stringify(error, null, 2));
+          toast.error("Erro ao carregar Banco de Talentos: " + error.message);
+          return;
+        }
         setTalentos((data ?? []) as unknown as CandidatoBanco[]);
       });
   }, [open]);
