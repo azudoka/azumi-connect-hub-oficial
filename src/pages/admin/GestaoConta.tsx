@@ -10,8 +10,8 @@ import {
   Clock as ClockIcon, X, Loader2, ExternalLink, Eye,
 } from "lucide-react";
 import {
-  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
-} from "@/components/ui/sheet";
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from "@/components/ui/dialog";
 
 const tabs = ["Boletos", "Extrato de Horas"] as const;
 
@@ -405,12 +405,12 @@ export default function GestaoConta() {
       )}
 
       {/* ── Sheet Novo Boleto ─────────────────────────────────────────── */}
-      <Sheet open={novoOpen} onOpenChange={setNovoOpen}>
-        <SheetContent side="right" className="w-full max-w-md overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>Novo boleto</SheetTitle>
-            <SheetDescription>Preencha os dados para emissão.</SheetDescription>
-          </SheetHeader>
+      <Dialog open={novoOpen} onOpenChange={setNovoOpen}>
+        <DialogContent className="sm:max-w-md w-full max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Novo boleto</DialogTitle>
+            <DialogDescription>Preencha os dados para emissão.</DialogDescription>
+          </DialogHeader>
           <div className="mt-6">
             <form onSubmit={handleCriarBoleto} className="space-y-4">
               <Field label="Empresa *">
@@ -480,8 +480,8 @@ export default function GestaoConta() {
               </button>
             </form>
           </div>
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
