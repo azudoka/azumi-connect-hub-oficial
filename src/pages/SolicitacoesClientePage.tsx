@@ -40,9 +40,6 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle,
-} from "@/components/ui/sheet";
-import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -883,8 +880,8 @@ export default function SolicitacoesClientePage() {
       </Dialog>
 
       {/* Sheet — Formulário dinâmico */}
-      <Sheet open={!!tipoForm} onOpenChange={(o) => { if (!o) { setTipoForm(null); setForm(FORM_BASE); } }}>
-        <SheetContent className="sm:max-w-lg w-full overflow-y-auto">
+      <Dialog open={!!tipoForm} onOpenChange={(o) => { if (!o) { setTipoForm(null); setForm(FORM_BASE); } }}>
+        <DialogContent className="sm:max-w-lg w-full max-h-[85vh] overflow-y-auto">
           {tipoForm && (
             <FormularioTipo
               tipo={TIPO_BY_KEY[tipoForm]}
@@ -896,8 +893,8 @@ export default function SolicitacoesClientePage() {
               onSubmit={handleSubmitForm}
             />
           )}
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog — Confirmação de custo adicional */}
       <Dialog open={!!confirmCusto} onOpenChange={(o) => { if (!o) setConfirmCusto(null); }}>
@@ -962,14 +959,14 @@ export default function SolicitacoesClientePage() {
       </Dialog>
 
       {/* Sheet — Conversa completa */}
-      <Sheet open={!!conversaAberta} onOpenChange={(o) => !o && setConversaAberta(null)}>
-        <SheetContent className="sm:max-w-md w-full flex flex-col">
-          <SheetHeader>
-            <SheetTitle>{conversaAberta?.titulo}</SheetTitle>
-            <SheetDescription>
+      <Dialog open={!!conversaAberta} onOpenChange={(o) => !o && setConversaAberta(null)}>
+        <DialogContent className="sm:max-w-md w-full max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>{conversaAberta?.titulo}</DialogTitle>
+            <DialogDescription>
               {conversaAberta?.codigo} · {conversaAberta?.consultor ?? "Azumi RH"}
-            </SheetDescription>
-          </SheetHeader>
+            </DialogDescription>
+          </DialogHeader>
           <div className="flex-1 overflow-y-auto space-y-2 py-4 pr-1">
             {(conversaAberta?.historico ?? []).length === 0 && (
               <p className="text-sm text-muted-foreground text-center py-6">Nenhuma mensagem ainda.</p>
@@ -1006,8 +1003,8 @@ export default function SolicitacoesClientePage() {
               }}
             />
           )}
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
@@ -1046,15 +1043,15 @@ function FormularioTipo({
       }
       onSubmit(e);
     }} className="flex flex-col h-full">
-      <SheetHeader>
-        <SheetTitle className="flex items-center gap-2">
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
           <span className="h-8 w-8 rounded-lg bg-gradient-brand text-white flex items-center justify-center">
             <tipo.icon className="h-4 w-4" />
           </span>
           {tipo.nome}
-        </SheetTitle>
-        <SheetDescription>{tipo.descricao}</SheetDescription>
-      </SheetHeader>
+        </DialogTitle>
+        <DialogDescription>{tipo.descricao}</DialogDescription>
+      </DialogHeader>
 
       <div className="space-y-4 py-4 flex-1">
         {/* Aviso de cota */}
@@ -1136,12 +1133,12 @@ function FormularioTipo({
         )}
       </div>
 
-      <SheetFooter className="flex-row sm:justify-end gap-2 pt-2 border-t">
+      <DialogFooter className="flex-row sm:justify-end gap-2 pt-2 border-t">
         <Button type="button" variant="outline" className="rounded-full" onClick={onCancel}>Cancelar</Button>
         <Button type="submit" className="rounded-full" disabled={precisaAceite && !aceiteTermo}>
           {statusCota.geraCusto ? "Continuar" : "Enviar solicitação"}
         </Button>
-      </SheetFooter>
+      </DialogFooter>
     </form>
   );
 }
