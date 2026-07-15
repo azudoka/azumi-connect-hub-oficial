@@ -292,41 +292,29 @@ function AdminDashboard() {
 
   return (
     <div>
-      <div className="relative overflow-hidden rounded-xl p-7 text-primary-foreground bg-primary">
-        <div className="relative z-10 max-w-[60%]">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="h-14 w-14 rounded-xl bg-card flex items-center justify-center shrink-0">
-              <iconify-icon icon="solar:graph-new-up-bold-duotone" width="26" height="26" style={{ color: "hsl(var(--primary))" }} />
-            </div>
-            <div>
-              <p className="font-display text-xl font-bold leading-tight">
-                {saudacao}, {usuario?.nome?.split(" ")[0] ?? "Ana"} 👋
-              </p>
-              <p className="text-sm text-primary-foreground/75 mt-0.5">{dataCapitalizada}</p>
-            </div>
+      <div className="rounded-xl p-7 text-primary-foreground bg-primary">
+        <div className="flex items-center gap-4 mb-6">
+          <div className="h-14 w-14 rounded-xl bg-card flex items-center justify-center shrink-0">
+            <iconify-icon icon="solar:graph-new-up-bold-duotone" width="26" height="26" style={{ color: "hsl(var(--primary))" }} />
           </div>
-          <div className="flex items-center gap-6">
-            <div>
-              <p className="text-sm text-primary-foreground/70">Projetos ativos</p>
-              <p className="font-display text-2xl font-bold mt-0.5">6</p>
-            </div>
-            <div className="h-10 w-px bg-primary-foreground/25" />
-            <div>
-              <p className="text-sm text-primary-foreground/70">Horas no mês</p>
-              <p className="font-display text-2xl font-bold mt-0.5">115h</p>
-            </div>
+          <div>
+            <p className="font-display text-xl font-bold leading-tight">
+              {saudacao}, {usuario?.nome?.split(" ")[0] ?? "Ana"} 👋
+            </p>
+            <p className="text-sm text-primary-foreground/75 mt-0.5">{dataCapitalizada}</p>
           </div>
         </div>
-
-        {/* Espaço de ilustração — não temos asset 3D como a referência, uso um ícone
-            grande e translúcido como substituto até termos uma ilustração de verdade */}
-        <iconify-icon
-          icon="solar:target-bold-duotone"
-          width="150"
-          height="150"
-          className="absolute -right-4 top-1/2 -translate-y-1/2 opacity-20 pointer-events-none"
-          style={{ color: "white" }}
-        />
+        <div className="flex items-center gap-6">
+          <div>
+            <p className="text-sm text-primary-foreground/70">Projetos ativos</p>
+            <p className="font-display text-2xl font-bold mt-0.5">6</p>
+          </div>
+          <div className="h-10 w-px bg-primary-foreground/25" />
+          <div>
+            <p className="text-sm text-primary-foreground/70">Horas no mês</p>
+            <p className="font-display text-2xl font-bold mt-0.5">115h</p>
+          </div>
+        </div>
       </div>
 
       <Tabs defaultValue="visao-geral" className="w-full mt-6">
