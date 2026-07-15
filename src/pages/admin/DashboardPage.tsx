@@ -5,43 +5,27 @@ import { ptBR } from "date-fns/locale";
 import {
   AlertTriangle,
   ArrowRight,
-  Briefcase,
   CheckCircle2,
-  CircleDollarSign,
   Clock,
   FileText,
   Loader2,
-  MoreVertical,
   Plus,
   Send,
   Star,
   Target,
   TrendingUp,
-  Wallet,
 } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Chart from "react-apexcharts";
 import type { ApexOptions } from "apexcharts";
 
-import { PageHeader } from "@/components/PageHeader";
-import { KpiCard } from "@/components/KpiCard";
 import { ConnectStatCard } from "@/components/ConnectStatCard";
 import { usePermissao } from "@/config/permissoes";
 import { StatusBadge } from "@/components/StatusBadge";
-import { SlaBar } from "@/components/SlaBar";
 import { EmptyState } from "@/components/EmptyState";
 
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import type { StatusKey } from "@/data/mock";
@@ -78,11 +62,8 @@ interface AtividadeRecente {
   icon: AtividadeIcon;
   texto: string;
   quando: string;
-  /** Se a atividade tem uma pessoa específica por trás, mostramos o avatar dela em vez do ícone genérico */
   autor?: string;
-  /** Pra onde essa atividade específica leva ao clicar — cada uma tem o destino certo, não um "ver tudo" genérico errado */
   to: string;
-  /** Referência curta (estilo #PROJ-0001), como no modelo original */
   ref?: string;
 }
 
@@ -113,55 +94,10 @@ interface Alerta {
 }
 
 const ALERTAS: Alerta[] = [
-  {
-    id: "al1",
-    severidade: "critical",
-    titulo: "Fatura FAT-2026-0001 em atraso",
-    descricao: "Kentaki Foods",
-    to: "/app/financeiro",
-  },
-  {
-    id: "al2",
-    severidade: "critical",
-    titulo: "Fatura FAT-2026-0005 em atraso",
-    descricao: "Tech Plural",
-    to: "/app/financeiro",
-  },
-  {
-    id: "al3",
-    severidade: "warning",
-    titulo: 'Entregável "Workshop de validação" aguarda parecer do cliente',
-    descricao: "Há 68h · SLA 72h",
-    to: "/app/projetos/p3",
-  },
-  {
-    id: "al4",
-    severidade: "warning",
-    titulo: 'Entregável "Revisão jurídica" com ajuste solicitado',
-    descricao: "Prazo: 22/04/2026",
-    to: "/app/projetos/p3",
-  },
-];
-
-interface EntregavelProx {
-  id: string;
-  nome: string;
-  projeto: string;
-  empresa: string;
-  responsavel: string;
-  prazo: string;
-  status: StatusKey;
-  statusLabel: string;
-  destaque?: boolean;
-}
-
-const ENTREGAVEIS: EntregavelProx[] = [
-  { id: "e1", nome: "Workshop de validação", projeto: "Mapeamento de Cargos",   empresa: "Kentaki Foods", responsavel: "Ana Beatriz",   prazo: "2026-04-28", status: "aguardando", statusLabel: "Aprovação cliente" },
-  { id: "e2", nome: "Política de cargos",    projeto: "Mapeamento de Cargos",   empresa: "Kentaki Foods", responsavel: "Camila Torres", prazo: "2026-05-10", status: "analise",    statusLabel: "Aprovação interna" },
-  { id: "e3", nome: "Revisão jurídica",      projeto: "Revisão de políticas",   empresa: "Tech Plural",   responsavel: "Camila Torres", prazo: "2026-04-22", status: "atrasada",   statusLabel: "Ajuste solicitado", destaque: true },
-  { id: "e4", nome: "Treinamento de líderes",projeto: "Mapeamento de Cargos",   empresa: "Kentaki Foods", responsavel: "Rafael Moura",  prazo: "2026-05-20", status: "andamento",  statusLabel: "Em andamento" },
-  { id: "e5", nome: "Triagem técnica",       projeto: "Hunting Dev Full Stack", empresa: "Tech Plural",   responsavel: "Ana Beatriz",   prazo: "2026-05-15", status: "andamento",  statusLabel: "Em andamento" },
-  { id: "e6", nome: "Go to Market",          projeto: "Go to Market",           empresa: "Alvo Digital",  responsavel: "Rafael Moura",  prazo: "2026-04-30", status: "aguardando", statusLabel: "Aguardando cliente" },
+  { id: "al1", severidade: "critical", titulo: "Fatura FAT-2026-0001 em atraso", descricao: "Kentaki Foods", to: "/app/financeiro" },
+  { id: "al2", severidade: "critical", titulo: "Fatura FAT-2026-0005 em atraso", descricao: "Tech Plural", to: "/app/financeiro" },
+  { id: "al3", severidade: "warning", titulo: 'Entregável "Workshop de validação" aguarda parecer do cliente', descricao: "Há 68h · SLA 72h", to: "/app/projetos/p3" },
+  { id: "al4", severidade: "warning", titulo: 'Entregável "Revisão jurídica" com ajuste solicitado', descricao: "Prazo: 22/04/2026", to: "/app/projetos/p3" },
 ];
 
 // =====================================================================
@@ -194,7 +130,6 @@ function AdminDashboard() {
     [now]
   );
   const dataCapitalizada = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
-  const hojeISO = format(now, "yyyy-MM-dd");
 
   // Financeiro mock
   const fin = {
@@ -236,10 +171,7 @@ function AdminDashboard() {
         setFatMeses(buckets.map(({ mes, valor }) => ({ mes, valor })));
       });
   }, []);
-  const totalReceber = fin.recebido + fin.pendente || 1;
-  const pctRecebido = Math.round((fin.recebido / totalReceber) * 1000) / 10;
-  const totalRepasse = fin.repassesPendentes + fin.repassado || 1;
-  const pctRepassado = Math.round((fin.repassado / totalRepasse) * 1000) / 10;
+
   const atrasados = 2;
 
   // Mock — Operação
@@ -278,6 +210,8 @@ function AdminDashboard() {
     { vaga: "Coord. DP",       empresa: "Studio Mira",  dias: 10, pct: 33  },
     { vaga: "Head Comercial",  empresa: "Alvo Digital", dias: 4,  pct: 13  },
   ];
+  const slaVagasDentro = VAGAS_SLA.filter((v) => v.pct <= 100).length;
+  const slaVagasPct = Math.round((slaVagasDentro / VAGAS_SLA.length) * 100);
 
   const ENGAJAMENTO_PIZZA = [
     { name: "Ativos",            value: 2, fill: "hsl(var(--success))" },
@@ -292,6 +226,7 @@ function AdminDashboard() {
 
   return (
     <div>
+      {/* Banner de saudação */}
       <div className="rounded-xl p-7 text-primary-foreground bg-primary">
         <div className="flex items-center gap-4 mb-6">
           <div className="h-14 w-14 rounded-xl bg-card flex items-center justify-center shrink-0">
@@ -326,7 +261,7 @@ function AdminDashboard() {
         {/* ── ABA VISÃO GERAL ── */}
         <TabsContent value="visao-geral" className="mt-0 space-y-6">
 
-          {/* 1. KPIs — 4 cards de estatística, todos no mesmo formato (sem card largo, sem gráfico embutido) */}
+          {/* KPIs */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
             {pode("financeiro.ver_valores") && (
               <ConnectStatCard
@@ -371,282 +306,306 @@ function AdminDashboard() {
             />
           </div>
 
-          {/* 2. Gráfico de faturamento real */}
-          <Card className="rounded-2xl shadow-md border-0 p-6">
-            <div className="flex items-start justify-between mb-6">
-              <div>
-                <h2 className="font-display text-base font-semibold">Faturamento mensal</h2>
-                <p className="text-xs text-muted-foreground mt-0.5">Últimos 6 meses · faturas emitidas</p>
-              </div>
-              {fatMeses && fatMeses.some((m) => m.valor > 0) && (
-                <span className="text-sm font-semibold text-foreground tabular-nums">
-                  {ocultar(formatBRL(fatMeses.reduce((s, m) => s + m.valor, 0)))}
-                </span>
-              )}
-            </div>
-            {fatMeses === null ? (
-              <div className="h-44 flex items-center justify-center">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-              </div>
-            ) : fatMeses.every((m) => m.valor === 0) ? (
-              <div className="h-44 flex flex-col items-center justify-center text-center gap-2">
-                <TrendingUp className="h-8 w-8 text-muted-foreground/30" />
-                <p className="text-sm text-muted-foreground">Ainda não há histórico suficiente de faturamento.</p>
-                <p className="text-xs text-muted-foreground/60">Os dados aparecerão aqui conforme faturas forem registradas.</p>
-              </div>
-            ) : (
-              <Chart
-                options={{
-                  chart: { type: "area", toolbar: { show: false }, zoom: { enabled: false } },
-                  colors: ["hsl(var(--primary))"],
-                  fill: { type: "gradient", gradient: { opacityFrom: 0.18, opacityTo: 0.02, shadeIntensity: 0 } },
-                  stroke: { curve: "smooth", width: 2.5 },
-                  dataLabels: { enabled: false },
-                  markers: { size: 3 },
-                  xaxis: {
-                    categories: fatMeses.map((f) => f.mes),
-                    labels: { style: { colors: "hsl(var(--muted-foreground))", fontSize: "11px" } },
-                    axisBorder: { show: false },
-                    axisTicks: { show: false },
-                  },
-                  yaxis: {
-                    labels: {
-                      style: { colors: "hsl(var(--muted-foreground))", fontSize: "11px" },
-                      formatter: (v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v),
-                    },
-                  },
-                  grid: { borderColor: "hsl(var(--border))", strokeDashArray: 3, xaxis: { lines: { show: false } } },
-                  tooltip: {
-                    theme: "light",
-                    y: { formatter: (v: number) => ocultar(formatBRL(v)), title: { formatter: () => "Faturado" } },
-                  },
-                } as ApexOptions}
-                series={[{ name: "Faturamento", data: fatMeses.map((f) => f.valor) }]}
-                type="area"
-                height={176}
-                width="100%"
-              />
-            )}
-          </Card>
+          {/* Linha 1 — RevenueForecast (8/12) + SLA + Sparkline (4/12) */}
+          <div className="grid grid-cols-12 gap-6">
 
-          {/* 3. Atividade + Alertas */}
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
-            <Card className="lg:col-span-3 p-6 rounded-2xl shadow-md border-0">
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-6">
-                Últimas atualizações
-              </h2>
-              {ATIVIDADES.length === 0 ? (
-                <EmptyState
-                  icon={Clock}
-                  title="Sem atividades recentes"
-                  description="As últimas atualizações da operação aparecerão aqui."
-                />
-              ) : (
-                <ul>
-                  {ATIVIDADES.map((a, i) => {
-                    const meta = ATIVIDADE_META[a.icon];
-                    const ultimo = i === ATIVIDADES.length - 1;
-                    return (
-                      <li key={a.id}>
-                        <div className="flex gap-4 min-h-[64px]">
-                          <p className="text-xs text-muted-foreground w-10 shrink-0 pt-0.5 tabular-nums">{a.quando}</p>
-                          <div className="flex flex-col items-center shrink-0">
-                            <span className={cn("rounded-full h-3 w-3 shrink-0", meta.dot)} />
-                            {!ultimo && <span className="w-px flex-1 bg-border mt-1" />}
-                          </div>
-                          <div className="min-w-0 flex-1 pb-5">
-                            <p className="text-sm leading-snug">{a.texto}</p>
-                            {a.ref && (
-                              <button
-                                onClick={() => navigate(a.to)}
-                                className="text-xs text-primary hover:underline font-medium mt-0.5"
-                              >
-                                {a.ref}
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </Card>
-
-            <Card className="lg:col-span-2 p-6 rounded-2xl shadow-md border-0">
-              <div className="flex items-center gap-2 mb-2">
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Alertas ativos</h2>
-                <span className="badge-pill bg-[hsl(var(--destructive)/0.15)] text-destructive border border-[hsl(var(--destructive)/0.3)] text-xs">
-                  {ALERTAS.length}
-                </span>
-              </div>
-              {ALERTAS.length === 0 ? (
-                <EmptyState
-                  icon={CheckCircle2}
-                  title="Nenhum alerta"
-                  description="Tudo certo por aqui!"
-                />
-              ) : (
-                <div className="flex flex-col">
-                  <div className="h-px bg-border" />
-                  {ALERTAS.map((al) => {
-                    const isCritical = al.severidade === "critical";
-                    return (
-                      <Link key={al.id} to={al.to} className="group flex items-center gap-3 py-3.5 hover:bg-muted/30 transition-colors -mx-1 px-1 rounded-md">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-medium leading-snug truncate">{al.titulo}</p>
-                            <span className={cn(
-                              "shrink-0 badge-pill text-[10px] font-semibold px-2 py-0.5",
-                              isCritical ? "bg-[hsl(var(--destructive)/0.15)] text-destructive" : "bg-[hsl(var(--warning)/0.15)] text-warning"
-                            )}>
-                              {isCritical ? "Crítico" : "Atenção"}
-                            </span>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-1">{al.descricao}</p>
-                        </div>
-                        <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                      </Link>
-                    );
-                  })}
-                  <div className="h-px bg-border" />
+            {/* RevenueForecast */}
+            <div className="lg:col-span-8 col-span-12">
+              <Card className="rounded-2xl shadow-md border-0 p-6 h-full">
+                <div className="flex items-start justify-between mb-6">
+                  <div>
+                    <h2 className="font-display text-base font-semibold">Faturamento mensal</h2>
+                    <p className="text-xs text-muted-foreground mt-0.5">Faturas emitidas por mês</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {fatMeses && fatMeses.some((m) => m.valor > 0) && (
+                      <span className="text-sm font-semibold text-foreground tabular-nums">
+                        {ocultar(formatBRL(fatMeses.reduce((s, m) => s + m.valor, 0)))}
+                      </span>
+                    )}
+                    <Select defaultValue="6m">
+                      <SelectTrigger className="w-[140px] h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="6m">Últimos 6 meses</SelectItem>
+                        <SelectItem value="3m">Últimos 3 meses</SelectItem>
+                        <SelectItem value="1a">Último ano</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-              )}
-            </Card>
+                {fatMeses === null ? (
+                  <div className="h-56 flex items-center justify-center">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  </div>
+                ) : fatMeses.every((m) => m.valor === 0) ? (
+                  <div className="h-56 flex flex-col items-center justify-center text-center gap-2">
+                    <TrendingUp className="h-8 w-8 text-muted-foreground/30" />
+                    <p className="text-sm text-muted-foreground">Ainda não há histórico suficiente de faturamento.</p>
+                    <p className="text-xs text-muted-foreground/60">Os dados aparecerão aqui conforme faturas forem registradas.</p>
+                  </div>
+                ) : (
+                  <Chart
+                    options={{
+                      chart: { type: "area", toolbar: { show: false }, zoom: { enabled: false } },
+                      colors: ["hsl(var(--primary))"],
+                      fill: { type: "gradient", gradient: { opacityFrom: 0.18, opacityTo: 0.02, shadeIntensity: 0 } },
+                      stroke: { curve: "smooth", width: 2.5 },
+                      dataLabels: { enabled: false },
+                      markers: { size: 3 },
+                      xaxis: {
+                        categories: fatMeses.map((f) => f.mes),
+                        labels: { style: { colors: "hsl(var(--muted-foreground))", fontSize: "11px" } },
+                        axisBorder: { show: false },
+                        axisTicks: { show: false },
+                      },
+                      yaxis: {
+                        labels: {
+                          style: { colors: "hsl(var(--muted-foreground))", fontSize: "11px" },
+                          formatter: (v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v),
+                        },
+                      },
+                      grid: { borderColor: "hsl(var(--border))", strokeDashArray: 3, xaxis: { lines: { show: false } } },
+                      tooltip: {
+                        theme: "light",
+                        y: { formatter: (v: number) => ocultar(formatBRL(v)), title: { formatter: () => "Faturado" } },
+                      },
+                    } as ApexOptions}
+                    series={[{ name: "Faturamento", data: fatMeses.map((f) => f.valor) }]}
+                    type="area"
+                    height={224}
+                    width="100%"
+                  />
+                )}
+              </Card>
+            </div>
+
+            {/* Coluna direita — SLA + Sparkline */}
+            <div className="lg:col-span-4 col-span-12 flex flex-col gap-6">
+
+              {/* SLA das vagas ativas (NewCustomers) */}
+              <Card className="rounded-2xl shadow-md border-0 p-6">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="bg-[hsl(var(--primary)/0.1)] p-3 rounded-xl shrink-0">
+                    <iconify-icon icon="solar:target-bold-duotone" width="22" height="22" style={{ color: "hsl(var(--primary))" }} />
+                  </div>
+                  <p className="text-base font-semibold leading-tight">SLA das vagas ativas</p>
+                </div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm text-muted-foreground">Vagas dentro do prazo</p>
+                  <p className="text-sm font-semibold">{slaVagasPct}%</p>
+                </div>
+                <Progress value={slaVagasPct} className="h-2" />
+                <p className="text-xs text-muted-foreground mt-2.5">
+                  {slaVagasDentro} de {VAGAS_SLA.length} vagas no prazo · {VAGAS_SLA.length - slaVagasDentro} estourada{VAGAS_SLA.length - slaVagasDentro !== 1 ? "s" : ""}
+                </p>
+              </Card>
+
+              {/* Faturamento sparkline (TotalIncome) */}
+              <Card className="rounded-2xl shadow-md border-0 p-6 flex-1">
+                <div className="flex items-start justify-between mb-1">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Faturamento total</p>
+                    <p className="font-display text-2xl font-bold mt-1 tabular-nums">
+                      {fatMeses && fatMeses.some((m) => m.valor > 0)
+                        ? ocultar(formatBRL(fatMeses.reduce((s, m) => s + m.valor, 0)))
+                        : "—"
+                      }
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Últimos 6 meses</p>
+                  </div>
+                  <span className={cn(
+                    "text-xs font-semibold px-2.5 py-0.5 rounded-full shrink-0 mt-0.5",
+                    pctFaturamento >= 80
+                      ? "text-success bg-[hsl(var(--success)/0.12)]"
+                      : "text-warning bg-[hsl(var(--warning)/0.12)]"
+                  )}>
+                    {pctFaturamento}% meta
+                  </span>
+                </div>
+                {fatMeses === null ? (
+                  <div className="h-16 flex items-center justify-center mt-3">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground/50" />
+                  </div>
+                ) : fatMeses.some((m) => m.valor > 0) ? (
+                  <div className="mt-3 -mx-6 -mb-6">
+                    <Chart
+                      options={{
+                        chart: { type: "area", toolbar: { show: false }, sparkline: { enabled: true } },
+                        colors: ["hsl(var(--primary))"],
+                        fill: { type: "gradient", gradient: { opacityFrom: 0.28, opacityTo: 0.02 } },
+                        stroke: { curve: "smooth", width: 2 },
+                        tooltip: {
+                          theme: "light",
+                          y: { formatter: (v: number) => ocultar(formatBRL(v)) },
+                        },
+                      } as ApexOptions}
+                      series={[{ name: "Faturamento", data: fatMeses.map((f) => f.valor) }]}
+                      type="area"
+                      height={72}
+                      width="100%"
+                    />
+                  </div>
+                ) : (
+                  <div className="h-16 flex items-center mt-3">
+                    <p className="text-xs text-muted-foreground/60">Sem histórico ainda</p>
+                  </div>
+                )}
+              </Card>
+            </div>
           </div>
 
-          {/* 4. Entregáveis próximos do prazo */}
-          <Card className="overflow-hidden rounded-2xl shadow-md border-0">
-            <div className="p-5 border-b border-border">
-              <h2 className="font-display text-lg font-semibold">
-                Entregáveis com prazo nos próximos 30 dias
-              </h2>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Priorize as entregas com prazo mais próximo ou atrasadas.
-              </p>
+          {/* Linha 2 — Vagas em destaque (8/12) + Timeline (4/12) */}
+          <div className="grid grid-cols-12 gap-6">
+
+            {/* Vagas em destaque (ProductRevenue) */}
+            <div className="lg:col-span-8 col-span-12">
+              <Card className="overflow-hidden rounded-2xl shadow-md border-0 h-full">
+                <div className="p-5 border-b border-border flex items-center justify-between">
+                  <div>
+                    <h2 className="font-display text-base font-semibold">Vagas em destaque</h2>
+                    <p className="text-xs text-muted-foreground mt-0.5">Vagas ativas · por urgência de SLA (meta 30 dias)</p>
+                  </div>
+                  <Link to="/app/atracao" className="text-xs text-primary hover:underline font-medium shrink-0">
+                    Ver todas →
+                  </Link>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[420px]">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3">Vaga</th>
+                        <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3">Empresa</th>
+                        <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3">SLA</th>
+                        <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {VAGAS_SLA.map((v, i) => {
+                        const cor       = v.pct > 100 ? "hsl(var(--destructive))" : v.pct > 60 ? "hsl(var(--warning))" : "hsl(var(--success))";
+                        const textCor   = v.pct > 100 ? "#A32D2D" : v.pct > 60 ? "#854F0B" : "#3B6D11";
+                        const status    = (v.pct > 100 ? "atrasada" : v.pct > 60 ? "analise" : "andamento") as StatusKey;
+                        const statusLbl = v.pct > 100 ? "SLA estourado" : v.pct > 60 ? "Atenção" : "No prazo";
+                        return (
+                          <tr
+                            key={i}
+                            onClick={() => navigate("/app/atracao")}
+                            className="border-b border-border last:border-0 hover:bg-muted/40 cursor-pointer transition-colors"
+                          >
+                            <td className="px-5 py-3.5">
+                              <div className="flex items-center gap-3">
+                                <div className="h-8 w-8 rounded-lg bg-[hsl(var(--primary)/0.1)] flex items-center justify-center shrink-0">
+                                  <iconify-icon icon="solar:case-round-bold-duotone" width="15" height="15" style={{ color: "hsl(var(--primary))" }} />
+                                </div>
+                                <span className="text-sm font-medium">{v.vaga}</span>
+                              </div>
+                            </td>
+                            <td className="px-5 py-3.5 text-sm text-muted-foreground">{v.empresa}</td>
+                            <td className="px-5 py-3.5">
+                              <div className="flex items-center gap-2">
+                                <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden min-w-[64px]">
+                                  <div
+                                    className="h-full rounded-full transition-all"
+                                    style={{ width: `${Math.min(100, v.pct)}%`, background: cor }}
+                                  />
+                                </div>
+                                <span className="text-xs font-medium tabular-nums w-7 text-right shrink-0" style={{ color: textCor }}>
+                                  {v.dias}d
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-5 py-3.5">
+                              <StatusBadge status={status}>{statusLbl}</StatusBadge>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
             </div>
-            {ENTREGAVEIS.length === 0 ? (
-              <EmptyState
-                icon={Briefcase}
-                title="Sem entregáveis no horizonte"
-                description="Nenhum entregável com prazo nos próximos 30 dias."
-              />
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[720px]">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left font-semibold text-sm px-4 py-3">Responsável</th>
-                      <th className="text-left font-semibold text-sm px-4 py-3">Entregável</th>
-                      <th className="text-left font-semibold text-sm px-4 py-3">Empresa</th>
-                      <th className="text-left font-semibold text-sm px-4 py-3">Prazo</th>
-                      <th className="text-left font-semibold text-sm px-4 py-3">Status</th>
-                      <th className="w-10"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {ENTREGAVEIS.map((e) => {
-                      const atrasada = e.prazo < hojeISO;
+
+            {/* Timeline de atividade (DailyActivity) */}
+            <div className="lg:col-span-4 col-span-12">
+              <Card className="p-6 rounded-2xl shadow-md border-0 h-full">
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-5">
+                  Últimas atualizações
+                </h2>
+                {ATIVIDADES.length === 0 ? (
+                  <EmptyState
+                    icon={Clock}
+                    title="Sem atividades recentes"
+                    description="As últimas atualizações da operação aparecerão aqui."
+                  />
+                ) : (
+                  <div className="relative pl-5 border-l border-border space-y-5">
+                    {ATIVIDADES.map((a) => {
+                      const meta = ATIVIDADE_META[a.icon];
                       return (
-                        <tr
-                          key={e.id}
-                          onClick={() => navigate("/app/projetos")}
-                          className="border-b border-border last:border-0 hover:bg-muted/40 cursor-pointer transition-colors"
-                        >
-                          <td className="px-4 py-3.5">
-                            <div
-                              title={e.responsavel}
-                              className="h-[52px] w-[52px] rounded-lg bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))] flex items-center justify-center text-sm font-semibold text-white shrink-0"
+                        <div key={a.id} className="relative">
+                          <span className={cn("absolute -left-[21px] h-3 w-3 rounded-full border-2 border-card", meta.dot)} />
+                          <p className="text-xs text-muted-foreground tabular-nums">{a.quando}</p>
+                          <p className="text-sm leading-snug mt-0.5">{a.texto}</p>
+                          {a.ref && (
+                            <button
+                              onClick={() => navigate(a.to)}
+                              className="text-xs text-primary hover:underline font-medium mt-0.5"
                             >
-                              {e.responsavel.split(" ").map((n) => n[0]).slice(0, 2).join("")}
-                            </div>
-                          </td>
-                          <td className="px-4 py-3.5">
-                            <p className="text-sm font-semibold truncate">{e.nome}</p>
-                            <p className="text-xs text-muted-foreground truncate">{e.projeto}</p>
-                          </td>
-                          <td className="px-4 py-3.5 text-sm text-muted-foreground">{e.empresa}</td>
-                          <td className={cn("px-4 py-3.5 text-sm tabular-nums", atrasada && "text-destructive font-semibold")}>
-                            {formatDateBR(e.prazo)}
-                          </td>
-                          <td className="px-4 py-3.5">
-                            <StatusBadge status={e.status}>{e.statusLabel}</StatusBadge>
-                          </td>
-                          <td className="px-2 py-3.5" onClick={(ev) => ev.stopPropagation()}>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <button
-                                  className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-[hsl(var(--primary)/0.1)] hover:text-primary text-muted-foreground transition-colors"
-                                  aria-label="Ações"
-                                >
-                                  <MoreVertical className="h-4 w-4" />
-                                </button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-40">
-                                <DropdownMenuItem onClick={() => navigate("/app/projetos")} className="gap-2">
-                                  <iconify-icon icon="solar:eye-bold-duotone" width="16" height="16" /> Ver projeto
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => navigate("/app/horas")} className="gap-2">
-                                  <iconify-icon icon="solar:clock-circle-bold-duotone" width="16" height="16" /> Lançar horas
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </td>
-                        </tr>
+                              {a.ref}
+                            </button>
+                          )}
+                        </div>
                       );
                     })}
-                  </tbody>
-                </table>
+                  </div>
+                )}
+              </Card>
+            </div>
+          </div>
+
+          {/* Alertas ativos */}
+          <Card className="p-6 rounded-2xl shadow-md border-0">
+            <div className="flex items-center gap-2 mb-4">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Alertas ativos</h2>
+              <span className="badge-pill bg-[hsl(var(--destructive)/0.15)] text-destructive border border-[hsl(var(--destructive)/0.3)] text-xs">
+                {ALERTAS.length}
+              </span>
+            </div>
+            {ALERTAS.length === 0 ? (
+              <EmptyState
+                icon={CheckCircle2}
+                title="Nenhum alerta"
+                description="Tudo certo por aqui!"
+              />
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {ALERTAS.map((al) => {
+                  const isCritical = al.severidade === "critical";
+                  return (
+                    <Link
+                      key={al.id}
+                      to={al.to}
+                      className="group flex items-center gap-3 p-3 rounded-xl hover:bg-muted/30 border border-border transition-colors"
+                    >
+                      <div className={cn(
+                        "shrink-0 h-8 w-8 rounded-lg flex items-center justify-center",
+                        isCritical ? "bg-[hsl(var(--destructive)/0.12)]" : "bg-[hsl(var(--warning)/0.12)]"
+                      )}>
+                        <AlertTriangle className={cn("h-4 w-4", isCritical ? "text-destructive" : "text-warning")} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium leading-snug truncate">{al.titulo}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{al.descricao}</p>
+                      </div>
+                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </Card>
-
-          {/* 5. Resumo financeiro */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-display text-lg font-semibold">Resumo financeiro do mês</h2>
-              <Link to="/app/financeiro" className="text-xs text-primary hover:underline font-medium">
-                Ir para Financeiro →
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-              <ConnectStatCard
-                variant="stat"
-                icon="solar:graph-up-bold-duotone"
-                tone="blue"
-                label={`Faturado — meta ${ocultar(formatBRL(fin.metaFaturamento))}`}
-                value={ocultar(formatBRL(fin.faturado))}
-                deltaValue={`${pctFaturamento.toFixed(1)}%`}
-                positive={pctFaturamento >= 80}
-                barPercent={pctFaturamento}
-                onClick={() => navigate("/app/financeiro")}
-              />
-
-              <ConnectStatCard
-                variant="stat"
-                icon="solar:check-circle-bold-duotone"
-                tone="green"
-                label={`Recebido — pendente ${ocultar(formatBRL(fin.pendente))}`}
-                value={ocultar(formatBRL(fin.recebido))}
-                deltaValue={`${pctRecebido.toFixed(1)}%`}
-                positive={pctRecebido >= 50}
-                barPercent={pctRecebido}
-                onClick={() => navigate("/app/financeiro")}
-              />
-
-              <ConnectStatCard
-                variant="stat"
-                icon="solar:wallet-money-bold-duotone"
-                tone="teal"
-                label={`Repasses — já repassado ${ocultar(formatBRL(fin.repassado))}`}
-                value={ocultar(formatBRL(fin.repassesPendentes))}
-                deltaValue={`${pctRepassado.toFixed(1)}%`}
-                positive={pctRepassado >= 50}
-                barPercent={pctRepassado}
-                onClick={() => navigate("/app/financeiro")}
-              />
-            </div>
-            </div>
 
         </TabsContent>
 
@@ -781,7 +740,7 @@ function AdminDashboard() {
             </Card>
           </div>
 
-          {/* LINHA 2: Produtividade — portado do RevenueForecast.tsx da referência */}
+          {/* LINHA 2: Produtividade */}
           <Card className="p-5 rounded-xl border-0" style={{ boxShadow: "0 1px 4px rgba(133,146,173,0.2)" }}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-display text-base font-semibold">Produtividade dos consultores</h2>
