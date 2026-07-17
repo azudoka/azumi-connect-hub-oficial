@@ -1,20 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Building2, Heart, MapPin, Clock, DollarSign, Search, Lock, Zap, Instagram, Linkedin, Globe, ExternalLink } from "lucide-react";
+import { MapPin, Search, Lock, Zap, Instagram, Linkedin, Globe, ExternalLink } from "lucide-react";
 import capaVagas from "@/assets/brand/capa-vagas.png";
 import {
   VAGAS_MOCK,
-  NIVEL_LABEL,
   MODALIDADE_LABEL,
-  CONTRATO_LABEL,
-  formatSalario,
-  diasAtras,
   type VagaPublica,
 } from "@/data/vagasPublicasMock";
 import { listarVagasPublicadas, type VagaSupabase } from "@/services/vagasService";
 import CandidaturaModal from "@/components/candidatura/CandidaturaModal";
 import { AzumiLogo } from "@/components/brand/AzumiLogo";
-import { CategoryTag } from "@/components/CategoryTag";
 
 function supabaseToPublica(r: VagaSupabase): VagaPublica {
   return {
@@ -84,7 +79,6 @@ export default function VagasPublicasPage() {
   const [modalidade, setModalidade] = useState("");
   const [nivel, setNivel] = useState("");
   const [contrato, setContrato] = useState("");
-  const [favoritas, setFavoritas] = useState<Set<string>>(new Set());
   const [modalBanco, setModalBanco] = useState(false);
   const [vagasSupabase, setVagasSupabase] = useState<VagaPublica[]>([]);
   const [loadingPublicas, setLoadingPublicas] = useState(true);
@@ -108,37 +102,32 @@ export default function VagasPublicasPage() {
     });
   }, [q, modalidade, nivel, contrato, todasVagas]);
 
-  function toggleFav(id: string) {
-    setFavoritas((s) => {
-      const n = new Set(s);
-      n.has(id) ? n.delete(id) : n.add(id);
-      return n;
-    });
-  }
-
   function scrollToList() {
     document.getElementById("vagas-lista")?.scrollIntoView({ behavior: "smooth" });
   }
 
   return (
     <div className="min-h-screen bg-background">
-      {/* ── HERO — capa única contínua, logo dentro dela (sem faixa separada) ── */}
-      <section className="relative overflow-hidden px-6 pb-24 pt-6" style={{ minHeight: 420 }}>
+      {/* ── HERO — capa existente, logo em destaque, botão central ── */}
+      <section className="relative overflow-hidden" style={{ minHeight: 460 }}>
         <div className="absolute inset-0">
           <img src={capaVagas} alt="" className="h-full w-full object-cover" />
         </div>
         <div className="absolute inset-0 bg-gradient-brand-bg opacity-[0.94]" />
         <div className="absolute inset-0 bg-black/15" />
 
-        <div className="relative z-10 mx-auto flex max-w-6xl items-center justify-between py-3">
-          <AzumiLogo light product="Connect" size={28} hideSubtitle />
-          <div className="flex items-center gap-3">
+        {/* Topbar — logo com destaque + redes sociais */}
+        <div className="relative z-10 mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
+          <div className="rounded-xl bg-card/95 px-4 py-2.5 shadow-elevated backdrop-blur-sm">
+            <AzumiLogo product="Connect" size={26} hideSubtitle />
+          </div>
+          <div className="flex items-center gap-4">
             <a
               href="https://www.instagram.com/azumirh/"
               target="_blank"
               rel="noreferrer"
               aria-label="Instagram da Azumi RH"
-              className="text-white/70 hover:text-white transition-colors"
+              className="text-white/80 hover:text-white transition-colors"
             >
               <Instagram className="h-5 w-5" />
             </a>
@@ -147,7 +136,7 @@ export default function VagasPublicasPage() {
               target="_blank"
               rel="noreferrer"
               aria-label="LinkedIn da Azumi RH"
-              className="text-white/70 hover:text-white transition-colors"
+              className="text-white/80 hover:text-white transition-colors"
             >
               <Linkedin className="h-5 w-5" />
             </a>
@@ -156,14 +145,14 @@ export default function VagasPublicasPage() {
               target="_blank"
               rel="noreferrer"
               aria-label="Site da Azumi RH"
-              className="text-white/70 hover:text-white transition-colors"
+              className="text-white/80 hover:text-white transition-colors"
             >
               <Globe className="h-5 w-5" />
             </a>
           </div>
         </div>
 
-        <div className="relative z-10 mx-auto mt-10 max-w-5xl text-center text-white">
+        <div className="relative z-10 mx-auto mt-6 max-w-4xl px-6 text-center text-white">
           <h1 className="font-display text-4xl font-bold sm:text-6xl leading-tight text-white">
             Encontre sua próxima{" "}
             <span className="font-black underline decoration-4 decoration-blue-400 underline-offset-4">oportunidade</span>{" "}
@@ -173,48 +162,113 @@ export default function VagasPublicasPage() {
           <p className="mt-3 font-sans text-white/75 text-lg">Vagas selecionadas pela nossa equipe especializada em RH</p>
         </div>
 
-        <div className="relative z-10 mx-auto mt-8 max-w-4xl rounded-2xl bg-card p-3 shadow-elevated sm:p-4">
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_180px_180px_auto]">
+        {/* Botão central — igual ao "Conheça as vagas" da referência */}
+        <div className="relative z-10 flex justify-center mt-8 pb-10">
+          <button
+            onClick={scrollToList}
+            className="rounded-full bg-card px-8 py-3.5 font-sans text-sm font-semibold text-foreground shadow-elevated hover:brightness-95 transition-all inline-flex items-center gap-2"
+          >
+            Conheça as vagas <ExternalLink className="h-4 w-4" />
+          </button>
+        </div>
+      </section>
+
+      {/* ── SOBRE A AZUMI ── */}
+      <section className="mx-auto max-w-4xl px-6 py-16 text-center">
+        <h2 className="font-display text-sm font-semibold uppercase tracking-widest text-muted-foreground mb-3">
+          Sobre a empresa
+        </h2>
+        <p className="font-display text-2xl sm:text-3xl font-bold text-foreground leading-snug">
+          Conectamos <span className="text-primary">pessoas</span> e <span className="text-primary">empresas</span> de um jeito humano. 💙
+        </p>
+        <p className="mt-5 font-sans text-muted-foreground leading-relaxed">
+          Somos a <strong>Azumi RH</strong>, uma consultoria que une <em>tecnologia</em> e{" "}
+          <em>sensibilidade</em> para encontrar o match certo entre talentos e empresas.
+          Acreditamos que recrutamento de verdade é sobre <strong>gente</strong>, não só sobre currículo.
+        </p>
+        <p className="mt-3 font-sans text-muted-foreground leading-relaxed">
+          Valorizamos quem caminha com a gente — <strong>autonomia</strong>, <strong>cuidado</strong> e{" "}
+          <em>transparência</em> guiam cada processo seletivo que conduzimos. ✨
+        </p>
+        <div className="mt-6 flex items-center justify-center gap-5">
+          <a
+            href="https://www.instagram.com/azumirh/"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Instagram da Azumi RH"
+            className="text-muted-foreground hover:text-primary transition-colors"
+          >
+            <Instagram className="h-5 w-5" />
+          </a>
+          <a
+            href="https://www.linkedin.com/company/azumirh"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="LinkedIn da Azumi RH"
+            className="text-muted-foreground hover:text-primary transition-colors"
+          >
+            <Linkedin className="h-5 w-5" />
+          </a>
+          <a
+            href="https://azumirh.com.br"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Site da Azumi RH"
+            className="text-muted-foreground hover:text-primary transition-colors"
+          >
+            <Globe className="h-5 w-5" />
+          </a>
+        </div>
+      </section>
+
+      {/* ── FILTROS ── */}
+      <section className="mx-auto max-w-5xl px-6">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div>
+            <label className="block font-sans text-sm font-medium text-foreground mb-1.5">Nome da vaga</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Qual vaga você procura?"
-                className="w-full rounded-lg border border-border bg-background py-2.5 pl-9 pr-3 font-sans text-sm text-foreground focus:border-primary focus:outline-none"
+                placeholder="Pesquisar pelo nome da vaga"
+                className="w-full rounded-lg border border-border bg-card pl-9 pr-3 py-2.5 font-sans text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </div>
+          </div>
+          <div>
+            <label className="block font-sans text-sm font-medium text-foreground mb-1.5">Modelo de atuação</label>
             <select
               value={modalidade}
               onChange={(e) => setModalidade(e.target.value)}
-              className="rounded-lg border border-border bg-background px-3 py-2.5 font-sans text-sm text-foreground focus:border-primary focus:outline-none"
+              className="w-full rounded-lg border border-border bg-card px-3 py-2.5 font-sans text-sm text-foreground focus:border-primary focus:outline-none"
             >
-              <option value="">Todas modalidades</option>
+              <option value="">Escolha uma opção</option>
               <option value="presencial">Presencial</option>
               <option value="remoto">Remoto</option>
               <option value="hibrido">Híbrido</option>
             </select>
+          </div>
+          <div>
+            <label className="block font-sans text-sm font-medium text-foreground mb-1.5">Localização</label>
             <select
               value={nivel}
               onChange={(e) => setNivel(e.target.value)}
-              className="rounded-lg border border-border bg-background px-3 py-2.5 font-sans text-sm text-foreground focus:border-primary focus:outline-none"
+              className="w-full rounded-lg border border-border bg-card px-3 py-2.5 font-sans text-sm text-foreground focus:border-primary focus:outline-none"
             >
-              <option value="">Todos níveis</option>
+              <option value="">Escolha uma opção</option>
               <option value="estagio">Estágio</option>
               <option value="junior">Júnior</option>
               <option value="pleno">Pleno</option>
               <option value="senior">Sênior</option>
               <option value="especialista">Especialista</option>
             </select>
-            <button onClick={scrollToList} className="btn-primary justify-center">
-              Buscar vagas
-            </button>
           </div>
         </div>
       </section>
 
-      {/* ── LISTA — fundo claro ── */}
-      <section id="vagas-lista" className="mx-auto -mt-10 max-w-6xl px-6">
+      {/* ── LISTA — formato texto, linha por linha, igual à referência ── */}
+      <section id="vagas-lista" className="mx-auto mt-10 max-w-5xl px-6 pb-16">
         {loadingPublicas && (
           <div className="flex justify-center gap-2 py-20 font-sans text-muted-foreground">
             <span className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -229,105 +283,36 @@ export default function VagasPublicasPage() {
         )}
         {!loadingPublicas && vagasSupabase.length > 0 && (
           <>
-            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className="font-display text-lg font-semibold text-foreground">
-                {filtradas.length} vagas encontradas
-              </h2>
-              <select
-                value={contrato}
-                onChange={(e) => setContrato(e.target.value)}
-                className="w-full rounded-lg border border-border bg-card px-3 py-2 font-sans text-sm text-foreground sm:w-auto"
-              >
-                <option value="">Todos contratos</option>
-                <option value="clt">CLT</option>
-                <option value="pj">PJ</option>
-                <option value="estagio">Estágio</option>
-                <option value="temporario">Temporário</option>
-              </select>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <h2 className="font-display text-2xl font-semibold text-foreground mb-4">Vagas</h2>
+            <div className="space-y-3">
               {filtradas.map((v) => {
                 const urgente = v.nivel_urgencia === "urgente";
-                const fav = favoritas.has(v.id);
                 return (
-                  <article
+                  <Link
                     key={v.id}
-                    className="card-hover relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-card"
+                    to={`/vagas/${v.id}`}
+                    className="group flex items-center justify-between gap-4 rounded-xl border border-border bg-card px-5 py-4 hover:border-primary/40 hover:shadow-card transition-all"
                   >
-                    {urgente && (
-                      <div className="absolute right-4 top-0 z-10 flex items-center gap-1 rounded-b-lg bg-destructive px-2.5 py-1 font-sans text-[10px] font-bold uppercase tracking-wide text-destructive-foreground">
-                        <Zap className="h-3 w-3" /> Urgente
-                      </div>
-                    )}
-                    <div className="flex flex-1 flex-col p-5">
-                      <div className="flex items-start gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                          <Building2 className="h-5 w-5" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="truncate font-display font-semibold text-foreground">{v.titulo}</h3>
-                          <p className="flex items-center gap-1 truncate font-sans text-sm text-muted-foreground">
-                            {v.confidencial && <Lock className="h-3 w-3 shrink-0" />}
-                            {v.empresa}
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => toggleFav(v.id)}
-                          aria-label="Salvar"
-                          className="text-muted-foreground hover:text-destructive"
-                        >
-                          <Heart className={`h-5 w-5 ${fav ? "fill-destructive text-destructive" : ""}`} />
-                        </button>
-                      </div>
-
-                      <div className="mt-3 space-y-1.5 font-sans text-sm text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-3.5 w-3.5" /> {v.local_trabalho}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <DollarSign className="h-3.5 w-3.5" />{" "}
-                          {formatSalario(v.salario_de, v.salario_ate, v.salario_fixo)}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-3.5 w-3.5" /> {v.carga_horaria}
-                        </div>
-                      </div>
-
-                      <div className="mt-3 flex flex-wrap gap-1.5">
-                        <CategoryTag categoria="modalidade">
-                          {MODALIDADE_LABEL[v.modalidade] ?? v.modalidade}
-                        </CategoryTag>
-                        <CategoryTag categoria="nivel">
-                          {NIVEL_LABEL[v.nivel] ?? v.nivel}
-                        </CategoryTag>
-                        <CategoryTag categoria="contrato">
-                          {CONTRATO_LABEL[v.tipo_contrato] ?? v.tipo_contrato}
-                        </CategoryTag>
-                        {v.tem_comissao && (
-                          <span className="rounded-full border border-success/30 bg-success/10 px-2 py-0.5 font-sans text-xs font-medium text-success">
-                            + Comissão
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-sans font-semibold text-foreground">{v.titulo}</span>
+                        {urgente && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-destructive">
+                            <Zap className="h-3 w-3" /> Urgente
                           </span>
                         )}
+                        {v.confidencial && <Lock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
                       </div>
-
-                      {v.descricao && (
-                        <p className="mt-3 line-clamp-2 font-sans text-sm text-muted-foreground">
-                          {v.descricao}
-                        </p>
-                      )}
-
-                      <div className="mt-4 flex items-center justify-between gap-3 border-t border-border pt-3">
-                        <span className="font-sans text-xs text-muted-foreground">{diasAtras(v.created_at)}</span>
-                        <Link
-                          to={`/vagas/${v.id}`}
-                          className="btn-outline-brand !px-4 !py-2 !text-xs"
-                        >
-                          Ver detalhes
-                        </Link>
+                      <div className="mt-1 flex items-center gap-3 flex-wrap font-sans text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> {v.local_trabalho}</span>
+                        <span>·</span>
+                        <span>{MODALIDADE_LABEL[v.modalidade] ?? v.modalidade}</span>
                       </div>
                     </div>
-                  </article>
+                    <svg className="h-5 w-5 text-muted-foreground shrink-0 group-hover:text-primary group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
                 );
               })}
             </div>
