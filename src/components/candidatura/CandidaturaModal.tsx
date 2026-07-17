@@ -276,6 +276,23 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
         }
       }
 
+      let fotoUrl: string | null = null;
+      if (c.foto) {
+        const ext = c.foto.name.split(".").pop() ?? "jpg";
+        const path = `fotos/${Date.now()}_${c.nome.replace(/\s+/g, "_")}.${ext}`;
+        const { data: upData, error: upError } = await supabase.storage
+          .from("public-applications")
+          .upload(path, c.foto, { upsert: false });
+        if (upError) {
+          console.error("[foto] storage:", upError.message);
+        } else if (upData) {
+          const { data: urlData } = supabase.storage.from("public-applications").getPublicUrl(upData.path);
+          fotoUrl = urlData.publicUrl;
+        }
+      } else if (c.fotoPreview && c.fotoPreview.startsWith("http")) {
+        fotoUrl = c.fotoPreview;
+      }
+
       // Sempre INSERT — reaproveitamos os DADOS do candidato anterior (nome, email, etc.)
       // mas cada candidatura a uma vaga é uma linha nova com seu próprio job_id.
       const row = {
@@ -298,6 +315,7 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
         disponibilidade_inicio: modo === "banco" ? (c.disponibilidade || null) : null,
         banco_talentos: modo === "banco",
         etapa_azumi: "recebido",
+        foto_url: fotoUrl,
         lgpd_aceite: c.aceitePrivacidade,
         lgpd_aceite_at: c.aceitePrivacidade ? new Date().toISOString() : null,
       };

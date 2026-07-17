@@ -300,11 +300,15 @@ export function Header({ showSwitcher = true, context = "connect", variant = "ad
               onClick={() => setOpenPerfil((v) => !v)}
               className="flex items-center gap-2 h-9 px-2 pr-3 rounded-lg hover:bg-secondary"
             >
-              <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center text-[10px] font-semibold text-primary-foreground">
-                {usuario?.nome
-                  ? usuario.nome.split(" ").filter(Boolean).slice(0, 2).map((n) => n[0]).join("").toUpperCase()
-                  : "VC"}
-              </div>
+              {usuario?.avatarUrl ? (
+                <img src={usuario.avatarUrl} alt={usuario.nome} className="h-7 w-7 rounded-lg object-cover" />
+              ) : (
+                <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center text-[10px] font-semibold text-primary-foreground">
+                  {usuario?.nome
+                    ? usuario.nome.split(" ").filter(Boolean).slice(0, 2).map((n) => n[0]).join("").toUpperCase()
+                    : "VC"}
+                </div>
+              )}
               <div className="text-left hidden sm:block">
                 <div className="text-xs font-medium leading-tight">{usuario?.nome?.split(" ")[0] ?? "Você"}</div>
                 <div className="text-[10px] text-muted-foreground leading-tight">
@@ -319,11 +323,15 @@ export function Header({ showSwitcher = true, context = "connect", variant = "ad
             {openPerfil && (
               <div className="absolute right-0 mt-2 w-64 bg-card border border-border rounded-xl shadow-elevated z-50 animate-fade-in overflow-hidden">
                 <div className="px-4 py-4 flex items-center gap-3 border-b border-border">
-                  <div className="h-11 w-11 rounded-lg bg-primary flex items-center justify-center text-sm font-semibold text-primary-foreground shrink-0">
-                    {usuario?.nome
-                      ? usuario.nome.split(" ").filter(Boolean).slice(0, 2).map((n) => n[0]).join("").toUpperCase()
-                      : "VC"}
-                  </div>
+                  {usuario?.avatarUrl ? (
+                    <img src={usuario.avatarUrl} alt={usuario.nome} className="h-11 w-11 rounded-lg object-cover shrink-0" />
+                  ) : (
+                    <div className="h-11 w-11 rounded-lg bg-primary flex items-center justify-center text-sm font-semibold text-primary-foreground shrink-0">
+                      {usuario?.nome
+                        ? usuario.nome.split(" ").filter(Boolean).slice(0, 2).map((n) => n[0]).join("").toUpperCase()
+                        : "VC"}
+                    </div>
+                  )}
                   <div className="min-w-0">
                     <p className="text-sm font-semibold truncate">{usuario?.nome ?? "Você"}</p>
                     <p className="text-[11px] text-muted-foreground truncate">

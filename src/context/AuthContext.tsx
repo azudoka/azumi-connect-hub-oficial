@@ -59,6 +59,7 @@ export interface Usuario {
   modulos: ModuloPermissao[];
   isDemo: boolean;
   auditoria: boolean;
+  avatarUrl?: string;
 }
 
 export interface AuthUser {
@@ -143,7 +144,7 @@ const ROLES_COM_AUDITORIA: UserRole[] = ["rh", "ceo", "admin"];
 async function fetchPerfil(userId: string): Promise<Usuario | null> {
   const { data, error } = await supabase
     .from("users_profile")
-    .select("id, role, company_id, full_name, is_active, email, empresa_externa_nome")
+    .select("id, role, company_id, full_name, is_active, email, empresa_externa_nome, avatar_url")
     .eq("id", userId)
     .single();
 
@@ -165,6 +166,7 @@ async function fetchPerfil(userId: string): Promise<Usuario | null> {
     modulos: PERMISSOES_POR_ROLE[papel] ?? [],
     isDemo: false,
     auditoria: ROLES_COM_AUDITORIA.includes(papel),
+    avatarUrl: (data as any).avatar_url ?? undefined,
   };
 }
 
@@ -182,6 +184,7 @@ interface AuthContextValue {
   hasModulo: (slug: ModuloSlug) => boolean;
   podeOperar: (slug: ModuloSlug) => boolean;
   temAuditoria: boolean;
+  refreshPerfil: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -266,6 +269,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [usuario]
   );
 
+  const refreshPerfil = useCallback(async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      const perfil = await fetchPerfil(session.user.id);
+      if (perfil) setUsuario(perfil);
+    }
+  }, []);
+
   const value = useMemo<AuthContextValue>(() => {
     const legacyUser: AuthUser | null = usuario
       ? { id: usuario.id, nome: usuario.nome, papel: usuario.role, empresaId: usuario.empresaId ?? null }
@@ -280,8 +291,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       hasModulo,
       podeOperar,
       temAuditoria: usuario?.auditoria ?? false,
+      refreshPerfil,
     };
-  }, [usuario, carregando, login, loginLegacy, logout, hasModulo, podeOperar]);
+  }, [usuario, carregando, login, loginLegacy, logout, hasModulo, podeOperar, refreshPerfil]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

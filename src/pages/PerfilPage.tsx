@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -8,10 +8,12 @@ import {
   FileText,
   Clock,
   Building2,
+  Camera,
 } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { supabase } from "@/integrations/supabase/client";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,10 +57,12 @@ const PILL_BASE =
   "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap";
 
 export default function PerfilPage() {
-  const { user } = useAuth();
+  const { user, usuario, refreshPerfil } = useAuth();
   const isCliente = user?.papel === "cliente";
 
   const [editMode, setEditMode] = useState(false);
+  const [enviandoAvatar, setEnviandoAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({
     nome: user?.nome ?? "",
     email: "",
@@ -86,6 +90,32 @@ export default function PerfilPage() {
     setSnapshot(form);
     setEditMode(false);
     toast.success("Perfil atualizado!");
+  }
+
+  async function handleUploadAvatar(file: File) {
+    if (!usuario?.id) return;
+    setEnviandoAvatar(true);
+    try {
+      const ext = file.name.split(".").pop() ?? "jpg";
+      const path = `avatars/${usuario.id}.${ext}`;
+      const { data: upData, error: upError } = await supabase.storage
+        .from("public-applications")
+        .upload(path, file, { upsert: true });
+      if (upError) throw upError;
+      const { data: urlData } = supabase.storage.from("public-applications").getPublicUrl(upData.path);
+      const publicUrl = urlData.publicUrl + `?t=${Date.now()}`;
+      const { error: dbError } = await supabase
+        .from("users_profile")
+        .update({ avatar_url: publicUrl })
+        .eq("id", usuario.id);
+      if (dbError) throw dbError;
+      await refreshPerfil();
+      toast.success("Foto atualizada!");
+    } catch (e: any) {
+      toast.error("Erro ao salvar foto: " + e.message);
+    } finally {
+      setEnviandoAvatar(false);
+    }
   }
 
   // --- Acesso rápido ---
@@ -149,11 +179,30 @@ export default function PerfilPage() {
         </div>
 
         <div className="flex items-start gap-4 mb-5">
-          <Avatar className="h-14 w-14">
-            <AvatarFallback className="bg-gradient-to-br from-primary to-primary/60 text-primary-foreground font-semibold">
-              {iniciais(form.nome || user?.nome)}
-            </AvatarFallback>
-          </Avatar>
+          <div className="relative shrink-0">
+            <Avatar className="h-14 w-14">
+              {usuario?.avatarUrl && <AvatarImage src={usuario.avatarUrl} alt={form.nome || user?.nome} />}
+              <AvatarFallback className="bg-gradient-to-br from-primary to-primary/60 text-primary-foreground font-semibold">
+                {iniciais(form.nome || user?.nome)}
+              </AvatarFallback>
+            </Avatar>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUploadAvatar(f); e.target.value = ""; }}
+            />
+            <button
+              type="button"
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={enviandoAvatar}
+              className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-primary flex items-center justify-center ring-2 ring-background hover:bg-primary/80 disabled:opacity-50"
+              title="Alterar foto"
+            >
+              <Camera className="h-2.5 w-2.5 text-primary-foreground" />
+            </button>
+          </div>
           <div className="flex-1 min-w-0">
             <div className="font-medium text-base">{form.nome || user?.nome || "—"}</div>
             <div className="mt-1.5">
