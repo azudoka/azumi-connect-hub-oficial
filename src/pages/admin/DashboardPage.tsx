@@ -616,7 +616,7 @@ function AdminDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
             {/* Bloco 1: Tarefas em atraso */}
-            <Card className="p-5 rounded-xl border-0" style={{ boxShadow: "0 1px 4px rgba(133,146,173,0.2)" }}>
+            <Card className="p-5 rounded-2xl shadow-md border-0">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-display text-base font-semibold flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4 text-destructive" />
@@ -673,7 +673,7 @@ function AdminDashboard() {
             </Card>
 
             {/* Bloco 2: Engajamento do cliente */}
-            <Card className="p-5 rounded-xl border-0" style={{ boxShadow: "0 1px 4px rgba(133,146,173,0.2)" }}>
+            <Card className="p-5 rounded-2xl shadow-md border-0">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-display text-base font-semibold flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-primary" />
@@ -741,7 +741,7 @@ function AdminDashboard() {
           </div>
 
           {/* LINHA 2: Produtividade */}
-          <Card className="p-5 rounded-xl border-0" style={{ boxShadow: "0 1px 4px rgba(133,146,173,0.2)" }}>
+          <Card className="p-5 rounded-2xl shadow-md border-0">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-display text-base font-semibold">Produtividade dos consultores</h2>
               <Select value={periodoProdutividade} onValueChange={(v) => setPeriodoProdutividade(v as "atual" | "anterior")}>
@@ -812,7 +812,7 @@ function AdminDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
             {/* Bloco 4: NPS */}
-            <Card className="p-5 rounded-xl border-0" style={{ boxShadow: "0 1px 4px rgba(133,146,173,0.2)" }}>
+            <Card className="p-5 rounded-2xl shadow-md border-0">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-display text-base font-semibold flex items-center gap-2">
                   <Star className="h-4 w-4 text-warning" />
@@ -866,7 +866,7 @@ function AdminDashboard() {
             </Card>
 
             {/* Bloco 5: SLA Vagas */}
-            <Card className="p-5 rounded-xl border-0" style={{ boxShadow: "0 1px 4px rgba(133,146,173,0.2)" }}>
+            <Card className="p-5 rounded-2xl shadow-md border-0">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-display text-base font-semibold flex items-center gap-2">
                   <Target className="h-4 w-4 text-primary" />
