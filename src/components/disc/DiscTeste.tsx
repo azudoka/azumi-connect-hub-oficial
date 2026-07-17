@@ -11,6 +11,7 @@ import {
 import PerfilIlustracao from "./PerfilIlustracao";
 import { getDiscInterpretacao } from "./discProfileContent";
 import { DiscRadarChart } from "./DiscRadarChart";
+import { gerarRadarSvgString } from "@/lib/discRadarSvg";
 
 const NAVY = "#031D38";
 const BLUE = "#034C8B";
@@ -157,16 +158,21 @@ export default function DiscTeste({ candidateName, onComplete }: Props) {
         </div>
       </div>
 
-      ${(["D", "I", "S", "C"] as DiscDim[])
-        .map(
-          (d) => `
-        <div class="bar-row">
-          <div class="k" style="color:${COR[d]}">${d}</div>
-          <div class="track"><div class="fill" style="width:${scores[d]}%;background:${COR[d]}"></div></div>
-          <div class="v">${scores[d]}%</div>
-        </div>`,
-        )
-        .join("")}
+      <div style="display:flex;align-items:flex-start;gap:24px;margin-bottom:8px">
+        <div style="flex-shrink:0">${gerarRadarSvgString(scores)}</div>
+        <div style="flex:1;padding-top:8px">
+          ${(["D", "I", "S", "C"] as DiscDim[])
+            .map(
+              (d) => `
+          <div class="bar-row">
+            <div class="k" style="color:${COR[d]}">${d}</div>
+            <div class="track"><div class="fill" style="width:${scores[d]}%;background:${COR[d]}"></div></div>
+            <div class="v">${scores[d]}%</div>
+          </div>`,
+            )
+            .join("")}
+        </div>
+      </div>
 
       <div class="perfil">
         <h2>${profContent.nome}</h2>
