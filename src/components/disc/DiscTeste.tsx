@@ -9,6 +9,7 @@ import {
   type DiscScores,
 } from "./discQuestions";
 import PerfilIlustracao from "./PerfilIlustracao";
+import { getDiscInterpretacao } from "./discProfileContent";
 
 const NAVY = "#031D38";
 const BLUE = "#034C8B";
@@ -42,6 +43,15 @@ export default function DiscTeste({ candidateName, onComplete }: Props) {
 
   const scores = useMemo(() => calcularScores(answers), [answers]);
   const perfil = useMemo(() => perfilPredominante(scores), [scores]);
+
+  const perfilSecundarioDim = useMemo(
+    () => (["D", "I", "S", "C"] as DiscDim[]).sort((a, b) => scores[b] - scores[a])[1],
+    [scores],
+  );
+  const { predominante: profContent, secundario: profSecContent } = useMemo(
+    () => getDiscInterpretacao(perfil.dim, perfilSecundarioDim),
+    [perfil.dim, perfilSecundarioDim],
+  );
 
   function marcar(tipo: "mais" | "menos", dim: DiscDim) {
     setAnswers((prev) => {
@@ -158,15 +168,20 @@ export default function DiscTeste({ candidateName, onComplete }: Props) {
         .join("")}
 
       <div class="perfil">
-        <h2>${perfil.nome}</h2>
-        <p>Você é uma pessoa <strong>${perfil.adjetivos[0]}</strong>, <strong>${perfil.adjetivos[1]}</strong> e <strong>${perfil.adjetivos[2]}</strong>. ${perfil.descricao}</p>
-        <ul>${perfil.pontosFortes.map((p) => `<li>${p}</li>`).join("")}</ul>
+        <h2>${profContent.nome}</h2>
+        <p>${profContent.resumo}</p>
+        <h3 style="font-size:13px;margin:14px 0 6px;color:#059669">Pontos fortes</h3>
+        <ul>${profContent.pontosFortes.map((p) => `<li>${p}</li>`).join("")}</ul>
+        <h3 style="font-size:13px;margin:14px 0 6px;color:#d97706">Pontos de desenvolvimento</h3>
+        <ul>${profContent.pontosDesenvolvimento.map((p) => `<li>${p}</li>`).join("")}</ul>
       </div>
 
       <div class="dicas">
-        <h3>Como se sair bem neste perfil</h3>
-        <ul>${perfil.comoSairBem.map((p) => `<li>${p}</li>`).join("")}</ul>
+        <h3>Como funciona melhor</h3>
+        <ul>${profContent.comoFuncionaMelhor.map((p) => `<li>${p}</li>`).join("")}</ul>
       </div>
+
+      ${profSecContent ? `<div class="perfil" style="margin-top:16px;border-left:4px solid ${COR[profSecContent.letra]};padding-left:14px"><p style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#6b7280;margin-bottom:4px">Perfil secundário</p><h2 style="color:${COR[profSecContent.letra]};font-size:18px">${profSecContent.nome}</h2><p>${profSecContent.resumo}</p></div>` : ""}
 
       <div class="aviso">
         Este resultado é uma leitura comportamental de triagem. Não é um diagnóstico psicológico.
@@ -219,23 +234,38 @@ export default function DiscTeste({ candidateName, onComplete }: Props) {
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
-          <h4 className="text-base font-semibold text-slate-900">{perfil.nome}</h4>
-          <p className="mt-1 text-sm text-slate-600">
-            Você é uma pessoa <strong>{perfil.adjetivos[0]}</strong>, <strong>{perfil.adjetivos[1]}</strong> e <strong>{perfil.adjetivos[2]}</strong>. {perfil.descricao}
-          </p>
-          <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-700">
-            {perfil.pontosFortes.map((p) => <li key={p}>{p}</li>)}
-          </ul>
+          <h4 className="text-base font-semibold text-slate-900">{profContent.nome}</h4>
+          <p className="mt-1 text-sm text-slate-600">{profContent.resumo}</p>
+          <div className="mt-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700 mb-2">Pontos fortes</p>
+            <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
+              {profContent.pontosFortes.map((p) => <li key={p}>{p}</li>)}
+            </ul>
+          </div>
+          <div className="mt-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-amber-700 mb-2">Pontos de desenvolvimento</p>
+            <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
+              {profContent.pontosDesenvolvimento.map((p) => <li key={p}>{p}</li>)}
+            </ul>
+          </div>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white p-5">
           <h4 className="flex items-center gap-2 text-sm font-semibold" style={{ color: corPerfil }}>
-            <Lightbulb className="h-4 w-4" /> Como se sair bem neste perfil
+            <Lightbulb className="h-4 w-4" /> Como funciona melhor
           </h4>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
-            {perfil.comoSairBem.map((p) => <li key={p}>{p}</li>)}
+            {profContent.comoFuncionaMelhor.map((p) => <li key={p}>{p}</li>)}
           </ul>
         </div>
+
+        {profSecContent && (
+          <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-5">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Perfil secundário</p>
+            <h4 className="text-sm font-semibold" style={{ color: COR[profSecContent.letra] }}>{profSecContent.nome}</h4>
+            <p className="mt-1 text-sm text-slate-500">{profSecContent.resumo}</p>
+          </div>
+        )}
 
         <button
           type="button"

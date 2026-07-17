@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { SectionDivider } from "@/components/SectionDivider";
 import { SlaBar } from "@/components/SlaBar";
 import { DiscBars } from "@/components/DiscBars";
+import { getDiscInterpretacao } from "@/components/disc/discProfileContent";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { vagas, comentariosVaga, getGestorDaVaga, type JanelaDisponibilidade } from "@/data/mock";
 import { getParecerCliente, getFeedback1aLeva, resetSeedDemo } from "@/data/atracaoClienteStore";
@@ -4802,6 +4803,17 @@ function CandidatoDetailSheet({
     ? { D: dados.discDetalhes.d, I: dados.discDetalhes.i, S: dados.discDetalhes.s, C: dados.discDetalhes.c }
     : undefined);
 
+  const validDiscDims = ["D", "I", "S", "C"] as const;
+  const discProfileDim = cand.perfilDom && validDiscDims.includes(cand.perfilDom as typeof validDiscDims[number])
+    ? cand.perfilDom as "D" | "I" | "S" | "C"
+    : null;
+  const discSecundarioDim = discValues && discProfileDim
+    ? (validDiscDims as unknown as ("D"|"I"|"S"|"C")[]).sort((a, b) => ((discValues[b] ?? 0) - (discValues[a] ?? 0)))[1]
+    : null;
+  const discInterpretacao = discProfileDim
+    ? getDiscInterpretacao(discProfileDim, discSecundarioDim)
+    : null;
+
   const etapaPodeAgendar = etapaAtual === "Entrevista Azumi" || etapaAtual === "Entrevista gestor" || etapaAtual === "Quest/Entrevista";
   const questsDoCandidato = questionariosVaga.map((q) => {
     const resp = q.respostasPorCandidato[cand.id];
@@ -5062,13 +5074,18 @@ function CandidatoDetailSheet({
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <div className="text-sm font-semibold">
-                      {dados.discDetalhes?.perfil ?? (cand.perfilDom ? `Perfil ${cand.perfilDom}` : "DISC")}
+                      {discInterpretacao?.predominante.nome ?? dados.discDetalhes?.perfil ?? (cand.perfilDom ? `Perfil ${cand.perfilDom}` : "DISC")}
                     </div>
                     <div className="text-[11px] text-muted-foreground mt-0.5">
                       {dados.discStatus === "concluido" ? "DISC concluído"
                         : dados.discStatus === "solicitado" ? "DISC solicitado — aguardando resposta"
                         : "DISC não solicitado"}
                     </div>
+                    {discInterpretacao?.predominante && (
+                      <p className="text-[11px] text-muted-foreground mt-1.5 leading-relaxed max-w-sm">
+                        {discInterpretacao.predominante.resumo}
+                      </p>
+                    )}
                   </div>
                   <div className="flex gap-1.5">
                     <button
@@ -5088,12 +5105,34 @@ function CandidatoDetailSheet({
                           return `<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span style="font-weight:600">${k}</span><span>${v}%</span></div><div style="height:10px;background:#e2e8f0;border-radius:5px"><div style="height:100%;width:${v}%;background:${cores[k]};border-radius:5px"></div></div></div>`;
                         }).join("");
                         const h2s = (t: string) => `<h2 style="font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;margin:20px 0 6px;border-top:1px solid #e2e8f0;padding-top:14px">${t}</h2>`;
+                        const interp = discInterpretacao;
                         const extras = [
-                          dados.discDetalhes?.descricao ? `${h2s("Descrição do perfil")}<p>${dados.discDetalhes.descricao}</p>` : "",
-                          (dados.discDetalhes as any)?.pontosFortes?.length ? `${h2s("Pontos fortes")}<ul>${(dados.discDetalhes as any).pontosFortes.map((p: string) => `<li>${p}</li>`).join("")}</ul>` : "",
-                          (dados.discDetalhes as any)?.pontosAtencao?.length ? `${h2s("Pontos de atenção")}<ul>${(dados.discDetalhes as any).pontosAtencao.map((p: string) => `<li>${p}</li>`).join("")}</ul>` : "",
-                          (dados.discDetalhes as any)?.estiloMotivacao ? `${h2s("Estilo de motivação")}<p>${(dados.discDetalhes as any).estiloMotivacao}</p>` : "",
-                          (dados.discDetalhes as any)?.perguntasEntrevista?.length ? `${h2s("Perguntas sugeridas para entrevista")}<ul>${(dados.discDetalhes as any).perguntasEntrevista.map((q: string) => `<li>${q}</li>`).join("")}</ul>` : "",
+                          dados.discDetalhes?.descricao
+                            ? `${h2s("Descrição do perfil")}<p>${dados.discDetalhes.descricao}</p>`
+                            : interp?.predominante
+                              ? `${h2s("Sobre o perfil")}<p>${interp.predominante.resumo}</p>`
+                              : "",
+                          (dados.discDetalhes as any)?.pontosFortes?.length
+                            ? `${h2s("Pontos fortes")}<ul>${(dados.discDetalhes as any).pontosFortes.map((p: string) => `<li>${p}</li>`).join("")}</ul>`
+                            : interp?.predominante?.pontosFortes?.length
+                              ? `${h2s("Pontos fortes")}<ul>${interp.predominante.pontosFortes.map((p: string) => `<li>${p}</li>`).join("")}</ul>`
+                              : "",
+                          interp?.predominante?.pontosDesenvolvimento?.length
+                            ? `${h2s("Pontos de desenvolvimento")}<ul>${interp.predominante.pontosDesenvolvimento.map((p: string) => `<li>${p}</li>`).join("")}</ul>`
+                            : (dados.discDetalhes as any)?.pontosAtencao?.length
+                              ? `${h2s("Pontos de atenção")}<ul>${(dados.discDetalhes as any).pontosAtencao.map((p: string) => `<li>${p}</li>`).join("")}</ul>`
+                              : "",
+                          interp?.predominante?.comoFuncionaMelhor?.length
+                            ? `${h2s("Como funciona melhor")}<ul>${interp.predominante.comoFuncionaMelhor.map((p: string) => `<li>${p}</li>`).join("")}</ul>`
+                            : (dados.discDetalhes as any)?.estiloMotivacao
+                              ? `${h2s("Estilo de motivação")}<p>${(dados.discDetalhes as any).estiloMotivacao}</p>`
+                              : "",
+                          (dados.discDetalhes as any)?.perguntasEntrevista?.length
+                            ? `${h2s("Perguntas sugeridas para entrevista")}<ul>${(dados.discDetalhes as any).perguntasEntrevista.map((q: string) => `<li>${q}</li>`).join("")}</ul>`
+                            : "",
+                          interp?.secundario
+                            ? `${h2s("Perfil secundário")}<p><strong style="color:${interp.secundario.corHex}">${interp.secundario.nome}</strong></p><p>${interp.secundario.resumo}</p>`
+                            : "",
                         ].join("");
                         const html = `<!doctype html><html><head><title>Perfil DISC — ${cand.nome}</title><style>body{font-family:sans-serif;padding:40px;color:#1e293b;line-height:1.5;max-width:700px;margin:0 auto}h1{font-size:22px;color:#031D38;margin-bottom:4px}ul{padding-left:20px}li{margin-bottom:4px}.footer{margin-top:40px;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px}</style></head><body><h1>Perfil DISC — ${cand.nome}</h1><p style="color:#64748b;font-size:14px;margin-bottom:24px">Perfil predominante: <strong style="color:#1e293b">${perfil}</strong></p>${barras}${extras}<div class="footer">Azumi Connect · Gerado em ${new Date().toLocaleDateString("pt-BR")}</div><script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`;
                         const win = window.open("", "_blank");
@@ -5657,9 +5696,15 @@ function RelatorioCandidatoModal({
     sintese: candidato.parecer ?? "",
     pontosPositivos: "",
     pontosAtencao: "",
-    discResumo: candidato.perfilDom
-      ? `Perfil dominante ${candidato.perfilDom}.`
-      : "Perfil DISC ainda não disponível.",
+    discResumo: (() => {
+      const validDims = ["D", "I", "S", "C"] as const;
+      const dim = candidato.perfilDom && validDims.includes(candidato.perfilDom as typeof validDims[number])
+        ? candidato.perfilDom as "D" | "I" | "S" | "C"
+        : null;
+      if (!dim) return "Perfil DISC ainda não disponível.";
+      const { predominante } = getDiscInterpretacao(dim);
+      return `${predominante.nome} — ${predominante.resumo}\n\nPontos fortes: ${predominante.pontosFortes.slice(0, 3).join("; ")}.`;
+    })(),
     questoes: Object.fromEntries(
       questoesReais.map((q) => [
         q.id,
@@ -5887,7 +5932,22 @@ function RelatorioCandidatoModal({
               const movimentoHtml = form.movimento
                 ? `${h2r("Movimento Proposto")}<span style="display:inline-block;padding:4px 12px;border-radius:6px;font-size:13px;font-weight:600;background:${form.movimento==="Avançar"?"#d1fae5":form.movimento==="Desclassificar"?"#fee2e2":"#fef3c7"};color:${form.movimento==="Avançar"?"#065f46":form.movimento==="Desclassificar"?"#991b1b":"#92400e"}">${form.movimento}</span>`
                 : "";
-              const html = `<!doctype html><html><head><title>Relatório — ${esc(candidato.nome)}</title><style>body{font-family:sans-serif;padding:40px;color:#1e293b;line-height:1.6;max-width:750px;margin:0 auto}h1{font-size:22px;color:#031D38;margin-bottom:2px}p{margin:0 0 8px}.footer{margin-top:40px;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px}</style></head><body><h1>Relatório do Candidato</h1><p style="color:#64748b;font-size:12px">${esc(candidato.nome)} · ${esc(vagaTitulo)} · ${esc(empresa)} · ${form.protocolo} · ${form.data}</p>${h2r("Dados Essenciais")}<p><strong>Cargo:</strong> ${esc(form.cargoAtual)}</p><p><strong>Cidade / UF:</strong> ${esc(form.cidadeUf)}</p>${form.experienciaResumida ? `<p style="margin-top:8px">${nl(form.experienciaResumida)}</p>` : ""}${h2r("Síntese do Currículo")}<p>${nl(form.sintese || "—")}</p>${h2r("Pontos Positivos")}<p style="white-space:pre-line">${esc(form.pontosPositivos || "—")}</p>${h2r("Pontos de Atenção")}<p style="white-space:pre-line">${esc(form.pontosAtencao || "—")}</p>${h2r("Perfil Comportamental (DISC)")}<p>${nl(form.discResumo || "—")}</p>${h2r("Questionário — Respostas e Notas")}${questoesHtml}${h2r("Recomendação do Consultor")}<p>${nl(form.recomendacao || "—")}</p>${movimentoHtml}<div class="footer"><p style="font-weight:600;margin:0">${esc(form.consultorNome)}</p><p style="color:#64748b;margin:2px 0">${esc(form.consultorCargo)}</p><p style="margin-top:6px">Azumi Connect · ${form.protocolo} · Emitido em ${form.data}</p></div><script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`;
+              const relDiscDim = (() => {
+                const vd = ["D", "I", "S", "C"] as const;
+                const d = candidato.perfilDom && vd.includes(candidato.perfilDom as typeof vd[number]) ? candidato.perfilDom as "D"|"I"|"S"|"C" : null;
+                return d;
+              })();
+              const relDiscSec = relDiscDim && candidato.disc
+                ? (["D","I","S","C"] as const).sort((a,b) => ((candidato.disc![b]??0)-(candidato.disc![a]??0)))[1]
+                : null;
+              const relInterp = relDiscDim ? getDiscInterpretacao(relDiscDim, relDiscSec) : null;
+              const discDetalhadoHtml = relInterp?.predominante ? [
+                `<h3 style="font-size:13px;font-weight:700;color:#059669;margin:12px 0 4px">Pontos fortes</h3><ul style="padding-left:18px;margin:0">${relInterp.predominante.pontosFortes.map((p:string)=>`<li style="font-size:13px;margin-bottom:3px">${p}</li>`).join("")}</ul>`,
+                `<h3 style="font-size:13px;font-weight:700;color:#d97706;margin:12px 0 4px">Pontos de desenvolvimento</h3><ul style="padding-left:18px;margin:0">${relInterp.predominante.pontosDesenvolvimento.map((p:string)=>`<li style="font-size:13px;margin-bottom:3px">${p}</li>`).join("")}</ul>`,
+                `<h3 style="font-size:13px;font-weight:700;color:#034C8B;margin:12px 0 4px">Como funciona melhor</h3><ul style="padding-left:18px;margin:0">${relInterp.predominante.comoFuncionaMelhor.map((p:string)=>`<li style="font-size:13px;margin-bottom:3px">${p}</li>`).join("")}</ul>`,
+                relInterp.secundario ? `<div style="margin-top:14px;padding:10px 14px;border-left:3px solid ${relInterp.secundario.corHex};background:#f9fafb"><p style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#6b7280;margin:0 0 4px">Perfil secundário</p><p style="font-size:13px;font-weight:700;color:${relInterp.secundario.corHex};margin:0 0 4px">${relInterp.secundario.nome}</p><p style="font-size:13px;color:#475569;margin:0">${relInterp.secundario.resumo}</p></div>` : "",
+              ].join("") : "";
+              const html = `<!doctype html><html><head><title>Relatório — ${esc(candidato.nome)}</title><style>body{font-family:sans-serif;padding:40px;color:#1e293b;line-height:1.6;max-width:750px;margin:0 auto}h1{font-size:22px;color:#031D38;margin-bottom:2px}p{margin:0 0 8px}.footer{margin-top:40px;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px}</style></head><body><h1>Relatório do Candidato</h1><p style="color:#64748b;font-size:12px">${esc(candidato.nome)} · ${esc(vagaTitulo)} · ${esc(empresa)} · ${form.protocolo} · ${form.data}</p>${h2r("Dados Essenciais")}<p><strong>Cargo:</strong> ${esc(form.cargoAtual)}</p><p><strong>Cidade / UF:</strong> ${esc(form.cidadeUf)}</p>${form.experienciaResumida ? `<p style="margin-top:8px">${nl(form.experienciaResumida)}</p>` : ""}${h2r("Síntese do Currículo")}<p>${nl(form.sintese || "—")}</p>${h2r("Pontos Positivos")}<p style="white-space:pre-line">${esc(form.pontosPositivos || "—")}</p>${h2r("Pontos de Atenção")}<p style="white-space:pre-line">${esc(form.pontosAtencao || "—")}</p>${h2r("Perfil Comportamental (DISC)")}<p>${nl(form.discResumo || "—")}</p>${discDetalhadoHtml}${h2r("Questionário — Respostas e Notas")}${questoesHtml}${h2r("Recomendação do Consultor")}<p>${nl(form.recomendacao || "—")}</p>${movimentoHtml}<div class="footer"><p style="font-weight:600;margin:0">${esc(form.consultorNome)}</p><p style="color:#64748b;margin:2px 0">${esc(form.consultorCargo)}</p><p style="margin-top:6px">Azumi Connect · ${form.protocolo} · Emitido em ${form.data}</p></div><script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`;
               const win = window.open("", "_blank");
               if (win) { win.document.write(html); win.document.close(); }
             }}
