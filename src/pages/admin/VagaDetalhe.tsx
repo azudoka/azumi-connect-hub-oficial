@@ -9,6 +9,7 @@ import { SectionDivider } from "@/components/SectionDivider";
 import { SlaBar } from "@/components/SlaBar";
 import { DiscBars } from "@/components/DiscBars";
 import { getDiscInterpretacao } from "@/components/disc/discProfileContent";
+import { DiscRadarChart } from "@/components/disc/DiscRadarChart";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { vagas, comentariosVaga, getGestorDaVaga, type JanelaDisponibilidade } from "@/data/mock";
 import { getParecerCliente, getFeedback1aLeva, resetSeedDemo } from "@/data/atracaoClienteStore";
@@ -5134,7 +5135,7 @@ function CandidatoDetailSheet({
                             ? `${h2s("Perfil secundário")}<p><strong style="color:${interp.secundario.corHex}">${interp.secundario.nome}</strong></p><p>${interp.secundario.resumo}</p>`
                             : "",
                         ].join("");
-                        const html = `<!doctype html><html><head><title>Perfil DISC — ${cand.nome}</title><style>body{font-family:sans-serif;padding:40px;color:#1e293b;line-height:1.5;max-width:700px;margin:0 auto}h1{font-size:22px;color:#031D38;margin-bottom:4px}ul{padding-left:20px}li{margin-bottom:4px}.footer{margin-top:40px;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px}</style></head><body><h1>Perfil DISC — ${cand.nome}</h1><p style="color:#64748b;font-size:14px;margin-bottom:24px">Perfil predominante: <strong style="color:#1e293b">${perfil}</strong></p>${barras}${extras}<div class="footer">Azumi Connect · Gerado em ${new Date().toLocaleDateString("pt-BR")}</div><script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`;
+                        const html = `<!doctype html><html><head><title>Perfil DISC — ${cand.nome}</title><style>*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}body{font-family:sans-serif;padding:40px;color:#1e293b;line-height:1.5;max-width:700px;margin:0 auto}h1{font-size:22px;color:#031D38;margin-bottom:4px}ul{padding-left:20px}li{margin-bottom:4px}.footer{margin-top:40px;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px}</style></head><body><h1>Perfil DISC — ${cand.nome}</h1><p style="color:#64748b;font-size:14px;margin-bottom:24px">Perfil predominante: <strong style="color:#1e293b">${perfil}</strong></p>${barras}${extras}<div class="footer">Azumi Connect · Gerado em ${new Date().toLocaleDateString("pt-BR")}</div><script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`;
                         const win = window.open("", "_blank");
                         if (win) { win.document.write(html); win.document.close(); }
                       }}
@@ -5144,16 +5145,21 @@ function CandidatoDetailSheet({
                     </button>
                   </div>
                 </div>
-                {discValues && <DiscBars values={discValues} />}
                 {discValues && (
-                  <div className="grid grid-cols-4 gap-2 mt-3">
-                    {(["D","I","S","C"] as const).map((fator) => (
-                      <div key={fator} className="rounded-md border border-border bg-[hsl(var(--background)/0.4)] p-2 text-center">
-                        <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{fator}</div>
-                        <div className="text-lg font-bold mt-0.5">{discValues[fator]}</div>
-                        <div className="text-[10px] text-muted-foreground">%</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                    <DiscRadarChart scores={discValues} />
+                    <div className="space-y-2 py-2">
+                      <DiscBars values={discValues} />
+                      <div className="grid grid-cols-4 gap-1.5 mt-2">
+                        {(["D","I","S","C"] as const).map((fator) => (
+                          <div key={fator} className="rounded-md border border-border bg-[hsl(var(--background)/0.4)] p-2 text-center">
+                            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{fator}</div>
+                            <div className="text-base font-bold mt-0.5">{discValues[fator]}</div>
+                            <div className="text-[10px] text-muted-foreground">%</div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -5947,7 +5953,7 @@ function RelatorioCandidatoModal({
                 `<h3 style="font-size:13px;font-weight:700;color:#034C8B;margin:12px 0 4px">Como funciona melhor</h3><ul style="padding-left:18px;margin:0">${relInterp.predominante.comoFuncionaMelhor.map((p:string)=>`<li style="font-size:13px;margin-bottom:3px">${p}</li>`).join("")}</ul>`,
                 relInterp.secundario ? `<div style="margin-top:14px;padding:10px 14px;border-left:3px solid ${relInterp.secundario.corHex};background:#f9fafb"><p style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#6b7280;margin:0 0 4px">Perfil secundário</p><p style="font-size:13px;font-weight:700;color:${relInterp.secundario.corHex};margin:0 0 4px">${relInterp.secundario.nome}</p><p style="font-size:13px;color:#475569;margin:0">${relInterp.secundario.resumo}</p></div>` : "",
               ].join("") : "";
-              const html = `<!doctype html><html><head><title>Relatório — ${esc(candidato.nome)}</title><style>body{font-family:sans-serif;padding:40px;color:#1e293b;line-height:1.6;max-width:750px;margin:0 auto}h1{font-size:22px;color:#031D38;margin-bottom:2px}p{margin:0 0 8px}.footer{margin-top:40px;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px}</style></head><body><h1>Relatório do Candidato</h1><p style="color:#64748b;font-size:12px">${esc(candidato.nome)} · ${esc(vagaTitulo)} · ${esc(empresa)} · ${form.protocolo} · ${form.data}</p>${h2r("Dados Essenciais")}<p><strong>Cargo:</strong> ${esc(form.cargoAtual)}</p><p><strong>Cidade / UF:</strong> ${esc(form.cidadeUf)}</p>${form.experienciaResumida ? `<p style="margin-top:8px">${nl(form.experienciaResumida)}</p>` : ""}${h2r("Síntese do Currículo")}<p>${nl(form.sintese || "—")}</p>${h2r("Pontos Positivos")}<p style="white-space:pre-line">${esc(form.pontosPositivos || "—")}</p>${h2r("Pontos de Atenção")}<p style="white-space:pre-line">${esc(form.pontosAtencao || "—")}</p>${h2r("Perfil Comportamental (DISC)")}<p>${nl(form.discResumo || "—")}</p>${discDetalhadoHtml}${h2r("Questionário — Respostas e Notas")}${questoesHtml}${h2r("Recomendação do Consultor")}<p>${nl(form.recomendacao || "—")}</p>${movimentoHtml}<div class="footer"><p style="font-weight:600;margin:0">${esc(form.consultorNome)}</p><p style="color:#64748b;margin:2px 0">${esc(form.consultorCargo)}</p><p style="margin-top:6px">Azumi Connect · ${form.protocolo} · Emitido em ${form.data}</p></div><script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`;
+              const html = `<!doctype html><html><head><title>Relatório — ${esc(candidato.nome)}</title><style>*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}body{font-family:sans-serif;padding:40px;color:#1e293b;line-height:1.6;max-width:750px;margin:0 auto}h1{font-size:22px;color:#031D38;margin-bottom:2px}p{margin:0 0 8px}.footer{margin-top:40px;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px}</style></head><body><h1>Relatório do Candidato</h1><p style="color:#64748b;font-size:12px">${esc(candidato.nome)} · ${esc(vagaTitulo)} · ${esc(empresa)} · ${form.protocolo} · ${form.data}</p>${h2r("Dados Essenciais")}<p><strong>Cargo:</strong> ${esc(form.cargoAtual)}</p><p><strong>Cidade / UF:</strong> ${esc(form.cidadeUf)}</p>${form.experienciaResumida ? `<p style="margin-top:8px">${nl(form.experienciaResumida)}</p>` : ""}${h2r("Síntese do Currículo")}<p>${nl(form.sintese || "—")}</p>${h2r("Pontos Positivos")}<p style="white-space:pre-line">${esc(form.pontosPositivos || "—")}</p>${h2r("Pontos de Atenção")}<p style="white-space:pre-line">${esc(form.pontosAtencao || "—")}</p>${h2r("Perfil Comportamental (DISC)")}<p>${nl(form.discResumo || "—")}</p>${discDetalhadoHtml}${h2r("Questionário — Respostas e Notas")}${questoesHtml}${h2r("Recomendação do Consultor")}<p>${nl(form.recomendacao || "—")}</p>${movimentoHtml}<div class="footer"><p style="font-weight:600;margin:0">${esc(form.consultorNome)}</p><p style="color:#64748b;margin:2px 0">${esc(form.consultorCargo)}</p><p style="margin-top:6px">Azumi Connect · ${form.protocolo} · Emitido em ${form.data}</p></div><script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`;
               const win = window.open("", "_blank");
               if (win) { win.document.write(html); win.document.close(); }
             }}

@@ -10,6 +10,7 @@ import {
 } from "./discQuestions";
 import PerfilIlustracao from "./PerfilIlustracao";
 import { getDiscInterpretacao } from "./discProfileContent";
+import { DiscRadarChart } from "./DiscRadarChart";
 
 const NAVY = "#031D38";
 const BLUE = "#034C8B";
@@ -109,7 +110,7 @@ export default function DiscTeste({ candidateName, onComplete }: Props) {
     const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"/>
 <title>Relatório DISC — ${candidateName}</title>
 <style>
-  *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,Segoe UI,Roboto,Inter,sans-serif}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important;box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,Segoe UI,Roboto,Inter,sans-serif}
   body{background:#F5F7FA;color:#1f2937;padding:24px}
   .wrap{max-width:780px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08)}
   header{background:${NAVY};color:#fff;padding:28px 32px}
@@ -218,17 +219,21 @@ export default function DiscTeste({ candidateName, onComplete }: Props) {
           </div>
         </div>
 
-        <div className="space-y-2.5 rounded-xl border border-slate-200 bg-white p-5">
+        <div className="rounded-xl border border-slate-200 bg-white p-5">
+          <DiscRadarChart scores={scores} />
+        </div>
+
+        <div className="space-y-2.5 rounded-xl border border-slate-200 bg-white p-4">
           {(["D", "I", "S", "C"] as DiscDim[]).map((d) => (
             <div key={d} className="flex items-center gap-3">
               <div className="w-5 text-sm font-bold" style={{ color: COR[d] }}>{d}</div>
-              <div className="h-3 flex-1 overflow-hidden rounded-full bg-slate-100">
+              <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100">
                 <div
                   className="h-full rounded-full transition-all"
                   style={{ width: `${scores[d]}%`, background: COR[d] }}
                 />
               </div>
-              <div className="w-12 text-right text-xs tabular-nums text-slate-600">{scores[d]}%</div>
+              <div className="w-10 text-right text-xs tabular-nums text-slate-600">{scores[d]}%</div>
             </div>
           ))}
         </div>

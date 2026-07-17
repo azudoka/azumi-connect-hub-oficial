@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { X, Upload, Check, ChevronRight, FileText, Loader2, UserCheck, RefreshCw } from "lucide-react";
 import DiscTeste from "@/components/disc/DiscTeste";
+import { DiscIntroConsentimento } from "@/components/disc/DiscIntroConsentimento";
 import type { DiscDim, DiscScores } from "@/components/disc/discQuestions";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -100,6 +101,7 @@ const ORIGENS = ["LinkedIn", "Instagram", "Indicação", "Google", "Site Azumi",
 export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vagaId }: Props) {
   // step 0 = CPF lookup; 1 = formulário; 2 = DISC; "ok" = sucesso
   const [step, setStep] = useState<0 | 1 | 2 | "ok">(0);
+  const [discIntroAceita, setDiscIntroAceita] = useState(false);
   const [c, setC] = useState<Cadastro>(CADASTRO_INIT);
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -130,6 +132,7 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
     setDiscValido(false);
     setQuerAlterarDados(null);
     setQuerRefazerDisc(null);
+    setDiscIntroAceita(false);
     onClose();
   }
 
@@ -727,7 +730,14 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
           {/* ── Step 2: DISC ── */}
           {step === 2 && (
             <div className="mx-auto max-w-2xl">
-              <DiscTeste candidateName={c.nome || "Candidato"} onComplete={concluir} />
+              {!discIntroAceita ? (
+                <DiscIntroConsentimento
+                  nomeCandidato={c.nome || "Candidato"}
+                  onAceitar={() => setDiscIntroAceita(true)}
+                />
+              ) : (
+                <DiscTeste candidateName={c.nome || "Candidato"} onComplete={concluir} />
+              )}
             </div>
           )}
 

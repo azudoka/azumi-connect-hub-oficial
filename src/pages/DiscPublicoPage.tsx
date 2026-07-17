@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import DiscTeste from "@/components/disc/DiscTeste";
+import { DiscIntroConsentimento } from "@/components/disc/DiscIntroConsentimento";
 import type { DiscDim, DiscScores } from "@/components/disc/discQuestions";
 
 const NAVY = "#031D38";
@@ -13,6 +14,7 @@ export default function DiscPublicoPage() {
   const [carregando, setCarregando] = useState(true);
   const [concluido, setConcluido] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [introAceita, setIntroAceita] = useState(false);
 
   useEffect(() => {
     if (!candidatoId) { setErro("Link inválido."); setCarregando(false); return; }
@@ -96,7 +98,14 @@ export default function DiscPublicoPage() {
         <span style={{ color: "#93C5FD" }} className="text-lg font-semibold">RH</span>
       </header>
       <div className="max-w-2xl mx-auto py-8 px-4">
-        <DiscTeste candidateName={nome ?? "Candidato"} onComplete={handleComplete} />
+        {!introAceita ? (
+          <DiscIntroConsentimento
+            nomeCandidato={nome ?? "Candidato"}
+            onAceitar={() => setIntroAceita(true)}
+          />
+        ) : (
+          <DiscTeste candidateName={nome ?? "Candidato"} onComplete={handleComplete} />
+        )}
       </div>
     </div>
   );
