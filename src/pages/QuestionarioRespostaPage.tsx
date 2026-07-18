@@ -86,7 +86,7 @@ export default function QuestionarioRespostaPage() {
       const { data: candidato } = await supabase
         .from("candidates")
         .select("id")
-        .eq("cpf", cpfDigitado)
+        .eq("cpf", cpfNums)
         .maybeSingle();
       if (!candidato) {
         setErroCpf("CPF não encontrado — verifique com quem te convidou.");
