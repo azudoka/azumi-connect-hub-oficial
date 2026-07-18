@@ -534,6 +534,9 @@ export default function VagaDetalheAdmin() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [colunasEstado, candidatosExtras]);
 
+  const [vagaQuestId, setVagaQuestId] = useState<string | null>(null);
+  useEffect(() => { setVagaQuestId(vagaSupabaseData?.questionnaire_id ?? null); }, [vagaSupabaseData?.questionnaire_id]);
+
   const [questionariosVaga, setQuestionariosVaga] = useState<QuestionarioVaga[]>([]);
   const [eventos, setEventos] = useState<EventoEntrevista[]>([]);
   const [mensagens, setMensagens] = useState<MensagemVaga[]>([
@@ -848,6 +851,24 @@ export default function VagaDetalheAdmin() {
     const linkCurto = await criarLinkCurto(urlCompleta, "questionario_direto");
     navigator.clipboard.writeText(linkCurto);
     toast.success("Link copiado!", { description: linkCurto });
+  }
+
+  async function enviarQuestionarioDaVaga(candidatoId: string) {
+    if (!vagaQuestId) {
+      toast.error("Esta vaga ainda não tem um questionário vinculado. Selecione um na aba Questionários.");
+      return;
+    }
+    if (!vaga?.id) return;
+    const token = crypto.randomUUID();
+    const { error } = await supabase.from("candidate_questionnaires").insert({
+      questionnaire_id: vagaQuestId,
+      job_id: vaga.id,
+      candidate_id: candidatoId,
+      token,
+      status: "pendente",
+    });
+    if (error) { toast.error("Erro ao enviar questionário: " + error.message); return; }
+    toast.success("Questionário enviado. Aparecerá na ficha quando o candidato responder.");
   }
 
   /** Gera link público (mock) para o candidato responder o questionário. */
@@ -1915,7 +1936,13 @@ export default function VagaDetalheAdmin() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setAssociarQuestOpen(c.id)}
+                      onClick={() => {
+                        if (vagaQuestId) {
+                          enviarQuestionarioDaVaga(c.id);
+                        } else {
+                          setAssociarQuestOpen(c.id);
+                        }
+                      }}
                       className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-border text-[11px] font-medium hover:bg-secondary"
                     >
                       <ListChecks className="h-3 w-3" /> Questionário
@@ -2041,6 +2068,37 @@ export default function VagaDetalheAdmin() {
 
       {tab === "questionarios" && (
         <div className="bg-card rounded-xl shadow-[0_1px_4px_rgba(133,146,173,0.2)] p-5">
+          {/* Questionário vinculado a esta vaga */}
+          {vagaSupabaseData && (
+            <div className="mb-5 p-4 bg-[hsl(var(--secondary)/0.4)] rounded-xl">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 block">
+                Questionário desta vaga (triagem)
+              </label>
+              <select
+                value={vagaQuestId ?? ""}
+                onChange={async (e) => {
+                  const novoId = e.target.value || null;
+                  const { error } = await supabase
+                    .from("job_solicitations")
+                    .update({ questionnaire_id: novoId })
+                    .eq("id", vagaSupabaseData.id);
+                  if (error) { toast.error("Erro ao vincular questionário."); return; }
+                  setVagaQuestId(novoId);
+                  toast.success(novoId ? "Questionário vinculado a esta vaga." : "Questionário desvinculado.");
+                }}
+                className="w-full h-9 rounded-md border border-border bg-background px-3 text-sm"
+              >
+                <option value="">Nenhum questionário vinculado</option>
+                {questionariosVaga.map((q) => (
+                  <option key={q.id} value={q.id}>{q.nome}</option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground mt-2">
+                Esse é o questionário enviado automaticamente ao clicar "Questionário" no card de qualquer candidato desta vaga.
+              </p>
+            </div>
+          )}
+
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-display font-semibold">Gestão de questionários</h3>
             <button
@@ -2879,7 +2937,13 @@ export default function VagaDetalheAdmin() {
         onClose={() => setFichaCandidatoId(null)}
         onSolicitarDisc={(id) => setDiscWhatsOpen(id)}
         
-        onAssociarQuestionario={(id) => setAssociarQuestOpen(id)}
+        onAssociarQuestionario={(id) => {
+          if (vagaQuestId) {
+            enviarQuestionarioDaVaga(id);
+          } else {
+            setAssociarQuestOpen(id);
+          }
+        }}
         onDeclinar={(id) => setDeclinarOpen(id)}
         onAgendar={(id) => setAgendarOpen(id)}
         onAbrirRelatorio={(id) => setRelatorioOpenId(id)}

@@ -41,6 +41,7 @@ export type VagaSupabase = {
   excluida_em: string | null;    // ← encerrada_em
   motivo_exclusao: string | null;// ← motivo_encerramento
   etapaAtualizadoEm: string | null;
+  questionnaire_id: string | null;
 };
 
 // ── Mapeamento DB → VagaSupabase ─────────────────────────────────────────────
@@ -98,6 +99,7 @@ function jsToVaga(row: any): VagaSupabase {
     excluida_em: row.encerrada_em ?? null,
     motivo_exclusao: row.motivo_encerramento ?? null,
     etapaAtualizadoEm: row.etapa_connect_atualizado_em ?? null,
+    questionnaire_id: row.questionnaire_id ?? null,
   };
 }
 
