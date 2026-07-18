@@ -202,37 +202,55 @@ export default function CandidatarConvitePage() {
 
   if (erro) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center text-center px-6 gap-3">
-        <p className="text-slate-700 font-medium">{erro}</p>
-        <p className="text-slate-500 text-sm">Entre em contato com a Azumi RH se acredita que isso é um erro.</p>
+      <div className="min-h-screen flex flex-col items-center justify-center text-center px-6 gap-3"
+        style={{ background: "linear-gradient(160deg, #14233F 0%, #264478 55%, #3D63B8 100%)" }}>
+        <AzumiLogo product="Connect" size={44} light />
+        <div className="mt-4 bg-white rounded-2xl p-6 shadow-xl max-w-sm w-full text-center">
+          <p className="text-[#14233F] font-semibold text-sm mb-1">{erro}</p>
+          <p className="text-slate-500 text-xs">Entre em contato com a Azumi RH se acredita que isso é um erro.</p>
+          <div className="mt-4 flex gap-2">
+            <a href="https://wa.me/5541988350743" target="_blank" rel="noreferrer"
+              className="flex-1 flex items-center justify-center gap-1.5 rounded-full bg-[#25D366] text-white text-xs font-semibold py-2.5 hover:bg-[#1ebe5a] transition-colors">
+              WhatsApp
+            </a>
+            <a href="mailto:contato@azumirh.com.br"
+              className="flex-1 flex items-center justify-center gap-1.5 rounded-full border border-slate-300 text-slate-600 text-xs font-medium py-2.5 hover:bg-slate-50 transition-colors">
+              E-mail
+            </a>
+          </div>
+        </div>
+        <p className="text-white/30 text-xs mt-4">Azumi RH · azumirh.com.br</p>
       </div>
     );
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-stretch justify-center overflow-y-auto bg-black/70 sm:items-center sm:p-6">
-      <div className="relative flex w-full max-w-4xl flex-col bg-card sm:my-6 sm:max-h-[calc(100vh-3rem)] sm:rounded-2xl">
+    <div className="min-h-screen flex flex-col bg-[#F0F4FA]">
+      <div className="relative flex w-full max-w-4xl mx-auto flex-col flex-1">
         {enviando && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 rounded-2xl bg-card/90">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            <p className="font-sans text-sm text-muted-foreground">Enviando candidatura…</p>
+          <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-white/80 backdrop-blur-sm">
+            <Loader2 className="h-8 w-8 animate-spin text-[#264478]" />
+            <p className="font-sans text-sm text-slate-600">Enviando candidatura…</p>
           </div>
         )}
 
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-border bg-[hsl(var(--ocean))] px-6 py-4 text-white sm:rounded-t-2xl">
+        {/* Header — branded gradient */}
+        <div
+          className="flex items-center justify-between px-6 py-4 text-white"
+          style={{ background: "linear-gradient(90deg, #14233F 0%, #264478 100%)" }}
+        >
           <div className="min-w-0">
-            <p className="font-sans text-xs uppercase tracking-wider text-white/70">Candidatura</p>
+            <p className="font-sans text-xs uppercase tracking-wider text-white/60">Processo seletivo</p>
             <h2 className="truncate font-display text-base font-semibold">{jobTitulo}</h2>
           </div>
-          <AzumiLogo product="Connect" light size={20} hideSubtitle />
+          <AzumiLogo product="Connect" light size={32} hideSubtitle />
         </div>
 
         {/* Stepper */}
         {step !== "ok" && (
-          <div className="flex items-center gap-3 border-b border-border bg-muted/50 px-6 py-3">
+          <div className="flex items-center gap-3 border-b border-slate-200 bg-white px-6 py-3">
             <StepItem n={1} label="Cadastro" active={step === 1} done={step === 2} />
-            <div className="h-px flex-1 bg-border" />
+            <div className="h-px flex-1 bg-slate-200" />
             <StepItem n={2} label="Perfil DISC" active={step === 2} done={false} />
           </div>
         )}
@@ -323,6 +341,8 @@ export default function CandidatarConvitePage() {
             </div>
           )}
         </div>
+
+        <p className="text-center text-xs text-slate-400 py-4">Azumi RH · azumirh.com.br</p>
       </div>
     </div>
   );
