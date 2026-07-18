@@ -23,8 +23,8 @@ const FONT_IMPORT =
   '<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">';
 const FONT_FAMILY = "'Poppins', Arial, sans-serif";
 
-const AZUMI_LOGO_URL = "https://connect.azumirh.com.br/azumi-logo.png";
-const CONNECT_LOGO_URL = "https://connect.azumirh.com.br/connect-logo.png";
+const AZUMI_LOGO_URL = "https://raw.githubusercontent.com/azudoka/azumi-connect-hub-oficial/main/public/azumi-logo.png";
+const CONNECT_LOGO_URL = "https://raw.githubusercontent.com/azudoka/azumi-connect-hub-oficial/main/public/connect-logo.png";
 
 const ICON_INSTAGRAM =
   '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="20" height="20" rx="5" stroke="#B9C8E6" stroke-width="1.8"/><circle cx="12" cy="12" r="4.2" stroke="#B9C8E6" stroke-width="1.8"/><circle cx="17.2" cy="6.8" r="1.1" fill="#B9C8E6"/></svg>';
