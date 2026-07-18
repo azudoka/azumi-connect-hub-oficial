@@ -24,6 +24,7 @@ import PortalDashboard from "./pages/portal/PortalDashboard";
 import Login from "./pages/auth/Login";
 import RedefinirSenha from "./pages/auth/RedefinirSenha";
 import DiscPublicoPage from "./pages/DiscPublicoPage";
+import DiscAvulsoPage from "./pages/DiscAvulsoPage";
 import SelecaoPerfil from "./pages/auth/SelecaoPerfil";
 import NotFound from "./pages/NotFound";
 import Stub from "./pages/Stub";
@@ -195,6 +196,7 @@ const AppRoutes = () => (
     <Route path="/vagas/:id" element={<VagaPublicaDetalhePage />} />
     <Route path="/aplicar/:id" element={<AplicarRedirect />} />
     <Route path="/disc/:candidatoId" element={<DiscPublicoPage />} />
+    <Route path="/disc-avulso/:token" element={<DiscAvulsoPage />} />
     <Route path="/l/:codigo" element={<RedirecionadorPage />} />
     <Route path="/questionario-resposta/:token" element={<QuestionarioRespostaPage />} />
     <Route path="/candidatar-convite/:token" element={<CandidatarConvitePage />} />

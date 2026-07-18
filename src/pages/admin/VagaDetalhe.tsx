@@ -72,7 +72,7 @@ import {
   MoreVertical, Eye, StickyNote, ChevronRight, ChevronLeft, ChevronDown, UserX, Play, UserPlus, Link2,
   Copy, FileText, MessageCircle, Download, ListChecks, ThumbsDown, CalendarPlus,
   CalendarDays, Globe, Paperclip, X as XIcon, Plus, Mail, Phone, Briefcase, Circle,
-  Pencil, Trash2, GripVertical, Star, BookOpen, PauseCircle, ShieldOff, Ban,
+  Pencil, Trash2, GripVertical, Star, BookOpen, PauseCircle, ShieldOff, Ban, Brain,
 } from "lucide-react";
 
 const DISC_CONFIG = {
@@ -1244,6 +1244,24 @@ export default function VagaDetalheAdmin() {
             className="h-8 px-3 rounded-md border border-border hover:bg-secondary text-xs font-medium inline-flex items-center gap-1.5"
           >
             <Link2 className="h-3.5 w-3.5" /> Copiar link
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              const { data, error } = await (supabase as any)
+                .from("disc_convites_avulsos")
+                .insert({})
+                .select("token")
+                .single();
+              if (error || !data) { toast.error("Erro ao gerar link DISC."); return; }
+              const urlCompleta = `${window.location.origin}/disc-avulso/${data.token}`;
+              const link = await criarLinkCurto(urlCompleta, "disc_avulso");
+              navigator.clipboard?.writeText(link);
+              toast.success("Link DISC avulso copiado!", { description: link });
+            }}
+            className="h-8 px-3 rounded-md border border-border hover:bg-secondary text-xs font-medium inline-flex items-center gap-1.5"
+          >
+            <Brain className="h-3.5 w-3.5" /> Link DISC avulso
           </button>
         </div>
       </div>
