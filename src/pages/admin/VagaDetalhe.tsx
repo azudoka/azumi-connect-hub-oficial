@@ -569,6 +569,32 @@ export default function VagaDetalheAdmin() {
   const [vagaQuestId, setVagaQuestId] = useState<string | null>(null);
   useEffect(() => { setVagaQuestId(vagaSupabaseData?.questionnaire_id ?? null); }, [vagaSupabaseData?.questionnaire_id]);
 
+  // ── Auto-desclassificação por prazo de questionário vencido ──────────
+  const [questsPendentesVaga, setQuestsPendentesVaga] = useState<{ id: string; candidate_id: string | null; prazo_limite: string | null }[]>([]);
+  useEffect(() => {
+    if (!vagaSupabaseData?.id) return;
+    (supabase as any).from("candidate_questionnaires")
+      .select("id, candidate_id, prazo_limite")
+      .eq("job_id", vagaSupabaseData.id)
+      .eq("status", "pendente")
+      .not("prazo_limite", "is", null)
+      .then(({ data }: { data: any[] | null }) => setQuestsPendentesVaga(data ?? []));
+  }, [vagaSupabaseData?.id]);
+  useEffect(() => {
+    if (questsPendentesVaga.length === 0) return;
+    const now = new Date();
+    const vencidos = questsPendentesVaga.filter((q) => q.prazo_limite && new Date(q.prazo_limite) < now);
+    if (vencidos.length === 0) return;
+    vencidos.forEach(async (q) => {
+      if (!q.candidate_id) return;
+      await supabase.from("candidates").update({ etapa_azumi: "reprovado" } as any).eq("id", q.candidate_id);
+      await (supabase as any).from("candidate_questionnaires").update({ status: "expirado" }).eq("id", q.id);
+      setColunasEstado((prev) => ({ ...prev, [q.candidate_id!]: "Reprovado" }));
+      toast.warning("Candidato desclassificado automaticamente — prazo do questionário venceu.");
+    });
+    setQuestsPendentesVaga((prev) => prev.filter((q) => !vencidos.some((v) => v.id === q.id)));
+  }, [questsPendentesVaga]);
+
   const [questionariosVaga, setQuestionariosVaga] = useState<QuestionarioVaga[]>([]);
   const [eventos, setEventos] = useState<EventoEntrevista[]>([]);
   const [mensagens, setMensagens] = useState<MensagemVaga[]>([
@@ -920,34 +946,46 @@ export default function VagaDetalheAdmin() {
     toast.success("Link copiado!", { description: linkCurto });
   }
 
-  async function enviarQuestionarioDaVaga(candidatoId: string) {
-    if (!vagaQuestId) {
-      toast.error("Esta vaga ainda não tem um questionário vinculado. Selecione um na aba Questionários.");
+  async function enviarQuestionarioDaVaga(candidatoId: string, overrideQuestId?: string) {
+    const qId = overrideQuestId ?? vagaQuestId;
+    if (!qId) {
+      toast.error("Nenhum questionário selecionado. Vincule um questionário a esta vaga ou selecione um.");
       return;
     }
     if (!vaga?.id) return;
     const token = crypto.randomUUID();
-    const { error } = await supabase.from("candidate_questionnaires").insert({
-      questionnaire_id: vagaQuestId,
+    const isHuntingGestao = (vaga.tipo ?? "") === "hunting" || (vaga.tipo ?? "") === "gestao";
+    const prazoLimite = isHuntingGestao ? null : new Date(Date.now() + 24 * 3600000).toISOString();
+    const { error } = await (supabase as any).from("candidate_questionnaires").insert({
+      questionnaire_id: qId,
       job_id: vaga.id,
       candidate_id: candidatoId,
       token,
       status: "pendente",
+      enviado_em: new Date().toISOString(),
+      prazo_limite: prazoLimite,
     });
     if (error) { toast.error("Erro ao enviar questionário: " + error.message); return; }
-    toast.success("Questionário enviado. Aparecerá na ficha quando o candidato responder.");
+    toast.success("Questionário enviado." + (prazoLimite ? " Prazo: 24h." : ""));
     try {
-      const { data: cand } = await supabase.from("candidates").select("nome, email").eq("id", candidatoId).maybeSingle();
+      const { data: cand } = await supabase.from("candidates").select("nome, email, telefone").eq("id", candidatoId).maybeSingle();
       if (cand?.email) {
         const urlCompleta = `${window.location.origin}/questionario-resposta/${token}`;
         const linkCurto = await criarLinkCurto(urlCompleta, "questionario_email");
         sendEmail(
           cand.email,
           `Próxima etapa: questionário — ${vaga?.titulo ?? "Vaga Azumi"}`,
-          emailConviteQuestionario({ nome: cand.nome?.split(" ")[0] ?? cand.nome, cargoVaga: vaga?.titulo ?? "Vaga", link: linkCurto })
+          emailConviteQuestionario({ nome: (cand.nome as string)?.split(" ")[0] ?? cand.nome, cargoVaga: vaga?.titulo ?? "Vaga", link: linkCurto })
         );
+        const tel = ((cand as any).telefone as string | null)?.replace(/\D/g, "");
+        if (tel) {
+          const msg = encodeURIComponent(
+            `Olá ${(cand.nome as string)?.split(" ")[0] ?? cand.nome}! 👋 Você avançou no processo seletivo da vaga ${vaga?.titulo ?? ""}. Responda o questionário aqui: ${linkCurto}`
+          );
+          window.open(`https://wa.me/55${tel}?text=${msg}`, "_blank", "noopener,noreferrer");
+        }
       }
-    } catch (e) { console.error("[email questionario]", e); }
+    } catch (e) { console.error("[email/whatsapp questionario]", e); }
   }
 
   /** Gera link público (mock) para o candidato responder o questionário. */
@@ -2968,10 +3006,11 @@ export default function VagaDetalheAdmin() {
             <EnviarQuestionarioForm
               candidatoNome={c?.nome ?? "Candidato"}
               questionarios={questionariosVaga}
+              defaultId={vagaQuestId}
               onCancel={() => setEnviarQuestParaCand(null)}
               onConfirm={(qId) => {
                 if (!enviarQuestParaCand) return;
-                enviarQuestionarioParaCandidato(qId, enviarQuestParaCand);
+                enviarQuestionarioDaVaga(enviarQuestParaCand, qId);
                 setEnviarQuestParaCand(null);
               }}
             />
@@ -4123,15 +4162,17 @@ function QuestionarioEditorModal({
 function EnviarQuestionarioForm({
   candidatoNome,
   questionarios,
+  defaultId,
   onCancel,
   onConfirm,
 }: {
   candidatoNome: string;
   questionarios: QuestionarioVaga[];
+  defaultId?: string | null;
   onCancel: () => void;
   onConfirm: (questionarioId: string) => void;
 }) {
-  const [sel, setSel] = useState<string>(questionarios[0]?.id ?? "");
+  const [sel, setSel] = useState<string>(defaultId ?? questionarios[0]?.id ?? "");
   return (
     <div className="space-y-3 text-sm">
       <p>Deseja enviar um questionário para <strong>{candidatoNome}</strong> agora?</p>
@@ -4149,13 +4190,13 @@ function EnviarQuestionarioForm({
         </Field>
       )}
       <div className="flex justify-end gap-2 pt-2">
-        <button onClick={onCancel} className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm">Cancelar</button>
+        <button onClick={onCancel} className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm">Não, só mover</button>
         <button
           disabled={!sel}
           onClick={() => onConfirm(sel)}
           className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium inline-flex items-center gap-1.5 disabled:opacity-50"
         >
-          <Send className="h-3.5 w-3.5" /> Enviar
+          <Send className="h-3.5 w-3.5" /> Sim, enviar
         </button>
       </div>
     </div>

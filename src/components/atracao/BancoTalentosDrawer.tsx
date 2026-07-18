@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
-import { X, Search, Mail, Phone, MapPin, GraduationCap, Briefcase, Calendar, Link2, AlertCircle, Eye, Link as LinkIcon } from "lucide-react";
+import { X, Search, AlertCircle, Eye, Link as LinkIcon, ChevronDown } from "lucide-react";
 import {
   STATUS_LABEL,
   DISC_COR,
@@ -10,6 +10,7 @@ import {
   type DiscDimMock,
 } from "@/data/bancoTalentosMock";
 import { supabase } from "@/integrations/supabase/client";
+import FichaCandidatoModal from "@/components/candidatura/FichaCandidatoModal";
 
 interface CandidatoBanco {
   id: string;
@@ -98,6 +99,10 @@ export default function BancoTalentosDrawer({ open, onClose }: Props) {
   const [selecionado, setSelecionado] = useState<TalentoCandidato | null>(null);
   const [talentos, setTalentos] = useState<CandidatoBanco[]>([]);
   const [carregando, setCarregando] = useState(false);
+  const [vincularTarget, setVincularTarget] = useState<{ id: string; nome: string } | null>(null);
+  const [vagasAbertas, setVagasAbertas] = useState<{ id: string; cargo: string; empresa: string | null }[]>([]);
+  const [vagaVincularId, setVagaVincularId] = useState("");
+  const [vinculando, setVinculando] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -136,6 +141,33 @@ export default function BancoTalentosDrawer({ open, onClose }: Props) {
       return true;
     });
   }, [talentosView, busca, perfilFiltro, statusFiltro, cidadeFiltro, cargoFiltro]);
+
+  useEffect(() => {
+    if (!vincularTarget) return;
+    setVagaVincularId("");
+    (supabase as any).from("job_solicitations")
+      .select("id, cargo, avulsa_empresa_nome")
+      .eq("status", "em_processo")
+      .is("encerrada_em", null)
+      .order("cargo")
+      .then(({ data }: { data: any[] | null }) =>
+        setVagasAbertas((data ?? []).map((v) => ({ id: v.id, cargo: v.cargo ?? "—", empresa: v.avulsa_empresa_nome ?? null })))
+      );
+  }, [vincularTarget]);
+
+  async function confirmarVinculo() {
+    if (!vincularTarget || !vagaVincularId) return;
+    setVinculando(true);
+    const { error } = await supabase.from("candidates")
+      .update({ job_id: vagaVincularId, banco_talentos: false, etapa_azumi: "recebido" } as any)
+      .eq("id", vincularTarget.id);
+    setVinculando(false);
+    if (error) { toast.error("Erro ao vincular: " + error.message); return; }
+    toast.success(`${vincularTarget.nome} vinculado(a) à vaga.`);
+    setTalentos((prev) => prev.filter((t) => t.id !== vincularTarget.id));
+    setSelecionado(null);
+    setVincularTarget(null);
+  }
 
   if (!open) return null;
 
@@ -261,7 +293,7 @@ export default function BancoTalentosDrawer({ open, onClose }: Props) {
                         <Eye className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={(e) => { e.stopPropagation(); /* eslint-disable-next-line no-alert */ alert(`Vincular ${t.nome} a uma vaga`); }}
+                        onClick={(e) => { e.stopPropagation(); setVincularTarget({ id: t.id, nome: t.nome }); }}
                         className="rounded-md p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
                         title="Vincular a vaga"
                       >
@@ -282,9 +314,57 @@ export default function BancoTalentosDrawer({ open, onClose }: Props) {
           </table>
         </div>
 
-        {/* Drawer de detalhe */}
+        {/* Ficha completa do candidato */}
         {selecionado && (
-          <DrawerDetalhe talento={selecionado} onClose={() => setSelecionado(null)} />
+          <FichaCandidatoModal
+            candidatoId={selecionado.id}
+            onClose={() => setSelecionado(null)}
+            onVincular={(id, nome) => { setSelecionado(null); setVincularTarget({ id, nome }); }}
+          />
+        )}
+
+        {/* Modal: vincular a vaga */}
+        {vincularTarget && createPortal(
+          <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/50 px-4" onClick={() => setVincularTarget(null)}>
+            <div className="w-full max-w-md rounded-xl bg-background shadow-elevated p-6" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-base font-semibold text-foreground mb-1">Vincular a vaga</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Selecione a vaga para associar <strong>{vincularTarget.nome}</strong>.
+                O candidato sairá do Banco de Talentos e entrará no Kanban da vaga como "Recebido".
+              </p>
+              <div className="relative mb-4">
+                <select
+                  value={vagaVincularId}
+                  onChange={(e) => setVagaVincularId(e.target.value)}
+                  className="w-full h-10 appearance-none rounded-md border border-border bg-background px-3 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                >
+                  <option value="">Selecione uma vaga…</option>
+                  {vagasAbertas.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.cargo}{v.empresa ? ` — ${v.empresa}` : ""}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setVincularTarget(null)}
+                  className="h-9 px-4 rounded-lg border border-border text-sm hover:bg-secondary"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmarVinculo}
+                  disabled={!vagaVincularId || vinculando}
+                  className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50"
+                >
+                  {vinculando ? "Vinculando…" : "Confirmar"}
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
         )}
       </div>
     </div>,
@@ -292,124 +372,4 @@ export default function BancoTalentosDrawer({ open, onClose }: Props) {
   );
 }
 
-function DrawerDetalhe({ talento, onClose }: { talento: TalentoCandidato; onClose: () => void }) {
-  return (
-    <div className="absolute inset-0 z-10 flex justify-end bg-black/40" onClick={onClose}>
-      <div
-        className="flex h-full w-full max-w-xl flex-col bg-background shadow-elevated"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between border-b border-border px-6 py-4">
-          <h3 className="font-semibold text-foreground">Perfil do candidato</h3>
-          <button onClick={onClose} className="rounded-md p-1.5 text-muted-foreground hover:bg-secondary">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-auto p-6 space-y-5">
-          <div className="flex items-start gap-4">
-            {talento.fotoUrl ? (
-              <img src={talento.fotoUrl} alt="" className="h-16 w-16 shrink-0 rounded-lg object-cover" />
-            ) : (
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-secondary text-base font-semibold text-muted-foreground">
-                {talento.nome.split(" ").map((n) => n[0]).slice(0, 2).join("")}
-              </div>
-            )}
-            <div className="min-w-0">
-              <h2 className="text-xl font-semibold text-foreground">{talento.nome}</h2>
-              <p className="text-sm text-muted-foreground">{talento.cargoPretendido}</p>
-              <div className="mt-2 flex items-center gap-2">
-                <span
-                  className="inline-flex h-6 items-center rounded px-2 text-xs font-bold text-white"
-                  style={{ background: DISC_COR[talento.perfilDisc] }}
-                >
-                  Perfil {talento.perfilDisc}
-                </span>
-                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
-                  talento.status === "disponivel" ? "bg-emerald-100 text-emerald-700" :
-                  talento.status === "em_processo" ? "bg-blue-100 text-blue-700" :
-                  "bg-amber-100 text-amber-800"
-                }`}>
-                  {talento.status === "contratado" && <AlertCircle className="h-3 w-3" />}
-                  {STATUS_LABEL[talento.status]}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <section className="rounded-lg border border-border p-4 space-y-2 text-sm">
-            <Linha icon={Mail} label="Email" value={talento.email} />
-            <Linha icon={Phone} label="Telefone" value={talento.telefone} />
-            <Linha icon={MapPin} label="Cidade" value={talento.cidade} />
-            <Linha icon={GraduationCap} label="Escolaridade" value={talento.escolaridade} />
-            <Linha icon={Briefcase} label="Contrato desejado" value={talento.contratoDesejado} />
-            <Linha icon={Calendar} label="Disponibilidade" value={talento.disponibilidade} />
-            {talento.linkedin && <Linha icon={Link2} label="LinkedIn" value={talento.linkedin} />}
-          </section>
-
-          <section className="rounded-lg border border-border p-4">
-            <h4 className="mb-3 text-sm font-semibold text-foreground">Resultado DISC</h4>
-            <div className="space-y-2">
-              {(["D", "I", "S", "C"] as DiscDimMock[]).map((d) => (
-                <div key={d} className="flex items-center gap-3">
-                  <div className="w-5 text-sm font-bold" style={{ color: DISC_COR[d] }}>{d}</div>
-                  <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-secondary">
-                    <div className="h-full rounded-full" style={{ width: `${talento.scoresDisc[d]}%`, background: DISC_COR[d] }} />
-                  </div>
-                  <div className="w-10 text-right text-xs tabular-nums text-muted-foreground">{talento.scoresDisc[d]}%</div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="rounded-lg border border-border p-4">
-            <h4 className="mb-3 text-sm font-semibold text-foreground">Histórico de processos</h4>
-            {talento.historico.length === 0 ? (
-              <p className="text-xs text-muted-foreground">Ainda não participou de processos.</p>
-            ) : (
-              <ul className="space-y-2">
-                {talento.historico.map((h, i) => (
-                  <li key={i} className="flex items-center justify-between text-sm">
-                    <div>
-                      <p className="text-foreground">{h.vaga}</p>
-                      <p className="text-xs text-muted-foreground">{h.etapa}</p>
-                    </div>
-                    <span className="text-xs text-muted-foreground">{new Date(h.data).toLocaleDateString("pt-BR")}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
-          {talento.status === "contratado" && (
-            <div className="flex items-start gap-2 rounded-lg border-l-4 border-amber-400 bg-amber-50 p-3 text-xs text-amber-900">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>Este candidato foi <strong>contratado</strong>. Mantemos o registro no banco para histórico, mas evite vinculá-lo a novas vagas sem confirmação.</span>
-            </div>
-          )}
-        </div>
-
-        <div className="flex justify-end gap-2 border-t border-border px-6 py-3">
-          <button
-            onClick={() => alert(`Vincular ${talento.nome} a uma vaga`)}
-            className="h-9 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground hover:opacity-95"
-          >
-            Vincular a vaga
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Linha({ icon: Icon, label, value }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string }) {
-  return (
-    <div className="flex items-start gap-3">
-      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-      <div className="min-w-0 flex-1">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="truncate text-sm text-foreground">{value}</p>
-      </div>
-    </div>
-  );
-}
+// DrawerDetalhe e Linha removidos — substituídos por FichaCandidatoModal
