@@ -19,30 +19,41 @@ import { CategoryTag } from "@/components/CategoryTag";
 function Header() {
   const { escuro, alternar } = useThemeToggle();
   return (
-    <header className="sticky top-0 z-30 w-full bg-card border-b border-border">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Link to="/vagas">
-          <AzumiLogo product="Connect" size={32} hideSubtitle />
-        </Link>
-        <div className="flex items-center gap-4">
-          <Link to="/vagas" className="font-sans text-sm text-muted-foreground hover:text-foreground">
-            Vagas
+    <header className="sticky top-0 z-30 w-full pt-4 sm:pt-6 px-4 sm:px-6 pb-2">
+      <div className="mx-auto max-w-5xl">
+        <div
+          className="flex items-center justify-between gap-2 rounded-full px-3 sm:px-5 py-2 sm:py-2.5 backdrop-blur-md border border-white/10 shadow-elevated"
+          style={{ background: "hsl(var(--ocean) / 0.9)" }}
+        >
+          <Link
+            to="/vagas"
+            className="flex items-center rounded-full px-2.5 sm:px-3 py-1.5 transition-colors hover:bg-white/10"
+          >
+            <AzumiLogo product="Connect" light size={22} hideSubtitle />
           </Link>
-          <a
-            href="https://azumirh.com.br"
-            target="_blank"
-            rel="noreferrer"
-            className="font-sans text-sm text-muted-foreground hover:text-foreground"
-          >
-            Sobre a empresa
-          </a>
-          <button
-            onClick={alternar}
-            title={escuro ? "Modo claro" : "Modo escuro"}
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
-            {escuro ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-          </button>
+          <div className="flex items-center gap-1 sm:gap-4">
+            <Link
+              to="/vagas"
+              className="rounded-full px-2.5 sm:px-3 py-1.5 font-sans text-xs sm:text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+            >
+              Vagas
+            </Link>
+            <a
+              href="https://azumirh.com.br"
+              target="_blank"
+              rel="noreferrer"
+              className="hidden sm:block rounded-full px-3 py-1.5 font-sans text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+            >
+              Sobre a empresa
+            </a>
+            <button
+              onClick={alternar}
+              title={escuro ? "Modo claro" : "Modo escuro"}
+              className="rounded-full p-1.5 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+            >
+              {escuro ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}
+            </button>
+          </div>
         </div>
       </div>
     </header>
