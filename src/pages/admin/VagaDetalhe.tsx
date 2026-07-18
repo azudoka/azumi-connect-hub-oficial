@@ -627,6 +627,9 @@ export default function VagaDetalheAdmin() {
   const [linkDiscCurto, setLinkDiscCurto] = useState<string | null>(null);
   const [associarQuestOpen, setAssociarQuestOpen] = useState<string | null>(null);
   const [declinarOpen, setDeclinarOpen] = useState<string | null>(null);
+  const [excluirCandidatoOpen, setExcluirCandidatoOpen] = useState<string | null>(null);
+  const [convidarBancoOpen, setConvidarBancoOpen] = useState(false);
+  const [talentosCompativeis, setTalentosCompativeis] = useState<any[]>([]);
   const [agendarOpen, setAgendarOpen] = useState<string | null>(null);
   /** Modal específico de Entrevista com Gestor (Etapa 5 — Doc Mestre). */
   const [agendarGestorOpen, setAgendarGestorOpen] = useState<string | null>(null);
@@ -1123,6 +1126,39 @@ export default function VagaDetalheAdmin() {
     toast.success(`Observação salva para ${cand.nome}.`);
   }
 
+  useEffect(() => {
+    if (!convidarBancoOpen) return;
+    supabase.from("candidates")
+      .select("id, nome, foto_url, escolaridade, cidade, disc_perfil")
+      .eq("banco_talentos", true)
+      .then(({ data }) => setTalentosCompativeis(data ?? []));
+  }, [convidarBancoOpen]);
+
+  async function confirmarExclusaoCandidato() {
+    if (!excluirCandidatoOpen) return;
+    const id = excluirCandidatoOpen;
+    const { error } = await supabase.from("candidates").delete().eq("id", id);
+    if (error) { toast.error("Erro ao excluir: " + error.message); return; }
+    toast.success("Ficha excluída permanentemente.");
+    setExcluirCandidatoOpen(null);
+    setFichaCandidatoId(null);
+    setCandidatosExtras((prev) => prev.filter((c) => c.id !== id));
+    setColunasEstado((prev) => { const n = { ...prev }; delete n[id]; return n; });
+  }
+
+  async function convidarDoBanco(candidatoId: string) {
+    if (!vaga?.id) return;
+    const { error } = await supabase.from("candidates").update({
+      job_id: vaga.id,
+      banco_talentos: false,
+      etapa_azumi: "recebido",
+    } as any).eq("id", candidatoId);
+    if (error) { toast.error("Erro ao convidar: " + error.message); return; }
+    toast.success("Candidato movido para essa vaga.");
+    setTalentosCompativeis((prev) => prev.filter((t) => t.id !== candidatoId));
+    recarregarCandidaturas();
+  }
+
   function confirmarDesclassificacao() {
     if (!confirmarDesclId) return;
     const cand = candidatosVaga.find((c) => c.id === confirmarDesclId);
@@ -1525,6 +1561,12 @@ export default function VagaDetalheAdmin() {
               className="h-8 px-3 rounded-lg border border-border text-xs flex items-center gap-1.5 hover:bg-secondary"
             >
               <Link2 className="h-3.5 w-3.5" /> Convidar candidato
+            </button>
+            <button
+              onClick={() => setConvidarBancoOpen(true)}
+              className="h-8 px-3 rounded-lg border border-border text-xs flex items-center gap-1.5 hover:bg-secondary"
+            >
+              <Users className="h-3.5 w-3.5" /> Convidar do Banco de Talentos
             </button>
             {/* "Criar questionário" foi movido para a aba Questionários */}
             <span className="text-xs text-muted-foreground ml-auto inline-flex items-center gap-2">
@@ -2103,6 +2145,13 @@ export default function VagaDetalheAdmin() {
                       className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-[hsl(var(--destructive)/0.3)] text-destructive text-[11px] font-medium hover:bg-[hsl(var(--destructive)/0.1)]"
                     >
                       <ThumbsDown className="h-3 w-3" /> Registrar declínio
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setExcluirCandidatoOpen(c.id)}
+                      className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-[hsl(var(--destructive)/0.3)] text-destructive text-[11px] font-medium hover:bg-[hsl(var(--destructive)/0.1)]"
+                    >
+                      <Trash2 className="h-3 w-3" /> Excluir ficha
                     </button>
                     <button
                       type="button"
@@ -3340,6 +3389,73 @@ export default function VagaDetalheAdmin() {
           </ModalShell>
         );
       })()}
+
+      {/* ── Modal: Excluir ficha do candidato ────────────────────── */}
+      {excluirCandidatoOpen && (
+        <ModalShell title="Excluir ficha do candidato" onClose={() => setExcluirCandidatoOpen(null)}>
+          <div className="rounded-lg border border-[hsl(var(--destructive)/0.3)] bg-[hsl(var(--destructive)/0.05)] p-4 mb-4">
+            <p className="text-sm font-medium text-destructive mb-2">Essa ação não pode ser desfeita.</p>
+            <p className="text-sm text-muted-foreground">
+              Ao excluir, você perde permanentemente: dados de contato, currículo,
+              resultado do teste DISC, respostas de questionário, histórico de
+              etapas e avaliações internas desse candidato. Se essa pessoa quiser
+              participar de um processo novamente no futuro, ela vai precisar se
+              cadastrar do zero — nenhum dado antigo será reaproveitado.
+            </p>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <button
+              onClick={() => setExcluirCandidatoOpen(null)}
+              className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={confirmarExclusaoCandidato}
+              className="h-9 px-4 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium hover:opacity-90"
+            >
+              Sim, excluir permanentemente
+            </button>
+          </div>
+        </ModalShell>
+      )}
+
+      {/* ── Modal: Convidar do Banco de Talentos ─────────────────── */}
+      {convidarBancoOpen && (
+        <ModalShell title="Convidar do Banco de Talentos" onClose={() => setConvidarBancoOpen(false)} size="lg">
+          {talentosCompativeis.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">Nenhum candidato no banco de talentos no momento.</p>
+          ) : (
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {talentosCompativeis.map((t) => (
+                <div key={t.id} className="flex items-center justify-between rounded-lg border border-border p-3">
+                  <div className="flex items-center gap-3">
+                    {t.foto_url ? (
+                      <img src={t.foto_url} className="h-9 w-9 rounded-full object-cover shrink-0" alt="" />
+                    ) : (
+                      <div className="h-9 w-9 rounded-full bg-secondary flex items-center justify-center text-xs font-semibold shrink-0">
+                        {t.nome.split(" ").map((n: string) => n[0]).slice(0, 2).join("")}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground">{t.nome}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {[t.escolaridade, t.cidade, t.disc_perfil ? `DISC ${t.disc_perfil}` : null].filter(Boolean).join(" · ")}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => convidarDoBanco(t.id)}
+                    className="h-8 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 shrink-0 ml-3"
+                  >
+                    Convidar
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </ModalShell>
+      )}
 
       {/* ── Pop-up: vaga encerrada → relatório final ─────────────── */}
       {relatorioFinalPromptOpen && (

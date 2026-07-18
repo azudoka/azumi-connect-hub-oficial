@@ -320,6 +320,7 @@ export default function BancoTalentosDrawer({ open, onClose }: Props) {
             candidatoId={selecionado.id}
             onClose={() => setSelecionado(null)}
             onVincular={(id, nome) => { setSelecionado(null); setVincularTarget({ id, nome }); }}
+            onExcluido={(id) => { setTalentos((prev) => prev.filter((t) => t.id !== id)); setSelecionado(null); }}
           />
         )}
 

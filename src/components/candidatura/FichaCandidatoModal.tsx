@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { X, Mail, Phone, MapPin, GraduationCap, FileText, Link2, ExternalLink, Link as LinkIcon } from "lucide-react";
+import { X, Mail, Phone, MapPin, GraduationCap, FileText, Link2, ExternalLink, Link as LinkIcon, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { DiscRadarChart } from "@/components/disc/DiscRadarChart";
 import { getDiscInterpretacao } from "@/components/disc/discProfileContent";
@@ -36,13 +37,15 @@ interface Props {
   candidatoId: string;
   onClose: () => void;
   onVincular?: (id: string, nome: string) => void;
+  onExcluido?: (id: string) => void;
 }
 
-export default function FichaCandidatoModal({ candidatoId, onClose, onVincular }: Props) {
+export default function FichaCandidatoModal({ candidatoId, onClose, onVincular, onExcluido }: Props) {
   const [tab, setTab] = useState<"dados" | "disc" | "processos">("dados");
   const [cand, setCand] = useState<CandData | null>(null);
   const [processos, setProcessos] = useState<ProcessoItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [excluirOpen, setExcluirOpen] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -83,6 +86,14 @@ export default function FichaCandidatoModal({ candidatoId, onClose, onVincular }
         }
       });
   }, [candidatoId]);
+
+  async function confirmarExclusao() {
+    const { error } = await supabase.from("candidates").delete().eq("id", candidatoId);
+    if (error) { toast.error("Erro ao excluir: " + error.message); return; }
+    toast.success("Ficha excluída permanentemente.");
+    onExcluido?.(candidatoId);
+    onClose();
+  }
 
   const interp = cand?.discPerfil ? getDiscInterpretacao(cand.discPerfil, cand.discSecundario) : null;
   const iniciais = cand?.nome.split(" ").map((n) => n[0]).slice(0, 2).join("") ?? "—";
@@ -250,17 +261,59 @@ export default function FichaCandidatoModal({ candidatoId, onClose, onVincular }
         </div>
 
         {/* Footer */}
-        {onVincular && cand && (
-          <div className="shrink-0 border-t border-border px-6 py-3 flex justify-end">
+        {cand && (
+          <div className="shrink-0 border-t border-border px-6 py-3 flex items-center justify-between gap-2">
             <button
-              onClick={() => onVincular(cand.id, cand.nome)}
-              className="h-9 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground hover:opacity-90 inline-flex items-center gap-1.5"
+              onClick={() => setExcluirOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-full border border-destructive/40 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10"
             >
-              <LinkIcon className="h-3.5 w-3.5" /> Vincular a vaga
+              <Trash2 className="h-3 w-3" /> Excluir ficha
             </button>
+            {onVincular && (
+              <button
+                onClick={() => onVincular(cand.id, cand.nome)}
+                className="h-9 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground hover:opacity-90 inline-flex items-center gap-1.5"
+              >
+                <LinkIcon className="h-3.5 w-3.5" /> Vincular a vaga
+              </button>
+            )}
           </div>
         )}
       </div>
+
+      {/* Modal de confirmação de exclusão — z-[300] para ficar sobre o painel */}
+      {excluirOpen && createPortal(
+        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 p-4" onClick={() => setExcluirOpen(false)}>
+          <div className="w-full max-w-md rounded-xl bg-background shadow-elevated p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-base font-semibold text-foreground mb-1">Excluir ficha do candidato</h3>
+            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 mb-4 mt-3">
+              <p className="text-sm font-medium text-destructive mb-2">Essa ação não pode ser desfeita.</p>
+              <p className="text-sm text-muted-foreground">
+                Ao excluir, você perde permanentemente: dados de contato, currículo,
+                resultado do teste DISC, respostas de questionário, histórico de
+                etapas e avaliações internas desse candidato. Se essa pessoa quiser
+                participar de um processo novamente no futuro, ela vai precisar se
+                cadastrar do zero — nenhum dado antigo será reaproveitado.
+              </p>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setExcluirOpen(false)}
+                className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmarExclusao}
+                className="h-9 px-4 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium hover:opacity-90"
+              >
+                Sim, excluir permanentemente
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>,
     document.body
   );
