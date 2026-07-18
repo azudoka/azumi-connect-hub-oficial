@@ -346,8 +346,8 @@
 
   .btn-outline-brand {
     background: transparent;
-    color: hsl(var(--ocean));
-    border: 1.5px solid hsl(var(--ocean));
+    color: hsl(var(--primary));
+    border: 1.5px solid hsl(var(--primary));
     border-radius: 100px;
     padding: 10px 24px;
     font-weight: 600;
