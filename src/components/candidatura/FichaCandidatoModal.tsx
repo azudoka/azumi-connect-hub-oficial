@@ -99,9 +99,9 @@ export default function FichaCandidatoModal({ candidatoId, onClose, onVincular, 
   const iniciais = cand?.nome.split(" ").map((n) => n[0]).slice(0, 2).join("") ?? "—";
 
   return createPortal(
-    <div className="fixed inset-0 z-[200] flex items-start justify-end bg-black/50" onClick={onClose}>
+    <div className="fixed inset-0 z-[200] bg-[hsl(var(--background)/0.7)] backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
       <div
-        className="relative flex h-full w-full max-w-xl flex-col bg-background shadow-elevated overflow-hidden"
+        className="relative flex w-full max-w-xl max-h-[90vh] flex-col bg-background shadow-elevated overflow-hidden rounded-xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

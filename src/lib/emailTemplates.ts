@@ -25,6 +25,8 @@ const FONT_FAMILY = "'Poppins', Arial, sans-serif";
 
 const AZUMI_LOGO_URL = "https://raw.githubusercontent.com/azudoka/azumi-connect-hub-oficial/main/public/azumi-logo.png";
 const CONNECT_LOGO_URL = "https://raw.githubusercontent.com/azudoka/azumi-connect-hub-oficial/main/public/connect-logo.png";
+const LOGO_H_AZUMI = 48;
+const LOGO_H_CONNECT = 64;
 
 const ICON_INSTAGRAM =
   '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="20" height="20" rx="5" stroke="#B9C8E6" stroke-width="1.8"/><circle cx="12" cy="12" r="4.2" stroke="#B9C8E6" stroke-width="1.8"/><circle cx="17.2" cy="6.8" r="1.1" fill="#B9C8E6"/></svg>';
@@ -37,8 +39,8 @@ function emailHeader(): string {
   return `
   <tr><td style="background:#264478;padding:26px 32px;">
     <table width="100%" cellpadding="0" cellspacing="0"><tr>
-      <td align="left"><img src="${AZUMI_LOGO_URL}" height="26" alt="Azumi RH" style="display:block;"></td>
-      <td align="right"><img src="${CONNECT_LOGO_URL}" height="44" alt="Connect" style="display:block;"></td>
+      <td align="left"><img src="${AZUMI_LOGO_URL}" height="${LOGO_H_AZUMI}" alt="Azumi RH" style="display:block;"></td>
+      <td align="right"><img src="${CONNECT_LOGO_URL}" height="${LOGO_H_CONNECT}" alt="Connect" style="display:block;"></td>
     </tr></table>
   </td></tr>`;
 }

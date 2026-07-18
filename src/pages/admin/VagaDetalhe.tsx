@@ -3263,6 +3263,7 @@ export default function VagaDetalheAdmin() {
         onSimularResposta={simularRespostaQuestionario}
         onConvidarParaVaga={(id) => { setConvidarVagaCandId(id); setConvidarVagaOpen(true); }}
         onRecarregarCandidaturas={recarregarCandidaturas}
+        onExcluir={(id) => setExcluirCandidatoOpen(id)}
       />
 
       {/* ── Modal: Convidar para outra vaga ──────────────────────── */}
@@ -5151,6 +5152,7 @@ function CandidatoDetailSheet({
   onSimularResposta,
   onConvidarParaVaga,
   onRecarregarCandidaturas,
+  onExcluir,
 }: {
   open: boolean;
   candidato: CandidatoBase | null;
@@ -5174,6 +5176,7 @@ function CandidatoDetailSheet({
   onSimularResposta?: (candidatoId: string, questionarioId: string) => void;
   onConvidarParaVaga?: (candidatoId: string) => void;
   onRecarregarCandidaturas?: () => void;
+  onExcluir?: (id: string) => void;
 }) {
   useScrollLock(open);
   const { id: vagaIdParam } = useParams();
@@ -5422,6 +5425,14 @@ function CandidatoDetailSheet({
             >
               <ThumbsDown className="h-3.5 w-3.5" /> Registrar declínio
             </button>
+            {onExcluir && (
+              <button
+                onClick={() => onExcluir(cand.id)}
+                className="inline-flex items-center gap-1 h-8 px-3 rounded-md border border-[hsl(var(--destructive)/0.3)] text-destructive hover:bg-[hsl(var(--destructive)/0.1)] text-xs font-medium"
+              >
+                <Trash2 className="h-3.5 w-3.5" /> Excluir ficha
+              </button>
+            )}
           </div>
 
           {/* Abas da ficha */}
