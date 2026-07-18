@@ -1,7 +1,7 @@
 import { createPortal } from "react-dom";
 import { publicarVaga, despublicarVaga, getVaga, atualizarVaga, definirStatusVaga, excluirVaga, type VagaSupabase, type CriarVagaInput } from "@/services/vagasService";
 import { criarLinkCurto } from "@/services/shortLinkService";
-import { emailConviteQuestionario, emailAprovado, emailNaoAprovado, sendEmail } from "@/lib/emailTemplates";
+import { emailConviteQuestionario, emailAprovado, emailNaoAprovado, emailSolicitarNps, sendEmail } from "@/lib/emailTemplates";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
@@ -86,6 +86,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { ScrollLock } from "@/components/ScrollLock";
+import { useAuth } from "@/context/AuthContext";
 
 const tabs = [
   { key: "candidatos", label: "Candidatos", icon: Users },
@@ -283,6 +284,7 @@ function supabaseToVagaMock(r: VagaSupabase) {
 
 export default function VagaDetalheAdmin() {
   const { id } = useParams();
+  const { usuario } = useAuth();
 
   const vagaMock = vagas.find((v) => v.id === id);
   const [vagaSupabaseData, setVagaSupabaseData] = useState<VagaSupabase | null>(null);
@@ -2920,6 +2922,34 @@ export default function VagaDetalheAdmin() {
                           );
                         }
                       } catch (e) { console.error("[email contratado]", e); }
+                      // NPS para cliente avulso
+                      if (vaga?.id) {
+                        supabase
+                          .from("job_solicitations")
+                          .select("is_avulsa, avulsa_solicitante_email, avulsa_solicitante_nome, consultor_id")
+                          .eq("id", vaga.id)
+                          .single()
+                          .then(async ({ data: js }) => {
+                            if (!js?.is_avulsa || !js.avulsa_solicitante_email) return;
+                            const { data: npsRow } = await supabase
+                              .from("nps_avaliacoes")
+                              .insert({ candidate_id: id, job_id: vaga.id, consultor_id: js.consultor_id } as any)
+                              .select("token")
+                              .single();
+                            if (!npsRow?.token) return;
+                            const link = await criarLinkCurto(`${window.location.origin}/nps/${npsRow.token}`, "nps_avulso");
+                            sendEmail(
+                              js.avulsa_solicitante_email,
+                              "Como foi sua experiência?",
+                              emailSolicitarNps({
+                                nomeContato: js.avulsa_solicitante_nome ?? "Cliente",
+                                cargoVaga: vaga.titulo,
+                                link,
+                              })
+                            );
+                          })
+                          .catch((e) => console.error("[nps avulso]", e));
+                      }
                     }
                   }}
                   className="h-9 px-4 rounded-lg bg-success text-success-foreground text-sm font-medium inline-flex items-center gap-1.5"
@@ -3316,6 +3346,7 @@ export default function VagaDetalheAdmin() {
             empresa={vaga.empresa}
             questionariosVaga={questionariosVaga}
             draft={relatoriosPorCandidato[relatorioOpenId]}
+            consultorAssinaturaUrl={usuario?.assinaturaUrl}
             onClose={() => setRelatorioOpenId(null)}
             onSaveDraft={(data) => {
               setRelatoriosPorCandidato((prev) => ({
@@ -6094,6 +6125,7 @@ function RelatorioCandidatoModal({
   empresa,
   questionariosVaga,
   draft,
+  consultorAssinaturaUrl,
   onClose,
   onSaveDraft,
   onMarkSent,
@@ -6103,6 +6135,7 @@ function RelatorioCandidatoModal({
   empresa: string;
   questionariosVaga: QuestionarioVaga[];
   draft?: RelatorioCandidato;
+  consultorAssinaturaUrl?: string;
   onClose: () => void;
   onSaveDraft: (data: RelatorioCandidato) => void;
   onMarkSent: (data: RelatorioCandidato) => void;
@@ -6227,7 +6260,7 @@ function RelatorioCandidatoModal({
         {/* Corpo */}
         <div className="flex-1 overflow-y-auto px-6 py-5">
           {preview ? (
-            <RelatorioPreview form={form} candidato={candidato} vagaTitulo={vagaTitulo} empresa={empresa} questoesReais={questoesReais} algumRespondido={algumRespondido} algumaAvaliacao={algumaAvaliacao} />
+            <RelatorioPreview form={form} candidato={candidato} vagaTitulo={vagaTitulo} empresa={empresa} questoesReais={questoesReais} algumRespondido={algumRespondido} algumaAvaliacao={algumaAvaliacao} consultorAssinaturaUrl={consultorAssinaturaUrl} />
           ) : (
             <div className="space-y-6">
               {/* Cabeçalho */}
@@ -6407,7 +6440,7 @@ function RelatorioCandidatoModal({
                 `<h3 style="font-size:13px;font-weight:700;color:#034C8B;margin:12px 0 4px">Como funciona melhor</h3><ul style="padding-left:18px;margin:0">${relInterp.predominante.comoFuncionaMelhor.map((p:string)=>`<li style="font-size:13px;margin-bottom:3px">${p}</li>`).join("")}</ul>`,
                 relInterp.secundario ? `<div style="margin-top:14px;padding:10px 14px;border-left:3px solid ${relInterp.secundario.corHex};background:#f9fafb"><p style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#6b7280;margin:0 0 4px">Perfil secundário</p><p style="font-size:13px;font-weight:700;color:${relInterp.secundario.corHex};margin:0 0 4px">${relInterp.secundario.nome}</p><p style="font-size:13px;color:#475569;margin:0">${relInterp.secundario.resumo}</p></div>` : "",
               ].join("") : "";
-              const html = `<!doctype html><html><head><title>Relatório — ${esc(candidato.nome)}</title><style>*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}body{font-family:sans-serif;padding:40px;color:#1e293b;line-height:1.6;max-width:750px;margin:0 auto}h1{font-size:22px;color:#031D38;margin-bottom:2px}p{margin:0 0 8px}.footer{margin-top:40px;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px}</style></head><body><div style="background:#264478;padding:20px 32px;display:flex;justify-content:space-between;align-items:center;margin:-40px -40px 32px -40px"><img src="https://yxtirmonrjmlasnrqwwl.supabase.co/storage/v1/object/public/public-applications/marca/azumi-logo.png" height="26" alt="Azumi RH" style="display:block"><img src="https://yxtirmonrjmlasnrqwwl.supabase.co/storage/v1/object/public/public-applications/marca/connect-logo.png" height="44" alt="Connect" style="display:block"></div><h1>Relatório do Candidato</h1><p style="color:#64748b;font-size:12px">${esc(candidato.nome)} · ${esc(vagaTitulo)} · ${esc(empresa)} · ${form.protocolo} · ${form.data}</p>${h2r("Dados Essenciais")}<p><strong>Cargo:</strong> ${esc(form.cargoAtual)}</p><p><strong>Cidade / UF:</strong> ${esc(form.cidadeUf)}</p>${form.experienciaResumida ? `<p style="margin-top:8px">${nl(form.experienciaResumida)}</p>` : ""}${h2r("Síntese do Currículo")}<p>${nl(form.sintese || "—")}</p>${h2r("Perfil Comportamental (DISC)")}<p>${nl(form.discResumo || "—")}</p>${relRadarSvg}${discDetalhadoHtml}${h2r("Questionário — Respostas e Notas")}${questoesHtml}${h2r("Recomendação do Consultor")}<p>${nl(form.recomendacao || "—")}</p>${movimentoHtml}<div class="footer"><p style="font-weight:600;margin:0">${esc(form.consultorNome)}</p><p style="color:#64748b;margin:2px 0">${esc(form.consultorCargo)}</p><p style="margin-top:6px">Azumi Connect · ${form.protocolo} · Emitido em ${form.data}</p></div><script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`;
+              const html = `<!doctype html><html><head><title>Relatório — ${esc(candidato.nome)}</title><style>*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}body{font-family:sans-serif;padding:40px;color:#1e293b;line-height:1.6;max-width:750px;margin:0 auto}h1{font-size:22px;color:#031D38;margin-bottom:2px}p{margin:0 0 8px}.footer{margin-top:40px;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px}</style></head><body><div style="background:#264478;padding:20px 32px;display:flex;justify-content:space-between;align-items:center;margin:-40px -40px 32px -40px"><img src="https://yxtirmonrjmlasnrqwwl.supabase.co/storage/v1/object/public/public-applications/marca/azumi-logo.png" height="26" alt="Azumi RH" style="display:block"><img src="https://yxtirmonrjmlasnrqwwl.supabase.co/storage/v1/object/public/public-applications/marca/connect-logo.png" height="44" alt="Connect" style="display:block"></div><h1>Relatório do Candidato</h1><p style="color:#64748b;font-size:12px">${esc(candidato.nome)} · ${esc(vagaTitulo)} · ${esc(empresa)} · ${form.protocolo} · ${form.data}</p>${h2r("Dados Essenciais")}<p><strong>Cargo:</strong> ${esc(form.cargoAtual)}</p><p><strong>Cidade / UF:</strong> ${esc(form.cidadeUf)}</p>${form.experienciaResumida ? `<p style="margin-top:8px">${nl(form.experienciaResumida)}</p>` : ""}${h2r("Síntese do Currículo")}<p>${nl(form.sintese || "—")}</p>${h2r("Perfil Comportamental (DISC)")}<p>${nl(form.discResumo || "—")}</p>${relRadarSvg}${discDetalhadoHtml}${h2r("Questionário — Respostas e Notas")}${questoesHtml}${h2r("Recomendação do Consultor")}<p>${nl(form.recomendacao || "—")}</p>${movimentoHtml}<div class="footer">${consultorAssinaturaUrl ? `<img src="${consultorAssinaturaUrl}" alt="Assinatura" style="height:56px;display:block;margin-bottom:6px;object-fit:contain">` : ""}<p style="font-weight:600;margin:0">${esc(form.consultorNome)}</p><p style="color:#64748b;margin:2px 0">${esc(form.consultorCargo)}</p><p style="margin-top:6px">Azumi Connect · ${form.protocolo} · Emitido em ${form.data}</p></div><script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`;
               const win = window.open("", "_blank");
               if (win) { win.document.write(html); win.document.close(); }
             }}
@@ -6467,7 +6500,7 @@ function CampoTextarea({
 }
 
 function RelatorioPreview({
-  form, candidato, vagaTitulo, empresa, questoesReais, algumRespondido, algumaAvaliacao,
+  form, candidato, vagaTitulo, empresa, questoesReais, algumRespondido, algumaAvaliacao, consultorAssinaturaUrl,
 }: {
   form: RelatorioCandidato;
   candidato: CandidatoBase;
@@ -6476,6 +6509,7 @@ function RelatorioPreview({
   questoesReais: { id: string; pergunta: string; resposta: string; notaSalva?: number; justificativaSalva?: string }[];
   algumRespondido: boolean;
   algumaAvaliacao: boolean;
+  consultorAssinaturaUrl?: string;
 }) {
   return (
     <article className="mx-auto max-w-3xl bg-card border border-border rounded-lg p-8 shadow-sm">
@@ -6557,6 +6591,9 @@ function RelatorioPreview({
       )}
 
       <footer className="border-t border-border pt-4 mt-6 text-sm">
+        {consultorAssinaturaUrl && (
+          <img src={consultorAssinaturaUrl} alt="Assinatura" className="h-14 mb-2 object-contain" />
+        )}
         <p className="font-medium">{form.consultorNome}</p>
         <p className="text-muted-foreground text-xs">{form.consultorCargo}</p>
         <p className="text-[11px] text-muted-foreground mt-2">Azumi Connect · {form.protocolo} · {form.data}</p>

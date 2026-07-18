@@ -9,6 +9,9 @@ import {
   Clock,
   Building2,
   Camera,
+  PenLine,
+  RotateCcw,
+  Save,
 } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
@@ -71,6 +74,14 @@ export default function PerfilPage() {
   });
   const [snapshot, setSnapshot] = useState(form);
 
+  // Assinatura
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const drawingRef = useRef(false);
+  const lastPtRef = useRef<{ x: number; y: number } | null>(null);
+  const [refazendoAssinatura, setRefazendoAssinatura] = useState(false);
+  const [salvandoAssinatura, setSalvandoAssinatura] = useState(false);
+  const [canvasVazio, setCanvasVazio] = useState(true);
+
   function startEdit() {
     setSnapshot(form);
     setEditMode(true);
@@ -79,6 +90,90 @@ export default function PerfilPage() {
   function cancelEdit() {
     setForm(snapshot);
     setEditMode(false);
+  }
+
+  function getCanvasPoint(e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    if ("touches" in e) {
+      const t = e.touches[0];
+      return { x: (t.clientX - rect.left) * scaleX, y: (t.clientY - rect.top) * scaleY };
+    }
+    return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+  }
+
+  function startDraw(e: React.MouseEvent | React.TouchEvent) {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    e.preventDefault();
+    drawingRef.current = true;
+    lastPtRef.current = getCanvasPoint(e, canvas);
+  }
+
+  function draw(e: React.MouseEvent | React.TouchEvent) {
+    if (!drawingRef.current) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    e.preventDefault();
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const pt = getCanvasPoint(e, canvas);
+    const from = lastPtRef.current ?? pt;
+    ctx.beginPath();
+    ctx.moveTo(from.x, from.y);
+    ctx.lineTo(pt.x, pt.y);
+    ctx.strokeStyle = "#14233F";
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.stroke();
+    lastPtRef.current = pt;
+    setCanvasVazio(false);
+  }
+
+  function endDraw() {
+    drawingRef.current = false;
+    lastPtRef.current = null;
+  }
+
+  function limparCanvas() {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setCanvasVazio(true);
+  }
+
+  async function salvarAssinatura() {
+    if (!usuario?.id) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    setSalvandoAssinatura(true);
+    try {
+      const blob = await new Promise<Blob>((res, rej) =>
+        canvas.toBlob((b) => (b ? res(b) : rej(new Error("canvas vazio"))), "image/png")
+      );
+      const path = `assinaturas/${usuario.id}/${Date.now()}.png`;
+      const { data: upData, error: upError } = await supabase.storage
+        .from("public-applications")
+        .upload(path, blob, { contentType: "image/png", cacheControl: "31536000", upsert: false });
+      if (upError) throw upError;
+      const { data: urlData } = supabase.storage.from("public-applications").getPublicUrl(upData.path);
+      const { error: dbError } = await supabase
+        .from("users_profile")
+        .update({ assinatura_url: urlData.publicUrl })
+        .eq("id", usuario.id);
+      if (dbError) throw dbError;
+      await refreshPerfil();
+      setRefazendoAssinatura(false);
+      toast.success("Assinatura salva!");
+    } catch (e: any) {
+      toast.error("Erro ao salvar assinatura: " + e.message);
+    } finally {
+      setSalvandoAssinatura(false);
+    }
   }
 
   function handleSubmit(e: FormEvent) {
@@ -270,6 +365,99 @@ export default function PerfilPage() {
           </div>
         </div>
       </form>
+
+      {/* Card — Assinatura (consultor/admin) */}
+      {!isCliente && (
+        <div className="bg-card/80 backdrop-blur border rounded-2xl p-5">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-2">
+              <PenLine className="h-4 w-4 text-muted-foreground" />
+              <h2 className="font-display font-semibold">Assinatura</h2>
+            </div>
+            {usuario?.assinaturaUrl && !refazendoAssinatura && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => { setRefazendoAssinatura(true); setCanvasVazio(true); }}
+              >
+                <RotateCcw size={13} /> Refazer
+              </Button>
+            )}
+          </div>
+
+          {usuario?.assinaturaUrl && !refazendoAssinatura ? (
+            <div className="flex flex-col items-start gap-2">
+              <div className="rounded-lg border border-border bg-white p-3 inline-block">
+                <img
+                  src={usuario.assinaturaUrl}
+                  alt="Assinatura"
+                  className="h-20 max-w-[320px] object-contain"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">Usada nos relatórios de candidatos</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Desenhe sua assinatura abaixo — ela será usada nos relatórios gerados para clientes.
+              </p>
+              <div className="relative rounded-lg border-2 border-dashed border-border bg-white overflow-hidden"
+                style={{ touchAction: "none" }}>
+                <canvas
+                  ref={canvasRef}
+                  width={560}
+                  height={160}
+                  className="w-full h-40 cursor-crosshair"
+                  onMouseDown={startDraw}
+                  onMouseMove={draw}
+                  onMouseUp={endDraw}
+                  onMouseLeave={endDraw}
+                  onTouchStart={startDraw}
+                  onTouchMove={draw}
+                  onTouchEnd={endDraw}
+                />
+                {canvasVazio && (
+                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                    <span className="text-sm text-muted-foreground/50 select-none">Assine aqui</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={limparCanvas}
+                  disabled={salvandoAssinatura}
+                >
+                  Limpar
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={salvarAssinatura}
+                  disabled={canvasVazio || salvandoAssinatura}
+                >
+                  <Save size={13} />
+                  {salvandoAssinatura ? "Salvando…" : "Salvar assinatura"}
+                </Button>
+                {refazendoAssinatura && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setRefazendoAssinatura(false)}
+                    disabled={salvandoAssinatura}
+                  >
+                    Cancelar
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Card — Empresa & Plano (cliente) */}
       {isCliente && (

@@ -60,6 +60,7 @@ export interface Usuario {
   isDemo: boolean;
   auditoria: boolean;
   avatarUrl?: string;
+  assinaturaUrl?: string;
 }
 
 export interface AuthUser {
@@ -144,7 +145,7 @@ const ROLES_COM_AUDITORIA: UserRole[] = ["rh", "ceo", "admin"];
 async function fetchPerfil(userId: string): Promise<Usuario | null> {
   const { data, error } = await supabase
     .from("users_profile")
-    .select("id, role, company_id, full_name, is_active, email, empresa_externa_nome, avatar_url")
+    .select("id, role, company_id, full_name, is_active, email, empresa_externa_nome, avatar_url, assinatura_url")
     .eq("id", userId)
     .single();
 
@@ -167,6 +168,7 @@ async function fetchPerfil(userId: string): Promise<Usuario | null> {
     isDemo: false,
     auditoria: ROLES_COM_AUDITORIA.includes(papel),
     avatarUrl: (data as any).avatar_url ?? undefined,
+    assinaturaUrl: (data as any).assinatura_url ?? undefined,
   };
 }
 

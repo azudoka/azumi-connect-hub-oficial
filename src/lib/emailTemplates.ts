@@ -165,6 +165,17 @@ export function emailAgendamentoEntrevista(params: {
   );
 }
 
+export function emailSolicitarNps(params: { nomeContato: string; cargoVaga: string; link: string }): string {
+  return emailWrapper(
+    "Como foi sua experiência?",
+    paragrafo(
+      `Olá, ${params.nomeContato}! Um candidato para a vaga de <strong>${params.cargoVaga}</strong> foi aprovado. Gostaríamos de conhecer sua avaliação sobre o processo.`
+    ) +
+      botao(params.link, "Avaliar agora") +
+      '<p style="font-size:12px;color:#8FA9D6;margin:16px 0 0;">Leva menos de 1 minuto — sua opinião é muito importante pra gente.</p>'
+  );
+}
+
 export function emailRedefinirSenha(params: { link: string }): string {
   return emailWrapper(
     "Redefinir sua senha",
