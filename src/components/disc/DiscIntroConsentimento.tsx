@@ -12,7 +12,9 @@ export function DiscIntroConsentimento({ nomeCandidato, onAceitar }: Props) {
 
   return (
     <div className="max-w-lg mx-auto text-center py-10 px-6">
-      <AzumiLogo product="Connect" size={32} className="mx-auto mb-8" />
+      <div className="flex justify-center mb-8">
+        <AzumiLogo product="Connect" size={32} />
+      </div>
 
       <h1 className="text-2xl font-display font-bold mb-2">
         Olá, {nomeCandidato}!
