@@ -4,10 +4,10 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Building2, Users, Briefcase, Clock, MessagesSquare, Target,
   BarChart3, Wallet, FileText, ShieldCheck, Calendar, Megaphone, BookOpen,
-  Settings, LogOut, Menu, Sparkles, UserCog, Heart,
+  Settings, LogOut, Sparkles, UserCog, Heart,
   ExternalLink, Mail, Phone,
 } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { empresasMockById } from "@/data/mockEmpresas";
 import { usePermissao, type Permissao } from "@/config/permissoes";
@@ -27,16 +27,6 @@ const PERMISSAO_POR_ROTA: Record<string, Permissao> = {
   "/app/usuarios": "usuarios.gerenciar",
   "/app/clientes": "clientes.gerenciar",
   "/app/auditoria": "auditoria.ver",
-};
-
-// Ícone de rail por grupo — cada grupo do menu tem um representante no rail fixo.
-const GROUP_RAIL_ICON: Record<string, string> = {
-  "Principal": "solar:widget-2-bold-duotone",
-  "Visão Geral": "solar:widget-2-bold-duotone",
-  "Operações": "solar:case-round-bold-duotone",
-  "Inteligência": "solar:chart-2-bold-duotone",
-  "Gestão": "solar:wallet-bold-duotone",
-  "Plataforma": "solar:calendar-bold-duotone",
 };
 
 const adminGroups = [
@@ -115,23 +105,9 @@ const clienteGroups = [
 ];
 
 export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
-  // collapsed = true -> flyout fechado (só o rail de 80px aparece)
-  const [collapsed, setCollapsed] = useState(false);
-  const inactivityRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const resetInactivity = () => {
-    if (inactivityRef.current) clearTimeout(inactivityRef.current);
-    inactivityRef.current = setTimeout(() => setCollapsed(true), 5000);
-  };
-  useEffect(() => {
-    resetInactivity();
-    window.addEventListener("mousemove", resetInactivity);
-    window.addEventListener("keydown", resetInactivity);
-    return () => {
-      if (inactivityRef.current) clearTimeout(inactivityRef.current);
-      window.removeEventListener("mousemove", resetInactivity);
-      window.removeEventListener("keydown", resetInactivity);
-    };
-  }, []);
+  // open = true -> largura expandida (mostra rótulo ao lado de cada ícone)
+  // Abre/fecha por hover, igual ao padrão de referência — sem clique manual.
+  const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { logout, user, usuario } = useAuth();
   const empresaInfo = usuario?.empresaId ? empresasMockById[usuario.empresaId] : null;
@@ -156,103 +132,79 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
     }))
     .filter((g) => g.items.length > 0);
 
-  const [activeGroup, setActiveGroup] = useState<string | null>(groups[0]?.label ?? null);
-
-  function openGroup(label: string) {
-    setActiveGroup(label);
-    setCollapsed(false);
-    resetInactivity();
-  }
-
-  const pillClass =
-    "group flex items-center gap-3 rounded-full px-4 py-3 text-[15px] text-sidebar-foreground " +
-    "transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:translate-x-1 " +
-    "hover:bg-[hsl(var(--primary)/0.12)] hover:text-primary";
-  const pillActiveClass = "!bg-[hsl(var(--primary)/0.12)] !text-primary";
+  const linkRowClass =
+    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-sidebar-foreground " +
+    "transition-colors duration-150 hover:bg-white/10 hover:text-white";
+  const linkRowActiveClass = "!bg-white/15 !text-white font-medium";
 
   return (
-    <div className="relative flex shrink-0">
-      {/* Rail fixo — 80px, sempre visível */}
-      <aside className="sidebar-connect-brand w-20 h-full flex flex-col items-center bg-gradient-sidebar border-r border-sidebar-border py-4 gap-1" aria-label="Navegação — atalhos">
-        <div className="mb-4">
-          <AzumiLogo product="Connect" collapsed light size={26} />
-        </div>
-
-        <button
-          onClick={() => setCollapsed((c) => !c)}
-          className="h-11 w-11 rounded-full flex items-center justify-center text-white/90 hover:bg-white/15 hover:text-white transition-colors mb-2"
-          aria-label={collapsed ? "Abrir menu" : "Fechar menu"}
-        >
-          <Menu className="h-5 w-5" />
-        </button>
-
-        <div className="flex-1 flex flex-col gap-1 overflow-y-auto">
-          {groups.map((g) => (
-            <button
-              key={g.label}
-              onClick={() => openGroup(g.label)}
-              title={g.label}
-              className={cn(
-                "h-11 w-11 rounded-full flex items-center justify-center transition-colors",
-                activeGroup === g.label && !collapsed
-                  ? "bg-[hsl(var(--primary-glow))] text-white shadow-sm"
-                  : "text-white/90 hover:bg-white/15 hover:text-white"
-              )}
-            >
-              <iconify-icon icon={GROUP_RAIL_ICON[g.label] ?? "solar:widget-2-bold-duotone"} width="22" height="22" />
-            </button>
-          ))}
-        </div>
-
-        <button
-          onClick={handleLogout}
-          className="h-11 w-11 rounded-full flex items-center justify-center text-white/90 hover:bg-white/15 hover:text-destructive transition-colors"
-          aria-label="Sair"
-        >
-          <LogOut className="h-5 w-5" />
-        </button>
-      </aside>
-
-      {/* Flyout — faz parte do fluxo normal agora: a largura anima, então o conteúdo ao lado
-          é empurrado/reduzido de verdade, não fica coberto por cima. */}
-      <div
-        className="h-full overflow-hidden shrink-0 transition-[width] duration-[400ms] ease-in-out"
-        style={{ width: collapsed ? "0px" : "260px" }}
+    <div
+      className="h-full shrink-0 overflow-hidden transition-[width] duration-300 ease-in-out"
+      style={{ width: open ? "220px" : "64px" }}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <aside
+        className="sidebar-connect-brand h-full flex flex-col bg-gradient-sidebar border-r border-sidebar-border py-4"
+        style={{ width: "220px" }}
+        aria-label="Navegação principal"
       >
-        <aside
-          className="h-full w-[260px] bg-[hsl(var(--primary)/0.07)] border-r border-border flex flex-col"
-          style={{ boxShadow: collapsed ? "none" : "7px 7px 10px rgba(0,0,0,0.03)" }}
-          aria-label="Navegação principal"
-        >
-        <div className="h-24 flex items-center justify-center px-5 border-b border-border">
-          <AzumiLogo product="Connect" size={30} />
+        {/* Logo — símbolo sempre visível, wordmark só aparece expandido */}
+        <div className="flex items-center gap-2 px-4 mb-6 h-8">
+          <div className="shrink-0">
+            <AzumiLogo product="Connect" collapsed light size={22} />
+          </div>
+          <span
+            className={cn(
+              "font-display text-sm font-semibold text-white whitespace-nowrap transition-opacity duration-200",
+              open ? "opacity-100" : "opacity-0"
+            )}
+          >
+            Connect
+          </span>
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-5">
-          {groups
-            .filter((g) => g.label === activeGroup)
-            .map((g) => (
-              <div key={g.label}>
-                <div className="px-4 mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
-                  {g.label}
-                </div>
-                <ul className="space-y-0.5">
-                  {g.items.map((it) => (
-                    <li key={it.to}>
-                      <NavLink to={it.to} className={pillClass} activeClassName={pillActiveClass}>
-                        <it.icon className="h-4 w-4 shrink-0" />
-                        <span className="truncate">{it.label}</span>
-                      </NavLink>
-                    </li>
-                  ))}
-                </ul>
+        {/* Lista de páginas — um ícone por página, sem agrupamento em rail separado */}
+        <nav className="flex-1 overflow-y-auto px-3 space-y-4">
+          {groups.map((g) => (
+            <div key={g.label}>
+              <div
+                className={cn(
+                  "px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest text-white/40 whitespace-nowrap transition-opacity duration-200",
+                  open ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
+                )}
+              >
+                {g.label}
               </div>
-            ))}
+              <ul className="space-y-0.5">
+                {g.items.map((it) => (
+                  <li key={it.to}>
+                    <NavLink to={it.to} className={linkRowClass} activeClassName={linkRowActiveClass}>
+                      <it.icon className="h-[18px] w-[18px] shrink-0" />
+                      <span
+                        className={cn(
+                          "whitespace-nowrap transition-opacity duration-200",
+                          open ? "opacity-100" : "opacity-0"
+                        )}
+                      >
+                        {it.label}
+                      </span>
+                    </NavLink>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
 
-          {variant === "admin" && activeGroup === "Plataforma" && (
+          {variant === "admin" && (
             <div>
-              <div className="px-4 mb-1.5 flex items-center gap-2">
-                <Sparkles className="h-3 w-3 text-highlight" />
+              <div
+                className={cn(
+                  "px-3 mb-1 flex items-center gap-1.5 whitespace-nowrap transition-opacity duration-200",
+                  open ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
+                )}
+              >
+                <Sparkles className="h-3 w-3 text-highlight shrink-0" />
                 <span className="text-[10px] font-semibold uppercase tracking-widest text-highlight">Hub</span>
               </div>
               <ul className="space-y-0.5">
@@ -262,9 +214,11 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
                   { to: "/hub/ceo/dashboard", icon: BarChart3, label: "CEO" },
                 ].map((it) => (
                   <li key={it.to}>
-                    <NavLink to={it.to} className={pillClass} activeClassName={pillActiveClass}>
-                      <it.icon className="h-4 w-4 shrink-0" />
-                      <span className="truncate">{it.label}</span>
+                    <NavLink to={it.to} className={linkRowClass} activeClassName={linkRowActiveClass}>
+                      <it.icon className="h-[18px] w-[18px] shrink-0" />
+                      <span className={cn("whitespace-nowrap transition-opacity duration-200", open ? "opacity-100" : "opacity-0")}>
+                        {it.label}
+                      </span>
                     </NavLink>
                   </li>
                 ))}
@@ -272,13 +226,15 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
             </div>
           )}
 
-          <div className="pt-2 mt-2 border-t border-border">
+          <div className="pt-3 mt-1 border-t border-white/10">
             {(() => {
               const configHref = variant === "cliente" ? "/cliente/gestao-conta" : "/app/configuracoes";
               return (
-                <NavLink to={configHref} className={pillClass} activeClassName={pillActiveClass}>
-                  <Settings className="h-4 w-4 shrink-0" />
-                  <span className="truncate">Configurações</span>
+                <NavLink to={configHref} className={linkRowClass} activeClassName={linkRowActiveClass}>
+                  <Settings className="h-[18px] w-[18px] shrink-0" />
+                  <span className={cn("whitespace-nowrap transition-opacity duration-200", open ? "opacity-100" : "opacity-0")}>
+                    Configurações
+                  </span>
                 </NavLink>
               );
             })()}
@@ -287,44 +243,56 @@ export function SidebarConnect({ variant = "admin" }: SidebarConnectProps) {
               <button
                 type="button"
                 onClick={() => navigate("/portal")}
-                className={cn(pillClass, "w-full text-xs text-muted-foreground")}
+                className={cn(linkRowClass, "w-full")}
                 aria-label="Acessar Portal do Cliente"
               >
-                <ExternalLink className="h-4 w-4 shrink-0" />
-                <span className="truncate">Acessar Portal do Cliente</span>
+                <ExternalLink className="h-[18px] w-[18px] shrink-0" />
+                <span className={cn("whitespace-nowrap transition-opacity duration-200", open ? "opacity-100" : "opacity-0")}>
+                  Acessar Portal do Cliente
+                </span>
               </button>
             )}
           </div>
         </nav>
 
-        {/* Cartão de rodapé — consultor (visão cliente) */}
-        {user?.papel === "cliente" && (
-          <div className="p-3 border-t border-border">
-            <div className="bg-muted rounded-xl p-3">
+        {/* Cartão de rodapé — consultor (visão cliente), só faz sentido expandido */}
+        {user?.papel === "cliente" && open && (
+          <div className="px-3 pt-3">
+            <div className="bg-white/10 rounded-xl p-3">
               <div className="flex items-center gap-3">
                 <div className="relative">
                   <div className="h-9 w-9 rounded-lg bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))] flex items-center justify-center text-xs font-semibold text-white">
                     {consultorIniciais}
                   </div>
-                  <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-success ring-2 ring-card animate-soft-pulse" />
+                  <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-success ring-2 ring-sidebar-background animate-soft-pulse" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Seu consultor Azumi</div>
-                  <div className="text-sm font-medium truncate">{consultorNome}</div>
+                  <div className="text-[10px] uppercase tracking-wider text-white/60">Seu consultor Azumi</div>
+                  <div className="text-sm font-medium truncate text-white">{consultorNome}</div>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setConsultorOpen(true)}
-                className="mt-3 w-full text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 px-2 py-1.5 rounded-md hover:bg-secondary"
+                className="mt-3 w-full text-xs text-white/70 hover:text-white flex items-center gap-1.5 px-2 py-1.5 rounded-md hover:bg-white/10"
               >
                 <Mail className="h-3.5 w-3.5" /> Falar com consultor
               </button>
             </div>
           </div>
         )}
-        </aside>
-      </div>
+
+        <button
+          onClick={handleLogout}
+          className={cn(linkRowClass, "mx-3 mt-2 hover:!bg-[hsl(var(--destructive)/0.2)] hover:!text-destructive")}
+          aria-label="Sair"
+        >
+          <LogOut className="h-[18px] w-[18px] shrink-0" />
+          <span className={cn("whitespace-nowrap transition-opacity duration-200", open ? "opacity-100" : "opacity-0")}>
+            Sair
+          </span>
+        </button>
+      </aside>
 
       <Dialog open={consultorOpen} onOpenChange={setConsultorOpen}>
         <DialogContent>
