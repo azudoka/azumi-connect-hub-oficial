@@ -19,22 +19,22 @@ import { CategoryTag } from "@/components/CategoryTag";
 function Header() {
   const { escuro, alternar } = useThemeToggle();
   return (
-    <header className="sticky top-0 z-30 w-full pt-4 sm:pt-6 px-4 sm:px-6 pb-2">
+    <header className="w-full pt-4 sm:pt-6 px-4 sm:px-6 pb-2">
       <div className="mx-auto max-w-5xl">
         <div
-          className="flex items-center justify-between gap-2 rounded-full px-3 sm:px-5 py-2 sm:py-2.5 backdrop-blur-md border border-white/10 shadow-elevated"
+          className="flex items-center justify-between gap-2 rounded-full px-3 sm:px-5 py-1 sm:py-1.5 backdrop-blur-md border border-white/10 shadow-elevated"
           style={{ background: "hsl(var(--ocean) / 0.9)" }}
         >
           <Link
             to="/vagas"
-            className="flex items-center rounded-full px-2.5 sm:px-3 py-1.5 transition-colors hover:bg-white/10"
+            className="flex items-center rounded-full px-2.5 sm:px-3 py-1 transition-colors hover:bg-white/10"
           >
-            <AzumiLogo product="Connect" light size={22} hideSubtitle />
+            <AzumiLogo product="Connect" light size={19} hideSubtitle />
           </Link>
           <div className="flex items-center gap-1 sm:gap-4">
             <Link
               to="/vagas"
-              className="rounded-full px-2.5 sm:px-3 py-1.5 font-sans text-xs sm:text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+              className="rounded-full px-2.5 sm:px-3 py-1 font-sans text-xs sm:text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors"
             >
               Vagas
             </Link>
