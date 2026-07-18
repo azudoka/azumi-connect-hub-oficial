@@ -404,6 +404,7 @@ export default function VagaDetalheAdmin() {
     id: c.id,
     nome: c.nome,
     cargo: c.cargo,
+    foto_url: c.foto_url ?? null,
     vagaId: vaga?.id ?? "",
     origem: c.origem,
     disc: c.disc_d != null
@@ -4674,6 +4675,7 @@ type CandidatoBase = {
   id: string;
   nome: string;
   cargo: string;
+  foto_url?: string | null;
   disc?: { D: number; I: number; S: number; C: number };
   perfilDom?: string;
   parecer?: string;
