@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Building2, MapPin, Clock, DollarSign, Briefcase, GraduationCap, Sun, Moon, FileText, ArrowLeft, Zap, Lock, Instagram, Linkedin, Globe } from "lucide-react";
+import { MapPin, Clock, DollarSign, Briefcase, GraduationCap, Sun, Moon, FileText, ArrowLeft, Zap, Lock, Instagram, Linkedin, Globe, Facebook, MessageCircle, Share2 } from "lucide-react";
 import { useThemeToggle } from "@/hooks/useThemeToggle";
 import {
   VAGAS_MOCK,
@@ -19,24 +19,27 @@ import { CategoryTag } from "@/components/CategoryTag";
 function Header() {
   const { escuro, alternar } = useThemeToggle();
   return (
-    <header className="sticky top-0 z-30 w-full bg-[hsl(var(--ocean))]">
+    <header className="sticky top-0 z-30 w-full bg-card border-b border-border">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link to="/vagas">
-          <AzumiLogo light product="Connect" size={36} hideSubtitle />
+          <AzumiLogo product="Connect" size={32} hideSubtitle />
         </Link>
         <div className="flex items-center gap-4">
+          <Link to="/vagas" className="font-sans text-sm text-muted-foreground hover:text-foreground">
+            Vagas
+          </Link>
           <a
             href="https://azumirh.com.br"
             target="_blank"
             rel="noreferrer"
-            className="font-sans text-sm text-white/80 hover:text-white"
+            className="font-sans text-sm text-muted-foreground hover:text-foreground"
           >
-            azumirh.com.br
+            Sobre a empresa
           </a>
           <button
             onClick={alternar}
             title={escuro ? "Modo claro" : "Modo escuro"}
-            className="text-white/70 hover:text-white transition-colors"
+            className="text-muted-foreground hover:text-foreground transition-colors"
           >
             {escuro ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </button>
@@ -168,97 +171,138 @@ export default function VagaPublicaDetalhePage() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <div className="mx-auto max-w-[1000px] px-6 py-8">
+      <div className="mx-auto max-w-6xl px-6 py-8">
         <Link to="/vagas" className="inline-flex items-center gap-1.5 font-sans text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> Voltar para vagas
         </Link>
 
-        <div className="mt-5 space-y-5">
-          {urgente && (
-            <div className="flex items-center gap-2 rounded-lg bg-[hsl(var(--warning)/0.15)] px-4 py-3 font-sans text-sm font-medium text-[hsl(var(--warning))]">
-              <Zap className="h-4 w-4 shrink-0" /> Vaga urgente — candidate-se o quanto antes
-            </div>
-          )}
+        {/* Compartilhar */}
+        <div className="mt-5 flex items-center gap-3">
+          <span className="flex items-center gap-1.5 font-sans text-sm text-muted-foreground">
+            <Share2 className="h-3.5 w-3.5" /> Compartilhar vaga:
+          </span>
+          <a
+            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Compartilhar no Facebook"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1877F2] text-white hover:brightness-95 transition"
+          >
+            <Facebook className="h-4 w-4" />
+          </a>
+          <a
+            href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Compartilhar no LinkedIn"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0A66C2] text-white hover:brightness-95 transition"
+          >
+            <Linkedin className="h-4 w-4" />
+          </a>
+          <a
+            href={`https://wa.me/?text=${encodeURIComponent(`${vaga.titulo} — ${window.location.href}`)}`}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Compartilhar no WhatsApp"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-[#25D366] text-white hover:brightness-95 transition"
+          >
+            <MessageCircle className="h-4 w-4" />
+          </a>
+        </div>
 
-          <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div className="flex items-start gap-4">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                  <Building2 className="h-6 w-6" />
-                </div>
-                <div className="min-w-0">
-                  <p className="flex items-center gap-1.5 font-sans text-sm text-muted-foreground">
-                    {vaga.confidencial && <Lock className="h-3 w-3 shrink-0" />}
-                    {vaga.empresa}
-                  </p>
-                  <h1 className="font-display text-2xl font-semibold text-foreground">{vaga.titulo}</h1>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    <CategoryTag categoria="modalidade">
-                      {MODALIDADE_LABEL[vaga.modalidade] ?? vaga.modalidade}
-                    </CategoryTag>
-                    <CategoryTag categoria="nivel">
-                      {NIVEL_LABEL[vaga.nivel] ?? vaga.nivel}
-                    </CategoryTag>
-                    <CategoryTag categoria="contrato">
-                      {CONTRATO_LABEL[vaga.tipo_contrato] ?? vaga.tipo_contrato}
-                    </CategoryTag>
+        {urgente && (
+          <div className="mt-5 flex items-center gap-2 rounded-lg bg-[hsl(var(--warning)/0.15)] px-4 py-3 font-sans text-sm font-medium text-[hsl(var(--warning))]">
+            <Zap className="h-4 w-4 shrink-0" /> Vaga urgente — candidate-se o quanto antes
+          </div>
+        )}
+
+        {/* Título em destaque */}
+        <div className="mt-6">
+          <p className="flex items-center gap-1.5 font-sans text-sm text-muted-foreground">
+            {vaga.confidencial && <Lock className="h-3 w-3 shrink-0" />}
+            {vaga.empresa}
+          </p>
+          <h1 className="mt-1 font-display text-3xl sm:text-4xl font-bold text-foreground leading-tight">
+            {vaga.titulo}
+          </h1>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            <CategoryTag categoria="modalidade">
+              {MODALIDADE_LABEL[vaga.modalidade] ?? vaga.modalidade}
+            </CategoryTag>
+            <CategoryTag categoria="nivel">
+              {NIVEL_LABEL[vaga.nivel] ?? vaga.nivel}
+            </CategoryTag>
+            <CategoryTag categoria="contrato">
+              {CONTRATO_LABEL[vaga.tipo_contrato] ?? vaga.tipo_contrato}
+            </CategoryTag>
+          </div>
+        </div>
+
+        {/* Layout 2 colunas — conteúdo à esquerda (mais espaço), candidatura fixa à direita */}
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8 items-start">
+          <div className="space-y-5 min-w-0">
+            <section className="rounded-2xl border border-border bg-card p-6 shadow-card">
+              <h2 className="mb-4 font-display text-lg font-semibold text-foreground">Detalhes da vaga</h2>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {detalhes.map((d) => (
+                  <div key={d.label} className="flex items-start gap-3">
+                    <d.icon className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">{d.label}</p>
+                      <p className="font-sans text-sm font-medium text-foreground">{d.value}</p>
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
-              <button onClick={() => setModalOpen(true)} className="btn-primary w-full shrink-0 justify-center sm:w-auto">
+            </section>
+
+            {vaga.beneficios && vaga.beneficios.split(",").map((b) => b.trim()).filter(Boolean).length > 0 && (
+              <section className="rounded-2xl border border-border bg-card p-6 shadow-card">
+                <h2 className="mb-3 font-display text-lg font-semibold text-foreground">Benefícios</h2>
+                <div className="flex flex-wrap gap-2">
+                  {vaga.beneficios.split(",").map((b) => b.trim()).filter(Boolean).map((b) => (
+                    <span key={b} className="rounded-full border border-border bg-muted px-3 py-1 font-sans text-xs text-foreground">
+                      {b}
+                    </span>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {vaga.descricao && (
+              <section className="rounded-2xl border border-border bg-card p-6 shadow-card">
+                <h2 className="mb-3 font-display text-lg font-semibold text-foreground">Sobre a vaga</h2>
+                <p className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-foreground/85">{vaga.descricao}</p>
+              </section>
+            )}
+          </div>
+
+          {/* Card de candidatura — fixo na lateral, sempre visível ao rolar */}
+          <div className="lg:sticky lg:top-24">
+            <div className="rounded-2xl border border-border bg-card p-6 shadow-elevated">
+              <h2 className="font-display text-lg font-semibold text-foreground mb-1">Candidatar-se para a vaga</h2>
+              <p className="font-sans text-sm text-muted-foreground mb-5">
+                Preencha seus dados e concorra a essa oportunidade.
+              </p>
+              <button onClick={() => setModalOpen(true)} className="btn-primary w-full justify-center">
                 Quero me candidatar →
               </button>
             </div>
           </div>
+        </div>
 
-          <section className="rounded-2xl border border-border bg-card p-6 shadow-card">
-            <h2 className="mb-4 font-display text-lg font-semibold text-foreground">Detalhes da vaga</h2>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {detalhes.map((d) => (
-                <div key={d.label} className="flex items-start gap-3">
-                  <d.icon className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">{d.label}</p>
-                    <p className="font-sans text-sm font-medium text-foreground">{d.value}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {vaga.beneficios && vaga.beneficios.split(",").map((b) => b.trim()).filter(Boolean).length > 0 && (
-            <section className="rounded-2xl border border-border bg-card p-6 shadow-card">
-              <h2 className="mb-3 font-display text-lg font-semibold text-foreground">Benefícios</h2>
-              <div className="flex flex-wrap gap-2">
-                {vaga.beneficios.split(",").map((b) => b.trim()).filter(Boolean).map((b) => (
-                  <span key={b} className="rounded-full border border-border bg-muted px-3 py-1 font-sans text-xs text-foreground">
-                    {b}
-                  </span>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {vaga.descricao && (
-            <section className="rounded-2xl border border-border bg-card p-6 shadow-card">
-              <h2 className="mb-3 font-display text-lg font-semibold text-foreground">Sobre a vaga</h2>
-              <p className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-foreground/85">{vaga.descricao}</p>
-            </section>
-          )}
-
-          {/* CTA banco de talentos */}
-          <div className="brand-gradient-bg rounded-2xl px-6 py-12 text-center text-white">
-            <h3 className="font-display text-2xl font-semibold">Não encontrou a vaga ideal?</h3>
-            <p className="mx-auto mt-3 max-w-xl font-sans text-sm text-white/80">
-              Cadastre-se no nosso banco de talentos e entraremos em contato quando surgir uma oportunidade para o seu perfil.
-            </p>
-            <button
-              onClick={() => setModalBanco(true)}
-              className="mt-6 inline-flex h-12 items-center rounded-full bg-white px-8 font-sans text-sm font-semibold text-primary shadow-card transition hover:bg-white/90"
-            >
-              Quero entrar no banco de talentos →
-            </button>
-          </div>
+        {/* CTA banco de talentos */}
+        <div className="brand-gradient-bg mt-8 rounded-2xl px-6 py-12 text-center text-white">
+          <h3 className="font-display text-2xl font-semibold">Não encontrou a vaga ideal?</h3>
+          <p className="mx-auto mt-3 max-w-xl font-sans text-sm text-white/80">
+            Cadastre-se no nosso banco de talentos e entraremos em contato quando surgir uma oportunidade para o seu perfil.
+          </p>
+          <button
+            onClick={() => setModalBanco(true)}
+            className="mt-6 inline-flex h-12 items-center rounded-full bg-white px-8 font-sans text-sm font-semibold text-primary shadow-card transition hover:bg-white/90"
+          >
+            Quero entrar no banco de talentos →
+          </button>
         </div>
       </div>
 
