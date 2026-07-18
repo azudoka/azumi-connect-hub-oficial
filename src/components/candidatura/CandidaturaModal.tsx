@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { X, Upload, Check, ChevronRight, FileText, Loader2, UserCheck, RefreshCw } from "lucide-react";
 import DiscTeste from "@/components/disc/DiscTeste";
 import { DiscIntroConsentimento } from "@/components/disc/DiscIntroConsentimento";
@@ -19,6 +20,9 @@ interface Props {
   vagaId?: string;
   vagaSalarioACombinar?: boolean;
   vagaDiscHabilitado?: boolean;
+  /** Quando true, renderiza como painel embutido na página (sem fundo escuro, sem posição fixa,
+      sem botão de fechar) em vez de modal flutuante. Mesma lógica por trás, só muda a casca visual. */
+  inline?: boolean;
 }
 
 interface Cadastro {
@@ -138,7 +142,7 @@ function cpfValido(cpf: string): boolean {
 const DATA_MIN = "1945-01-01";
 const DATA_MAX = new Date(Date.now() - 14 * 365.25 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vagaId, vagaSalarioACombinar, vagaDiscHabilitado = true }: Props) {
+export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vagaId, vagaSalarioACombinar, vagaDiscHabilitado = true, inline = false }: Props) {
   // step 0 = CPF lookup; 1 = formulário; 2 = DISC; "ok" = sucesso
   const [step, setStep] = useState<0 | 1 | 2 | "ok">(0);
   const [discIntroAceita, setDiscIntroAceita] = useState(false);
@@ -157,7 +161,7 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
   const [querAlterarDados, setQuerAlterarDados] = useState<boolean | null>(null);
   const [querRefazerDisc, setQuerRefazerDisc] = useState<boolean | null>(null);
 
-  if (!open) return null;
+  if (!inline && !open) return null;
 
   function up<K extends keyof Cadastro>(k: K, v: Cadastro[K]) {
     setC((p) => ({ ...p, [k]: v }));
@@ -459,8 +463,20 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
   const stepNum = step === 0 ? 0 : step === 1 ? 1 : step === 2 ? 2 : 3;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-stretch justify-center overflow-y-auto bg-black/70 sm:items-center sm:p-6">
-      <div className="relative flex w-full max-w-4xl flex-col bg-card sm:my-6 sm:max-h-[calc(100vh-3rem)] sm:rounded-2xl">
+    <div
+      className={
+        inline
+          ? "w-full"
+          : "fixed inset-0 z-[100] flex items-stretch justify-center overflow-y-auto bg-black/70 sm:items-center sm:p-6"
+      }
+    >
+      <div
+        className={
+          inline
+            ? "relative flex w-full flex-col rounded-2xl border border-border bg-card shadow-elevated"
+            : "relative flex w-full max-w-4xl flex-col bg-card sm:my-6 sm:max-h-[calc(100vh-3rem)] sm:rounded-2xl"
+        }
+      >
         {enviando && (
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 rounded-2xl bg-card/90">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -469,18 +485,23 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
         )}
 
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border bg-[hsl(var(--ocean))] px-6 py-4 text-white sm:rounded-t-2xl">
+        <div className={cn(
+          "flex items-center justify-between border-b border-border px-6 py-4",
+          inline ? "bg-card rounded-t-2xl" : "bg-[hsl(var(--ocean))] text-white sm:rounded-t-2xl"
+        )}>
           <div className="min-w-0">
-            <p className="font-sans text-xs uppercase tracking-wider text-white/70">
+            <p className={cn("font-sans text-xs uppercase tracking-wider", inline ? "text-muted-foreground" : "text-white/70")}>
               {modo === "banco" ? "Banco de talentos" : "Candidatura"}
             </p>
-            <h2 className="truncate font-display text-base font-semibold">
-              {vagaTitulo ?? "Entre para o banco de talentos Azumi"}
+            <h2 className={cn("truncate font-display text-base font-semibold", inline ? "text-foreground" : "")}>
+              {inline ? "Candidatar-se para a vaga" : (vagaTitulo ?? "Entre para o banco de talentos Azumi")}
             </h2>
           </div>
-          <button onClick={close} className="rounded-md p-1.5 text-white/80 hover:bg-white/10">
-            <X className="h-5 w-5" />
-          </button>
+          {!inline && (
+            <button onClick={close} className="rounded-md p-1.5 text-white/80 hover:bg-white/10">
+              <X className="h-5 w-5" />
+            </button>
+          )}
         </div>
 
         {/* Stepper */}
