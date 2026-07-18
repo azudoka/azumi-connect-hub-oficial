@@ -23,6 +23,9 @@ const COR: Record<DiscDim, string> = {
   C: "#3b82f6",
 };
 
+const AZUMI_LOGO_URL = "https://yxtirmonrjmlasnrqwwl.supabase.co/storage/v1/object/public/public-applications/marca/azumi-logo.png";
+const CONNECT_LOGO_URL = "https://yxtirmonrjmlasnrqwwl.supabase.co/storage/v1/object/public/public-applications/marca/connect-logo.png";
+
 interface Props {
   candidateName: string;
   onComplete: (scores: DiscScores, perfilDim: DiscDim) => void;
@@ -114,10 +117,7 @@ export default function DiscTeste({ candidateName, onComplete }: Props) {
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important;box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,Segoe UI,Roboto,Inter,sans-serif}
   body{background:#F5F7FA;color:#1f2937;padding:24px}
   .wrap{max-width:780px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08)}
-  header{background:${NAVY};color:#fff;padding:28px 32px}
-  header .logo{font-size:22px;font-weight:600}
-  header .logo span{color:#93C5FD}
-  header .sub{margin-top:6px;color:rgba(255,255,255,.8);font-size:14px}
+  header{background:#264478;padding:20px 32px;display:flex;justify-content:space-between;align-items:center}
   .body{padding:28px 32px}
   h1{font-size:20px;margin-bottom:4px}
   .lead{color:#64748b;font-size:14px;margin-bottom:24px}
@@ -143,8 +143,8 @@ export default function DiscTeste({ candidateName, onComplete }: Props) {
 <body>
   <div class="wrap">
     <header>
-      <div class="logo">azumi <span>RH</span></div>
-      <div class="sub">Relatório de perfil DISC</div>
+      <img src="${AZUMI_LOGO_URL}" height="26" alt="Azumi RH" style="display:block">
+      <img src="${CONNECT_LOGO_URL}" height="44" alt="Connect" style="display:block">
     </header>
     <div class="body">
       <h1>${candidateName}</h1>
@@ -210,7 +210,8 @@ export default function DiscTeste({ candidateName, onComplete }: Props) {
     return (
       <div className="space-y-5">
         <div>
-          <h3 className="text-lg font-semibold text-foreground">Seu perfil comportamental</h3>
+          <p className="text-sm text-muted-foreground">Seu perfil comportamental é</p>
+          <h3 className="text-xl font-bold leading-tight" style={{ color: corPerfil }}>{perfil.nome}</h3>
           <p className="text-sm text-muted-foreground">Baseado nas 12 perguntas respondidas.</p>
         </div>
 
