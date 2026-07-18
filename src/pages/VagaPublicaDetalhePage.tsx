@@ -20,12 +20,11 @@ function Header() {
   const { escuro, alternar } = useThemeToggle();
   return (
     <header className="sticky top-0 z-30 w-full bg-card border-b border-border">
-      <div className="mx-auto grid max-w-6xl grid-cols-[1fr_auto_1fr] items-center px-6 py-4">
-        <div />
-        <Link to="/vagas" className="justify-self-center">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <Link to="/vagas">
           <AzumiLogo product="Connect" size={32} hideSubtitle />
         </Link>
-        <div className="flex items-center gap-4 justify-self-end">
+        <div className="flex items-center gap-4">
           <Link to="/vagas" className="font-sans text-sm text-muted-foreground hover:text-foreground">
             Vagas
           </Link>
