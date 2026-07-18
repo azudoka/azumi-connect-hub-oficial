@@ -4,6 +4,7 @@ import DiscTeste from "@/components/disc/DiscTeste";
 import { DiscIntroConsentimento } from "@/components/disc/DiscIntroConsentimento";
 import type { DiscDim, DiscScores } from "@/components/disc/discQuestions";
 import { supabase } from "@/integrations/supabase/client";
+import { emailBoasVindas, sendEmail } from "@/lib/emailTemplates";
 
 const EMAIL_API = "https://azumi-email-api.vercel.app/api/send-email";
 const DISC_VALIDADE_MS = 1000 * 60 * 60 * 24 * 30 * 6; // 6 meses
@@ -435,6 +436,14 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
             <p style="margin-top:16px;font-size:12px;color:#666">Enviado automaticamente por Azumi Connect · ${new Date().toLocaleString("pt-BR")}</p>`,
         }),
       }).catch((e) => console.error("[candidatura] email:", e));
+
+      if (c.email) {
+        sendEmail(
+          c.email,
+          "Bem-vindo(a) à Azumi RH!",
+          emailBoasVindas({ nome: c.nome.split(" ")[0], link: window.location.origin + "/vagas" })
+        );
+      }
 
       setStep("ok");
     } catch (err: any) {

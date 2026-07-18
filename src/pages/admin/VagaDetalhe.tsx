@@ -1,6 +1,7 @@
 import { createPortal } from "react-dom";
 import { publicarVaga, despublicarVaga, getVaga, atualizarVaga, definirStatusVaga, excluirVaga, type VagaSupabase, type CriarVagaInput } from "@/services/vagasService";
 import { criarLinkCurto } from "@/services/shortLinkService";
+import { emailConviteQuestionario, emailAprovado, emailNaoAprovado, sendEmail } from "@/lib/emailTemplates";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
@@ -818,6 +819,16 @@ export default function VagaDetalheAdmin() {
     }
     if (coluna === "Reprovado") {
       setColunasEstado((prev) => ({ ...prev, [candId]: coluna }));
+      try {
+        const cand = candidatosVaga.find((c) => c.id === candId);
+        if (cand?.email) {
+          sendEmail(
+            cand.email,
+            `Atualização sobre sua candidatura — ${vaga?.titulo ?? "Vaga Azumi"}`,
+            emailNaoAprovado({ nome: cand.nome.split(" ")[0], cargoVaga: vaga?.titulo ?? "Vaga" })
+          );
+        }
+      } catch (e) { console.error("[email reprovado]", e); }
       return true;
     }
     if (coluna === "Banco de Talentos") {
@@ -870,6 +881,18 @@ export default function VagaDetalheAdmin() {
     });
     if (error) { toast.error("Erro ao enviar questionário: " + error.message); return; }
     toast.success("Questionário enviado. Aparecerá na ficha quando o candidato responder.");
+    try {
+      const { data: cand } = await supabase.from("candidates").select("nome, email").eq("id", candidatoId).maybeSingle();
+      if (cand?.email) {
+        const urlCompleta = `${window.location.origin}/questionario-resposta/${token}`;
+        const linkCurto = await criarLinkCurto(urlCompleta, "questionario_email");
+        sendEmail(
+          cand.email,
+          `Próxima etapa: questionário — ${vaga?.titulo ?? "Vaga Azumi"}`,
+          emailConviteQuestionario({ nome: cand.nome?.split(" ")[0] ?? cand.nome, cargoVaga: vaga?.titulo ?? "Vaga", link: linkCurto })
+        );
+      }
+    } catch (e) { console.error("[email questionario]", e); }
   }
 
   /** Gera link público (mock) para o candidato responder o questionário. */
@@ -2612,7 +2635,19 @@ export default function VagaDetalheAdmin() {
                   onClick={() => {
                     const id = confirmarContratadoId;
                     setConfirmarContratadoId(null);
-                    if (id) moverCandidato(id, "Contratado");
+                    if (id) {
+                      moverCandidato(id, "Contratado");
+                      try {
+                        const candObj = candidatosVaga.find((c) => c.id === id);
+                        if (candObj?.email) {
+                          sendEmail(
+                            candObj.email,
+                            `Parabéns! Você foi aprovado(a) — ${vaga?.titulo ?? "Vaga Azumi"}`,
+                            emailAprovado({ nome: candObj.nome.split(" ")[0], cargoVaga: vaga?.titulo ?? "Vaga", empresa: vaga?.empresa ?? "Azumi RH", link: `${window.location.origin}/vagas` })
+                          );
+                        }
+                      } catch (e) { console.error("[email contratado]", e); }
+                    }
                   }}
                   className="h-9 px-4 rounded-lg bg-success text-success-foreground text-sm font-medium inline-flex items-center gap-1.5"
                 >
