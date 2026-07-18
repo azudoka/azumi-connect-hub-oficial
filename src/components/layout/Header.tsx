@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import { consumoNotificacoes } from "@/data/mock";
 import { useAuth } from "@/context/AuthContext";
 import { UpgradePlanoModal } from "@/components/UpgradePlanoModal";
+import { useThemeToggle } from "@/hooks/useThemeToggle";
 
 interface HeaderProps {
   showSwitcher?: boolean;
@@ -40,7 +41,7 @@ export function Header({ showSwitcher = true, context = "connect", variant = "ad
   const [openQuick, setOpenQuick] = useState(false);
   const [openPerfil, setOpenPerfil] = useState(false);
   const [openUpgrade, setOpenUpgrade] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  const { escuro: darkMode, alternar: alternarTema } = useThemeToggle();
   const notifRef = useRef<HTMLDivElement>(null);
   const quickRef = useRef<HTMLDivElement>(null);
   const perfilRef = useRef<HTMLDivElement>(null);
@@ -178,11 +179,10 @@ export function Header({ showSwitcher = true, context = "connect", variant = "ad
             </button>
           )}
 
-          {/* Claro/escuro — visual pronto; modo escuro completo é uma frente própria, ainda não liga de verdade */}
           <button
             type="button"
-            onClick={() => setDarkMode((v) => !v)}
-            title="Modo escuro (em breve)"
+            onClick={alternarTema}
+            title={darkMode ? "Modo claro" : "Modo escuro"}
             className="h-9 w-9 rounded-lg hover:bg-secondary flex items-center justify-center text-muted-foreground"
           >
             {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
