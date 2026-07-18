@@ -141,64 +141,73 @@ export default function VagasPublicasPage() {
         <div className="absolute inset-0 bg-gradient-brand-bg opacity-[0.94]" />
         <div className="absolute inset-0 bg-black/15" />
 
-        {/* Topbar — logo com destaque + redes sociais */}
-        <div className="relative z-10 mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
-          <div className="rounded-xl bg-card/95 px-4 py-2.5 shadow-elevated backdrop-blur-sm">
-            <AzumiLogo product="Connect" size={26} hideSubtitle />
-          </div>
-          <div className="flex items-center gap-4">
-            <a
-              href="https://www.instagram.com/azumirh/"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Instagram da Azumi RH"
-              className="text-white/80 hover:text-white transition-colors"
+        {/* Topbar — uma barra flutuante só, arredondada, com a cor da marca Connect */}
+        <div className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6 pt-4 sm:pt-6">
+          <div
+            className="flex items-center justify-between gap-2 rounded-full px-3 sm:px-5 py-2 sm:py-2.5 backdrop-blur-md border border-white/10 shadow-elevated"
+            style={{ background: "hsl(var(--ocean) / 0.55)" }}
+          >
+            <Link
+              to="/vagas"
+              className="flex items-center rounded-full px-2.5 sm:px-3 py-1.5 transition-colors hover:bg-white/10"
             >
-              <Instagram className="h-5 w-5" />
-            </a>
-            <a
-              href="https://www.linkedin.com/company/azumirh/"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="LinkedIn da Azumi RH"
-              className="text-white/80 hover:text-white transition-colors"
-            >
-              <Linkedin className="h-5 w-5" />
-            </a>
-            <a
-              href="https://www.facebook.com/azumirhc/"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Facebook da Azumi RH"
-              className="text-white/80 hover:text-white transition-colors"
-            >
-              <Facebook className="h-5 w-5" />
-            </a>
-            <a
-              href="https://www.tiktok.com/@azumirh"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="TikTok da Azumi RH"
-              className="text-white/80 hover:text-white transition-colors"
-            >
-              <iconify-icon icon="simple-icons:tiktok" width="18" height="18" />
-            </a>
-            <a
-              href="https://azumirh.com.br"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Site da Azumi RH"
-              className="text-white/80 hover:text-white transition-colors"
-            >
-              <Globe className="h-5 w-5" />
-            </a>
-            <button
-              onClick={alternar}
-              title={escuro ? "Modo claro" : "Modo escuro"}
-              className="text-white/80 hover:text-white transition-colors"
-            >
-              {escuro ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            </button>
+              <AzumiLogo product="Connect" light size={22} hideSubtitle />
+            </Link>
+            <div className="flex items-center gap-1 sm:gap-3">
+              <a
+                href="https://www.instagram.com/azumirh/"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Instagram da Azumi RH"
+                className="hidden sm:block text-white/80 hover:text-white transition-colors"
+              >
+                <Instagram className="h-[18px] w-[18px]" />
+              </a>
+              <a
+                href="https://www.linkedin.com/company/azumirh/"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="LinkedIn da Azumi RH"
+                className="hidden sm:block text-white/80 hover:text-white transition-colors"
+              >
+                <Linkedin className="h-[18px] w-[18px]" />
+              </a>
+              <a
+                href="https://www.facebook.com/azumirhc/"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Facebook da Azumi RH"
+                className="hidden sm:block text-white/80 hover:text-white transition-colors"
+              >
+                <Facebook className="h-[18px] w-[18px]" />
+              </a>
+              <a
+                href="https://www.tiktok.com/@azumirh"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="TikTok da Azumi RH"
+                className="hidden sm:block text-white/80 hover:text-white transition-colors"
+              >
+                <iconify-icon icon="simple-icons:tiktok" width="16" height="16" />
+              </a>
+              <a
+                href="https://azumirh.com.br"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Site da Azumi RH"
+                className="hidden sm:block text-white/80 hover:text-white transition-colors"
+              >
+                <Globe className="h-[18px] w-[18px]" />
+              </a>
+              <span className="hidden sm:block h-4 w-px bg-white/20 mx-1" />
+              <button
+                onClick={alternar}
+                title={escuro ? "Modo claro" : "Modo escuro"}
+                className="rounded-full p-1.5 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                {escuro ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}
+              </button>
+            </div>
           </div>
         </div>
 
