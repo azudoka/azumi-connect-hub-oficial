@@ -844,7 +844,7 @@ export default function VagaDetalheAdmin() {
       toast.error("Erro ao gerar link: " + error.message);
       return;
     }
-    const urlCompleta = `${window.location.origin}/candidatar-convite/${token}`;
+    const urlCompleta = `${window.location.origin}/questionario-resposta/${token}`;
     const linkCurto = await criarLinkCurto(urlCompleta, "questionario_direto");
     navigator.clipboard.writeText(linkCurto);
     toast.success("Link copiado!", { description: linkCurto });
