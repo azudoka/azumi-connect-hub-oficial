@@ -1211,17 +1211,17 @@ export default function VagaDetalheAdmin() {
               Despublicar
             </button>
           )}
-          <a
-            href={linkPublico}
-            onClick={(e) => {
-              e.preventDefault();
-              navigator.clipboard?.writeText(linkPublico);
-              toast.success("Link público copiado!");
+          <button
+            type="button"
+            onClick={async () => {
+              const link = await criarLinkCurto(linkPublico, "vaga_publica");
+              navigator.clipboard?.writeText(link);
+              toast.success("Link copiado!", { description: link });
             }}
             className="h-8 px-3 rounded-md border border-border hover:bg-secondary text-xs font-medium inline-flex items-center gap-1.5"
           >
             <Link2 className="h-3.5 w-3.5" /> Copiar link
-          </a>
+          </button>
         </div>
       </div>
 
@@ -4840,6 +4840,19 @@ function CandidatoDetailSheet({
   useEffect(() => {
     setFichaTab("dados");
   }, [candidato?.id, candidatoExtra?.id]);
+
+  // Dados reais de questionários do candidato
+  const [questsDoCandidatoReal, setQuestsDoCandidatoReal] = useState<any[]>([]);
+  const candidatoIdParaQuests = candidato?.id ?? candidatoExtra?.id ?? null;
+  useEffect(() => {
+    if (!open || !candidatoIdParaQuests) { setQuestsDoCandidatoReal([]); return; }
+    supabase
+      .from("candidate_questionnaires")
+      .select("id, status, token, enviado_em, respondido_em, questionnaires(titulo, questionnaire_questions(id, texto, ordem)), questionnaire_answers(question_id, resposta)")
+      .eq("candidate_id", candidatoIdParaQuests)
+      .then(({ data }) => setQuestsDoCandidatoReal(data ?? []));
+  }, [candidatoIdParaQuests, open]);
+
   if (!open) return null;
 
   // Aceita tanto candidato "oficial" quanto extra (manual/convidado)
@@ -5336,7 +5349,7 @@ function CandidatoDetailSheet({
 
             <div className="rounded-lg border border-border p-3">
               <div className="flex items-center justify-between mb-2">
-                <div className="text-sm font-medium">Questionários da vaga</div>
+                <div className="text-sm font-medium">Questionários</div>
                 <button
                   onClick={() => onAssociarQuestionario(cand.id)}
                   className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-border text-[11px] font-medium hover:bg-secondary"
@@ -5344,88 +5357,63 @@ function CandidatoDetailSheet({
                   <ListChecks className="h-3 w-3" /> Enviar
                 </button>
               </div>
-              {questsDoCandidato.length === 0 ? (
-                <div className="text-xs text-muted-foreground py-2">Nenhum questionário criado para esta vaga.</div>
+              {questsDoCandidatoReal.length === 0 ? (
+                <div className="text-xs text-muted-foreground py-2">Este candidato ainda não recebeu nenhum questionário.</div>
               ) : (
                 <ul className="space-y-2">
-                  {questsDoCandidato.map((q) => (
-                    <li key={q.id} className="rounded-md border border-border bg-[hsl(var(--background)/0.4)] p-2.5">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="min-w-0">
-                          <div className="text-xs font-medium truncate">{q.nome}</div>
-                          <div className="text-[10px] text-muted-foreground">
-                            {q.perguntas.length} pergunta(s)
-                            {q.resposta?.enviadoEm && ` · enviado em ${q.resposta.enviadoEm}`}
-                            {q.resposta?.respondidoEm && ` · respondido em ${q.resposta.respondidoEm}`}
-                          </div>
-                        </div>
-                        <span className={cn(
-                          "px-2 py-0.5 rounded-full text-[10px] font-medium border shrink-0",
-                          q.statusCand === "respondido" && "bg-[hsl(var(--success)/0.1)] text-success border-[hsl(var(--success)/0.3)]",
-                          q.statusCand === "pendente" && "bg-[hsl(var(--warning)/0.1)] text-warning border-[hsl(var(--warning)/0.3)]",
-                          q.statusCand === "nao_associado" && "bg-secondary text-muted-foreground border-border",
-                        )}>
-                          {q.statusCand === "respondido" ? "Respondido"
-                            : q.statusCand === "pendente" ? "Pendente"
-                            : "Não associado"}
-                        </span>
-                      </div>
-
-                      {q.statusCand === "pendente" && q.resposta?.link && (
-                        <div className="mt-2 flex items-center gap-1.5">
-                          <input
-                            readOnly
-                            value={q.resposta.link}
-                            className="flex-1 h-7 px-2 rounded-md border border-border bg-card text-[10px]"
-                          />
-                          <button
-                            onClick={() => { navigator.clipboard?.writeText(q.resposta!.link!); toast.success("Link copiado."); }}
-                            className="h-7 w-7 inline-flex items-center justify-center rounded-md border border-border hover:bg-secondary"
-                            title="Copiar link"
-                          >
-                            <Copy className="h-3 w-3" />
-                          </button>
-                          {onEnviarWhatsQuestionario && (
-                            <button
-                              onClick={() => onEnviarWhatsQuestionario(cand.id, q.id)}
-                              disabled={etapaAtual !== "Questionário"}
-                              className="h-7 px-2 rounded-md bg-success text-success-foreground text-[10px] font-medium inline-flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
-                              title={etapaAtual !== "Questionário" ? `Candidato em "${etapaAtual ?? "Recebido"}" — mova para "Questionário" primeiro` : "Enviar via WhatsApp"}
-                            >
-                              <MessageCircle className="h-3 w-3" /> WhatsApp
-                            </button>
-                          )}
-                        </div>
-                      )}
-
-                      {q.statusCand === "pendente" && onSimularResposta && (
-                        <div className="mt-2 flex items-center justify-between gap-2 rounded-md border border-dashed border-[hsl(var(--warning)/0.4)] bg-[hsl(var(--warning)/0.05)] px-2 py-1.5">
-                          <span className="text-[10px] text-muted-foreground">
-                            <strong className="text-warning">Dev only</strong> · ambiente de teste
+                  {questsDoCandidatoReal.map((q: any) => {
+                    const perguntas: any[] = (q.questionnaires?.questionnaire_questions ?? []).sort((a: any, b: any) => a.ordem - b.ordem);
+                    const respostas: any[] = q.questionnaire_answers ?? [];
+                    return (
+                      <li key={q.id} className="rounded-md border border-border bg-[hsl(var(--background)/0.4)] p-2.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-medium truncate">{q.questionnaires?.titulo ?? "Questionário"}</span>
+                          <span className={cn(
+                            "px-2 py-0.5 rounded-full text-[10px] font-medium border shrink-0",
+                            q.status === "respondido"
+                              ? "bg-[hsl(var(--success)/0.1)] text-success border-[hsl(var(--success)/0.3)]"
+                              : "bg-[hsl(var(--warning)/0.1)] text-warning border-[hsl(var(--warning)/0.3)]",
+                          )}>
+                            {q.status === "respondido" ? "Respondido" : "Pendente"}
                           </span>
-                          <button
-                            type="button"
-                            onClick={() => onSimularResposta(cand.id, q.id)}
-                            className="h-6 px-2 rounded border border-[hsl(var(--warning)/0.4)] bg-card text-[10px] font-medium text-warning hover:bg-[hsl(var(--warning)/0.1)]"
-                            title="Gera respostas fake como se o candidato tivesse respondido"
-                          >
-                            Simular resposta do candidato (teste)
-                          </button>
                         </div>
-                      )}
-
-                      {q.statusCand === "respondido" && q.resposta && (
-                        <CorrigirQuestionarioInline
-                          perguntas={q.perguntas}
-                          respostas={q.resposta.respostas ?? {}}
-                          avaliacaoInicial={q.resposta.avaliacao?.questoes ?? {}}
-                          mediaSalva={q.resposta.avaliacao?.media}
-                          salvoComo={q.resposta.avaliacao?.salvoComo}
-                          onSalvar={(quests, modo) => onSalvarAvaliacao?.(q.id, cand.id, quests, modo)}
-                        />
-                      )}
-                    </li>
-                  ))}
+                        {q.status === "pendente" && q.token && (
+                          <div className="mt-2 flex items-center gap-1.5">
+                            <input
+                              readOnly
+                              value={`${window.location.origin}/questionario-resposta/${q.token}`}
+                              className="flex-1 h-7 px-2 rounded-md border border-border bg-card text-[10px]"
+                            />
+                            <button
+                              onClick={async () => {
+                                const url = `${window.location.origin}/questionario-resposta/${q.token}`;
+                                const link = await criarLinkCurto(url, "questionario_candidato");
+                                navigator.clipboard?.writeText(link);
+                                toast.success("Link copiado.");
+                              }}
+                              className="h-7 w-7 inline-flex items-center justify-center rounded-md border border-border hover:bg-secondary"
+                              title="Copiar link"
+                            >
+                              <Copy className="h-3 w-3" />
+                            </button>
+                          </div>
+                        )}
+                        {q.status === "respondido" && respostas.length > 0 && (
+                          <div className="mt-2 space-y-2">
+                            {perguntas.map((pergunta: any) => {
+                              const resp = respostas.find((r: any) => r.question_id === pergunta.id);
+                              return (
+                                <div key={pergunta.id} className="text-xs">
+                                  <p className="text-muted-foreground">{pergunta.texto}</p>
+                                  <p className="font-medium mt-0.5">{resp?.resposta ?? "—"}</p>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </div>

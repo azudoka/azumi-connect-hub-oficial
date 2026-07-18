@@ -14,6 +14,14 @@ interface Pergunta {
   opcoes?: string[];
 }
 
+function formatarCpf(v: string) {
+  const nums = v.replace(/\D/g, "").slice(0, 11);
+  return nums
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+}
+
 export default function QuestionarioRespostaPage() {
   const { token } = useParams<{ token: string }>();
   const [carregando, setCarregando] = useState(true);
@@ -23,6 +31,12 @@ export default function QuestionarioRespostaPage() {
   const [respostas, setRespostas] = useState<Record<string, string>>({});
   const [enviando, setEnviando] = useState(false);
   const [concluido, setConcluido] = useState(false);
+
+  // CPF identification step
+  const [cpfConfirmado, setCpfConfirmado] = useState(false);
+  const [cpfDigitado, setCpfDigitado] = useState("");
+  const [erroCpf, setErroCpf] = useState("");
+  const [verificandoCpf, setVerificandoCpf] = useState(false);
 
   useEffect(() => {
     if (!token) { setErro("Link inválido."); setCarregando(false); return; }
@@ -39,9 +53,11 @@ export default function QuestionarioRespostaPage() {
       }
       if (data.status === "respondido") { setConcluido(true); setCarregando(false); return; }
       setCq(data);
+      // If candidate_id already set, skip CPF step
+      if (data.candidate_id) setCpfConfirmado(true);
       const qs: Pergunta[] = ((data.questionnaires?.questionnaire_questions ?? []) as any[])
-        .sort((a, b) => a.ordem - b.ordem)
-        .map((p) => ({
+        .sort((a: any, b: any) => a.ordem - b.ordem)
+        .map((p: any) => ({
           id: p.id,
           ordem: p.ordem,
           texto: p.texto,
@@ -50,7 +66,6 @@ export default function QuestionarioRespostaPage() {
           opcoes: Array.isArray(p.opcoes) ? p.opcoes : undefined,
         }));
       setPerguntas(qs);
-      // Pre-select first option for multipla_escolha
       const init: Record<string, string> = {};
       qs.forEach((p) => {
         if (p.tipo === "multipla_escolha" && p.opcoes?.length) {
@@ -61,6 +76,35 @@ export default function QuestionarioRespostaPage() {
       setCarregando(false);
     })();
   }, [token]);
+
+  async function handleConfirmarCpf() {
+    const cpfNums = cpfDigitado.replace(/\D/g, "");
+    if (cpfNums.length !== 11) { setErroCpf("Informe um CPF válido com 11 dígitos."); return; }
+    setErroCpf("");
+    setVerificandoCpf(true);
+    try {
+      const { data: candidato } = await supabase
+        .from("candidates")
+        .select("id")
+        .eq("cpf", cpfDigitado)
+        .maybeSingle();
+      if (!candidato) {
+        setErroCpf("CPF não encontrado — verifique com quem te convidou.");
+        return;
+      }
+      // Associate candidate_id if not yet set
+      if (!cq.candidate_id) {
+        await supabase
+          .from("candidate_questionnaires")
+          .update({ candidate_id: candidato.id })
+          .eq("id", cq.id);
+        setCq((prev: any) => ({ ...prev, candidate_id: candidato.id }));
+      }
+      setCpfConfirmado(true);
+    } finally {
+      setVerificandoCpf(false);
+    }
+  }
 
   async function enviar() {
     const faltando = perguntas.filter((p) => p.obrigatoria && !respostas[p.id]?.trim());
@@ -115,6 +159,49 @@ export default function QuestionarioRespostaPage() {
     );
   }
 
+  // ── Tela de identificação por CPF ──────────────────────────────────────────
+  if (!cpfConfirmado) {
+    return (
+      <div className="min-h-screen" style={{ background: "#264478" }}>
+        <div className="max-w-lg mx-auto text-center py-16 px-6 text-white">
+          <div className="flex justify-center mb-8">
+            <AzumiLogo product="Connect" size={48} light />
+          </div>
+          <h1 className="text-2xl font-bold mb-3">Bem-vindo(a)!</h1>
+          <p className="text-white/80 mb-8 text-sm leading-relaxed">
+            Você foi convidado(a) a responder um questionário de triagem da Azumi RH
+            para o processo seletivo em andamento. Leva poucos minutos e ajuda a gente
+            a te conhecer melhor.
+          </p>
+          <div className="bg-white rounded-2xl p-6 text-left shadow-lg">
+            <label className="text-sm font-medium text-[#14233F] mb-2 block">
+              Confirme seu CPF para continuar
+            </label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={cpfDigitado}
+              onChange={(e) => { setCpfDigitado(formatarCpf(e.target.value)); setErroCpf(""); }}
+              onKeyDown={(e) => { if (e.key === "Enter") handleConfirmarCpf(); }}
+              placeholder="000.000.000-00"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none text-slate-800"
+            />
+            {erroCpf && <p className="mt-2 text-sm text-red-600">{erroCpf}</p>}
+            <button
+              onClick={handleConfirmarCpf}
+              disabled={verificandoCpf}
+              className="w-full mt-4 rounded-full bg-[#264478] text-white font-medium py-2.5 text-sm disabled:opacity-50 hover:bg-[#1e3561] transition"
+            >
+              {verificandoCpf ? "Verificando…" : "Continuar →"}
+            </button>
+          </div>
+          <p className="text-white/50 text-xs mt-6">Azumi RH · azumirh.com.br</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Formulário de perguntas ─────────────────────────────────────────────────
   return (
     <div style={{ background: "#F5F7FA" }} className="min-h-screen py-10 px-4">
       <div className="max-w-xl mx-auto">
