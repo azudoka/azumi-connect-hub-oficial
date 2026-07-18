@@ -137,7 +137,7 @@ export default function AtracaoLista() {
   ] as const;
 
   // Estados do form
-  const [consultoresVaga, setConsultoresVaga] = useState<{ id: string; full_name: string }[]>([]);
+  const [consultoresVaga, setConsultoresVaga] = useState<{ id: string; full_name: string; avatar_url: string | null; job_title: string | null }[]>([]);
   const [nResponsavelId, setNResponsavelId] = useState("");
   const [nDiscHabilitado, setNDiscHabilitado] = useState(true);
   const [tipoEmpresa, setTipoEmpresa] = useState<"avulsa" | "cadastrada">("avulsa");
@@ -215,8 +215,8 @@ export default function AtracaoLista() {
     if (!novaVagaOpen) return;
     supabase.from("companies").select("id, name").eq("status", "active").order("name")
       .then(({ data }) => setEmpresasCadastradas(data ?? []));
-    supabase.from("users_profile").select("id, full_name").in("role", ["azumi_admin", "azumi_consultor"]).order("full_name")
-      .then(({ data }) => setConsultoresVaga((data ?? []).map((d) => ({ id: d.id, full_name: d.full_name ?? "—" }))));
+    supabase.from("users_profile").select("id, full_name, avatar_url, job_title").in("role", ["azumi_admin", "azumi_consultor"]).order("full_name")
+      .then(({ data }) => setConsultoresVaga((data ?? []).map((d) => ({ id: d.id, full_name: d.full_name ?? "—", avatar_url: (d as any).avatar_url ?? null, job_title: (d as any).job_title ?? null }))));
     (supabase as any).from("sla_regras").select("id, modulo, nivel, dias_uteis, ordem").order("modulo").order("ordem")
       .then(({ data }: { data: SlaRegra[] | null }) => setSlaRegras(data ?? []));
   }, [novaVagaOpen]);
@@ -819,18 +819,43 @@ export default function AtracaoLista() {
 
             {/* Consultor responsável */}
             <div className="space-y-2">
-              <Label htmlFor="nResponsavel">Consultor responsável</Label>
-              <select
-                id="nResponsavel"
-                value={nResponsavelId}
-                onChange={(e) => setNResponsavelId(e.target.value)}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <option value="">Selecione o consultor…</option>
-                {consultoresVaga.map((c) => (
-                  <option key={c.id} value={c.id}>{c.full_name}</option>
-                ))}
-              </select>
+              <Label>Consultor responsável</Label>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex h-10 w-full items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring text-left">
+                    {nResponsavelId ? (() => {
+                      const sel = consultoresVaga.find((c) => c.id === nResponsavelId);
+                      return sel ? (
+                        <>
+                          {sel.avatar_url
+                            ? <img src={sel.avatar_url} className="h-6 w-6 rounded-full object-cover flex-shrink-0" />
+                            : <span className="h-6 w-6 rounded-full bg-primary/20 text-primary text-[10px] font-semibold flex items-center justify-center flex-shrink-0">{sel.full_name.split(" ").map((n) => n[0]).slice(0, 2).join("")}</span>
+                          }
+                          <span className="flex-1 truncate">{sel.full_name}</span>
+                        </>
+                      ) : null;
+                    })() : <span className="flex-1 text-muted-foreground">Selecione o consultor…</span>}
+                    <ChevronDown className="ml-auto h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]">
+                  <DropdownMenuItem onSelect={() => setNResponsavelId("")}>
+                    <span className="text-muted-foreground text-sm">Nenhum (sem responsável)</span>
+                  </DropdownMenuItem>
+                  {consultoresVaga.map((c) => (
+                    <DropdownMenuItem key={c.id} onSelect={() => setNResponsavelId(c.id)} className="flex items-center gap-2 py-2">
+                      {c.avatar_url
+                        ? <img src={c.avatar_url} className="h-7 w-7 rounded-full object-cover flex-shrink-0" />
+                        : <span className="h-7 w-7 rounded-full bg-primary/20 text-primary text-xs font-semibold flex items-center justify-center flex-shrink-0">{c.full_name.split(" ").map((n) => n[0]).slice(0, 2).join("")}</span>
+                      }
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-sm font-medium truncate">{c.full_name}</span>
+                        {c.job_title && <span className="text-xs text-muted-foreground truncate">{c.job_title}</span>}
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             {/* DISC habilitado */}

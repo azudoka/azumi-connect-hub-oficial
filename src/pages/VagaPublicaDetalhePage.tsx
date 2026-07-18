@@ -332,7 +332,7 @@ export default function VagaPublicaDetalhePage() {
               modo="vaga"
               vagaId={vaga.id}
               vagaTitulo={vaga.titulo}
-              vagaSalarioACombinar={!vaga.salario_de}
+              vagaSalarioACombinar={!vaga.salario_fixo}
               vagaDiscHabilitado={vagaDiscHabilitado}
             />
           </div>
