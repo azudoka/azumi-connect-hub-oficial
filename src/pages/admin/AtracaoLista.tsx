@@ -134,6 +134,8 @@ export default function AtracaoLista() {
   ] as const;
 
   // Estados do form
+  const [consultoresVaga, setConsultoresVaga] = useState<{ id: string; full_name: string }[]>([]);
+  const [nResponsavelId, setNResponsavelId] = useState("");
   const [tipoEmpresa, setTipoEmpresa] = useState<"avulsa" | "cadastrada">("avulsa");
   const [empresasCadastradas, setEmpresasCadastradas] = useState<{ id: string; name: string }[]>([]);
   const [empresaCadastradaId, setEmpresaCadastradaId] = useState("");
@@ -170,6 +172,8 @@ export default function AtracaoLista() {
     if (!novaVagaOpen) return;
     supabase.from("companies").select("id, name").eq("status", "active").order("name")
       .then(({ data }) => setEmpresasCadastradas(data ?? []));
+    supabase.from("users_profile").select("id, full_name").in("role", ["azumi_admin", "azumi_consultor"]).order("full_name")
+      .then(({ data }) => setConsultoresVaga((data ?? []).map((d) => ({ id: d.id, full_name: d.full_name ?? "—" }))));
   }, [novaVagaOpen]);
 
   function resetNovaVaga() {
@@ -178,6 +182,7 @@ export default function AtracaoLista() {
     setNTipo("operacional"); setNModalidade("presencial");
     setNPosicoes("1"); setNBeneficios([]); setNOutrosBeneficios(""); setNDescricao("");
     setAvulsaContatoNome(""); setAvulsaContatoCargo(""); setAvulsaContatoTelefone(""); setAvulsaContatoEmail("");
+    setNResponsavelId("");
     setPubAberto(false); setPubPublicar(false); setPubConfidencial(false);
     setPubLocal(""); setPubModalidade("presencial"); setPubNivel("pleno");
     setPubTurno("integral"); setPubContrato("clt"); setPubCarga("");
@@ -651,6 +656,22 @@ export default function AtracaoLista() {
               />
             </div>
 
+            {/* Consultor responsável */}
+            <div className="space-y-2">
+              <Label htmlFor="nResponsavel">Consultor responsável</Label>
+              <select
+                id="nResponsavel"
+                value={nResponsavelId}
+                onChange={(e) => setNResponsavelId(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="">Selecione o consultor…</option>
+                {consultoresVaga.map((c) => (
+                  <option key={c.id} value={c.id}>{c.full_name}</option>
+                ))}
+              </select>
+            </div>
+
             {/* Toggle: Empresa cadastrada vs Cliente avulso */}
             <div className="space-y-3">
               <Label>Tipo de cliente *</Label>
@@ -1031,6 +1052,7 @@ export default function AtracaoLista() {
                     salario_ate: pubACombinar ? undefined : (pubSalAte ? Number(pubSalAte) : undefined),
                     confidencial: pubConfidencial,
                     salario_fixo: !pubACombinar && !!pubSalDe && !pubSalAte,
+                    responsavel_id: nResponsavelId || null,
                   });
                   if (pubPublicar) {
                     await publicarVaga(vagaCriada.id);

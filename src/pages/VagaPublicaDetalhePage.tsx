@@ -257,6 +257,7 @@ export default function VagaPublicaDetalhePage() {
         modo="vaga"
         vagaId={vaga.id}
         vagaTitulo={vaga.titulo}
+        vagaSalarioACombinar={!vaga.salario_de}
       />
       <CandidaturaModal
         open={modalBanco}

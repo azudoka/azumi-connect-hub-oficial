@@ -1478,9 +1478,13 @@ export default function VagaDetalheAdmin() {
                           <div className="p-3 space-y-2">
                             {/* Linha 1: Avatar + Nome + Mais ações */}
                             <div className="flex items-start gap-2.5">
-                              <div className="h-10 w-10 shrink-0 rounded-md bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))] flex items-center justify-center text-xs font-semibold text-white">
-                                {c.nome.split(" ").map(n => n[0]).join("").slice(0, 2)}
-                              </div>
+                              {c.foto_url ? (
+                                <img src={c.foto_url} alt="" className="h-10 w-10 shrink-0 rounded-md object-cover" />
+                              ) : (
+                                <div className="h-10 w-10 shrink-0 rounded-md bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))] flex items-center justify-center text-xs font-semibold text-white">
+                                  {c.nome.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                                </div>
+                              )}
                               <div className="min-w-0 flex-1">
                                 <button
                                   type="button"
@@ -1857,9 +1861,13 @@ export default function VagaDetalheAdmin() {
               return (
                 <li key={c.id} className="border border-border rounded-lg p-3 bg-[hsl(var(--background)/0.4)]">
                   <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-md bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))] flex items-center justify-center text-[10px] font-semibold text-white">
-                      {c.nome.split(" ").map(n => n[0]).join("").slice(0, 2)}
-                    </div>
+                    {c.foto_url ? (
+                      <img src={c.foto_url} alt="" className="h-9 w-9 rounded-md object-cover shrink-0" />
+                    ) : (
+                      <div className="h-9 w-9 rounded-md bg-[image:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-glow)))] flex items-center justify-center text-[10px] font-semibold text-white shrink-0">
+                        {c.nome.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                      </div>
+                    )}
                     <div className="min-w-0 flex-1">
                       <button
                         type="button"

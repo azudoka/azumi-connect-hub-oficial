@@ -16,6 +16,7 @@ interface Props {
   modo: CandidaturaModo;
   vagaTitulo?: string;
   vagaId?: string;
+  vagaSalarioACombinar?: boolean;
 }
 
 interface Cadastro {
@@ -32,6 +33,7 @@ interface Cadastro {
   filhos: "nao_informar" | "nao" | "sim" | "";
   linkedin: string;
   portfolio: string;
+  pretensaoSalarial: string;
   origem: string;
   curriculo: File | null;
   mensagem: string;
@@ -78,6 +80,7 @@ const CADASTRO_INIT: Cadastro = {
   filhos: "",
   linkedin: "",
   portfolio: "",
+  pretensaoSalarial: "",
   origem: "",
   curriculo: null,
   mensagem: "",
@@ -98,10 +101,11 @@ const ESCOLARIDADES = [
 
 const ORIGENS = ["LinkedIn", "Instagram", "Indicação", "Google", "Site Azumi", "Outro"];
 
-export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vagaId }: Props) {
+export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vagaId, vagaSalarioACombinar }: Props) {
   // step 0 = CPF lookup; 1 = formulário; 2 = DISC; "ok" = sucesso
   const [step, setStep] = useState<0 | 1 | 2 | "ok">(0);
   const [discIntroAceita, setDiscIntroAceita] = useState(false);
+  const [semLinkedin, setSemLinkedin] = useState(false);
   const [c, setC] = useState<Cadastro>(CADASTRO_INIT);
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -133,6 +137,7 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
     setQuerAlterarDados(null);
     setQuerRefazerDisc(null);
     setDiscIntroAceita(false);
+    setSemLinkedin(false);
     onClose();
   }
 
@@ -316,6 +321,7 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
         banco_talentos: modo === "banco",
         etapa_azumi: "recebido",
         foto_url: fotoUrl,
+        pretensao_salarial: c.pretensaoSalarial || null,
         lgpd_aceite: c.aceitePrivacidade,
         lgpd_aceite_at: c.aceitePrivacidade ? new Date().toISOString() : null,
       };
@@ -624,12 +630,29 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
 
               <Grid2>
                 <Field label="LinkedIn">
-                  <Input value={c.linkedin} onChange={(v) => up("linkedin", v)} placeholder="linkedin.com/in/..." readOnly={dadosTravados} />
+                  <Input value={c.linkedin} onChange={(v) => up("linkedin", v)} placeholder="linkedin.com/in/..." readOnly={dadosTravados || semLinkedin} />
+                  {!dadosTravados && (
+                    <label className="flex items-center gap-2 mt-1 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={semLinkedin}
+                        onChange={(e) => { setSemLinkedin(e.target.checked); if (e.target.checked) up("linkedin", ""); }}
+                        className="h-3.5 w-3.5 rounded border-border accent-primary"
+                      />
+                      <span className="font-sans text-xs text-muted-foreground">Não tenho LinkedIn</span>
+                    </label>
+                  )}
                 </Field>
                 <Field label="Portfólio ou link adicional">
                   <Input value={c.portfolio} onChange={(v) => up("portfolio", v)} readOnly={dadosTravados} />
                 </Field>
               </Grid2>
+
+              {vagaSalarioACombinar && (
+                <Field label="Pretensão salarial">
+                  <Input value={c.pretensaoSalarial} onChange={(v) => up("pretensaoSalarial", v)} placeholder="Ex.: R$ 4.000 – R$ 5.000" readOnly={dadosTravados} />
+                </Field>
+              )}
 
               {modo === "banco" && (
                 <Grid2>

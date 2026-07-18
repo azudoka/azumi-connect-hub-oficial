@@ -131,6 +131,11 @@ function AdminDashboard() {
   );
   const dataCapitalizada = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
 
+  useEffect(() => {
+    document.title = "CONNECT - Azumi RH";
+    return () => { document.title = "Azumi Connect — HR as a Service"; };
+  }, []);
+
   // Financeiro mock
   const fin = {
     faturado: 44400,

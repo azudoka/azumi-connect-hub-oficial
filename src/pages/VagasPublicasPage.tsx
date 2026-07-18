@@ -84,6 +84,11 @@ export default function VagasPublicasPage() {
   const [loadingPublicas, setLoadingPublicas] = useState(true);
 
   useEffect(() => {
+    document.title = "Painel de Vagas | Azumi RH";
+    return () => { document.title = "Azumi Connect — HR as a Service"; };
+  }, []);
+
+  useEffect(() => {
     listarVagasPublicadas()
       .then((rows) => setVagasSupabase(rows.map(supabaseToPublica)))
       .catch(() => {})

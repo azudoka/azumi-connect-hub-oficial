@@ -128,6 +128,7 @@ export type CriarVagaInput = {
   avulsa_solicitante_cargo?: string | null;
   avulsa_solicitante_telefone?: string | null;
   avulsa_solicitante_email?: string | null;
+  responsavel_id?: string | null;
 };
 
 // Converte CriarVagaInput → colunas de job_solicitations
@@ -160,6 +161,7 @@ function inputToJs(input: Partial<CriarVagaInput>): Record<string, unknown> {
   if (input.avulsa_solicitante_cargo !== undefined) out.avulsa_solicitante_cargo = input.avulsa_solicitante_cargo ?? null;
   if (input.avulsa_solicitante_telefone !== undefined) out.avulsa_solicitante_telefone = input.avulsa_solicitante_telefone ?? null;
   if (input.avulsa_solicitante_email !== undefined) out.avulsa_solicitante_email = input.avulsa_solicitante_email ?? null;
+  if (input.responsavel_id !== undefined) out.responsavel_id = input.responsavel_id ?? null;
   return out;
 }
 
