@@ -307,6 +307,16 @@ export default function VagaDetalheAdmin() {
   const [justificativaExcesso, setJustificativaExcesso] = useState("");
   const [excedeuOpen, setExcedeuOpen] = useState(false);
 
+  // Realinhamento: abre quando todos os candidatos da rodada de "Entrevista Cliente" são reprovados
+  const [realinhamentoOpen, setRealinhamentoOpen] = useState(false);
+  const [realinhamentoNaoBateu, setRealinhamentoNaoBateu] = useState("");
+  const [realinhamentoAjustes, setRealinhamentoAjustes] = useState("");
+  const [realinhamentoObs, setRealinhamentoObs] = useState("");
+  const [salvandoRealinhamento, setSalvandoRealinhamento] = useState(false);
+
+  // Limite global de 6 candidatos em "Entrevista Cliente"
+  const [limiteGlobalEsgotado, setLimiteGlobalEsgotado] = useState(false);
+
   const colunas = [
     "Recebido",
     "Triagem",
@@ -440,7 +450,7 @@ export default function VagaDetalheAdmin() {
   };
   const [candidaturasSite, setCandidaturasSite] = useState<CandidaturaSite[]>([]);
   const [loadingSite, setLoadingSite] = useState(false);
-  const [historicoVaga, setHistoricoVaga] = useState<{ etapa: string; entrou_em: string }[]>([]);
+  const [historicoVaga, setHistoricoVaga] = useState<{ candidate_id: string; etapa: string; entrou_em: string }[]>([]);
 
   function recarregarCandidaturas() {
     if (!vaga?.id || vaga.id.startsWith("v-")) return;
@@ -460,10 +470,10 @@ export default function VagaDetalheAdmin() {
           if (rows.length > 0) {
             (supabase as any)
               .from("candidate_etapa_historico")
-              .select("etapa, entrou_em")
+              .select("candidate_id, etapa, entrou_em")
               .in("candidate_id", rows.map((r) => r.id))
               .order("entrou_em", { ascending: true })
-              .then(({ data: hist }: { data: { etapa: string; entrou_em: string }[] | null }) => {
+              .then(({ data: hist }: { data: { candidate_id: string; etapa: string; entrou_em: string }[] | null }) => {
                 setHistoricoVaga(hist ?? []);
               });
           }
@@ -630,6 +640,15 @@ export default function VagaDetalheAdmin() {
   );
   const posicoesPreenchidas = idsContratados.length;
   const vagaEncerrada = posicoesPreenchidas >= posicoesVaga;
+
+  // Conta candidatos únicos que já passaram por "Entrevista Cliente" nesta vaga (limite global 6)
+  const totalUnicosEntrevistaCliente = useMemo(() => {
+    const ids = new Set(historicoVaga.filter((h) => h.etapa === "Entrevista Cliente").map((h) => h.candidate_id));
+    return ids.size;
+  }, [historicoVaga]);
+  useEffect(() => {
+    setLimiteGlobalEsgotado(totalUnicosEntrevistaCliente >= 6 && posicoesPreenchidas === 0);
+  }, [totalUnicosEntrevistaCliente, posicoesPreenchidas]);
 
   // Pop-up automático: "Deseja gerar o Relatório Final?" quando todas as
   // posições forem preenchidas (apenas 1x por vaga — verifica store).
@@ -838,7 +857,23 @@ export default function VagaDetalheAdmin() {
       return true;
     }
     if (coluna === "Reprovado") {
-      setColunasEstado((prev) => ({ ...prev, [candId]: coluna }));
+      setColunasEstado((prev) => {
+        const novosEstados = { ...prev, [candId]: coluna };
+        // Detectar reprovação total: todos os que estavam em "Entrevista Cliente" foram reprovados
+        const estavamEntrevistaCliente = candidatosVaga.filter(
+          (c) => prev[c.id] === "Entrevista Cliente"
+        );
+        const todosReprovados =
+          estavamEntrevistaCliente.length > 0 &&
+          estavamEntrevistaCliente.every(
+            (c) => novosEstados[c.id] === "Reprovado" || c.id === candId
+          );
+        if (todosReprovados) {
+          // Abrir modal de realinhamento com um pequeno delay para o estado se estabilizar
+          setTimeout(() => setRealinhamentoOpen(true), 300);
+        }
+        return novosEstados;
+      });
       try {
         const cand = candidatosVaga.find((c) => c.id === candId);
         if (cand?.email) {
@@ -1081,6 +1116,13 @@ export default function VagaDetalheAdmin() {
   }
 
   function handleCliqueEnviar() {
+    if (limiteGlobalEsgotado) {
+      toast.error(
+        "Limite de 6 candidatos enviados atingido sem contratação.",
+        { description: "Para continuar, realize um realinhamento da vaga com o cliente ou registre uma contratação." }
+      );
+      return;
+    }
     const total = candidatosVaga.filter(c => colunasEstado[c.id] === "Entrevista Cliente").length;
     if (total > 3) {
       setExcedeuOpen(true);
@@ -2431,13 +2473,111 @@ export default function VagaDetalheAdmin() {
               </button>
               <button
                 disabled={!justificativaExcesso.trim()}
-                onClick={() => {
+                onClick={async () => {
+                  if (vaga?.id) {
+                    await (supabase as any).from("vaga_shortlist_justificativas").insert({
+                      job_id: vaga.id,
+                      justificativa: justificativaExcesso.trim(),
+                      total_perfis: candidatosVaga.filter(c => colunasEstado[c.id] === "Entrevista Cliente").length,
+                    });
+                  }
                   setExcedeuOpen(false);
                   setEnviarOpen(true);
                 }}
                 className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50"
               >
                 Prosseguir com envio
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {realinhamentoOpen && createPortal(
+        <div className="fixed inset-0 z-[60] bg-[hsl(var(--background)/0.7)] backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onWheel={(e)=>e.stopPropagation()}><ScrollLock />
+          <div className="bg-card border border-border rounded-2xl shadow-elevated w-full max-w-lg p-6 animate-scale-in">
+            <div className="flex items-start gap-3 mb-5">
+              <div className="h-10 w-10 rounded-full bg-[hsl(var(--warning)/0.15)] text-warning flex items-center justify-center shrink-0">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-display text-lg font-semibold">Realinhamento necessário</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Todos os candidatos enviados foram reprovados. Registre o feedback para realinhar o perfil da vaga.
+                </p>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">O que não bateu?</label>
+                <textarea
+                  value={realinhamentoNaoBateu}
+                  onChange={(e) => setRealinhamentoNaoBateu(e.target.value)}
+                  placeholder="Ex: perfil técnico não atingiu o esperado, fit cultural divergente…"
+                  className="mt-1.5 w-full h-20 p-3 rounded-lg bg-secondary border border-input focus:border-primary outline-none text-sm resize-none"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Ajustes no perfil</label>
+                <textarea
+                  value={realinhamentoAjustes}
+                  onChange={(e) => setRealinhamentoAjustes(e.target.value)}
+                  placeholder="Ex: reduzir exigência de inglês, aceitar experiência em outra área…"
+                  className="mt-1.5 w-full h-20 p-3 rounded-lg bg-secondary border border-input focus:border-primary outline-none text-sm resize-none"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Outras observações</label>
+                <textarea
+                  value={realinhamentoObs}
+                  onChange={(e) => setRealinhamentoObs(e.target.value)}
+                  placeholder="Qualquer contexto adicional relevante…"
+                  className="mt-1.5 w-full h-16 p-3 rounded-lg bg-secondary border border-input focus:border-primary outline-none text-sm resize-none"
+                />
+              </div>
+            </div>
+            <div className="mt-5 flex items-center justify-end gap-2">
+              <button
+                onClick={() => {
+                  setRealinhamentoOpen(false);
+                  setRealinhamentoNaoBateu("");
+                  setRealinhamentoAjustes("");
+                  setRealinhamentoObs("");
+                }}
+                disabled={salvandoRealinhamento}
+                className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm disabled:opacity-50"
+              >
+                Fechar sem salvar
+              </button>
+              <button
+                disabled={salvandoRealinhamento || (!realinhamentoNaoBateu.trim() && !realinhamentoAjustes.trim())}
+                onClick={async () => {
+                  if (!vaga?.id) return;
+                  setSalvandoRealinhamento(true);
+                  try {
+                    await (supabase as any).from("vaga_realinhamentos").insert({
+                      job_id: vaga.id,
+                      nao_bateu: realinhamentoNaoBateu.trim() || null,
+                      ajustes_perfil: realinhamentoAjustes.trim() || null,
+                      observacoes: realinhamentoObs.trim() || null,
+                    });
+                    toast.success("Realinhamento registrado.", { description: "Feedback salvo para acompanhamento." });
+                    setRealinhamentoOpen(false);
+                    setRealinhamentoNaoBateu("");
+                    setRealinhamentoAjustes("");
+                    setRealinhamentoObs("");
+                  } catch (err) {
+                    console.error("[realinhamento]", err);
+                    toast.error("Erro ao salvar realinhamento.");
+                  } finally {
+                    setSalvandoRealinhamento(false);
+                  }
+                }}
+                className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50 inline-flex items-center gap-1.5"
+              >
+                {salvandoRealinhamento ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                Salvar realinhamento
               </button>
             </div>
           </div>

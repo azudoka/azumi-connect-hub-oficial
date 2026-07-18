@@ -275,8 +275,16 @@ export default function AtracaoLista() {
   }
 
   // Validação de plano: Hunt Executivo bloqueado no plano Ongoing.
-  const PLANO_ATUAL = "ongoing"; // mock — em prod vem do contexto de auth
-  const huntBloqueado = nTipo === "hunting" && PLANO_ATUAL === "ongoing";
+  const [planoEmpresaSelecionada, setPlanoEmpresaSelecionada] = useState<string | null>(null);
+  useEffect(() => {
+    if (tipoEmpresa !== "cadastrada" || !empresaCadastradaId) {
+      setPlanoEmpresaSelecionada(null);
+      return;
+    }
+    supabase.from("companies").select("plan").eq("id", empresaCadastradaId).maybeSingle()
+      .then(({ data }) => setPlanoEmpresaSelecionada(data?.plan ?? null));
+  }, [tipoEmpresa, empresaCadastradaId]);
+  const huntBloqueado = nTipo === "hunting" && planoEmpresaSelecionada === "ongoing";
 
   // Suporte a deep-link /app/atracao?new=1 vindo de "Nova solicitação"
   useEffect(() => {
