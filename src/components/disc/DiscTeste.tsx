@@ -280,9 +280,9 @@ export default function DiscTeste({ candidateName, onComplete }: Props) {
               onClick={() => setIdx(i)}
               className={`h-7 w-7 rounded-md text-xs font-medium border transition ${
                 i === idx
-                  ? "border-foreground bg-foreground text-white"
+                  ? "border-primary bg-primary text-primary-foreground"
                   : ok
-                  ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                  ? "border-[hsl(var(--success)/0.4)] bg-[hsl(var(--success)/0.12)] text-success"
                   : "border-border bg-card text-muted-foreground hover:bg-muted/50"
               }`}
             >
@@ -302,8 +302,8 @@ export default function DiscTeste({ candidateName, onComplete }: Props) {
               <div
                 key={opt.dim}
                 className={`flex items-center gap-3 rounded-lg border p-3 ${
-                  isMais ? "border-emerald-300 bg-emerald-50" :
-                  isMenos ? "border-rose-300 bg-rose-50" :
+                  isMais ? "border-[hsl(var(--success)/0.4)] bg-[hsl(var(--success)/0.12)]" :
+                  isMenos ? "border-[hsl(var(--destructive)/0.4)] bg-[hsl(var(--destructive)/0.12)]" :
                   "border-border bg-card"
                 }`}
               >
@@ -312,7 +312,7 @@ export default function DiscTeste({ candidateName, onComplete }: Props) {
                   type="button"
                   onClick={() => marcar("mais", opt.dim)}
                   className={`inline-flex h-8 items-center gap-1 rounded-md px-2.5 text-xs font-medium border ${
-                    isMais ? "border-emerald-500 bg-emerald-500 text-white" : "border-border text-muted-foreground hover:bg-muted/50"
+                    isMais ? "border-success bg-success text-success-foreground" : "border-border text-muted-foreground hover:bg-muted/50"
                   }`}
                 >
                   <Plus className="h-3.5 w-3.5" /> Mais
@@ -321,7 +321,7 @@ export default function DiscTeste({ candidateName, onComplete }: Props) {
                   type="button"
                   onClick={() => marcar("menos", opt.dim)}
                   className={`inline-flex h-8 items-center gap-1 rounded-md px-2.5 text-xs font-medium border ${
-                    isMenos ? "border-rose-500 bg-rose-500 text-white" : "border-border text-muted-foreground hover:bg-muted/50"
+                    isMenos ? "border-destructive bg-destructive text-destructive-foreground" : "border-border text-muted-foreground hover:bg-muted/50"
                   }`}
                 >
                   <Minus className="h-3.5 w-3.5" /> Menos
@@ -345,7 +345,9 @@ export default function DiscTeste({ candidateName, onComplete }: Props) {
           <button
             type="button"
             onClick={() => setIdx((i) => Math.min(DISC_QUESTIONS.length - 1, i + 1))}
-            className="inline-flex items-center gap-1 rounded-lg px-4 py-2 text-sm font-medium text-white"
+            disabled={!(ans.mais && ans.menos)}
+            title={!(ans.mais && ans.menos) ? "Marque + Mais e − Menos para continuar" : undefined}
+            className="inline-flex items-center gap-1 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ background: BLUE }}
           >
             Próxima <ChevronRight className="h-4 w-4" />
