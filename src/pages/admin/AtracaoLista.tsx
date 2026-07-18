@@ -150,6 +150,17 @@ export default function AtracaoLista() {
   const [nBeneficios, setNBeneficios] = useState<string[]>([]);
   const [nOutrosBeneficios, setNOutrosBeneficios] = useState("");
   const [nDescricao, setNDescricao] = useState("");
+
+  // SLA motor
+  type SlaRegra = { id: string; modulo: string; nivel: string; dias_uteis: number; ordem: number };
+  type SlaExcecao = { dias_uteis: number; isento_taxa_urgencia: boolean; restrito_operacional: boolean; nivel: string | null };
+  const [slaRegras, setSlaRegras] = useState<SlaRegra[]>([]);
+  const [slaExcecao, setSlaExcecao] = useState<SlaExcecao | null>(null);
+  const [nSlaRegra, setNSlaRegra] = useState("");
+  const [nSlaDias, setNSlaDias] = useState("");
+  const [nSlaAltaGestao, setNSlaAltaGestao] = useState(false);
+  const [nUrgente, setNUrgente] = useState(false);
+  const [nSlaTaxa, setNSlaTaxa] = useState("300");
   const [avulsaContatoNome, setAvulsaContatoNome] = useState("");
   const [avulsaContatoCargo, setAvulsaContatoCargo] = useState("");
   const [avulsaContatoTelefone, setAvulsaContatoTelefone] = useState("");
@@ -170,12 +181,36 @@ export default function AtracaoLista() {
   const [pubACombinar, setPubACombinar] = useState(false);
   const [pubDescricao, setPubDescricao] = useState("");
 
+  // Load client SLA exception when a registered company is selected
+  useEffect(() => {
+    if (tipoEmpresa !== "cadastrada" || !empresaCadastradaId) {
+      setSlaExcecao(null);
+      return;
+    }
+    (supabase as any)
+      .from("sla_excecoes_cliente")
+      .select("dias_uteis, isento_taxa_urgencia, restrito_operacional, nivel")
+      .eq("empresa_id", empresaCadastradaId)
+      .maybeSingle()
+      .then(({ data }: { data: SlaExcecao | null }) => setSlaExcecao(data ?? null));
+  }, [tipoEmpresa, empresaCadastradaId]);
+
+  // Reset SLA when tipo changes (different module → different levels)
+  useEffect(() => {
+    setNSlaRegra("");
+    setNSlaDias("");
+    setNSlaAltaGestao(false);
+    setNUrgente(false);
+  }, [nTipo]);
+
   useEffect(() => {
     if (!novaVagaOpen) return;
     supabase.from("companies").select("id, name").eq("status", "active").order("name")
       .then(({ data }) => setEmpresasCadastradas(data ?? []));
     supabase.from("users_profile").select("id, full_name").in("role", ["azumi_admin", "azumi_consultor"]).order("full_name")
       .then(({ data }) => setConsultoresVaga((data ?? []).map((d) => ({ id: d.id, full_name: d.full_name ?? "—" }))));
+    (supabase as any).from("sla_regras").select("id, modulo, nivel, dias_uteis, ordem").order("modulo").order("ordem")
+      .then(({ data }: { data: SlaRegra[] | null }) => setSlaRegras(data ?? []));
   }, [novaVagaOpen]);
 
   function resetNovaVaga() {
@@ -186,10 +221,49 @@ export default function AtracaoLista() {
     setAvulsaContatoNome(""); setAvulsaContatoCargo(""); setAvulsaContatoTelefone(""); setAvulsaContatoEmail("");
     setNResponsavelId("");
     setNDiscHabilitado(true);
+    setNSlaRegra(""); setNSlaDias(""); setNSlaAltaGestao(false);
+    setNUrgente(false); setNSlaTaxa("300"); setSlaExcecao(null);
     setPubAberto(false); setPubPublicar(false); setPubConfidencial(false);
     setPubLocal(""); setPubModalidade("presencial"); setPubNivel("pleno");
     setPubTurno("integral"); setPubContrato("clt"); setPubCarga("");
     setPubSalDe(""); setPubSalAte(""); setPubACombinar(false); setPubDescricao("");
+  }
+
+  // SLA helpers
+  const slaModulo = nTipo === "hunting" ? "hunting" : "atracao";
+  const slaRegrasDoModulo = slaRegras.filter((r) => r.modulo === slaModulo);
+  const slaRegraAtual = slaRegras.find((r) => r.id === nSlaRegra) ?? null;
+
+  function isExcecaoAplicavel(): boolean {
+    if (!slaExcecao || !slaRegraAtual) return false;
+    return !slaExcecao.restrito_operacional || slaRegraAtual.ordem <= 2;
+  }
+
+  const excecaoAplicavel = isExcecaoAplicavel();
+  const urgenteIsentoTaxa = nUrgente && excecaoAplicavel && !!slaExcecao?.isento_taxa_urgencia;
+
+  function onSlaRegraChange(regraId: string) {
+    setNSlaRegra(regraId);
+    setNUrgente(false);
+    const regra = slaRegras.find((r) => r.id === regraId);
+    if (!regra) { setNSlaDias(""); setNSlaAltaGestao(false); return; }
+    if (regra.dias_uteis === 0) { setNSlaAltaGestao(true); setNSlaDias(""); return; }
+    setNSlaAltaGestao(false);
+    setNSlaDias(String(regra.dias_uteis));
+  }
+
+  function onUrgenteChange(checked: boolean) {
+    setNUrgente(checked);
+    if (!checked) {
+      // Restore standard SLA
+      if (slaRegraAtual && slaRegraAtual.dias_uteis > 0) setNSlaDias(String(slaRegraAtual.dias_uteis));
+      return;
+    }
+    // Apply exception for urgente if applicable
+    if (slaExcecao && isExcecaoAplicavel()) {
+      setNSlaDias(String(slaExcecao.dias_uteis));
+    }
+    // No exception → leave dias as-is (editable suggestion)
   }
 
   // Validação de plano: Hunt Executivo bloqueado no plano Ongoing.
@@ -808,6 +882,88 @@ export default function AtracaoLista() {
               />
             </div>
 
+            {/* ── SLA e prazo ─────────────────────────────────────────── */}
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground pt-1">SLA e prazo</p>
+
+            {/* Nível SLA */}
+            <div className="space-y-2">
+              <Label>Nível da vaga <span className="text-xs font-normal text-muted-foreground">(define o prazo padrão)</span></Label>
+              <select
+                value={nSlaRegra}
+                onChange={(e) => onSlaRegraChange(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="">Selecione o nível…</option>
+                {slaRegrasDoModulo.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.nivel}{r.dias_uteis > 0 ? ` — ${r.dias_uteis} dias úteis` : " — prazo a definir"}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Prazo em dias */}
+            {nSlaRegra && (
+              <div className="space-y-2">
+                <Label>
+                  {nSlaAltaGestao ? "Prazo — negociado via proposta formal" : "Prazo calculado (dias úteis)"}
+                </Label>
+                {nSlaAltaGestao ? (
+                  <Input
+                    type="text"
+                    value={nSlaDias}
+                    onChange={(e) => setNSlaDias(e.target.value)}
+                    placeholder="A definir via proposta formal"
+                  />
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <Input
+                      type="number"
+                      min={1}
+                      value={nSlaDias}
+                      onChange={(e) => setNSlaDias(e.target.value)}
+                      className="w-28"
+                    />
+                    <span className="text-sm text-muted-foreground">dias úteis</span>
+                    {excecaoAplicavel && !nUrgente && (
+                      <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                        Acordo especial do cliente
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Toggle urgente */}
+            {nSlaRegra && !nSlaAltaGestao && (
+              <div className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Vaga com prazo de urgência</p>
+                  <p className="text-xs text-muted-foreground">
+                    {urgenteIsentoTaxa
+                      ? "Prazo preferencial do cliente aplicado — sem cobrança de taxa."
+                      : "Reduz o SLA com prioridade máxima. Taxa de urgência será cobrada."}
+                  </p>
+                </div>
+                <Switch checked={nUrgente} onCheckedChange={onUrgenteChange} />
+              </div>
+            )}
+
+            {/* Taxa de urgência */}
+            {nUrgente && !urgenteIsentoTaxa && (
+              <div className="space-y-2">
+                <Label>Taxa de urgência</Label>
+                <Select value={nSlaTaxa} onValueChange={setNSlaTaxa}>
+                  <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="300">R$ 300,00</SelectItem>
+                    <SelectItem value="500">R$ 500,00</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             {/* Benefícios — checkboxes múltiplos */}
             <div className="space-y-2">
               <Label>Benefícios</Label>
@@ -1041,6 +1197,10 @@ export default function AtracaoLista() {
                 resetNovaVaga();
                 const tid = toast.loading(`Salvando "${titulo}"…`);
                 try {
+                  const slaDiasNum = nSlaAltaGestao
+                    ? (nSlaDias ? parseInt(nSlaDias) || null : null)
+                    : (nSlaDias ? parseInt(nSlaDias) : undefined);
+
                   const vagaCriada = await criarVaga({
                     titulo,
                     is_avulsa: tipoEmpresa === "avulsa",
@@ -1066,6 +1226,11 @@ export default function AtracaoLista() {
                     salario_fixo: !pubACombinar && !!pubSalDe && !pubSalAte,
                     responsavel_id: nResponsavelId || null,
                     disc_habilitado: nDiscHabilitado,
+                    sla_dias: slaDiasNum,
+                    sla_urgente: nUrgente,
+                    sla_taxa_urgencia: (nUrgente && !urgenteIsentoTaxa && nSlaTaxa) ? Number(nSlaTaxa) : null,
+                    sla_nivel: slaRegraAtual?.nivel ?? null,
+                    sla_modulo: nSlaRegra ? slaModulo : null,
                   });
                   if (pubPublicar) {
                     await publicarVaga(vagaCriada.id);
