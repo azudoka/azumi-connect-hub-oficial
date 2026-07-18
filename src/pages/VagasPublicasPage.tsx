@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Search, Lock, Zap, Instagram, Linkedin, Globe, ExternalLink, Moon, Sun } from "lucide-react";
+import { MapPin, Search, Lock, Zap, Instagram, Linkedin, Facebook, Globe, ExternalLink, Moon, Sun } from "lucide-react";
 import { useThemeToggle } from "@/hooks/useThemeToggle";
 import capaVagas from "@/assets/brand/capa-vagas.png";
 import {
@@ -51,13 +51,31 @@ function Footer() {
             <Instagram className="h-5 w-5" />
           </a>
           <a
-            href="https://www.linkedin.com/company/azumirh"
+            href="https://www.linkedin.com/company/azumirh/"
             target="_blank"
             rel="noreferrer"
             aria-label="LinkedIn da Azumi RH"
             className="text-white/70 transition hover:text-white"
           >
             <Linkedin className="h-5 w-5" />
+          </a>
+          <a
+            href="https://www.facebook.com/azumirhc/"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Facebook da Azumi RH"
+            className="text-white/70 transition hover:text-white"
+          >
+            <Facebook className="h-5 w-5" />
+          </a>
+          <a
+            href="https://www.tiktok.com/@azumirh"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="TikTok da Azumi RH"
+            className="text-white/70 transition hover:text-white"
+          >
+            <iconify-icon icon="simple-icons:tiktok" width="18" height="18" />
           </a>
           <a
             href="https://azumirh.com.br"
@@ -139,13 +157,31 @@ export default function VagasPublicasPage() {
               <Instagram className="h-5 w-5" />
             </a>
             <a
-              href="https://www.linkedin.com/company/azumirh"
+              href="https://www.linkedin.com/company/azumirh/"
               target="_blank"
               rel="noreferrer"
               aria-label="LinkedIn da Azumi RH"
               className="text-white/80 hover:text-white transition-colors"
             >
               <Linkedin className="h-5 w-5" />
+            </a>
+            <a
+              href="https://www.facebook.com/azumirhc/"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Facebook da Azumi RH"
+              className="text-white/80 hover:text-white transition-colors"
+            >
+              <Facebook className="h-5 w-5" />
+            </a>
+            <a
+              href="https://www.tiktok.com/@azumirh"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="TikTok da Azumi RH"
+              className="text-white/80 hover:text-white transition-colors"
+            >
+              <iconify-icon icon="simple-icons:tiktok" width="18" height="18" />
             </a>
             <a
               href="https://azumirh.com.br"
@@ -215,13 +251,31 @@ export default function VagasPublicasPage() {
             <Instagram className="h-5 w-5" />
           </a>
           <a
-            href="https://www.linkedin.com/company/azumirh"
+            href="https://www.linkedin.com/company/azumirh/"
             target="_blank"
             rel="noreferrer"
             aria-label="LinkedIn da Azumi RH"
             className="text-muted-foreground hover:text-primary transition-colors"
           >
             <Linkedin className="h-5 w-5" />
+          </a>
+          <a
+            href="https://www.facebook.com/azumirhc/"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Facebook da Azumi RH"
+            className="text-muted-foreground hover:text-primary transition-colors"
+          >
+            <Facebook className="h-5 w-5" />
+          </a>
+          <a
+            href="https://www.tiktok.com/@azumirh"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="TikTok da Azumi RH"
+            className="text-muted-foreground hover:text-primary transition-colors"
+          >
+            <iconify-icon icon="simple-icons:tiktok" width="18" height="18" />
           </a>
           <a
             href="https://azumirh.com.br"
