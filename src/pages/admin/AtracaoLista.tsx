@@ -37,7 +37,7 @@ function supabaseToLocal(r: VagaSupabase): VagaLocal {
 }
 import BancoTalentosDrawer from "@/components/atracao/BancoTalentosDrawer";
 import { Link, useSearchParams } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -189,6 +189,7 @@ export default function AtracaoLista() {
   const [pubModoSalario, setPubModoSalario] = useState<"combinar" | "a_partir" | "fixo">("combinar");
   const [pubSalarioValor, setPubSalarioValor] = useState("");
   const [pubDescricao, setPubDescricao] = useState("");
+  const pubDescricaoRef = useRef<HTMLTextAreaElement>(null);
 
   // Load client SLA exception when a registered company is selected
   useEffect(() => {
@@ -1318,13 +1319,45 @@ export default function AtracaoLista() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label>Descrição da vaga para o site *</Label>
+                        <div className="flex items-center justify-between">
+                          <Label>Descrição da vaga para o site *</Label>
+                          <button
+                            type="button"
+                            title="Negrito (envolve o texto selecionado)"
+                            onClick={() => {
+                              const el = pubDescricaoRef.current;
+                              if (!el) return;
+                              const start = el.selectionStart;
+                              const end = el.selectionEnd;
+                              const antes = pubDescricao.slice(0, start);
+                              const selecionado = pubDescricao.slice(start, end);
+                              const depois = pubDescricao.slice(end);
+                              const novo = `${antes}**${selecionado || "texto"}**${depois}`;
+                              setPubDescricao(novo);
+                              requestAnimationFrame(() => {
+                                el.focus();
+                                const novoInicio = start + 2;
+                                const novoFim = novoInicio + (selecionado || "texto").length;
+                                el.setSelectionRange(novoInicio, novoFim);
+                              });
+                            }}
+                            className="h-6 w-6 rounded flex items-center justify-center text-xs font-bold border border-border hover:bg-secondary text-foreground"
+                          >
+                            B
+                          </button>
+                        </div>
                         <Textarea
+                          ref={pubDescricaoRef}
                           value={pubDescricao}
                           onChange={(e) => setPubDescricao(e.target.value)}
                           placeholder="O que o candidato verá na página pública da vaga."
-                          rows={4}
+                          rows={5}
                         />
+                        <p className="text-[11px] text-muted-foreground">
+                          Use <strong>**texto**</strong> pra negrito e <em>*texto*</em> pra itálico. Linhas
+                          começando com "- " viram lista. Emoji: use o atalho do seu teclado (Cmd+Ctrl+Espaço no Mac,
+                          Win+. no Windows) e cole direto no texto.
+                        </p>
                       </div>
 
                       <div className="rounded-md bg-[hsl(var(--info)/0.1)] border border-[hsl(var(--info)/0.2)] px-3 py-2 text-xs text-info flex items-start gap-2">
