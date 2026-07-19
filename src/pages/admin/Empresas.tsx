@@ -297,13 +297,14 @@ export default function Empresas() {
       {/* ── Modal Nova Empresa ─────────────────────────────────────────── */}
       {novaOpen && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-[hsl(var(--background)/0.7)] backdrop-blur-sm animate-fade-in p-4"
+          className="fixed inset-0 z-[100] overflow-y-auto bg-[hsl(var(--background)/0.7)] backdrop-blur-sm animate-fade-in"
           onClick={() => { setNovaOpen(false); resetModal(); }}
         >
-          <div
-            className="relative w-full max-w-lg bg-background rounded-2xl shadow-elevated flex flex-col max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div
+              className="relative w-full max-w-lg bg-background rounded-2xl shadow-elevated flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
             {/* Header */}
             <div className="sticky top-0 bg-background z-10 flex items-center justify-between px-6 py-4 border-b border-border">
               <h2 className="font-display font-semibold text-foreground">Nova empresa</h2>
@@ -593,6 +594,7 @@ export default function Empresas() {
                 {salvando ? "Criando…" : "Criar empresa"}
               </Button>
             </div>
+          </div>
           </div>
         </div>
       )}
