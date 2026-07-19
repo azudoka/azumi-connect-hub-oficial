@@ -82,7 +82,7 @@ function jsToVaga(row: any): VagaSupabase {
     status: STATUS_DB_TO_UI[row.status] ?? row.status,
     etapa: row.etapa_connect ?? "briefing",
     publicacao: row.public_visible ? "publicada" : "nao_publicada",
-    consultor: row.responsavel_interno ?? null,
+    consultor: (row as any).responsavel?.nome ?? row.responsavel_interno ?? null,
     local_trabalho: row.local_trabalho ?? null,
     nivel: row.nivel ?? null,
     turno: row.turno ?? null,
@@ -196,7 +196,7 @@ function inputToJs(input: Partial<CriarVagaInput>): Record<string, unknown> {
 export async function listarVagas(): Promise<VagaSupabase[]> {
   const { data, error } = await supabase
     .from("job_solicitations")
-    .select("*")
+    .select("*, responsavel:users_profile!job_solicitations_responsavel_id_fkey(nome)")
     .is("encerrada_em", null)
     .order("created_at", { ascending: false });
   if (error) throw error;
@@ -206,7 +206,7 @@ export async function listarVagas(): Promise<VagaSupabase[]> {
 export async function listarVagasPublicadas(): Promise<VagaSupabase[]> {
   const { data, error } = await supabase
     .from("job_solicitations")
-    .select("*")
+    .select("*, responsavel:users_profile!job_solicitations_responsavel_id_fkey(nome)")
     .eq("public_visible", true)
     .neq("status", "finalizada")
     .neq("status", "cancelada")
@@ -219,7 +219,7 @@ export async function listarVagasPublicadas(): Promise<VagaSupabase[]> {
 export async function getVaga(id: string): Promise<VagaSupabase | null> {
   const { data, error } = await supabase
     .from("job_solicitations")
-    .select("*")
+    .select("*, responsavel:users_profile!job_solicitations_responsavel_id_fkey(nome)")
     .eq("id", id)
     .single();
   if (error) return null;
