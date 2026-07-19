@@ -1,5 +1,6 @@
 import { PageHeader } from "@/components/PageHeader";
 import { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -349,9 +350,9 @@ export default function GestaoConta() {
       )}
 
 
-      {/* ── Modal Detalhes ────────────────────────────────────────────── */}
-      {detalhesOpen && detalhesInvoice && (
-        <div className="fixed inset-0 z-50 bg-[hsl(var(--background)/0.7)] backdrop-blur-sm flex items-center justify-center animate-fade-in p-4">
+      {/* ── Modal Detalhes — via Portal, escapa do transform do <main> animado ── */}
+      {detalhesOpen && detalhesInvoice && createPortal(
+        <div className="fixed inset-0 z-50 bg-[hsl(var(--background)/0.7)] backdrop-blur-sm flex items-start justify-center animate-fade-in p-4 py-10 sm:py-16 overflow-y-auto" style={{ overscrollBehavior: "contain" }}>
           <div className="bg-card border border-border rounded-2xl shadow-elevated p-6 w-full max-w-md">
             <div className="flex items-start justify-between mb-4">
               <div>
@@ -401,7 +402,8 @@ export default function GestaoConta() {
               })()}
             </dl>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ── Sheet Novo Boleto ─────────────────────────────────────────── */}
