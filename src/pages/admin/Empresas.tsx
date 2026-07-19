@@ -298,11 +298,12 @@ export default function Empresas() {
       {novaOpen && (
         <div
           className="fixed inset-0 z-[100] overflow-y-auto bg-[hsl(var(--background)/0.7)] backdrop-blur-sm animate-fade-in"
+          style={{ overscrollBehavior: "contain" }}
           onClick={() => { setNovaOpen(false); resetModal(); }}
         >
-          <div className="flex min-h-full items-center justify-center p-4">
+          <div className="flex min-h-full items-start justify-center p-4 py-10 sm:py-16">
             <div
-              className="relative w-full max-w-lg bg-background rounded-2xl shadow-elevated flex flex-col"
+              className="relative w-full max-w-2xl bg-background rounded-2xl shadow-elevated flex flex-col my-auto"
               onClick={(e) => e.stopPropagation()}
             >
             {/* Header */}
