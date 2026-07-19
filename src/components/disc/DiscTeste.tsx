@@ -23,9 +23,6 @@ const COR: Record<DiscDim, string> = {
   C: "#3b82f6",
 };
 
-const AZUMI_LOGO_URL = "https://yxtirmonrjmlasnrqwwl.supabase.co/storage/v1/object/public/public-applications/marca/azumi-logo.png";
-const CONNECT_LOGO_URL = "https://yxtirmonrjmlasnrqwwl.supabase.co/storage/v1/object/public/public-applications/marca/connect-logo.png";
-
 interface Props {
   candidateName: string;
   onComplete: (scores: DiscScores, perfilDim: DiscDim) => void;
@@ -111,6 +108,10 @@ export default function DiscTeste({ candidateName, onComplete }: Props) {
   }
 
   function downloadRelatorio() {
+    const origin = window.location.origin;
+    const azumiLogoUrl = `${origin}/azumi-logo.png`;
+    const connectLogoUrl = `${origin}/connect-logo.png`;
+
     const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"/>
 <title>Relatório DISC — ${candidateName}</title>
 <style>
@@ -119,6 +120,7 @@ export default function DiscTeste({ candidateName, onComplete }: Props) {
   .wrap{max-width:780px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08)}
   header{background:#264478;padding:20px 32px;display:flex;justify-content:space-between;align-items:center}
   .body{padding:28px 32px}
+  .saudacao{font-size:15px;color:#334155;margin-bottom:18px;line-height:1.5}
   h1{font-size:20px;margin-bottom:4px}
   .lead{color:#64748b;font-size:14px;margin-bottom:24px}
   .hero{display:flex;align-items:center;gap:20px;margin-bottom:22px;padding:18px;border-radius:10px;background:#F8FAFC}
@@ -137,16 +139,21 @@ export default function DiscTeste({ candidateName, onComplete }: Props) {
   .dicas{margin-top:18px;padding:18px;border-radius:10px;border:1px solid #E2E8F0}
   .dicas h3{font-size:14px;margin-bottom:8px;color:${COR[perfil.dim]}}
   .aviso{margin-top:22px;padding:14px;border-left:4px solid #f59e0b;background:#FFF7ED;color:#92400e;font-size:13px;border-radius:6px}
-  footer{padding:16px 32px;background:#F8FAFC;color:#64748b;font-size:12px;text-align:center;border-top:1px solid #E2E8F0}
+  footer{padding:22px 32px;background:#0F2A4A;color:#CBD5E1;font-size:12px;text-align:center}
+  footer .social{display:flex;justify-content:center;gap:14px;margin-bottom:10px}
+  footer .social a{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:999px;background:rgba(255,255,255,.08);color:#fff;text-decoration:none}
+  footer .brand{color:#93C5FD;font-weight:600;margin-bottom:4px}
   @media print{body{background:#fff;padding:0}.wrap{box-shadow:none;border-radius:0}}
 </style></head>
 <body>
   <div class="wrap">
     <header>
-      <img src="${AZUMI_LOGO_URL}" height="26" alt="Azumi RH" style="display:block">
-      <img src="${CONNECT_LOGO_URL}" height="44" alt="Connect" style="display:block">
+      <img src="${azumiLogoUrl}" height="28" alt="Azumi RH" style="display:block">
+      <img src="${connectLogoUrl}" height="30" alt="Connect" style="display:block">
     </header>
     <div class="body">
+      <div class="saudacao">Olá, <strong>${candidateName}</strong>! Este é o resultado do seu Perfil Comportamental DISC, realizado através da <strong>Azumi RH</strong>.</div>
+
       <h1>${candidateName}</h1>
       <div class="lead">Resultado obtido em ${new Date().toLocaleDateString("pt-BR")}</div>
 
@@ -188,13 +195,31 @@ export default function DiscTeste({ candidateName, onComplete }: Props) {
         <ul>${profContent.comoFuncionaMelhor.map((p) => `<li>${p}</li>`).join("")}</ul>
       </div>
 
-      ${profSecContent ? `<div class="perfil" style="margin-top:16px;border-left:4px solid ${COR[profSecContent.letra]};padding-left:14px"><p style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#6b7280;margin-bottom:4px">Perfil secundário</p><h2 style="color:${COR[profSecContent.letra]};font-size:18px">${profSecContent.nome}</h2><p>${profSecContent.resumo}</p></div>` : ""}
+      ${profSecContent ? `
+      <div class="perfil" style="margin-top:16px;border-left:4px solid ${COR[profSecContent.letra]}">
+        <p style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#6b7280;margin-bottom:4px">Perfil secundário</p>
+        <h2 style="color:${COR[profSecContent.letra]}">${profSecContent.nome}</h2>
+        <p>${profSecContent.resumo}</p>
+        <h3 style="font-size:13px;margin:14px 0 6px;color:#059669">Pontos fortes</h3>
+        <ul>${profSecContent.pontosFortes.map((p) => `<li>${p}</li>`).join("")}</ul>
+        <h3 style="font-size:13px;margin:14px 0 6px;color:${COR[profSecContent.letra]}">Como funciona melhor</h3>
+        <ul>${profSecContent.comoFuncionaMelhor.map((p) => `<li>${p}</li>`).join("")}</ul>
+      </div>` : ""}
 
       <div class="aviso">
         Este resultado é uma leitura comportamental de triagem. Não é um diagnóstico psicológico.
       </div>
     </div>
-    <footer>azumirh.com.br</footer>
+    <footer>
+      <div class="social">
+        <a href="https://www.instagram.com/azumirh/" aria-label="Instagram">IG</a>
+        <a href="https://www.linkedin.com/company/azumirh/" aria-label="LinkedIn">IN</a>
+        <a href="https://www.facebook.com/azumirhc/" aria-label="Facebook">FB</a>
+        <a href="https://www.tiktok.com/@azumirh" aria-label="TikTok">TT</a>
+      </div>
+      <div class="brand">Azumi RH</div>
+      <div>azumirh.com.br · contato@azumirh.com.br</div>
+    </footer>
   </div>
   <script>window.onload=()=>setTimeout(()=>window.print(),300)</script>
 </body></html>`;
