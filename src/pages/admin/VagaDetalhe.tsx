@@ -3,6 +3,7 @@ import { publicarVaga, despublicarVaga, getVaga, atualizarVaga, definirStatusVag
 import { criarLinkCurto } from "@/services/shortLinkService";
 import { emailConviteQuestionario, emailAprovado, emailNaoAprovado, emailSolicitarNps, sendEmail } from "@/lib/emailTemplates";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -3746,7 +3747,6 @@ function EditVagaModal({
   const [posicoes, setPosicoes] = useState(String(vaga.posicoes ?? 1));
   const [beneficios, setBeneficios] = useState<string[]>(vaga.beneficios ?? []);
   const [descricao, setDescricao] = useState(vaga.descricao ?? "");
-  const [consultor, setConsultor] = useState(vaga.consultor ?? "");
   const [localTrabalho, setLocalTrabalho] = useState(vaga.local_trabalho ?? "");
   const [nivel, setNivel] = useState(vaga.nivel ?? "");
   const [turno, setTurno] = useState(vaga.turno ?? "");
@@ -3765,6 +3765,36 @@ function EditVagaModal({
   const [contatoEmail, setContatoEmail] = useState(vaga.avulsa_solicitante_email ?? "");
   const [saving, setSaving] = useState(false);
 
+  // Novos campos
+  const [responsavelId, setResponsavelId] = useState(vaga.responsavel_id ?? "");
+  const [discHabilitado, setDiscHabilitado] = useState(vaga.disc_habilitado);
+  const [perguntasHabilitado, setPerguntasHabilitado] = useState(vaga.perguntas_customizadas_habilitado);
+  const [perguntas, setPerguntas] = useState<{ texto: string; obrigatoria: boolean }[]>([]);
+  const [slaUrgente, setSlaUrgente] = useState(vaga.sla_urgente ?? false);
+  const [slaTaxa, setSlaTaxa] = useState(vaga.sla_taxa_urgencia?.toString() ?? "300");
+  const [consultores, setConsultores] = useState<{ id: string; full_name: string; avatar_url: string | null; job_title: string | null }[]>([]);
+
+  useEffect(() => {
+    supabase.from("users_profile")
+      .select("id, full_name, avatar_url, job_title")
+      .in("role", ["azumi_admin", "azumi_consultor"])
+      .order("full_name")
+      .then(({ data }) => setConsultores((data ?? []).map((d) => ({
+        id: d.id,
+        full_name: (d as any).full_name ?? "—",
+        avatar_url: (d as any).avatar_url ?? null,
+        job_title: (d as any).job_title ?? null,
+      }))));
+    (supabase as any)
+      .from("vaga_perguntas_customizadas")
+      .select("pergunta, obrigatoria, ordem")
+      .eq("job_id", vaga.id)
+      .order("ordem")
+      .then(({ data }: any) => setPerguntas(
+        (data ?? []).map((d: any) => ({ texto: d.pergunta, obrigatoria: d.obrigatoria }))
+      ));
+  }, [vaga.id]);
+
   const inputCls = "w-full h-9 px-3 rounded-md border border-border bg-background text-sm";
   const selectCls = "w-full h-9 px-3 rounded-md border border-border bg-background text-sm appearance-none";
 
@@ -3781,7 +3811,6 @@ function EditVagaModal({
         posicoes: parseInt(posicoes) || 1,
         beneficios,
         descricao: descricao.trim() || undefined,
-        consultor: consultor.trim() || undefined,
         local_trabalho: localTrabalho.trim() || undefined,
         nivel: nivel || undefined,
         turno: turno || undefined,
@@ -3794,6 +3823,11 @@ function EditVagaModal({
         sla_dias: parseInt(slaDias) || 30,
         confidencial,
         salario_fixo: salarioFixo,
+        responsavel_id: responsavelId || null,
+        disc_habilitado: discHabilitado,
+        perguntas_customizadas_habilitado: perguntasHabilitado,
+        sla_urgente: slaUrgente,
+        sla_taxa_urgencia: slaUrgente && slaTaxa ? Number(slaTaxa) : null,
         ...(vaga.is_avulsa && {
           avulsa_solicitante_nome: contatoNome.trim() || null,
           avulsa_solicitante_cargo: contatoCargo.trim() || null,
@@ -3802,12 +3836,26 @@ function EditVagaModal({
         }),
       };
       await atualizarVaga(vaga.id, input);
+
+      // Sincroniza perguntas customizadas
+      await (supabase as any).from("vaga_perguntas_customizadas").delete().eq("job_id", vaga.id);
+      const perguntasParaSalvar = perguntas.filter((q) => q.texto.trim());
+      if (perguntasHabilitado && perguntasParaSalvar.length > 0) {
+        await (supabase as any).from("vaga_perguntas_customizadas").insert(
+          perguntasParaSalvar.map((q, i) => ({
+            job_id: vaga.id, pergunta: q.texto, tipo: "texto", obrigatoria: q.obrigatoria, ordem: i + 1,
+          }))
+        );
+      }
+
       await onSaved();
     } catch {
       toast.error("Falha ao salvar. Tente novamente.");
       setSaving(false);
     }
   }
+
+  const consultorSelecionado = consultores.find((c) => c.id === responsavelId);
 
   return (
     <ModalShell title="Editar vaga" onClose={onClose} size="lg">
@@ -3892,14 +3940,48 @@ function EditVagaModal({
             className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm resize-none" />
         </Field>
 
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Consultor responsável">
-            <input value={consultor} onChange={(e) => setConsultor(e.target.value)} className={inputCls} />
-          </Field>
-          <Field label="Local de trabalho">
-            <input value={localTrabalho} onChange={(e) => setLocalTrabalho(e.target.value)} placeholder="Cidade, UF" className={inputCls} />
-          </Field>
-        </div>
+        {/* Consultor responsável */}
+        <Field label="Consultor responsável">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex h-9 w-full items-center gap-2 rounded-md border border-border bg-background px-3 text-sm text-left">
+                {consultorSelecionado ? (
+                  <>
+                    {consultorSelecionado.avatar_url
+                      ? <img src={consultorSelecionado.avatar_url} className="h-5 w-5 rounded-full object-cover shrink-0" />
+                      : <span className="h-5 w-5 rounded-full bg-primary/20 text-primary text-[9px] font-semibold flex items-center justify-center shrink-0">{consultorSelecionado.full_name.split(" ").map((n) => n[0]).slice(0, 2).join("")}</span>
+                    }
+                    <span className="flex-1 truncate">{consultorSelecionado.full_name}</span>
+                  </>
+                ) : (
+                  <span className="flex-1 text-muted-foreground">Selecione o consultor…</span>
+                )}
+                <ChevronDown className="ml-auto h-4 w-4 text-muted-foreground shrink-0" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]">
+              <DropdownMenuItem onSelect={() => setResponsavelId("")}>
+                <span className="text-muted-foreground text-sm">Nenhum (sem responsável)</span>
+              </DropdownMenuItem>
+              {consultores.map((c) => (
+                <DropdownMenuItem key={c.id} onSelect={() => setResponsavelId(c.id)} className="flex items-center gap-2 py-2">
+                  {c.avatar_url
+                    ? <img src={c.avatar_url} className="h-6 w-6 rounded-full object-cover shrink-0" />
+                    : <span className="h-6 w-6 rounded-full bg-primary/20 text-primary text-xs font-semibold flex items-center justify-center shrink-0">{c.full_name.split(" ").map((n) => n[0]).slice(0, 2).join("")}</span>
+                  }
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-medium truncate">{c.full_name}</span>
+                    {c.job_title && <span className="text-xs text-muted-foreground truncate">{c.job_title}</span>}
+                  </div>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </Field>
+
+        <Field label="Local de trabalho">
+          <input value={localTrabalho} onChange={(e) => setLocalTrabalho(e.target.value)} placeholder="Cidade, UF" className={inputCls} />
+        </Field>
 
         <div className="grid grid-cols-2 gap-3">
           <Field label="Nível">
@@ -3977,6 +4059,94 @@ function EditVagaModal({
           <input type="checkbox" checked={confidencial} onChange={(e) => setConfidencial(e.target.checked)} className="h-4 w-4 rounded" />
           Empresa confidencial (oculta nome e logo na página pública)
         </label>
+
+        {/* DISC */}
+        <div className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
+          <div>
+            <p className="text-sm font-medium text-foreground">Solicitar teste DISC</p>
+            <p className="text-xs text-muted-foreground">O candidato fará o Perfil Comportamental ao se candidatar</p>
+          </div>
+          <Switch checked={discHabilitado} onCheckedChange={setDiscHabilitado} />
+        </div>
+
+        {/* Perguntas customizadas */}
+        <div className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
+          <div>
+            <p className="text-sm font-medium text-foreground">Perguntas customizadas</p>
+            <p className="text-xs text-muted-foreground">O candidato responderá perguntas específicas desta vaga ao se candidatar</p>
+          </div>
+          <Switch checked={perguntasHabilitado} onCheckedChange={setPerguntasHabilitado} />
+        </div>
+
+        {perguntasHabilitado && (
+          <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-foreground">Perguntas</p>
+              <button
+                type="button"
+                onClick={() => setPerguntas((p) => [...p, { texto: "", obrigatoria: true }])}
+                disabled={perguntas.length >= 10}
+                className="h-8 px-3 rounded-md border border-border bg-background text-xs font-medium flex items-center gap-1 hover:bg-secondary disabled:opacity-50"
+              >
+                <Plus className="h-3.5 w-3.5" /> Adicionar
+              </button>
+            </div>
+            {perguntas.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-2">Nenhuma pergunta. Clique em "Adicionar" para criar.</p>
+            ) : (
+              perguntas.map((q, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <input
+                    value={q.texto}
+                    onChange={(e) => setPerguntas((p) => p.map((x, j) => j === i ? { ...x, texto: e.target.value } : x))}
+                    placeholder={`Pergunta ${i + 1}…`}
+                    className={inputCls + " flex-1"}
+                  />
+                  <div className="flex items-center gap-2 shrink-0 pt-2">
+                    <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={q.obrigatoria}
+                        onChange={(e) => setPerguntas((p) => p.map((x, j) => j === i ? { ...x, obrigatoria: e.target.checked } : x))}
+                        className="h-3.5 w-3.5 accent-primary"
+                      />
+                      <span className="text-xs text-muted-foreground">Obrig.</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setPerguntas((p) => p.filter((_, j) => j !== i))}
+                      className="text-muted-foreground hover:text-destructive transition-colors"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* SLA urgente */}
+        <div className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
+          <div>
+            <p className="text-sm font-medium text-foreground">Vaga com prazo de urgência</p>
+            <p className="text-xs text-muted-foreground">Reduz o SLA com prioridade máxima. Taxa de urgência pode ser cobrada.</p>
+          </div>
+          <Switch checked={slaUrgente} onCheckedChange={setSlaUrgente} />
+        </div>
+
+        {slaUrgente && (
+          <Field label="Taxa de urgência (R$)">
+            <input
+              type="number"
+              min={0}
+              value={slaTaxa}
+              onChange={(e) => setSlaTaxa(e.target.value)}
+              placeholder="300"
+              className={inputCls + " w-32"}
+            />
+          </Field>
+        )}
 
         <div className="flex justify-end gap-2 pt-2 border-t border-border mt-2">
           <button onClick={onClose} disabled={saving} className="h-9 px-4 rounded-lg border border-border hover:bg-secondary text-sm disabled:opacity-50">

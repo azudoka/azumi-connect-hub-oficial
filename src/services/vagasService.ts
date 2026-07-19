@@ -43,6 +43,7 @@ export type VagaSupabase = {
   avulsa_solicitante_email: string | null;
   disc_habilitado: boolean;
   perguntas_customizadas_habilitado: boolean;
+  responsavel_id: string | null;
   excluida_em: string | null;    // ← encerrada_em
   motivo_exclusao: string | null;// ← motivo_encerramento
   etapaAtualizadoEm: string | null;
@@ -101,6 +102,7 @@ function jsToVaga(row: any): VagaSupabase {
     salario_fixo: row.salario_fixo ?? false,
     disc_habilitado: row.disc_habilitado ?? true,
     perguntas_customizadas_habilitado: row.perguntas_customizadas_habilitado ?? false,
+    responsavel_id: row.responsavel_id ?? null,
     is_avulsa: row.is_avulsa ?? true,
     avulsa_solicitante_nome: row.avulsa_solicitante_nome ?? null,
     avulsa_solicitante_cargo: row.avulsa_solicitante_cargo ?? null,
