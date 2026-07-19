@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Plus, Search, Building2, X, ChevronDown } from "lucide-react";
@@ -294,8 +295,8 @@ export default function Empresas() {
         </div>
       )}
 
-      {/* ── Modal Nova Empresa ─────────────────────────────────────────── */}
-      {novaOpen && (
+      {/* ── Modal Nova Empresa — via Portal, escapa do transform do <main> animado ── */}
+      {novaOpen && createPortal(
         <div
           className="fixed inset-0 z-[100] overflow-y-auto bg-[hsl(var(--background)/0.7)] backdrop-blur-sm animate-fade-in"
           style={{ overscrollBehavior: "contain" }}
@@ -597,7 +598,8 @@ export default function Empresas() {
             </div>
           </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
