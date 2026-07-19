@@ -118,7 +118,7 @@ export default function DiscTeste({ candidateName, onComplete }: Props) {
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important;box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,Segoe UI,Roboto,Inter,sans-serif}
   body{background:#F5F7FA;color:#1f2937;padding:24px}
   .wrap{max-width:780px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08)}
-  header{background:#264478;padding:20px 32px;display:flex;justify-content:space-between;align-items:center}
+  header{background:#264478;padding:6px 32px;display:flex;justify-content:space-between;align-items:center}
   .body{padding:28px 32px}
   .saudacao{font-size:15px;color:#334155;margin-bottom:18px;line-height:1.5}
   h1{font-size:20px;margin-bottom:4px}
@@ -148,8 +148,8 @@ export default function DiscTeste({ candidateName, onComplete }: Props) {
 <body>
   <div class="wrap">
     <header>
-      <img src="${azumiLogoUrl}" height="28" alt="Azumi RH" style="display:block">
-      <img src="${connectLogoUrl}" height="30" alt="Connect" style="display:block">
+      <img src="${azumiLogoUrl}" height="56" alt="Azumi RH" style="display:block">
+      <img src="${connectLogoUrl}" height="60" alt="Connect" style="display:block">
     </header>
     <div class="body">
       <div class="saudacao">Olá, <strong>${candidateName}</strong>! Este é o resultado do seu Perfil Comportamental DISC, realizado através da <strong>Azumi RH</strong>.</div>
