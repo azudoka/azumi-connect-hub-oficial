@@ -109,6 +109,13 @@ function BtnSecondary({ onClick, children }: { onClick?: () => void; children: R
 export default function DiscAvulsoPage() {
   const { token } = useParams<{ token: string }>();
   const [step, setStep] = useState<Step>("loading");
+
+  useEffect(() => {
+    const html = document.documentElement;
+    const hadMidnight = html.classList.contains("theme-midnight");
+    html.classList.remove("theme-midnight");
+    return () => { if (hadMidnight) html.classList.add("theme-midnight"); };
+  }, []);
   const [erroMsg, setErroMsg] = useState("");
   const [conviteId, setConviteId] = useState<string | null>(null);
   const [candidatoId, setCandidatoId] = useState<string | null>(null);

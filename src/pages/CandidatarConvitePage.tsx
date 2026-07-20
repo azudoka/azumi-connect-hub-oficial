@@ -32,6 +32,13 @@ export default function CandidatarConvitePage() {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const html = document.documentElement;
+    const hadMidnight = html.classList.contains("theme-midnight");
+    html.classList.remove("theme-midnight");
+    return () => { if (hadMidnight) html.classList.add("theme-midnight"); };
+  }, []);
+
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [cqId, setCqId] = useState<string | null>(null);

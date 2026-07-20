@@ -58,6 +58,13 @@ function BotaoContato() {
 export default function CompletarCadastroPage() {
   const { token } = useParams<{ token: string }>();
   const [step, setStep] = useState<Step>("loading");
+
+  useEffect(() => {
+    const html = document.documentElement;
+    const hadMidnight = html.classList.contains("theme-midnight");
+    html.classList.remove("theme-midnight");
+    return () => { if (hadMidnight) html.classList.add("theme-midnight"); };
+  }, []);
   const [erroMsg, setErroMsg] = useState<string | null>(null);
   const [cand, setCand] = useState<CandidatoData | null>(null);
   const [discHabilitado, setDiscHabilitado] = useState(false);
