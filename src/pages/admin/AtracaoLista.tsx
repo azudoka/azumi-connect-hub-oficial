@@ -3,7 +3,7 @@ import { ConnectStatCard } from "@/components/ConnectStatCard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SlaBar } from "@/components/SlaBar";
 import { vagas as vagasMock, type StatusKey } from "@/data/mock";
-import { criarVaga, publicarVaga, listarVagas, atualizarEtapa, type VagaSupabase } from "@/services/vagasService";
+import { criarVaga, getVaga, publicarVaga, listarVagas, atualizarEtapa, type VagaSupabase } from "@/services/vagasService";
 import { sendEmail, emailAtribuicaoVaga } from "@/lib/emailTemplates";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, LayoutGrid, List, Filter, Info, AlertTriangle, Users, ChevronDown, ChevronRight, Megaphone, MoreVertical, Trash2 } from "lucide-react";
@@ -39,7 +39,7 @@ function supabaseToLocal(r: VagaSupabase): VagaLocal {
   } as unknown as VagaLocal;
 }
 import BancoTalentosDrawer from "@/components/atracao/BancoTalentosDrawer";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
@@ -110,6 +110,7 @@ type VagaLocal = (typeof vagasMock)[number] & { etapaFunil: FunilEtapa; is_avuls
 export default function AtracaoLista() {
   const [view, setView] = useState<"kanban" | "list">("kanban");
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const [vagas, setVagas] = useState<VagaLocal[]>([]);
   const [loadingVagas, setLoadingVagas] = useState(true);
@@ -119,9 +120,99 @@ export default function AtracaoLista() {
     setLoadingVagas(true);
     try {
       const rows = await listarVagas();
-      setVagas(rows.map(supabaseToLocal));
+      const localVagas = rows.map(supabaseToLocal);
+      if (localVagas.length > 0) {
+        const vagaIds = localVagas.map((v) => v.id);
+        const { data: cands } = await (supabase as any)
+          .from("candidates")
+          .select("job_id, etapa_azumi")
+          .in("job_id", vagaIds);
+        if (cands && cands.length > 0) {
+          const countsByJob: Record<string, { triagem: number; entrevista: number; enviados: number; contratados: number }> = {};
+          for (const c of cands as { job_id: string; etapa_azumi: string }[]) {
+            if (!countsByJob[c.job_id]) countsByJob[c.job_id] = { triagem: 0, entrevista: 0, enviados: 0, contratados: 0 };
+            if (c.etapa_azumi === "triagem" || c.etapa_azumi === "recebido") countsByJob[c.job_id].triagem++;
+            else if (c.etapa_azumi === "entrevista") countsByJob[c.job_id].entrevista++;
+            else if (c.etapa_azumi === "perfis_enviados") countsByJob[c.job_id].enviados++;
+            else if (c.etapa_azumi === "contratado") countsByJob[c.job_id].contratados++;
+          }
+          for (const v of localVagas) {
+            const counts = countsByJob[v.id];
+            if (counts) {
+              v.candidatosTriagem = counts.triagem;
+              v.candidatosEntrevista = counts.entrevista;
+              v.candidatosEnviados = counts.enviados;
+              v.candidatosContratados = counts.contratados;
+            }
+          }
+        }
+      }
+      setVagas(localVagas);
     } catch {/* silencia */}
     setLoadingVagas(false);
+  }
+
+  async function handleDuplicarVaga(vagaId: string) {
+    const tid = toast.loading("Duplicando vaga…");
+    try {
+      const vagaFull = await getVaga(vagaId);
+      if (!vagaFull) throw new Error("Vaga não encontrada");
+      const nova = await criarVaga({
+        titulo: `${vagaFull.titulo} (cópia)`,
+        is_avulsa: vagaFull.is_avulsa,
+        empresa: vagaFull.empresa,
+        empresa_id: vagaFull.empresa_id ?? undefined,
+        filial: vagaFull.filial ?? undefined,
+        tipo: vagaFull.tipo ?? undefined,
+        modalidade: vagaFull.modalidade ?? undefined,
+        posicoes: vagaFull.posicoes ?? undefined,
+        beneficios: vagaFull.beneficios ?? undefined,
+        descricao: vagaFull.descricao ?? undefined,
+        local_trabalho: vagaFull.local_trabalho ?? undefined,
+        nivel: vagaFull.nivel ?? undefined,
+        turno: vagaFull.turno ?? undefined,
+        tipo_contrato: vagaFull.tipo_contrato ?? undefined,
+        carga_horaria: vagaFull.carga_horaria ?? undefined,
+        salario_de: vagaFull.salario_de ?? undefined,
+        salario_ate: vagaFull.salario_ate ?? undefined,
+        confidencial: vagaFull.confidencial,
+        salario_fixo: vagaFull.salario_fixo,
+        responsavel_id: vagaFull.responsavel_id ?? undefined,
+        disc_habilitado: vagaFull.disc_habilitado,
+        perguntas_customizadas_habilitado: vagaFull.perguntas_customizadas_habilitado,
+        sla_dias: vagaFull.sla_dias ?? undefined,
+        sla_urgente: vagaFull.sla_urgente ?? undefined,
+        sla_taxa_urgencia: vagaFull.sla_taxa_urgencia ?? undefined,
+        sla_nivel: vagaFull.sla_nivel ?? undefined,
+        sla_modulo: vagaFull.sla_modulo ?? undefined,
+        avulsa_solicitante_nome: vagaFull.avulsa_solicitante_nome ?? undefined,
+        avulsa_solicitante_cargo: vagaFull.avulsa_solicitante_cargo ?? undefined,
+        avulsa_solicitante_telefone: vagaFull.avulsa_solicitante_telefone ?? undefined,
+        avulsa_solicitante_email: vagaFull.avulsa_solicitante_email ?? undefined,
+      });
+      if (vagaFull.perguntas_customizadas_habilitado) {
+        const { data: perguntas } = await (supabase as any)
+          .from("vaga_perguntas_customizadas")
+          .select("pergunta, tipo, obrigatoria, ordem")
+          .eq("job_id", vagaFull.id)
+          .order("ordem");
+        if (perguntas && perguntas.length > 0) {
+          await (supabase as any)
+            .from("vaga_perguntas_customizadas")
+            .insert((perguntas as { pergunta: string; tipo: string; obrigatoria: boolean; ordem: number }[]).map((q) => ({
+              job_id: nova.id,
+              pergunta: q.pergunta,
+              tipo: q.tipo,
+              obrigatoria: q.obrigatoria,
+              ordem: q.ordem,
+            })));
+        }
+      }
+      toast.success("Vaga duplicada com sucesso.", { id: tid });
+      navigate(`/app/atracao/${nova.id}`);
+    } catch (err) {
+      toast.error("Falha ao duplicar: " + (err instanceof Error ? err.message : "erro desconhecido"), { id: tid, duration: 8000 });
+    }
   }
 
   useEffect(() => { recarregarVagas(); }, []);
@@ -700,9 +791,29 @@ export default function AtracaoLista() {
                                 <iconify-icon icon="solar:danger-triangle-bold-duotone" width="12" height="12" /> SLA crítico
                               </div>
                             )}
-                            <div className="mt-3 pt-2 border-t border-border flex items-center gap-1.5">
-                              <ConsultorAvatar url={v.consultor_avatar_url} iniciais={consultorIniciais} size="sm" />
-                              <span className="text-[10px] text-muted-foreground truncate">{v.consultor}</span>
+                            <div className="mt-3 pt-2 border-t border-border flex items-center gap-1.5 justify-between">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <ConsultorAvatar url={v.consultor_avatar_url} iniciais={consultorIniciais} size="sm" />
+                                <span className="text-[10px] text-muted-foreground truncate">{v.consultor}</span>
+                              </div>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <button
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="h-5 w-5 rounded flex items-center justify-center hover:bg-secondary text-muted-foreground shrink-0"
+                                  >
+                                    <MoreVertical className="h-3.5 w-3.5" />
+                                  </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-40" onClick={(e) => e.stopPropagation()}>
+                                  <DropdownMenuItem className="gap-2" onClick={() => navigate(`/app/atracao/${v.id}`)}>
+                                    <iconify-icon icon="solar:eye-bold-duotone" width="16" height="16" /> Ver vaga
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem className="gap-2" onClick={() => handleDuplicarVaga(v.id)}>
+                                    <iconify-icon icon="solar:copy-bold-duotone" width="16" height="16" /> Duplicar
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
                           </li>
                         );
@@ -771,6 +882,9 @@ export default function AtracaoLista() {
                       <DropdownMenuContent align="end" className="w-40">
                         <DropdownMenuItem className="gap-2" onClick={() => navigate(`/app/atracao/${v.id}`)}>
                           <iconify-icon icon="solar:eye-bold-duotone" width="16" height="16" /> Ver vaga
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="gap-2" onClick={() => handleDuplicarVaga(v.id)}>
+                          <iconify-icon icon="solar:copy-bold-duotone" width="16" height="16" /> Duplicar
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
