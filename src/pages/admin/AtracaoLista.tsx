@@ -1472,7 +1472,8 @@ export default function AtracaoLista() {
                     const cons = consultoresVaga.find((c) => c.id === nResponsavelId);
                     if (cons?.email) {
                       const linkVaga = `${window.location.origin}/app/atracao/${vagaCriada.id}`;
-                      sendEmail(cons.email, `Nova vaga: ${titulo}`, emailAtribuicaoVaga({ nomeConsultor: cons.full_name, tituloVaga: titulo, empresa: nEmpresa.trim() || empresasCadastradas.find((e) => e.id === empresaCadastradaId)?.name ?? "—", linkVaga }));
+                      const empresaNome = (nEmpresa.trim() || empresasCadastradas.find((e) => e.id === empresaCadastradaId)?.name) ?? "—";
+                      sendEmail(cons.email, `Nova vaga: ${titulo}`, emailAtribuicaoVaga({ nomeConsultor: cons.full_name, tituloVaga: titulo, empresa: empresaNome, linkVaga }));
                     }
                   }
                   if (perguntasParaSalvar.length > 0) {
