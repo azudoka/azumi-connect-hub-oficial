@@ -23,7 +23,7 @@ function supabaseToLocal(r: VagaSupabase): VagaLocal {
     sla: 0,
     diasAbertos: Math.floor((Date.now() - new Date(r.criado_em).getTime()) / 86400000),
     diasPrevistos: r.sla_dias ?? 30,
-    candidatosTotal: 0,
+    candidatosTotal: r.candidatosTotal ?? 0,
     candidatosTriagem: 0,
     candidatosEntrevista: 0,
     candidatosEnviados: 0,
@@ -723,6 +723,7 @@ export default function AtracaoLista() {
                 <th className="text-left font-semibold px-4 py-4">Etapa</th>
                 <th className="text-left font-semibold px-4 py-4">Status</th>
                 <th className="text-left font-semibold px-4 py-4 w-48">SLA</th>
+                <th className="text-left font-semibold px-4 py-4">Consultor</th>
                 <th className="text-right font-semibold px-4 py-4">Candidatos</th>
                 <th className="w-10"></th>
               </tr>
@@ -750,6 +751,12 @@ export default function AtracaoLista() {
                   <td className="px-4 py-3.5 text-muted-foreground">{FUNIL_ETAPA_LABEL[v.etapaFunil]}</td>
                   <td className="px-4 py-3.5"><StatusBadge status={v.status} /></td>
                   <td className="px-4 py-3.5"><SlaBar percent={v.sla} /></td>
+                  <td className="px-4 py-3.5">
+                    <div className="flex items-center gap-2">
+                      <ConsultorAvatar url={v.consultor_avatar_url} iniciais={v.consultor?.split(" ").map((n) => n[0]).slice(0, 2).join("") ?? "AZ"} size="sm" />
+                      <span className="text-xs text-muted-foreground truncate max-w-[120px]">{v.consultor ?? "Não atribuído"}</span>
+                    </div>
+                  </td>
                   <td className="px-4 py-3.5 text-right tabular-nums">{v.candidatosTotal}</td>
                   <td className="px-2 py-3.5" onClick={(ev) => ev.stopPropagation()}>
                     <DropdownMenu>

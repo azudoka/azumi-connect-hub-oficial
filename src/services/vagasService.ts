@@ -21,6 +21,7 @@ export type VagaSupabase = {
   publicacao: string;            // "publicada" | "nao_publicada" ← public_visible bool
   consultor: string | null;
   consultor_avatar_url: string | null;
+  candidatosTotal: number;
   local_trabalho: string | null;
   nivel: string | null;
   turno: string | null;
@@ -86,6 +87,7 @@ function jsToVaga(row: any): VagaSupabase {
     publicacao: row.public_visible ? "publicada" : "nao_publicada",
     consultor: (row as any).responsavel?.full_name ?? row.responsavel_interno ?? null,
     consultor_avatar_url: (row as any).responsavel?.avatar_url ?? null,
+    candidatosTotal: (row as any).candidates?.[0]?.count ?? 0,
     local_trabalho: row.local_trabalho ?? null,
     nivel: row.nivel ?? null,
     turno: row.turno ?? null,
@@ -200,7 +202,7 @@ function inputToJs(input: Partial<CriarVagaInput>): Record<string, unknown> {
 export async function listarVagas(): Promise<VagaSupabase[]> {
   const { data, error } = await supabase
     .from("job_solicitations")
-    .select("*, responsavel:users_profile!job_solicitations_responsavel_id_fkey(full_name, avatar_url)")
+    .select("*, responsavel:users_profile!job_solicitations_responsavel_id_fkey(full_name, avatar_url), candidates(count)")
     .is("encerrada_em", null)
     .order("created_at", { ascending: false });
   if (error) throw error;
