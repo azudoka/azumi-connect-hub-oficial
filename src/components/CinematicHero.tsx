@@ -264,7 +264,7 @@ export function CinematicHero({
       <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none" style={{ perspective: "1500px" }}>
         <div
           ref={mainCardRef}
-          className="ch-main-card ch-card gsap-reveal relative overflow-hidden flex items-center justify-center pointer-events-auto w-[92vw] md:w-[82vw] h-[88vh] md:h-[80vh] rounded-[28px] md:rounded-[36px]"
+          className="ch-main-card ch-card gsap-reveal relative overflow-visible flex items-center justify-center pointer-events-auto w-[92vw] md:w-[82vw] h-[88vh] md:h-[80vh] rounded-[28px] md:rounded-[36px]"
         >
           <div className="ch-sheen" aria-hidden />
 
@@ -272,9 +272,9 @@ export function CinematicHero({
           <div className="relative w-full h-full max-w-7xl mx-auto px-6 lg:px-12 flex flex-col justify-evenly lg:grid items-center z-10 py-6 lg:py-0"
             style={{ gridTemplateColumns: "240px 1fr 200px", gap: "clamp(24px, 3vw, 56px)" }}>
 
-            {/* Right col (mobile top): brand */}
-            <div className="ch-card-right gsap-reveal order-1 lg:order-3 flex justify-center lg:justify-end z-20 w-full overflow-hidden">
-              <h2 className="text-5xl md:text-7xl lg:text-7xl font-black uppercase tracking-tighter ch-text-silver leading-none">
+            {/* Right col (mobile top): brand — sangra propositalmente pra fora do card */}
+            <div className="ch-card-right gsap-reveal order-1 lg:order-3 flex justify-center lg:justify-start z-20 w-full">
+              <h2 className="text-5xl md:text-7xl lg:text-8xl xl:text-9xl font-black uppercase tracking-tighter ch-text-silver leading-none select-none">
                 CONNECT
               </h2>
             </div>
