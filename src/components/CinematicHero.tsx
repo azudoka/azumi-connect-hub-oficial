@@ -169,7 +169,7 @@ export function CinematicHero({
         scrollTrigger: {
           trigger: containerRef.current,
           start: "top top",
-          end: "+=6000",
+          end: "+=3200",
           pin: true,
           scrub: 1.2,
           anticipatePin: 1,
@@ -177,31 +177,37 @@ export function CinematicHero({
       });
 
       scrollTl
-        .to([".ch-hero-text", ".ch-grid"], { scale: 1.1, filter: "blur(16px)", opacity: 0.15, ease: "power2.inOut", duration: 2 }, 0)
-        .to(".ch-main-card", { y: 0, ease: "power3.inOut", duration: 2 }, 0)
-        .to(".ch-main-card", { width: "100%", height: "100%", borderRadius: "0px", ease: "power3.inOut", duration: 1.5 })
+        // Card sobe + taglines desfocam (simultâneo)
+        .to([".ch-hero-text", ".ch-grid"], { scale: 1.08, filter: "blur(14px)", opacity: 0.1, ease: "power2.inOut", duration: 1.8 }, 0)
+        .to(".ch-main-card", { y: 0, ease: "power3.inOut", duration: 1.8 }, 0)
+        // Card expande pra tela toda
+        .to(".ch-main-card", { width: "100%", height: "100%", borderRadius: "0px", ease: "power3.inOut", duration: 1.2 })
+        // Conteúdo interno aparece (tudo junto, sem hold vazio)
         .fromTo(".ch-mockup",
-          { y: 200, z: -400, rotationX: 30, autoAlpha: 0, scale: 0.75 },
-          { y: 0, z: 0, rotationX: 0, autoAlpha: 1, scale: 1, ease: "expo.out", duration: 2.5 }, "-=0.8"
+          { y: 150, z: -300, rotationX: 25, autoAlpha: 0, scale: 0.8 },
+          { y: 0, z: 0, rotationX: 0, autoAlpha: 1, scale: 1, ease: "expo.out", duration: 2 }, "-=0.6"
         )
-        .fromTo(".ch-badge", { y: 60, autoAlpha: 0, scale: 0.8 }, { y: 0, autoAlpha: 1, scale: 1, ease: "back.out(1.4)", duration: 1.2, stagger: 0.18 }, "-=1.8")
-        .fromTo(".ch-card-left", { x: -40, autoAlpha: 0 }, { x: 0, autoAlpha: 1, ease: "power4.out", duration: 1.5 }, "-=1.2")
-        .fromTo(".ch-card-right", { x: 40, autoAlpha: 0 }, { x: 0, autoAlpha: 1, ease: "power4.out", duration: 1.5 }, "<")
-        .to({}, { duration: 2.5 })
+        .fromTo(".ch-badge", { y: 40, autoAlpha: 0, scale: 0.85 }, { y: 0, autoAlpha: 1, scale: 1, ease: "back.out(1.4)", duration: 1, stagger: 0.15 }, "-=1.5")
+        .fromTo(".ch-card-left", { x: -35, autoAlpha: 0 }, { x: 0, autoAlpha: 1, ease: "power4.out", duration: 1.2 }, "-=1.0")
+        .fromTo(".ch-card-right", { x: 35, autoAlpha: 0 }, { x: 0, autoAlpha: 1, ease: "power4.out", duration: 1.2 }, "<")
+        // Hold curto — leve respiro com o card vivo (mockup suave)
+        .to(".ch-mockup", { y: -6, ease: "sine.inOut", duration: 0.8, yoyo: true, repeat: 1 })
         .set(".ch-hero-text", { autoAlpha: 0 })
         .set(".ch-cta-wrapper", { autoAlpha: 1 })
-        .to({}, { duration: 1.5 })
+        // Hold curto antes de recolher
+        .to(".ch-badge", { y: -4, ease: "sine.inOut", duration: 0.6, yoyo: true, repeat: 1 })
+        // Conteúdo sai e card recolhe
         .to([".ch-mockup", ".ch-badge", ".ch-card-left", ".ch-card-right"], {
-          scale: 0.92, y: -30, autoAlpha: 0, ease: "power3.in", duration: 1.2, stagger: 0.04,
+          scale: 0.9, y: -25, autoAlpha: 0, ease: "power3.in", duration: 1, stagger: 0.03,
         })
         .to(".ch-main-card", {
           width: isMobile ? "92vw" : "82vw",
           height: isMobile ? "90vh" : "80vh",
           borderRadius: isMobile ? "28px" : "36px",
-          ease: "expo.inOut", duration: 1.8,
+          ease: "expo.inOut", duration: 1.5,
         }, "pullback")
-        .to(".ch-cta-wrapper", { scale: 1, filter: "blur(0px)", ease: "expo.inOut", duration: 1.8 }, "pullback")
-        .to(".ch-main-card", { y: -window.innerHeight - 300, ease: "power3.in", duration: 1.5 });
+        .to(".ch-cta-wrapper", { scale: 1, filter: "blur(0px)", ease: "expo.inOut", duration: 1.5 }, "pullback")
+        .to(".ch-main-card", { y: -window.innerHeight - 300, ease: "power3.in", duration: 1.2 });
     }, containerRef);
 
     return () => ctx.revert();
@@ -262,18 +268,20 @@ export function CinematicHero({
         >
           <div className="ch-sheen" aria-hidden />
 
-          <div className="relative w-full h-full max-w-7xl mx-auto px-4 lg:px-14 flex flex-col justify-evenly lg:grid lg:grid-cols-3 items-center lg:gap-8 z-10 py-6 lg:py-0">
+          {/* Grid: coluna esquerda fixa, centro flexível, direita fixa */}
+          <div className="relative w-full h-full max-w-7xl mx-auto px-6 lg:px-12 flex flex-col justify-evenly lg:grid items-center z-10 py-6 lg:py-0"
+            style={{ gridTemplateColumns: "240px 1fr 200px", gap: "clamp(24px, 3vw, 56px)" }}>
 
             {/* Right col (mobile top): brand */}
-            <div className="ch-card-right gsap-reveal order-1 lg:order-3 flex justify-center lg:justify-end z-20 w-full">
-              <h2 className="text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter ch-text-silver">
+            <div className="ch-card-right gsap-reveal order-1 lg:order-3 flex justify-center lg:justify-end z-20 w-full overflow-hidden">
+              <h2 className="text-5xl md:text-7xl lg:text-7xl font-black uppercase tracking-tighter ch-text-silver leading-none">
                 CONNECT
               </h2>
             </div>
 
             {/* Center col: browser mockup with screenshot */}
-            <div className="ch-mockup order-2 lg:order-2 relative w-full h-[320px] lg:h-[520px] flex items-center justify-center z-10" style={{ perspective: "1000px" }}>
-              <div ref={mockupRef} className="w-full max-w-md will-change-transform">
+            <div className="ch-mockup order-2 lg:order-2 relative w-full h-[300px] lg:h-[500px] flex items-center justify-center z-10" style={{ perspective: "1000px" }}>
+              <div ref={mockupRef} className="w-full will-change-transform">
                 <div className="ch-browser">
                   <div className="ch-browser-bar">
                     <div className="ch-dot bg-[#FF5F57]" />
@@ -325,11 +333,11 @@ export function CinematicHero({
             </div>
 
             {/* Left col (mobile bottom): card description */}
-            <div className="ch-card-left gsap-reveal order-3 lg:order-1 flex flex-col justify-center text-center lg:text-left z-20 w-full px-2 lg:px-0">
-              <h3 className="text-white text-xl md:text-2xl lg:text-3xl font-bold mb-3 tracking-tight leading-snug">
+            <div className="ch-card-left gsap-reveal order-3 lg:order-1 flex flex-col justify-center text-center lg:text-left z-20 w-full lg:self-center">
+              <h3 className="text-white text-xl md:text-2xl lg:text-2xl font-bold mb-3 tracking-tight leading-snug">
                 {cardHeading}
               </h3>
-              <p className="hidden md:block text-[#7FA8E8]/65 text-sm lg:text-base leading-relaxed max-w-sm">
+              <p className="hidden md:block text-[#7FA8E8]/65 text-sm leading-relaxed">
                 {cardDescription}
               </p>
             </div>
