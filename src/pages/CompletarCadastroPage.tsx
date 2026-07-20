@@ -20,7 +20,7 @@ interface CandidatoData {
   linkedin: string | null;
   cidade: string | null;
   curriculo_url: string | null;
-  job_solicitations?: { cargo: string | null; avulsa_empresa_nome: string | null; companies?: { nome: string | null } | null } | null;
+  job_solicitations?: { cargo: string | null; avulsa_empresa_nome: string | null } | null;
 }
 
 export default function CompletarCadastroPage() {
@@ -46,7 +46,7 @@ export default function CompletarCadastroPage() {
     (async () => {
       const { data, error } = await (supabase as any)
         .from("candidates")
-        .select("id, nome, email, telefone, cpf, escolaridade, linkedin, cidade, curriculo_url, job_solicitations(cargo, avulsa_empresa_nome, companies(nome))")
+        .select("id, nome, email, telefone, cpf, escolaridade, linkedin, cidade, curriculo_url, job_solicitations!candidates_job_id_fkey(cargo, avulsa_empresa_nome)")
         .eq("token_completar_cadastro", token)
         .maybeSingle();
       if (error || !data) { setErro("Link não encontrado ou já utilizado."); setCarregando(false); return; }
@@ -99,7 +99,7 @@ export default function CompletarCadastroPage() {
     }
   }
 
-  const empresa = cand?.job_solicitations?.companies?.nome ?? cand?.job_solicitations?.avulsa_empresa_nome ?? "Azumi RH";
+  const empresa = cand?.job_solicitations?.avulsa_empresa_nome ?? "Azumi RH";
   const vaga = cand?.job_solicitations?.cargo ?? "vaga";
 
   return (
