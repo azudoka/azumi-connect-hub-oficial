@@ -1,17 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { AzumiLogo } from "@/components/brand/AzumiLogo";
-import { NetworkBackground } from "@/components/NetworkBackground";
+import { CinematicHero } from "@/components/CinematicHero";
 import { InfiniteSlider } from "@/components/ui/infinite-slider";
 import { useInView } from "@/hooks/useInView";
 import { cn } from "@/lib/utils";
 import azumiLogoBranca from "@/assets/brand/azumi-logo-branca.png";
 import {
   ArrowRight, CheckCircle2, Users, MessageCircle, Instagram,
-  Mail, Linkedin, Clock, FileText, BarChart3, Kanban, Brain,
-  Smartphone, TrendingUp, ChevronRight, Calendar, FolderOpen,
-  Star, ShieldCheck, ClipboardList, Timer,
+  Mail, Linkedin, Clock, FileText, BarChart3, Kanban,
+  ChevronRight, Calendar, FolderOpen, Star, ShieldCheck,
+  ClipboardList, Timer, Brain, TrendingUp, Smartphone,
+  LayoutDashboard, Bell, CreditCard, Globe, Zap, BookOpen,
+  Scale, UserPlus, Activity, MessageSquare, ChevronLeft,
+  GraduationCap,
 } from "lucide-react";
 
 // ── Constantes ───────────────────────────────────────────────────────
@@ -41,18 +44,84 @@ const ROLE_MAP: Record<string, string> = {
 };
 
 const SCREENSHOTS = [
-  "/screenshots/tela-01.png", "/screenshots/tela-02.png",
-  "/screenshots/tela-03.png", "/screenshots/tela-04.png",
-  "/screenshots/tela-05.png", "/screenshots/tela-06.png",
-  "/screenshots/tela-07.png",
+  { src: "/screenshots/tela-01.png", label: "Atração & Seleção" },
+  { src: "/screenshots/tela-02.png", label: "Portal do Cliente" },
+  { src: "/screenshots/tela-03.png", label: "Projetos" },
+  { src: "/screenshots/tela-04.png", label: "Solicitações" },
+  { src: "/screenshots/tela-05.png", label: "Dashboard" },
+  { src: "/screenshots/tela-06.png", label: "Relatórios" },
+  { src: "/screenshots/tela-07.png", label: "Calendário" },
 ];
 
 const FOTOS_AZUMI = [
-  "/fotos/azumi-01.jpg", "/fotos/azumi-02.jpg", "/fotos/azumi-03.jpg",
-  "/fotos/azumi-04.jpg", "/fotos/azumi-05.jpg",
+  "/screenshots/azumirh/azumirh-01.png",
+  "/screenshots/azumirh/azumirh-02.png",
+  "/screenshots/azumirh/azumirh-03.png",
+  "/screenshots/azumirh/azumirh-04.png",
 ];
 
-// ── Features — disponível + em breve ────────────────────────────────
+// ── Serviços da Azumi ────────────────────────────────────────────────
+const SERVICOS = [
+  { icon: GraduationCap, title: "Treinamentos e Capacitação", desc: "Desenvolvimento prático das equipes e lideranças." },
+  { icon: ShieldCheck, title: "Compliance", desc: "Adequação às normas trabalhistas e regulatórias." },
+  { icon: Activity, title: "Diagnóstico Organizacional", desc: "Raio-X de maturidade de RH para embasar decisões." },
+  { icon: Users, title: "Atração e Seleção de Talentos", desc: "Processos seletivos estruturados do briefing à contratação." },
+  { icon: TrendingUp, title: "Planejamento de Carreira", desc: "Trilhas de desenvolvimento e planos de sucessão." },
+  { icon: Globe, title: "Go to Market", desc: "Estratégias de entrada e posicionamento com o time de RH." },
+  { icon: Zap, title: "Programa Impulso para RH", desc: "Aceleração do departamento de RH com metodologia própria." },
+  { icon: Scale, title: "Governança e Regulamentação", desc: "Estruturação de políticas, cargos e compliance trabalhista." },
+];
+
+// ── O que tem na plataforma ──────────────────────────────────────────
+const MODULOS_CLIENTE = [
+  {
+    icon: LayoutDashboard,
+    title: "Dashboard",
+    desc: "Controle do contrato em tempo real: projetos, entregáveis, cronograma e toda comunicação rastreada.",
+  },
+  {
+    icon: Clock,
+    title: "Horas",
+    desc: "Acompanhe quantas horas do seu pacote já foram consumidas e o que está sendo feito com elas.",
+  },
+  {
+    icon: MessageSquare,
+    title: "Solicitações",
+    desc: "Abra pedidos de dúvidas, reuniões, ajustes, novos usuários, relatórios e mudanças de plano — tudo rastreável.",
+  },
+  {
+    icon: Kanban,
+    title: "Atração & Vagas",
+    desc: "Acompanhe e solicite vagas, receba relatórios de perfil comportamental e questionário técnico de cada candidato.",
+  },
+  {
+    icon: CreditCard,
+    title: "Gestão de Conta",
+    desc: "Acompanhe seus boletos e solicite segunda via sem precisar entrar em contato por e-mail.",
+  },
+  {
+    icon: BarChart3,
+    title: "Relatórios",
+    desc: "Relatórios mensais e de cada serviço disponíveis para leitura direto na plataforma.",
+  },
+  {
+    icon: FolderOpen,
+    title: "Documentos",
+    desc: "Tudo guardado na nuvem, organizado e pronto para auditoria quando precisar.",
+  },
+  {
+    icon: Calendar,
+    title: "Calendário",
+    desc: "Eventos de marketing e reuniões internas organizados num só lugar, compartilhado com a Azumi.",
+  },
+  {
+    icon: Bell,
+    title: "Comunicados",
+    desc: "Feed de notícias com as atualizações da Azumi para a sua empresa — sem depender de e-mail.",
+  },
+];
+
+// ── Features técnicas ────────────────────────────────────────────────
 type Feature = {
   icon: React.ComponentType<{ className?: string }>;
   title: string;
@@ -195,6 +264,17 @@ function AnimSection({ children, className = "" }: {
 export default function LandingPage() {
   const { usuario, carregando } = useAuth();
   const [moduloAtivo, setModuloAtivo] = useState<string | null>(null);
+  const [slideAtivo, setSlideAtivo] = useState(0);
+  const [slidePausado, setSlidePausado] = useState(false);
+
+  // Autoplay do carrossel de screenshots
+  useEffect(() => {
+    if (slidePausado) return;
+    const t = setInterval(() => {
+      setSlideAtivo(p => (p + 1) % SCREENSHOTS.length);
+    }, 4000);
+    return () => clearInterval(t);
+  }, [slidePausado]);
 
   if (carregando) return (
     <div className="flex items-center justify-center min-h-screen bg-[#0d1a2d]">
@@ -205,7 +285,7 @@ export default function LandingPage() {
   if (usuario) return <Navigate to={ROLE_MAP[usuario.role] ?? "/login"} replace />;
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 overflow-x-hidden">
+    <div className="bg-white text-gray-900">
 
       {/* ── Nav ──────────────────────────────────────────────────── */}
       <header className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-6 md:px-14 h-16 bg-[#0d1a2d]/90 backdrop-blur-sm border-b border-white/10">
@@ -215,66 +295,32 @@ export default function LandingPage() {
         </Link>
       </header>
 
-      {/* ── Hero — sem foto, centrado ─────────────────────────────── */}
-      <section
-        className="relative min-h-screen flex flex-col items-center justify-center text-center overflow-hidden pt-16"
-        style={{ background: "linear-gradient(135deg, #0d1a2d 0%, #264478 55%, #3D63B8 100%)" }}
-      >
-        <NetworkBackground />
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full bg-[#3D63B8]/20 blur-[100px]" />
-        </div>
-
-        <div className="relative z-10 max-w-3xl mx-auto px-6 md:px-14 py-24 flex flex-col items-center gap-7">
-          <span className="inline-flex items-center gap-2 rounded-full border border-[#7FA8E8]/40 bg-[#3D63B8]/15 px-4 py-1.5 text-xs font-semibold text-[#7FA8E8] tracking-wide uppercase">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#7FA8E8] animate-pulse" />
-            Azumi Connect · Plataforma de RH
-          </span>
-
-          <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight tracking-tight">
-            <span className="block animate-slide-from-right">
-              O legado dos seus clientes
-            </span>
-            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[#7FA8E8] to-[#3D63B8] animate-slide-from-left">
-              na palma de suas mãos
-            </span>
-          </h1>
-
-          <p className="text-base md:text-lg text-white/65 leading-relaxed max-w-xl">
-            Você contrata a Azumi RH e o Connect é onde{" "}
-            <span className="text-white font-semibold">trabalhamos juntos</span>.
-            Vagas, projetos, horas e relatórios com{" "}
-            <span className="text-white font-semibold">rastreabilidade completa</span>, em tempo real.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-3">
-            <a
-              href={WA_DEFAULT}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={fireConversion}
-              className="inline-flex items-center justify-center gap-2 h-11 px-7 rounded-lg bg-[#3D63B8] text-white text-sm font-semibold hover:bg-[#264478] transition-colors shadow-lg shadow-[#3D63B8]/30"
-            >
-              <MessageCircle className="h-4 w-4" /> Falar com a equipe
-            </a>
-            <a
-              href="https://azumirh.com.br"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center h-11 px-7 rounded-lg border border-white/20 text-white/80 text-sm font-medium hover:bg-white/10 hover:text-white transition-colors"
-            >
-              Conhecer a Azumi RH
-            </a>
-          </div>
-        </div>
-
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center text-white/25 animate-bounce">
-          <ChevronRight className="h-4 w-4 rotate-90" />
-        </div>
-      </section>
+      {/* ── Hero Cinemático ───────────────────────────────────────── */}
+      <CinematicHero
+        tagline1="O legado dos seus clientes"
+        tagline2="na palma de suas mãos"
+        cardHeading="RH como serviço, do jeito certo."
+        cardDescription={
+          <>
+            A <span className="text-white font-semibold">Azumi RH</span> opera como
+            o seu departamento de RH — e o Connect é o espaço compartilhado onde
+            tudo fica{" "}
+            <span className="text-[#7FA8E8] font-semibold">visível, rastreável e documentado</span>{" "}
+            em tempo real.
+          </>
+        }
+        ctaHeading="Quer que a Azumi cuide do seu RH?"
+        ctaDescription="Fale direto com a equipe — sem fila, sem SDR."
+        screenshotSrc="/screenshots/tela-01.png"
+        ctaPrimaryLabel="Falar com a equipe"
+        ctaPrimaryHref={WA_DEFAULT}
+        ctaSecondaryLabel="Conhecer a Azumi RH"
+        ctaSecondaryHref="https://azumirh.com.br"
+        onCTAPrimary={fireConversion}
+      />
 
       {/* ── Sobre a Azumi + carrossel de fotos ───────────────────── */}
-      <section className="py-24 bg-white border-b border-gray-100 overflow-hidden">
+      <section className="pt-24 pb-0 bg-white border-b border-gray-100">
         <div className="max-w-5xl mx-auto px-6 md:px-14 mb-14">
           <AnimSection className="grid md:grid-cols-2 gap-12 items-center">
             <div>
@@ -288,12 +334,14 @@ export default function LandingPage() {
               <p className="text-gray-500 leading-relaxed mb-4">
                 A Azumi não é uma plataforma que a sua empresa opera sozinha.
                 Somos uma <span className="text-gray-800 font-semibold">consultoria de recursos humanos</span> que
-                usa a tecnologia como <span className="text-gray-800 font-semibold">ferramenta de gestão e entrega</span> do serviço.
+                usa a tecnologia como{" "}
+                <span className="text-gray-800 font-semibold">ferramenta de gestão e entrega</span> do serviço.
               </p>
               <p className="text-gray-500 leading-relaxed mb-6">
                 O Azumi Connect é onde sua empresa e os consultores Azumi trabalham
                 juntos: vagas abertas, projetos em andamento, horas registradas e
-                relatórios <span className="text-[#3D63B8] font-semibold">sempre disponíveis, em tempo real</span>.
+                relatórios{" "}
+                <span className="text-[#3D63B8] font-semibold">sempre disponíveis, em tempo real</span>.
               </p>
               <a
                 href="https://azumirh.com.br"
@@ -321,27 +369,185 @@ export default function LandingPage() {
         </div>
 
         {/* Carrossel de fotos institucionais */}
-        <InfiniteSlider gap={20} duration={45}>
-          {[...FOTOS_AZUMI, ...FOTOS_AZUMI].map((src, i) => (
-            <div key={i} className="h-56 w-80 shrink-0 rounded-2xl overflow-hidden shadow-md">
-              <div className="w-full h-full bg-gradient-to-br from-[#264478] to-[#3D63B8]">
-                <img
-                  src={src}
-                  alt="Azumi RH"
-                  className="w-full h-full object-cover"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                />
+        <div className="overflow-hidden pb-10">
+          <InfiniteSlider gap={20} duration={45}>
+            {[...FOTOS_AZUMI, ...FOTOS_AZUMI].map((src, i) => (
+              <div key={i} className="h-56 w-80 shrink-0 rounded-2xl overflow-hidden shadow-md">
+                <div className="w-full h-full bg-gradient-to-br from-[#264478] to-[#3D63B8]">
+                  <img
+                    src={src}
+                    alt="Azumi RH"
+                    className="w-full h-full object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                  />
+                </div>
               </div>
-            </div>
-          ))}
-        </InfiniteSlider>
-        <p className="text-center text-xs text-gray-400 mt-4 px-6">
-          Adicione fotos institucionais em <code className="bg-gray-100 px-1 rounded">public/fotos/azumi-01.jpg</code> até <code className="bg-gray-100 px-1 rounded">azumi-05.jpg</code>
-        </p>
+            ))}
+          </InfiniteSlider>
+        </div>
       </section>
 
-      {/* ── Carrossel de telas do Connect ────────────────────────── */}
-      <section className="py-16 bg-[#080f1a] overflow-hidden">
+      {/* ── Serviços da Azumi RH ─────────────────────────────────── */}
+      <section className="py-24 bg-[#0d1a2d]">
+        <div className="max-w-5xl mx-auto px-6 md:px-14">
+          <AnimSection className="mb-14">
+            <span className="text-xs font-bold uppercase tracking-widest text-[#7FA8E8]/60 block mb-3">
+              O que a Azumi faz
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold text-white leading-tight max-w-xl">
+              Frentes de atuação da{" "}
+              <span className="text-[#7FA8E8]">consultoria</span>
+            </h2>
+            <p className="mt-3 text-white/45 max-w-lg text-sm leading-relaxed">
+              Cada frente de serviço é operada <span className="text-white/70 font-medium">dentro do Connect</span> —
+              rastreável, documentada e visível para o cliente em tempo real.
+            </p>
+          </AnimSection>
+
+          <div className="grid md:grid-cols-2 gap-px bg-white/5 rounded-2xl overflow-hidden border border-white/8">
+            {SERVICOS.map((s, i) => {
+              const Icon = s.icon;
+              return (
+                <AnimCard key={s.title} delay={i * 60}
+                  className="flex items-start gap-4 p-6 bg-[#0d1a2d] hover:bg-white/3 transition-colors group">
+                  <div className="shrink-0 w-10 h-10 rounded-xl bg-[#3D63B8]/15 border border-[#3D63B8]/20 flex items-center justify-center group-hover:bg-[#3D63B8]/25 transition-colors mt-0.5">
+                    <Icon className="h-5 w-5 text-[#7FA8E8]" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-white text-sm mb-1">{s.title}</p>
+                    <p className="text-white/40 text-xs leading-relaxed">{s.desc}</p>
+                  </div>
+                </AnimCard>
+              );
+            })}
+          </div>
+
+          <AnimSection className="mt-10 text-center">
+            <a
+              href={WA_DEFAULT}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={fireConversion}
+              className="inline-flex items-center gap-2 text-sm font-semibold text-[#7FA8E8] hover:text-white transition-colors"
+            >
+              <MessageCircle className="h-4 w-4" />
+              Saber quais frentes fazem sentido pra minha empresa
+            </a>
+          </AnimSection>
+        </div>
+      </section>
+
+      {/* ── O que tem na plataforma ──────────────────────────────── */}
+      <section className="py-24 bg-gray-50">
+        <div className="max-w-5xl mx-auto px-6 md:px-14">
+          <AnimSection className="text-center mb-14">
+            <span className="text-xs font-bold uppercase tracking-widest text-[#3D63B8] block mb-3">
+              Visão do cliente
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+              O que você encontra dentro do Connect
+            </h2>
+            <p className="mt-3 text-gray-500 max-w-lg mx-auto">
+              Quando você contrata a Azumi, ganha acesso ao portal do cliente com{" "}
+              <span className="text-[#3D63B8] font-semibold">visibilidade total</span> sobre o serviço.
+            </p>
+          </AnimSection>
+
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-5">
+            {MODULOS_CLIENTE.map((m, i) => {
+              const Icon = m.icon;
+              return (
+                <AnimCard key={m.title} delay={i * 60}
+                  className="rounded-xl bg-white border border-gray-200 p-5 hover:shadow-md hover:border-[#3D63B8]/20 transition-all group">
+                  <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[#3D63B8]/8 group-hover:bg-[#3D63B8]/15 transition-colors">
+                    <Icon className="h-5 w-5 text-[#3D63B8]" />
+                  </div>
+                  <p className="font-semibold text-gray-900 text-sm mb-1.5">{m.title}</p>
+                  <p className="text-xs text-gray-500 leading-relaxed">{m.desc}</p>
+                </AnimCard>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Módulos técnicos — cards horizontais interativos ─────── */}
+      <section className="py-24 bg-white overflow-hidden">
+        <div className="max-w-6xl mx-auto px-6 md:px-14">
+          <AnimSection className="text-center mb-10">
+            <span className="text-xs font-bold uppercase tracking-widest text-[#3D63B8] block mb-3">
+              Dentro da plataforma
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Módulos técnicos</h2>
+            <p className="mt-3 text-gray-500">
+              Tudo incluído em{" "}
+              <span className="text-[#3D63B8] font-semibold">qualquer contrato Azumi RH</span>.
+              Passe o mouse para ver os detalhes de cada módulo.
+            </p>
+          </AnimSection>
+
+          <AnimSection>
+            <div className="flex gap-4 mb-5">
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#3D63B8]">
+                <CheckCircle2 className="h-3.5 w-3.5" /> Disponível agora
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-500">
+                <Clock className="h-3.5 w-3.5" /> Em desenvolvimento
+              </span>
+            </div>
+
+            {/* Scroll container with padding to allow scale-105 without clipping */}
+            <div className="overflow-x-auto pb-8 -mx-2 px-2"
+              style={{ scrollbarWidth: "thin", scrollbarColor: "#3D63B8 #f1f5f9" }}>
+              <div className="flex gap-4" style={{ minWidth: "max-content" }}>
+                {FEATURES.map((f) => {
+                  const ativo = moduloAtivo === f.title;
+                  const Icon = f.icon;
+                  return (
+                    <button
+                      key={f.title}
+                      onMouseEnter={() => setModuloAtivo(f.title)}
+                      onMouseLeave={() => setModuloAtivo(null)}
+                      onClick={() => setModuloAtivo(ativo ? null : f.title)}
+                      style={{ minHeight: ativo ? "220px" : "160px" }}
+                      className={cn(
+                        "shrink-0 w-56 rounded-2xl p-5 text-left transition-all duration-300 border",
+                        ativo
+                          ? "bg-[#3D63B8] text-white border-[#3D63B8] shadow-xl scale-105 z-10 relative"
+                          : f.available
+                            ? "bg-white text-gray-900 border-gray-200 shadow-sm hover:shadow-md hover:border-[#3D63B8]/30"
+                            : "bg-gray-50 text-gray-600 border-gray-200 shadow-sm hover:shadow-md opacity-80"
+                      )}
+                    >
+                      <Icon className={cn(
+                        "h-6 w-6 mb-3 transition-colors",
+                        ativo ? "text-white" : f.available ? "text-[#3D63B8]" : "text-amber-500"
+                      )} />
+                      <h4 className={cn("font-bold mb-2 text-sm", ativo ? "text-white" : "text-gray-900")}>
+                        {f.title}
+                      </h4>
+                      <p className={cn(
+                        "text-xs leading-relaxed transition-all duration-300",
+                        ativo ? "text-white/90" : "text-gray-500"
+                      )}>
+                        {ativo ? f.descricaoCompleta : f.description}
+                      </p>
+                      {!f.available && !ativo && (
+                        <span className="mt-3 inline-flex items-center gap-1 text-xs text-amber-500 font-semibold">
+                          <Clock className="h-3 w-3" /> Em breve
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </AnimSection>
+        </div>
+      </section>
+
+      {/* ── Carrossel de telas com autoplay + dots ───────────────── */}
+      <section className="py-16 bg-[#080f1a]">
         <AnimSection className="text-center mb-10 px-6">
           <p className="text-xs font-semibold uppercase tracking-widest text-[#7FA8E8]/60 mb-2">
             Veja a plataforma em ação
@@ -353,133 +559,69 @@ export default function LandingPage() {
             projetos, horas e relatórios em um só lugar.
           </p>
         </AnimSection>
-        <InfiniteSlider gap={32} duration={38}>
-          {[...SCREENSHOTS, ...SCREENSHOTS].map((src, i) => (
-            <img key={i} src={src} alt="Azumi Connect — tela da plataforma"
-              className="h-[280px] md:h-[360px] w-auto object-contain shrink-0 rounded-xl drop-shadow-2xl"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-            />
-          ))}
-        </InfiniteSlider>
-      </section>
 
-      {/* ── O que fica visível ────────────────────────────────────── */}
-      <section className="py-24 bg-gray-50">
-        <div className="max-w-5xl mx-auto px-6 md:px-14">
-          <AnimSection className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-              O que fica visível com o Connect
-            </h2>
-            <p className="mt-3 text-gray-500 max-w-lg mx-auto">
-              Porque a Azumi opera junto com você nessa plataforma, cada etapa do
-              serviço fica <span className="text-[#3D63B8] font-semibold">rastreável e transparente</span> para os dois lados.
-            </p>
-          </AnimSection>
+        <div
+          className="relative max-w-4xl mx-auto px-6"
+          onMouseEnter={() => setSlidePausado(true)}
+          onMouseLeave={() => setSlidePausado(false)}
+        >
+          {/* Contador */}
+          <div className="flex items-center justify-between mb-4 px-1">
+            <span className="text-xs font-semibold text-[#7FA8E8]/50 uppercase tracking-widest">
+              {SCREENSHOTS[slideAtivo]?.label}
+            </span>
+            <span className="text-xs text-white/30 font-medium tabular-nums">
+              {slideAtivo + 1} de {SCREENSHOTS.length}
+            </span>
+          </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            {[
-              {
-                icon: <Kanban className="h-6 w-6 text-[#3D63B8]" />,
-                title: "Processo seletivo em aberto",
-                highlight: "Acompanhamento em tempo real",
-                desc: <>Cada candidato avança pelas etapas com <span className="text-gray-700 font-semibold">SLA registrado</span>, avaliações e histórico completo. Sem depender de e-mail para saber onde está.</>,
-                delay: 0,
-              },
-              {
-                icon: <Users className="h-6 w-6 text-[#3D63B8]" />,
-                title: "Portal exclusivo da sua empresa",
-                highlight: "Acesso do gestor, sem intermediário",
-                desc: <>O responsável na empresa acessa o portal para <span className="text-gray-700 font-semibold">aprovar candidatos</span> e solicitar serviços diretamente à equipe Azumi.</>,
-                delay: 100,
-              },
-              {
-                icon: <FileText className="h-6 w-6 text-[#3D63B8]" />,
-                title: "Histórico completo e exportável",
-                highlight: "Rastreabilidade de ponta a ponta",
-                desc: <>Projetos, horas, relatórios e indicadores <span className="text-gray-700 font-semibold">sempre disponíveis</span>. Tudo registrado pela Azumi, acessível a qualquer momento.</>,
-                delay: 200,
-              },
-            ].map((item) => (
-              <AnimCard key={item.title} delay={item.delay}
-                className="rounded-2xl border border-gray-200 bg-white p-6 shadow-md hover:shadow-lg transition-shadow">
-                <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[#3D63B8]/10">
-                  {item.icon}
-                </div>
-                <p className="text-xs font-semibold text-[#3D63B8] uppercase tracking-widest mb-1">{item.highlight}</p>
-                <p className="font-semibold text-gray-800 mb-2">{item.title}</p>
-                <p className="text-sm text-gray-500 leading-relaxed">{item.desc}</p>
-              </AnimCard>
+          {/* Imagem principal */}
+          <div className="relative rounded-2xl overflow-hidden bg-[#0d1a2d] border border-white/8 shadow-2xl"
+            style={{ aspectRatio: "16/9" }}>
+            {SCREENSHOTS.map((s, i) => (
+              <img
+                key={s.src}
+                src={s.src}
+                alt={s.label}
+                className="absolute inset-0 w-full h-full object-contain transition-opacity duration-700"
+                style={{ opacity: i === slideAtivo ? 1 : 0, pointerEvents: i === slideAtivo ? "auto" : "none" }}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+              />
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* ── Módulos — cards horizontais interativos ───────────────── */}
-      <section className="py-24 bg-white overflow-hidden">
-        <div className="max-w-6xl mx-auto px-6 md:px-14">
-          <AnimSection className="text-center mb-10">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Módulos da plataforma</h2>
-            <p className="mt-3 text-gray-500">
-              Tudo incluído em <span className="text-[#3D63B8] font-semibold">qualquer contrato Azumi RH</span>.
-              Passe o mouse para ver os detalhes de cada módulo.
-            </p>
-          </AnimSection>
+          {/* Botões prev/next */}
+          <button
+            onClick={() => setSlideAtivo(p => (p - 1 + SCREENSHOTS.length) % SCREENSHOTS.length)}
+            className="absolute left-2 md:-left-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/8 border border-white/12 flex items-center justify-center text-white/60 hover:bg-white/16 hover:text-white transition-all"
+            aria-label="Anterior"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => setSlideAtivo(p => (p + 1) % SCREENSHOTS.length)}
+            className="absolute right-2 md:-right-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/8 border border-white/12 flex items-center justify-center text-white/60 hover:bg-white/16 hover:text-white transition-all"
+            aria-label="Próximo"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
 
-          <AnimSection>
-            {/* Labels */}
-            <div className="flex gap-4 mb-4">
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#3D63B8]">
-                <CheckCircle2 className="h-3.5 w-3.5" /> Disponível agora
-              </span>
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-500">
-                <Clock className="h-3.5 w-3.5" /> Em desenvolvimento
-              </span>
-            </div>
-
-            {/* Strip horizontal */}
-            <div className="flex gap-4 overflow-x-auto pb-4 scroll-smooth"
-              style={{ scrollbarWidth: "thin", scrollbarColor: "#3D63B8 #f1f5f9" }}>
-              {FEATURES.map((f) => {
-                const ativo = moduloAtivo === f.title;
-                const Icon = f.icon;
-                return (
-                  <button
-                    key={f.title}
-                    onMouseEnter={() => setModuloAtivo(f.title)}
-                    onMouseLeave={() => setModuloAtivo(null)}
-                    onClick={() => setModuloAtivo(ativo ? null : f.title)}
-                    className={cn(
-                      "shrink-0 w-60 rounded-2xl p-6 text-left transition-all duration-300 border",
-                      ativo
-                        ? "bg-[#3D63B8] text-white border-[#3D63B8] shadow-xl scale-105 z-10"
-                        : f.available
-                          ? "bg-white text-gray-900 border-gray-200 shadow-sm hover:shadow-md hover:border-[#3D63B8]/30"
-                          : "bg-gray-50 text-gray-600 border-gray-200 shadow-sm hover:shadow-md opacity-80"
-                    )}
-                  >
-                    <Icon className={cn(
-                      "h-7 w-7 mb-3 transition-colors",
-                      ativo ? "text-white" : f.available ? "text-[#3D63B8]" : "text-amber-500"
-                    )} />
-                    <h4 className={cn("font-bold mb-2 text-sm", ativo ? "text-white" : "text-gray-900")}>
-                      {f.title}
-                    </h4>
-                    <p className={cn(
-                      "text-xs leading-relaxed transition-all duration-300",
-                      ativo ? "text-white/90" : "text-gray-500 line-clamp-2"
-                    )}>
-                      {ativo ? f.descricaoCompleta : f.description}
-                    </p>
-                    {!f.available && !ativo && (
-                      <span className="mt-3 inline-flex items-center gap-1 text-xs text-amber-500 font-semibold">
-                        <Clock className="h-3 w-3" /> Em breve
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </AnimSection>
+          {/* Dots */}
+          <div className="flex items-center justify-center gap-2 mt-5">
+            {SCREENSHOTS.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setSlideAtivo(i)}
+                className={cn(
+                  "transition-all duration-300 rounded-full",
+                  i === slideAtivo
+                    ? "w-6 h-2 bg-[#3D63B8]"
+                    : "w-2 h-2 bg-white/20 hover:bg-white/40"
+                )}
+                aria-label={`Ir para tela ${i + 1}`}
+              />
+            ))}
+          </div>
         </div>
       </section>
 
@@ -541,35 +683,58 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Como funciona — timeline ──────────────────────────────── */}
+      {/* ── Como funciona — com ícones ────────────────────────────── */}
       <section className="py-24 bg-gray-50 overflow-hidden">
         <div className="max-w-5xl mx-auto px-6 md:px-14">
           <AnimSection className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Como funciona</h2>
             <p className="mt-3 text-gray-500">
-              Do primeiro contato ao <span className="text-[#3D63B8] font-semibold">relatório final</span> — 4 etapas.
+              Do primeiro contato ao{" "}
+              <span className="text-[#3D63B8] font-semibold">relatório final</span> — 4 etapas.
             </p>
           </AnimSection>
 
           {/* Desktop: horizontal */}
           <div className="hidden md:block">
             <div className="relative">
-              <div className="absolute top-6 left-[calc(12.5%)] right-[calc(12.5%)] h-px bg-gradient-to-r from-[#3D63B8] via-[#7FA8E8] to-[#3D63B8]" />
+              <div className="absolute top-[30px] left-[calc(12.5%)] right-[calc(12.5%)] h-px bg-gradient-to-r from-[#3D63B8] via-[#7FA8E8] to-[#3D63B8]" />
               <div className="grid grid-cols-4 gap-4">
                 {[
-                  { n: "01", title: "Contratação", desc: "Você contrata a Azumi RH e ganha acesso ao Connect junto com sua consultora dedicada." },
-                  { n: "02", title: "Onboarding no Connect", desc: "A Azumi configura o ambiente da sua empresa, cadastra usuários e abre as primeiras demandas." },
-                  { n: "03", title: "Operação conjunta", desc: "Vagas, projetos e solicitações gerenciados pela Azumi — registrados e visíveis para você no portal." },
-                  { n: "04", title: "Relatórios e evolução", desc: "A cada ciclo, indicadores e relatórios consolidados para avaliar resultados e planejar os próximos passos." },
-                ].map((step, i) => (
-                  <AnimCard key={step.n} delay={i * 120} className="flex flex-col items-center text-center px-2">
-                    <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-full bg-[#3D63B8] text-white font-bold text-sm shadow-lg shadow-[#3D63B8]/30 mb-5">
-                      {step.n}
-                    </div>
-                    <p className="font-semibold text-gray-900 mb-2 text-sm">{step.title}</p>
-                    <p className="text-xs text-gray-500 leading-relaxed">{step.desc}</p>
-                  </AnimCard>
-                ))}
+                  {
+                    n: "01", icon: FileText,
+                    title: "Contratação",
+                    desc: "Você contrata a Azumi RH e ganha acesso ao Connect junto com sua consultora dedicada.",
+                  },
+                  {
+                    n: "02", icon: UserPlus,
+                    title: "Onboarding no Connect",
+                    desc: "A Azumi configura o ambiente da sua empresa, cadastra usuários e abre as primeiras demandas.",
+                  },
+                  {
+                    n: "03", icon: Activity,
+                    title: "Operação conjunta",
+                    desc: "Vagas, projetos e solicitações gerenciados pela Azumi — registrados e visíveis para você no portal.",
+                  },
+                  {
+                    n: "04", icon: BarChart3,
+                    title: "Relatórios e evolução",
+                    desc: "A cada ciclo, indicadores e relatórios consolidados para avaliar resultados e planejar os próximos passos.",
+                  },
+                ].map((step, i) => {
+                  const Icon = step.icon;
+                  return (
+                    <AnimCard key={step.n} delay={i * 120} className="flex flex-col items-center text-center px-2">
+                      <div className="relative z-10 flex flex-col items-center mb-5">
+                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#3D63B8] text-white shadow-lg shadow-[#3D63B8]/30 mb-1">
+                          <Icon className="h-6 w-6" />
+                        </div>
+                        <span className="text-[10px] font-bold text-[#7FA8E8]/60 uppercase tracking-widest">{step.n}</span>
+                      </div>
+                      <p className="font-semibold text-gray-900 mb-2 text-sm">{step.title}</p>
+                      <p className="text-xs text-gray-500 leading-relaxed">{step.desc}</p>
+                    </AnimCard>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -579,21 +744,25 @@ export default function LandingPage() {
             <div className="absolute left-5 top-6 bottom-6 w-px bg-gradient-to-b from-[#3D63B8] via-[#7FA8E8] to-transparent" />
             <div className="space-y-8">
               {[
-                { n: "01", title: "Contratação", desc: "Você contrata a Azumi RH e ganha acesso ao Connect junto com sua consultora dedicada." },
-                { n: "02", title: "Onboarding no Connect", desc: "A Azumi configura o ambiente da sua empresa, cadastra usuários e abre as primeiras demandas." },
-                { n: "03", title: "Operação conjunta", desc: "Vagas, projetos e solicitações gerenciados pela Azumi — registrados e visíveis para você no portal." },
-                { n: "04", title: "Relatórios e evolução", desc: "A cada ciclo, indicadores e relatórios consolidados para avaliar resultados e planejar os próximos passos." },
-              ].map((step) => (
-                <div key={step.n} className="relative flex gap-6 items-start">
-                  <div className="relative z-10 flex-shrink-0 flex h-10 w-10 items-center justify-center rounded-full bg-[#3D63B8] text-white font-bold text-sm shadow-lg shadow-[#3D63B8]/30">
-                    {step.n}
+                { n: "01", icon: FileText, title: "Contratação", desc: "Você contrata a Azumi RH e ganha acesso ao Connect junto com sua consultora dedicada." },
+                { n: "02", icon: UserPlus, title: "Onboarding no Connect", desc: "A Azumi configura o ambiente da sua empresa, cadastra usuários e abre as primeiras demandas." },
+                { n: "03", icon: Activity, title: "Operação conjunta", desc: "Vagas, projetos e solicitações gerenciados pela Azumi — registrados e visíveis para você no portal." },
+                { n: "04", icon: BarChart3, title: "Relatórios e evolução", desc: "A cada ciclo, indicadores e relatórios consolidados para avaliar resultados e planejar os próximos passos." },
+              ].map((step) => {
+                const Icon = step.icon;
+                return (
+                  <div key={step.n} className="relative flex gap-6 items-start">
+                    <div className="relative z-10 flex-shrink-0 flex h-10 w-10 items-center justify-center rounded-full bg-[#3D63B8] text-white shadow-lg shadow-[#3D63B8]/30">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div className="pt-1.5">
+                      <span className="text-[10px] font-bold text-[#7FA8E8]/60 uppercase tracking-widest">{step.n}</span>
+                      <p className="font-semibold text-gray-900 mb-1">{step.title}</p>
+                      <p className="text-sm text-gray-500 leading-relaxed">{step.desc}</p>
+                    </div>
                   </div>
-                  <div className="pt-1.5">
-                    <p className="font-semibold text-gray-900 mb-1">{step.title}</p>
-                    <p className="text-sm text-gray-500 leading-relaxed">{step.desc}</p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
@@ -709,7 +878,6 @@ export default function LandingPage() {
 
       {/* ── CTA Final ────────────────────────────────────────────── */}
       <section className="relative py-24 bg-[#0d1a2d] overflow-hidden">
-        <NetworkBackground />
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] rounded-full bg-[#3D63B8]/15 blur-[80px]" />
         </div>
@@ -740,14 +908,12 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="flex flex-col items-center md:items-start gap-3">
             <div className="flex items-center gap-5">
-              {/* Azumi RH — wordmark mais alto, proporcionalmente maior */}
               <img
                 src={azumiLogoBranca}
                 alt="Azumi RH"
                 style={{ height: 42, width: "auto", objectFit: "contain", filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.3))" }}
               />
               <div className="w-px h-10 bg-white/15" />
-              {/* Connect — logo menor que o da marca mãe */}
               <AzumiLogo product="Connect" light size={14} />
             </div>
             <p className="text-xs text-white/25 mt-1">
