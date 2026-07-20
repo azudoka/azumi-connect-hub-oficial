@@ -17,8 +17,6 @@ const SCREENSHOTS = [
   "/screenshots/tela-05.png",
   "/screenshots/tela-06.png",
   "/screenshots/tela-07.png",
-  "/screenshots/tela-08.png",
-  "/screenshots/tela-09.png",
 ];
 
 const WA = "5541988350743";
