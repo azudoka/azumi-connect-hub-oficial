@@ -18,6 +18,12 @@ const waLink = (texto: string) =>
 
 const WA_DEFAULT = waLink("Olá! Vim pela landing page do Azumi Connect e quero saber mais sobre a consultoria Azumi RH.");
 
+function fireConversion() {
+  if (typeof window !== "undefined" && typeof (window as any).gtag === "function") {
+    (window as any).gtag("event", "conversion", { send_to: "AW-18333141930/YRvRCI-Q4tIcEKqX9qVE" });
+  }
+}
+
 const ROLE_MAP: Record<string, string> = {
   admin: "/app/dashboard", consultor: "/app/dashboard",
   rh: "/app/dashboard", rh_operacional: "/app/dashboard",
@@ -160,6 +166,7 @@ export default function LandingPage() {
                 href={WA_DEFAULT}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={fireConversion}
                 className="inline-flex items-center justify-center gap-2 h-11 px-7 rounded-lg bg-[#3D63B8] text-white text-sm font-semibold hover:bg-[#264478] transition-colors shadow-lg shadow-[#3D63B8]/30"
               >
                 <MessageCircle className="h-4 w-4" /> Falar com a equipe
@@ -588,6 +595,7 @@ export default function LandingPage() {
                   href={waLink(plan.msg)}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={fireConversion}
                   className={`inline-flex items-center justify-center gap-2 h-10 rounded-lg text-sm font-semibold transition-colors ${
                     plan.highlight
                       ? "bg-[#3D63B8] text-white hover:bg-[#264478]"
@@ -627,6 +635,7 @@ export default function LandingPage() {
               href={WA_DEFAULT}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={fireConversion}
               className="inline-flex items-center justify-center gap-2 h-12 px-8 rounded-lg bg-[#3D63B8] text-white text-sm font-semibold hover:bg-[#264478] transition-colors shadow-lg shadow-[#3D63B8]/30"
             >
               <MessageCircle className="h-4 w-4" /> Falar com a equipe
