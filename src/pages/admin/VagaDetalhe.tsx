@@ -3937,16 +3937,19 @@ function EditVagaModal({
   const [consultores, setConsultores] = useState<{ id: string; full_name: string; avatar_url: string | null; job_title: string | null }[]>([]);
 
   useEffect(() => {
-    supabase.from("users_profile")
-      .select("id, full_name, avatar_url, job_title")
-      .in("role", ["azumi_admin", "azumi_consultor"])
+    (supabase as any).from("users_profile")
+      .select("id, full_name, avatar_url, job_title, role")
       .order("full_name")
-      .then(({ data }) => setConsultores((data ?? []).map((d) => ({
-        id: d.id,
-        full_name: (d as any).full_name ?? "—",
-        avatar_url: (d as any).avatar_url ?? null,
-        job_title: (d as any).job_title ?? null,
-      }))));
+      .then(({ data }: any) => setConsultores(
+        (data ?? [])
+          .filter((d: any) => d.role === "azumi_admin" || d.role === "azumi_consultor")
+          .map((d: any) => ({
+            id: d.id,
+            full_name: d.full_name ?? "—",
+            avatar_url: d.avatar_url ?? null,
+            job_title: d.job_title ?? null,
+          }))
+      ));
     (supabase as any)
       .from("vaga_perguntas_customizadas")
       .select("pergunta, obrigatoria, ordem")

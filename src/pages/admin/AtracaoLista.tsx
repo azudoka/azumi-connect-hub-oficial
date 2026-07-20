@@ -108,8 +108,12 @@ export default function AtracaoLista() {
   useEffect(() => { recarregarVagas(); }, []);
 
   useEffect(() => {
-    supabase.from("users_profile").select("id, full_name, avatar_url, job_title, email").in("role", ["azumi_admin", "azumi_consultor"]).order("full_name")
-      .then(({ data }) => setConsultoresVaga((data ?? []).map((d: any) => ({ id: d.id, full_name: d.full_name ?? "—", avatar_url: d.avatar_url ?? null, job_title: d.job_title ?? null, email: d.email ?? null }))));
+    (supabase as any).from("users_profile").select("id, full_name, avatar_url, job_title, email, role").order("full_name")
+      .then(({ data }: any) => setConsultoresVaga(
+        (data ?? [])
+          .filter((d: any) => d.role === "azumi_admin" || d.role === "azumi_consultor")
+          .map((d: any) => ({ id: d.id, full_name: d.full_name ?? "—", avatar_url: d.avatar_url ?? null, job_title: d.job_title ?? null, email: d.email ?? null }))
+      ));
   }, []);
 
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -225,8 +229,12 @@ export default function AtracaoLista() {
     if (!novaVagaOpen) return;
     supabase.from("companies").select("id, name").eq("status", "active").order("name")
       .then(({ data }) => setEmpresasCadastradas(data ?? []));
-    supabase.from("users_profile").select("id, full_name, avatar_url, job_title, email").in("role", ["azumi_admin", "azumi_consultor"]).order("full_name")
-      .then(({ data }) => setConsultoresVaga((data ?? []).map((d: any) => ({ id: d.id, full_name: d.full_name ?? "—", avatar_url: d.avatar_url ?? null, job_title: d.job_title ?? null, email: d.email ?? null }))));
+    (supabase as any).from("users_profile").select("id, full_name, avatar_url, job_title, email, role").order("full_name")
+      .then(({ data }: any) => setConsultoresVaga(
+        (data ?? [])
+          .filter((d: any) => d.role === "azumi_admin" || d.role === "azumi_consultor")
+          .map((d: any) => ({ id: d.id, full_name: d.full_name ?? "—", avatar_url: d.avatar_url ?? null, job_title: d.job_title ?? null, email: d.email ?? null }))
+      ));
     (supabase as any).from("sla_regras").select("id, modulo, nivel, dias_uteis, ordem").order("modulo").order("ordem")
       .then(({ data }: { data: SlaRegra[] | null }) => setSlaRegras(data ?? []));
   }, [novaVagaOpen]);
