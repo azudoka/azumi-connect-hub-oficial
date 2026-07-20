@@ -74,6 +74,7 @@ import RedirecionadorPage from "./pages/RedirecionadorPage";
 import QuestionarioRespostaPage from "./pages/QuestionarioRespostaPage";
 import CandidatarConvitePage from "./pages/CandidatarConvitePage";
 import ConvitePage from "./pages/ConvitePage";
+import LandingPage from "./pages/LandingPage";
 
 import LiderPainelPage from "./pages/hub/lider/LiderPainelPage";
 import MeuTimePage from "./pages/hub/lider/MeuTimePage";
@@ -188,7 +189,7 @@ function AplicarRedirect() {
 
 const AppRoutes = () => (
   <Routes>
-    <Route path="/" element={<RootRedirect />} />
+    <Route path="/" element={<LandingPage />} />
     <Route path="/login" element={<Login />} />
     <Route path="/redefinir-senha" element={<RedefinirSenha />} />
     <Route path="/selecao-perfil" element={<SelecaoPerfil />} />
