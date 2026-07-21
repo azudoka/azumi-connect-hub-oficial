@@ -541,6 +541,30 @@ export default function VagaDetalheAdmin() {
   useEffect(() => { recarregarCandidaturas(); }, [vaga?.id]);
 
   useEffect(() => {
+    if (!vaga?.id || vaga.id.startsWith("v-")) return;
+    (supabase as any)
+      .from("entrevista_agendamentos")
+      .select("candidate_id, status, horario_sugestao_1, horario_sugestao_2, token")
+      .eq("job_id", vaga.id)
+      .order("created_at", { ascending: false })
+      .then(({ data }: { data: any[] | null }) => {
+        if (!data) return;
+        const map: Record<string, { status: string; horario1: string; horario2: string; token: string }> = {};
+        data.forEach((row) => {
+          if (!map[row.candidate_id]) {
+            map[row.candidate_id] = {
+              status: row.status,
+              horario1: row.horario_sugestao_1,
+              horario2: row.horario_sugestao_2,
+              token: row.token,
+            };
+          }
+        });
+        setAgendamentosMap(map);
+      });
+  }, [vaga?.id]);
+
+  useEffect(() => {
     setColunasEstado((prev) => {
       const novos = candidatosVaga.filter((c) => !(c.id in prev));
       if (novos.length === 0) return prev;
@@ -642,6 +666,8 @@ export default function VagaDetalheAdmin() {
   const [tipoEntrevista, setTipoEntrevista] = useState<"presencial" | "remota">("remota");
   const [horario1, setHorario1] = useState("");
   const [horario2, setHorario2] = useState("");
+  const [agendarConfirmacaoStep, setAgendarConfirmacaoStep] = useState<{ linkCurto: string; email: string; token: string } | null>(null);
+  const [agendamentosMap, setAgendamentosMap] = useState<Record<string, { status: string; horario1: string; horario2: string; token: string }>>({});
   /** Modal específico de Entrevista com Gestor (Etapa 5 — Doc Mestre). */
   const [agendarGestorOpen, setAgendarGestorOpen] = useState<string | null>(null);
   const [fichaCandidatoId, setFichaCandidatoId] = useState<string | null>(null);
@@ -2049,8 +2075,9 @@ export default function VagaDetalheAdmin() {
                           {/* Bloco inferior: agendamento (separado, com fundo diferente) */}
                           {(() => {
                             const ev = eventos.find((e) => e.candidatoId === c.id);
+                            const agendamento = agendamentosMap[c.id];
                             const podeAgendar = colunasEstado[c.id] === "Entrevista Azumi" || colunasEstado[c.id] === "Entrevista Cliente";
-                            if (!ev && !podeAgendar) return null;
+                            if (!ev && !agendamento && !podeAgendar) return null;
                             return (
                               <div className="border-t border-border bg-[hsl(var(--muted)/0.4)] px-3 py-2 flex items-center gap-2 text-[11px]">
                                 {ev ? (
@@ -2058,6 +2085,13 @@ export default function VagaDetalheAdmin() {
                                     <CalendarDays className="h-3.5 w-3.5 text-primary shrink-0" />
                                     <span className="truncate">
                                       Entrevista <span className="font-medium">{ev.data}</span> às <span className="font-medium">{ev.hora}</span>
+                                    </span>
+                                  </>
+                                ) : agendamento ? (
+                                  <>
+                                    <CalendarDays className="h-3.5 w-3.5 text-warning shrink-0" />
+                                    <span className="truncate text-warning font-medium">
+                                      Aguardando resposta
                                     </span>
                                   </>
                                 ) : (
@@ -3388,9 +3422,85 @@ export default function VagaDetalheAdmin() {
 
       {/* ── Modal: Agendar entrevista Azumi — fluxo real ───────── */}
       {agendarOpen && (() => {
-        const c = candidatosVaga.find((x) => x.id === agendarOpen);
+        const cExtra = candidatosExtras.find((x) => x.id === agendarOpen);
+        const cNome = cExtra?.nome ?? "";
+        const closeModal = () => {
+          setAgendarOpen(null);
+          setHorario1("");
+          setHorario2("");
+          setAgendarConfirmacaoStep(null);
+        };
+
+        if (agendarConfirmacaoStep) {
+          return (
+            <ModalShell title="Confirmar envio" onClose={closeModal}>
+              <p className="text-xs text-muted-foreground mb-4">
+                Revise as informações antes de enviar. Você também pode copiar o link para WhatsApp.
+              </p>
+              <div className="space-y-3">
+                {cExtra?.email && (
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">E-mail do candidato</p>
+                    <div className="flex items-center gap-2 bg-muted rounded-md px-3 py-2 text-sm">
+                      <span className="flex-1 truncate">{cExtra.email}</span>
+                      <button
+                        type="button"
+                        className="text-xs text-primary hover:underline shrink-0"
+                        onClick={() => { navigator.clipboard.writeText(cExtra.email!); toast.success("E-mail copiado!"); }}
+                      >
+                        Copiar
+                      </button>
+                    </div>
+                  </div>
+                )}
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Link de confirmação (WhatsApp)</p>
+                  <div className="flex items-center gap-2 bg-muted rounded-md px-3 py-2 text-sm">
+                    <span className="flex-1 truncate text-xs">{agendarConfirmacaoStep.linkCurto}</span>
+                    <button
+                      type="button"
+                      className="text-xs text-primary hover:underline shrink-0"
+                      onClick={() => { navigator.clipboard.writeText(agendarConfirmacaoStep.linkCurto); toast.success("Link copiado!"); }}
+                    >
+                      Copiar
+                    </button>
+                  </div>
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <Button variant="outline" size="sm" onClick={closeModal} className="flex-1">Cancelar</Button>
+                  <Button
+                    size="sm"
+                    className="flex-1"
+                    onClick={async () => {
+                      const { linkCurto, email, token } = agendarConfirmacaoStep;
+                      if (email) {
+                        await sendEmail(email, "Sua entrevista foi agendada", emailAgendamentoEntrevista({
+                          nome: cNome,
+                          cargoVaga: vaga.cargo,
+                          data: new Date(horario1).toLocaleDateString("pt-BR"),
+                          hora: new Date(horario1).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+                          modalidade: tipoEntrevista,
+                          link: linkCurto,
+                        }));
+                      }
+                      setAgendamentosMap((prev) => ({
+                        ...prev,
+                        [agendarOpen!]: { status: "aguardando_candidato", horario1, horario2, token },
+                      }));
+                      toast.success("Sugestões de horário enviadas ao candidato.");
+                      closeModal();
+                    }}
+                  >
+                    Confirmar envio
+                  </Button>
+                </div>
+              </div>
+            </ModalShell>
+          );
+        }
+
         return (
-          <ModalShell title="Agendar entrevista Azumi" onClose={() => { setAgendarOpen(null); setHorario1(""); setHorario2(""); }}>
+          <ModalShell title="Agendar entrevista Azumi" onClose={closeModal}>
             <p className="text-xs text-muted-foreground mb-3">
               Entrevista interna com consultor Azumi. Envie duas sugestões de horário — o candidato confirma uma ou sugere outra.
             </p>
@@ -3430,30 +3540,14 @@ export default function VagaDetalheAdmin() {
                   const urlCompleta = `${window.location.origin}/confirmar-entrevista/${data.token}`;
                   const linkCurto = await criarLinkCurto(urlCompleta, "confirmar_entrevista");
 
-                  if (c?.email) {
-                    sendEmail(c.email, "Sua entrevista foi agendada", emailAgendamentoEntrevista({
-                      nome: c.nome,
-                      cargoVaga: vaga.cargo,
-                      data: new Date(horario1).toLocaleDateString("pt-BR"),
-                      hora: new Date(horario1).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
-                      modalidade: tipoEntrevista,
-                      link: linkCurto,
-                    }));
-                  }
-                  if (c?.telefone) {
-                    const msg = encodeURIComponent(
-                      `Olá ${c.nome}! Sua entrevista pro processo de ${vaga.cargo} está sendo agendada. Confirme aqui: ${linkCurto}`
-                    );
-                    window.open(`https://wa.me/55${c.telefone.replace(/\D/g, "")}?text=${msg}`, "_blank");
-                  }
-
-                  toast.success("Sugestões de horário enviadas.");
-                  setAgendarOpen(null);
-                  setHorario1("");
-                  setHorario2("");
+                  setAgendarConfirmacaoStep({
+                    linkCurto,
+                    email: cExtra?.email ?? "",
+                    token: data.token,
+                  });
                 }}
               >
-                Enviar sugestões ao candidato
+                Avançar — revisar antes de enviar
               </Button>
             </div>
           </ModalShell>
