@@ -3,6 +3,7 @@ import { publicarVaga, despublicarVaga, getVaga, atualizarVaga, definirStatusVag
 import { criarLinkCurto } from "@/services/shortLinkService";
 import { emailConviteQuestionario, emailAprovado, emailNaoAprovado, emailSolicitarNps, emailAgendamentoEntrevista, emailCompletarCadastro, sendEmail } from "@/lib/emailTemplates";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";

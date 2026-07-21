@@ -126,6 +126,13 @@ function BotaoContato() {
 export default function QuestionarioRespostaPage() {
   const { token } = useParams<{ token: string }>();
 
+  useEffect(() => {
+    const html = document.documentElement;
+    const hadMidnight = html.classList.contains("theme-midnight");
+    html.classList.remove("theme-midnight");
+    return () => { if (hadMidnight) html.classList.add("theme-midnight"); };
+  }, []);
+
   const [step, setStep] = useState<Step>("loading");
   const [erroGlobal, setErroGlobal] = useState("");
   const [cq, setCq] = useState<any>(null);
