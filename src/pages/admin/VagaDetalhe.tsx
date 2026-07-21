@@ -1,7 +1,7 @@
 import { createPortal } from "react-dom";
 import { publicarVaga, despublicarVaga, getVaga, atualizarVaga, definirStatusVaga, excluirVaga, criarVaga, type VagaSupabase, type CriarVagaInput } from "@/services/vagasService";
 import { criarLinkCurto } from "@/services/shortLinkService";
-import { emailConviteQuestionario, emailAprovado, emailNaoAprovado, emailSolicitarNps, emailAgendamentoEntrevista, emailCompletarCadastro, sendEmail } from "@/lib/emailTemplates";
+import { emailConviteQuestionario, emailAprovado, emailNaoAprovado, emailSolicitarNps, emailAgendamentoEntrevista, emailConsultorContraProposta, emailCompletarCadastro, sendEmail } from "@/lib/emailTemplates";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,7 +74,7 @@ import {
   Users, FileQuestion, History, Filter, Loader2, AlertTriangle, Bot, User,
   MoreVertical, Eye, StickyNote, ChevronRight, ChevronLeft, ChevronDown, UserX, Play, UserPlus, Link2,
   Copy, FileText, MessageCircle, Download, ListChecks, ThumbsDown, CalendarPlus,
-  CalendarDays, Globe, Paperclip, X as XIcon, Plus, Mail, Phone, Briefcase, Circle,
+  CalendarDays, CalendarCheck2, Globe, Paperclip, X as XIcon, Plus, Mail, Phone, Briefcase, Circle,
   Pencil, Trash2, GripVertical, Star, BookOpen, PauseCircle, ShieldOff, Ban, Brain,
 } from "lucide-react";
 
@@ -544,12 +544,12 @@ export default function VagaDetalheAdmin() {
     if (!vaga?.id || vaga.id.startsWith("v-")) return;
     (supabase as any)
       .from("entrevista_agendamentos")
-      .select("candidate_id, status, horario_sugestao_1, horario_sugestao_2, token")
+      .select("candidate_id, status, horario_sugestao_1, horario_sugestao_2, token, horario_sugerido_pelo_candidato, horario_consultor_contra_proposta")
       .eq("job_id", vaga.id)
       .order("created_at", { ascending: false })
       .then(({ data }: { data: any[] | null }) => {
         if (!data) return;
-        const map: Record<string, { status: string; horario1: string; horario2: string; token: string }> = {};
+        const map: Record<string, { status: string; horario1: string; horario2: string; token: string; horarioCandidato?: string | null; horarioContraProposta?: string | null }> = {};
         data.forEach((row) => {
           if (!map[row.candidate_id]) {
             map[row.candidate_id] = {
@@ -557,6 +557,8 @@ export default function VagaDetalheAdmin() {
               horario1: row.horario_sugestao_1,
               horario2: row.horario_sugestao_2,
               token: row.token,
+              horarioCandidato: row.horario_sugerido_pelo_candidato ?? null,
+              horarioContraProposta: row.horario_consultor_contra_proposta ?? null,
             };
           }
         });
@@ -667,7 +669,10 @@ export default function VagaDetalheAdmin() {
   const [horario1, setHorario1] = useState("");
   const [horario2, setHorario2] = useState("");
   const [agendarConfirmacaoStep, setAgendarConfirmacaoStep] = useState<{ linkCurto: string; email: string; token: string } | null>(null);
-  const [agendamentosMap, setAgendamentosMap] = useState<Record<string, { status: string; horario1: string; horario2: string; token: string }>>({});
+  const [revisarSugestaoOpen, setRevisarSugestaoOpen] = useState<string | null>(null);
+  const [contraPropostaHorario, setContraPropostaHorario] = useState("");
+  const [contraPropostaStep, setContraPropostaStep] = useState<"main" | "nova_data">("main");
+  const [agendamentosMap, setAgendamentosMap] = useState<Record<string, { status: string; horario1: string; horario2: string; token: string; horarioCandidato?: string | null; horarioContraProposta?: string | null }>>({});
   /** Modal específico de Entrevista com Gestor (Etapa 5 — Doc Mestre). */
   const [agendarGestorOpen, setAgendarGestorOpen] = useState<string | null>(null);
   const [fichaCandidatoId, setFichaCandidatoId] = useState<string | null>(null);
@@ -2088,12 +2093,14 @@ export default function VagaDetalheAdmin() {
                                     </span>
                                   </>
                                 ) : agendamento?.status === "candidato_sugeriu" ? (
-                                  <>
-                                    <CalendarDays className="h-3.5 w-3.5 text-destructive shrink-0" />
-                                    <span className="truncate text-destructive font-medium">
-                                      Candidato sugeriu horários
-                                    </span>
-                                  </>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); setRevisarSugestaoOpen(c.id); setContraPropostaStep("main"); }}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    className="inline-flex items-center gap-1.5 text-destructive hover:underline font-medium"
+                                  >
+                                    <CalendarDays className="h-3.5 w-3.5 shrink-0" /> Candidato sugeriu — revisar
+                                  </button>
                                 ) : agendamento ? (
                                   <>
                                     <CalendarDays className="h-3.5 w-3.5 text-warning shrink-0" />
@@ -3481,12 +3488,15 @@ export default function VagaDetalheAdmin() {
                     onClick={async () => {
                       const { linkCurto, email, token } = agendarConfirmacaoStep;
                       if (email) {
-                        await sendEmail(email, "Sua entrevista foi agendada", emailAgendamentoEntrevista({
+                        await sendEmail(email, `Convite para entrevista — ${vaga.titulo ?? vaga.cargo}`, emailAgendamentoEntrevista({
                           nome: cNome,
+                          tituloVaga: vaga.titulo ?? vaga.cargo,
                           cargoVaga: vaga.cargo,
-                          data: new Date(horario1).toLocaleDateString("pt-BR"),
-                          hora: new Date(horario1).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
-                          modalidade: tipoEntrevista,
+                          data1: new Date(horario1).toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" }),
+                          hora1: new Date(horario1).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+                          data2: new Date(horario2).toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" }),
+                          hora2: new Date(horario2).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+                          modalidade: tipoEntrevista === "remota" ? "Remota (online)" : "Presencial",
                           link: linkCurto,
                         }));
                       }
@@ -3506,10 +3516,14 @@ export default function VagaDetalheAdmin() {
           );
         }
 
+        const erroH1 = validarSlotEntrevista(horario1);
+        const erroH2 = validarSlotEntrevista(horario2);
+        const minDT = new Date().toISOString().slice(0, 16);
+
         return (
           <ModalShell title="Agendar entrevista Azumi" onClose={closeModal}>
             <p className="text-xs text-muted-foreground mb-3">
-              Entrevista interna com consultor Azumi. Envie duas sugestões de horário — o candidato confirma uma ou sugere outra.
+              Entrevista interna com consultor Azumi. Envie duas sugestões de horário — o candidato confirma uma ou sugere um novo.
             </p>
             <div className="space-y-3">
               <div>
@@ -3520,15 +3534,18 @@ export default function VagaDetalheAdmin() {
                 </div>
               </div>
               <div>
-                <label className="text-xs font-medium">Sugestão de horário 1</label>
-                <Input type="datetime-local" value={horario1} onChange={(e) => setHorario1(e.target.value)} />
+                <label className="text-xs font-medium">Sugestão 1</label>
+                <Input type="datetime-local" min={minDT} value={horario1} onChange={(e) => setHorario1(e.target.value)} className={erroH1 ? "border-destructive" : ""} />
+                {erroH1 && <p className="text-[11px] text-destructive mt-1">{erroH1}</p>}
               </div>
               <div>
-                <label className="text-xs font-medium">Sugestão de horário 2</label>
-                <Input type="datetime-local" value={horario2} onChange={(e) => setHorario2(e.target.value)} />
+                <label className="text-xs font-medium">Sugestão 2</label>
+                <Input type="datetime-local" min={minDT} value={horario2} onChange={(e) => setHorario2(e.target.value)} className={erroH2 ? "border-destructive" : ""} />
+                {erroH2 && <p className="text-[11px] text-destructive mt-1">{erroH2}</p>}
               </div>
+              <p className="text-[11px] text-muted-foreground">Segunda a sexta · 08h–18h</p>
               <Button
-                disabled={!horario1 || !horario2}
+                disabled={!horario1 || !horario2 || !!erroH1 || !!erroH2}
                 onClick={async () => {
                   const { data, error } = await (supabase as any)
                     .from("entrevista_agendamentos")
@@ -3557,6 +3574,116 @@ export default function VagaDetalheAdmin() {
                 Avançar — revisar antes de enviar
               </Button>
             </div>
+          </ModalShell>
+        );
+      })()}
+
+      {/* ── Modal: Revisar sugestão do candidato ────────────────── */}
+      {revisarSugestaoOpen && (() => {
+        const cExtra = candidatosExtras.find((x) => x.id === revisarSugestaoOpen);
+        const ag = agendamentosMap[revisarSugestaoOpen];
+        if (!ag || !cExtra) return null;
+        const erroCont = validarSlotEntrevista(contraPropostaHorario);
+        const minDT = new Date().toISOString().slice(0, 16);
+        const fechar = () => { setRevisarSugestaoOpen(null); setContraPropostaHorario(""); setContraPropostaStep("main"); };
+        const horarioSugerido = ag.horarioCandidato;
+
+        return (
+          <ModalShell
+            title="Sugestão do candidato"
+            onClose={fechar}
+          >
+            <p className="text-xs text-muted-foreground mb-4">
+              <strong>{cExtra.nome}</strong> não pôde nos horários sugeridos e propôs:
+            </p>
+            {horarioSugerido && (
+              <div className="bg-muted rounded-lg px-4 py-3 text-sm font-medium mb-4">
+                {new Date(horarioSugerido).toLocaleString("pt-BR", { weekday: "long", day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" })}
+              </div>
+            )}
+
+            {contraPropostaStep === "main" ? (
+              <div className="space-y-2">
+                <Button
+                  className="w-full"
+                  onClick={async () => {
+                    if (!horarioSugerido) return;
+                    const { error } = await (supabase as any)
+                      .from("entrevista_agendamentos")
+                      .update({ status: "confirmado", horario_confirmado: horarioSugerido })
+                      .eq("token", ag.token);
+                    if (error) { toast.error("Erro ao confirmar."); return; }
+                    if (cExtra.email) {
+                      const link = `${window.location.origin}/confirmar-entrevista/${ag.token}`;
+                      sendEmail(cExtra.email, `Entrevista confirmada — ${vaga.titulo ?? vaga.cargo}`, emailAgendamentoEntrevista({
+                        nome: cExtra.nome,
+                        tituloVaga: vaga.titulo ?? vaga.cargo,
+                        cargoVaga: vaga.cargo,
+                        data1: new Date(horarioSugerido).toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" }),
+                        hora1: new Date(horarioSugerido).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+                        data2: new Date(horarioSugerido).toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" }),
+                        hora2: new Date(horarioSugerido).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+                        modalidade: "A confirmar",
+                        link,
+                      }));
+                    }
+                    setAgendamentosMap((prev) => ({ ...prev, [revisarSugestaoOpen!]: { ...prev[revisarSugestaoOpen!], status: "confirmado" } }));
+                    toast.success("Entrevista confirmada no horário do candidato.");
+                    fechar();
+                  }}
+                >
+                  Aceitar este horário
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setContraPropostaStep("nova_data")}
+                >
+                  Sugerir novo horário (última tentativa)
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-xs text-warning font-medium">Esta é a última tentativa. Se o candidato recusar, será descontinuado do processo.</p>
+                <div>
+                  <label className="text-xs font-medium">Novo horário proposto</label>
+                  <Input type="datetime-local" min={minDT} value={contraPropostaHorario} onChange={(e) => setContraPropostaHorario(e.target.value)} className={erroCont ? "border-destructive" : ""} />
+                  {erroCont && <p className="text-[11px] text-destructive mt-1">{erroCont}</p>}
+                  <p className="text-[11px] text-muted-foreground mt-1">Segunda a sexta · 08h–18h</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1" onClick={() => setContraPropostaStep("main")}>Voltar</Button>
+                  <Button
+                    className="flex-1"
+                    disabled={!contraPropostaHorario || !!erroCont}
+                    onClick={async () => {
+                      const { error } = await (supabase as any)
+                        .from("entrevista_agendamentos")
+                        .update({ status: "consultor_contra_proposta", horario_consultor_contra_proposta: new Date(contraPropostaHorario).toISOString() })
+                        .eq("token", ag.token);
+                      if (error) { toast.error("Erro ao enviar."); return; }
+                      if (cExtra.email) {
+                        const link = `${window.location.origin}/confirmar-entrevista/${ag.token}`;
+                        const linkCurto = await criarLinkCurto(link, "contra_proposta");
+                        sendEmail(cExtra.email, `Nova proposta de horário — ${vaga.titulo ?? vaga.cargo}`, emailConsultorContraProposta({
+                          nome: cExtra.nome,
+                          tituloVaga: vaga.titulo ?? vaga.cargo,
+                          data: new Date(contraPropostaHorario).toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" }),
+                          hora: new Date(contraPropostaHorario).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+                          modalidade: "A confirmar",
+                          link: linkCurto,
+                        }));
+                      }
+                      setAgendamentosMap((prev) => ({ ...prev, [revisarSugestaoOpen!]: { ...prev[revisarSugestaoOpen!], status: "consultor_contra_proposta", horarioContraProposta: contraPropostaHorario } }));
+                      toast.success("Nova proposta enviada ao candidato.");
+                      fechar();
+                    }}
+                  >
+                    Enviar proposta final
+                  </Button>
+                </div>
+              </div>
+            )}
           </ModalShell>
         );
       })()}
@@ -3591,6 +3718,7 @@ export default function VagaDetalheAdmin() {
         tituloVaga={vaga.titulo}
         etapaAtual={fichaCandidatoId ? colunasEstado[fichaCandidatoId] : undefined}
         eventos={eventos.filter((e) => e.candidatoId === fichaCandidatoId)}
+        agendamento={fichaCandidatoId ? agendamentosMap[fichaCandidatoId] ?? null : null}
         declinio={fichaCandidatoId ? declinios[fichaCandidatoId] : undefined}
         questionariosVaga={questionariosVaga}
         mensagensVaga={mensagens}
@@ -5727,6 +5855,7 @@ function CandidatoDetailSheet({
   tituloVaga,
   etapaAtual,
   eventos,
+  agendamento,
   declinio,
   questionariosVaga,
   mensagensVaga,
@@ -5751,6 +5880,7 @@ function CandidatoDetailSheet({
   tituloVaga: string;
   etapaAtual?: string;
   eventos: EventoEntrevista[];
+  agendamento?: { status: string; horario1: string; horario2: string; token: string; horarioCandidato?: string | null; horarioContraProposta?: string | null } | null;
   declinio?: { motivo: string; quem: "candidato" | "azumi" };
   questionariosVaga: QuestionarioVaga[];
   mensagensVaga: MensagemVaga[];
@@ -6057,14 +6187,39 @@ function CandidatoDetailSheet({
                 </button>
               );
             })()}
-            {etapaPodeAgendar && (
-              <button
-                onClick={() => onAgendar(cand.id)}
-                className="inline-flex items-center gap-1 h-8 px-3 rounded-md border border-border hover:bg-secondary text-xs font-medium"
-              >
-                <CalendarPlus className="h-3.5 w-3.5" /> Agendar entrevista
-              </button>
-            )}
+            {etapaPodeAgendar && (() => {
+              const agSt = agendamento?.status;
+              const aguardando = agSt === "aguardando_candidato" || agSt === "consultor_contra_proposta";
+              if (aguardando) {
+                return (
+                  <button disabled className="inline-flex items-center gap-1 h-8 px-3 rounded-md border border-border text-xs font-medium opacity-50 cursor-not-allowed">
+                    <CalendarDays className="h-3.5 w-3.5" /> Aguardando resposta
+                  </button>
+                );
+              }
+              if (agSt === "candidato_sugeriu") {
+                return (
+                  <button disabled className="inline-flex items-center gap-1 h-8 px-3 rounded-md border border-destructive/40 text-destructive text-xs font-medium opacity-80 cursor-not-allowed">
+                    <CalendarDays className="h-3.5 w-3.5" /> Candidato sugeriu horário
+                  </button>
+                );
+              }
+              if (agSt === "confirmado") {
+                return (
+                  <button disabled className="inline-flex items-center gap-1 h-8 px-3 rounded-md border border-success/40 text-success text-xs font-medium opacity-80 cursor-not-allowed">
+                    <CalendarCheck2 className="h-3.5 w-3.5" /> Entrevista confirmada
+                  </button>
+                );
+              }
+              return (
+                <button
+                  onClick={() => onAgendar(cand.id)}
+                  className="inline-flex items-center gap-1 h-8 px-3 rounded-md border border-border hover:bg-secondary text-xs font-medium"
+                >
+                  <CalendarPlus className="h-3.5 w-3.5" /> Agendar entrevista
+                </button>
+              );
+            })()}
             <button
               onClick={() => onConvidarParaVaga?.(cand.id)}
               className="inline-flex items-center gap-1 h-8 px-3 rounded-md border border-border hover:bg-secondary text-xs font-medium"
@@ -6086,6 +6241,71 @@ function CandidatoDetailSheet({
               </button>
             )}
           </div>
+
+          {/* Bloco de agendamento de entrevista */}
+          {agendamento && (() => {
+            const st = agendamento.status;
+            const labelMap: Record<string, { label: string; cor: string }> = {
+              aguardando_candidato: { label: "Aguardando resposta do candidato", cor: "text-warning" },
+              candidato_sugeriu: { label: "Candidato sugeriu novo horário", cor: "text-destructive" },
+              consultor_contra_proposta: { label: "Contra-proposta enviada — aguardando candidato", cor: "text-warning" },
+              confirmado: { label: "Entrevista confirmada", cor: "text-success" },
+              descontinuado: { label: "Candidato descontinuado (não aceitou nenhum horário)", cor: "text-muted-foreground" },
+            };
+            const info = labelMap[st] ?? { label: st, cor: "text-muted-foreground" };
+            return (
+              <div className="mt-4 rounded-lg border border-border bg-muted/30 px-4 py-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <CalendarDays className={`h-3.5 w-3.5 ${info.cor}`} />
+                  <span className={`text-xs font-medium ${info.cor}`}>{info.label}</span>
+                </div>
+                {st === "confirmado" && agendamento.horario1 && (
+                  <p className="text-xs text-muted-foreground">
+                    Confirmado para:{" "}
+                    <strong className="text-foreground">
+                      {new Date(agendamento.horarioCandidato ?? agendamento.horario1).toLocaleString("pt-BR", { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                    </strong>
+                  </p>
+                )}
+                {(st === "aguardando_candidato" || st === "consultor_contra_proposta") && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Sugestão 1: {new Date(agendamento.horario1).toLocaleString("pt-BR", { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                    {" · "}
+                    Sugestão 2: {new Date(agendamento.horario2).toLocaleString("pt-BR", { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                  </p>
+                )}
+                {st === "candidato_sugeriu" && agendamento.horarioCandidato && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Horário sugerido: <strong>{new Date(agendamento.horarioCandidato).toLocaleString("pt-BR", { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</strong>
+                  </p>
+                )}
+                {st === "aguardando_candidato" && (
+                  <button
+                    onClick={async () => {
+                      if (!candidatoExtra?.email) { toast.error("Candidato sem e-mail cadastrado."); return; }
+                      const link = `${window.location.origin}/confirmar-entrevista/${agendamento.token}`;
+                      const linkCurto = await criarLinkCurto(link, "lembrete_entrevista");
+                      sendEmail(candidatoExtra.email, "Lembrete: confirme sua entrevista", emailAgendamentoEntrevista({
+                        nome: candidatoExtra.nome,
+                        tituloVaga: tituloVaga,
+                        cargoVaga: tituloVaga,
+                        data1: new Date(agendamento.horario1).toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" }),
+                        hora1: new Date(agendamento.horario1).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+                        data2: new Date(agendamento.horario2).toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" }),
+                        hora2: new Date(agendamento.horario2).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+                        modalidade: "A confirmar",
+                        link: linkCurto,
+                      }));
+                      toast.success("E-mail de lembrete enviado.");
+                    }}
+                    className="inline-flex items-center gap-1 h-7 px-2.5 rounded-md border border-border hover:bg-secondary text-[11px] font-medium"
+                  >
+                    <Mail className="h-3 w-3" /> Reenviar lembrete
+                  </button>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Abas da ficha */}
           <div className="mt-4 flex border-b border-border -mx-5 px-5 gap-0">
@@ -7302,6 +7522,18 @@ function BlocoPreview({ titulo, children }: { titulo: string; children: React.Re
 // ────────────────────────────────────────────────────────────────────
 // Entrevista com Gestor — Modal de agendamento (Etapa 5 — Doc Mestre)
 // ────────────────────────────────────────────────────────────────────
+
+function validarSlotEntrevista(value: string): string | null {
+  if (!value) return null;
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return "Data inválida.";
+  if (d <= new Date()) return "Data e hora já passaram.";
+  const day = d.getDay();
+  if (day === 0 || day === 6) return "Não agendamos em fins de semana.";
+  const h = d.getHours();
+  if (h < 8 || h >= 18) return "Fora do horário de funcionamento (08h–18h).";
+  return null;
+}
 
 function janelaResumo(j: JanelaDisponibilidade): string {
   const dias = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];

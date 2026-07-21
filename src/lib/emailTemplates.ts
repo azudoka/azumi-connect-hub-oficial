@@ -147,21 +147,50 @@ export function emailNaoAprovado(params: { nome: string; cargoVaga: string }): s
 
 export function emailAgendamentoEntrevista(params: {
   nome: string;
+  tituloVaga: string;
   cargoVaga: string;
+  data1: string;
+  hora1: string;
+  data2: string;
+  hora2: string;
+  modalidade: string;
+  link: string;
+}): string {
+  return emailWrapper(
+    "Convite para entrevista",
+    paragrafo(`Olá, ${params.nome}! Você avançou no processo seletivo para a vaga de <strong>${params.tituloVaga || params.cargoVaga}</strong> e gostaríamos de agendar sua entrevista.`) +
+    paragrafo(`Abaixo estão duas sugestões de horário. Acesse o link e confirme a que melhor se encaixa na sua agenda — ou sugira uma alternativa:`) +
+    `<table cellpadding="0" cellspacing="0" style="margin:20px auto;background:#EEF2FA;border-radius:10px;width:100%;"><tr><td style="padding:16px 24px;text-align:left;">
+      <p style="font-size:13px;color:#14233F;margin:0 0 8px;font-weight:600;">Opção 1</p>
+      <p style="font-size:13px;color:#14233F;margin:0 0 4px;"><strong>Data:</strong> ${params.data1}</p>
+      <p style="font-size:13px;color:#14233F;margin:0 0 16px;"><strong>Horário:</strong> ${params.hora1}</p>
+      <p style="font-size:13px;color:#14233F;margin:0 0 8px;font-weight:600;">Opção 2</p>
+      <p style="font-size:13px;color:#14233F;margin:0 0 4px;"><strong>Data:</strong> ${params.data2}</p>
+      <p style="font-size:13px;color:#14233F;margin:0 0 12px;"><strong>Horário:</strong> ${params.hora2}</p>
+      <p style="font-size:12px;color:#476A9E;margin:0;"><strong>Modalidade:</strong> ${params.modalidade}</p>
+    </td></tr></table>` +
+    botao(params.link, "Confirmar ou sugerir horário")
+  );
+}
+
+export function emailConsultorContraProposta(params: {
+  nome: string;
+  tituloVaga: string;
   data: string;
   hora: string;
   modalidade: string;
   link: string;
 }): string {
   return emailWrapper(
-    "Sua entrevista foi agendada",
-    paragrafo(`Olá, ${params.nome}! Confirmamos sua entrevista pra vaga de <strong>${params.cargoVaga}</strong>.`) +
-      `<table cellpadding="0" cellspacing="0" style="margin:20px auto;background:#EEF2FA;border-radius:10px;"><tr><td style="padding:16px 24px;text-align:left;">
-        <p style="font-size:13px;color:#14233F;margin:0 0 4px;"><strong>Data:</strong> ${params.data}</p>
-        <p style="font-size:13px;color:#14233F;margin:0 0 4px;"><strong>Horário:</strong> ${params.hora}</p>
-        <p style="font-size:13px;color:#14233F;margin:0;"><strong>Modalidade:</strong> ${params.modalidade}</p>
-      </td></tr></table>` +
-      botao(params.link, "Confirmar presença")
+    "Nova proposta de horário — última tentativa",
+    paragrafo(`Olá, ${params.nome}! Infelizmente o horário que você sugeriu não foi possível para nossa equipe. Estamos fazendo mais uma tentativa com um novo horário para a vaga de <strong>${params.tituloVaga}</strong>:`) +
+    `<table cellpadding="0" cellspacing="0" style="margin:20px auto;background:#EEF2FA;border-radius:10px;width:100%;"><tr><td style="padding:16px 24px;text-align:left;">
+      <p style="font-size:13px;color:#14233F;margin:0 0 4px;"><strong>Data:</strong> ${params.data}</p>
+      <p style="font-size:13px;color:#14233F;margin:0 0 4px;"><strong>Horário:</strong> ${params.hora}</p>
+      <p style="font-size:13px;color:#14233F;margin:0;"><strong>Modalidade:</strong> ${params.modalidade}</p>
+    </td></tr></table>` +
+    paragrafo(`<strong>Atenção:</strong> Esta é a última tentativa de agendamento. Se este horário também não for possível, você será descontinuado(a) do processo seletivo.`) +
+    botao(params.link, "Confirmar ou recusar")
   );
 }
 
