@@ -2087,6 +2087,13 @@ export default function VagaDetalheAdmin() {
                                       Entrevista <span className="font-medium">{ev.data}</span> às <span className="font-medium">{ev.hora}</span>
                                     </span>
                                   </>
+                                ) : agendamento?.status === "candidato_sugeriu" ? (
+                                  <>
+                                    <CalendarDays className="h-3.5 w-3.5 text-destructive shrink-0" />
+                                    <span className="truncate text-destructive font-medium">
+                                      Candidato sugeriu horários
+                                    </span>
+                                  </>
                                 ) : agendamento ? (
                                   <>
                                     <CalendarDays className="h-3.5 w-3.5 text-warning shrink-0" />

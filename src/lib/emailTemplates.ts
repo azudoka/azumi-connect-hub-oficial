@@ -196,6 +196,29 @@ export function emailAtribuicaoVaga(params: { nomeConsultor: string; tituloVaga:
   );
 }
 
+export function emailCandidatoConfirmouEntrevista(params: { nomeConsultor: string; nomeCandidato: string; cargo: string; horario: string; linkVaga: string }): string {
+  return emailWrapper(
+    `${params.nomeCandidato} confirmou a entrevista`,
+    paragrafo(
+      `Olá, ${params.nomeConsultor}! O candidato <strong>${params.nomeCandidato}</strong> confirmou presença na entrevista para a vaga de <strong>${params.cargo}</strong>.`
+    ) + paragrafo(
+      `Horário confirmado: <strong>${params.horario}</strong>`
+    ) + botao(params.linkVaga, "Ver candidato no Connect")
+  );
+}
+
+export function emailCandidatoSugeriuHorarios(params: { nomeConsultor: string; nomeCandidato: string; cargo: string; horario1: string; horario2: string; observacao?: string; linkVaga: string }): string {
+  return emailWrapper(
+    `${params.nomeCandidato} sugeriu novos horários`,
+    paragrafo(
+      `Olá, ${params.nomeConsultor}! O candidato <strong>${params.nomeCandidato}</strong> não está disponível nos horários sugeridos para a vaga de <strong>${params.cargo}</strong> e propôs as seguintes alternativas:`
+    ) + paragrafo(
+      `• <strong>${params.horario1}</strong><br/>• <strong>${params.horario2}</strong>`
+    ) + (params.observacao ? paragrafo(`Observação: ${params.observacao}`) : "") +
+    botao(params.linkVaga, "Revisar e confirmar no Connect")
+  );
+}
+
 export function emailCompletarCadastro(params: { nome: string; cargoVaga: string; empresa: string; link: string }): string {
   return emailWrapper(
     "Complete seu cadastro",

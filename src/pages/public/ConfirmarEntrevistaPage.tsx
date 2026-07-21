@@ -1,255 +1,342 @@
-import { useMemo, useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import {
-  CalendarCheck,
-  MapPin,
-  Video,
-  ShieldCheck,
-  AlertTriangle,
-  CheckCircle2,
+  CalendarCheck, MapPin, Video, ShieldCheck,
+  AlertTriangle, CheckCircle2, Clock,
 } from "lucide-react";
-
-import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 import {
-  candidatoConfirmar,
-  candidatoRecusar,
-  formatarSugestao,
-  getAgendamento,
-} from "@/data/entrevistaGestorStore";
+  sendEmail,
+  emailCandidatoConfirmouEntrevista,
+  emailCandidatoSugeriuHorarios,
+} from "@/lib/emailTemplates";
 
-// ────────────────────────────────────────────────────────────────────
-// Validação simples de CPF (apenas máscara + 11 dígitos no mock)
-// ────────────────────────────────────────────────────────────────────
+// ── Types ──────────────────────────────────────────────────────────────
 
-function maskCpf(value: string): string {
-  const d = value.replace(/\D/g, "").slice(0, 11);
-  if (d.length <= 3) return d;
-  if (d.length <= 6) return `${d.slice(0, 3)}.${d.slice(3)}`;
-  if (d.length <= 9) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`;
-  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+type Responsavel = { full_name: string; email: string | null };
+type JobInfo = { cargo: string; responsavel_id: string | null; users_profile: Responsavel | null };
+type CandInfo = { nome: string; cpf: string | null };
+
+type Agendamento = {
+  id: string;
+  candidate_id: string;
+  job_id: string;
+  tipo: "presencial" | "remota";
+  horario_sugestao_1: string;
+  horario_sugestao_2: string;
+  horario_confirmado: string | null;
+  status: string;
+  token: string;
+  candidates: CandInfo | null;
+  job_solicitations: JobInfo | null;
+};
+
+type Step = "loading" | "not_found" | "choice" | "suggest" | "done_confirm" | "done_suggest" | "already_done";
+
+// ── Helpers ────────────────────────────────────────────────────────────
+
+function fmtDT(iso: string) {
+  return new Date(iso).toLocaleString("pt-BR", {
+    weekday: "long", day: "2-digit", month: "long",
+    hour: "2-digit", minute: "2-digit",
+  });
 }
 
-function cpfValido(value: string): boolean {
-  return value.replace(/\D/g, "").length === 11;
-}
-
-// ────────────────────────────────────────────────────────────────────
-// Página
-// ────────────────────────────────────────────────────────────────────
+// ── Page ───────────────────────────────────────────────────────────────
 
 export default function ConfirmarEntrevistaPage() {
-  const { agendamentoId } = useParams();
-  const [search] = useSearchParams();
-  const candFromUrl = search.get("cand");
+  const { agendamentoId } = useParams(); // token value in URL
 
-  const [versao, setVersao] = useState(0);
-  const ag = useMemo(
-    () => (agendamentoId ? getAgendamento(agendamentoId) : null),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [agendamentoId, versao]
-  );
+  useEffect(() => {
+    const html = document.documentElement;
+    const hadMidnight = html.classList.contains("theme-midnight");
+    html.classList.remove("theme-midnight");
+    return () => { if (hadMidnight) html.classList.add("theme-midnight"); };
+  }, []);
 
-  const [cpf, setCpf] = useState("");
-  const [comentario, setComentario] = useState("");
-  const [acaoEscolhida, setAcaoEscolhida] = useState<"confirmar" | "recusar" | null>(
-    null
-  );
+  const [step, setStep] = useState<Step>("loading");
+  const [ag, setAg] = useState<Agendamento | null>(null);
+  const [horarioEscolhido, setHorarioEscolhido] = useState<string | null>(null);
+  const [sug1, setSug1] = useState("");
+  const [sug2, setSug2] = useState("");
+  const [obs, setObs] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
-  // Estado de UI: link inválido / agendamento de outro candidato
-  if (!agendamentoId || !ag) {
+  useEffect(() => {
+    if (!agendamentoId) { setStep("not_found"); return; }
+    (supabase as any)
+      .from("entrevista_agendamentos")
+      .select(
+        "*, candidates!entrevista_agendamentos_candidate_id_fkey(nome, cpf), " +
+        "job_solicitations!entrevista_agendamentos_job_id_fkey(cargo, responsavel_id, " +
+        "users_profile!job_solicitations_responsavel_id_fkey(full_name, email))"
+      )
+      .eq("token", agendamentoId)
+      .single()
+      .then(({ data, error }: { data: any; error: any }) => {
+        if (error || !data) { setStep("not_found"); return; }
+        setAg(data as Agendamento);
+        if (data.status === "confirmado" || data.status === "candidato_sugeriu") {
+          setStep("already_done");
+        } else {
+          setStep("choice");
+        }
+      });
+  }, [agendamentoId]);
+
+  async function confirmar() {
+    if (!ag || !horarioEscolhido) return;
+    setSubmitting(true);
+    setErro(null);
+
+    const { error } = await (supabase as any)
+      .from("entrevista_agendamentos")
+      .update({ status: "confirmado", horario_confirmado: horarioEscolhido })
+      .eq("id", ag.id);
+
+    if (error) { setErro("Erro ao confirmar. Tente novamente."); setSubmitting(false); return; }
+
+    const nomeCandidato = ag.candidates?.nome ?? "Candidato";
+    const cargo = ag.job_solicitations?.cargo ?? "a vaga";
+    const resp = ag.job_solicitations?.users_profile;
+    const responsavelId = ag.job_solicitations?.responsavel_id;
+    const horarioFmt = fmtDT(horarioEscolhido);
+    const linkVaga = `${window.location.origin}/app/atracao/${ag.job_id}`;
+
+    if (resp?.email) {
+      sendEmail(resp.email, `${nomeCandidato} confirmou a entrevista`,
+        emailCandidatoConfirmouEntrevista({
+          nomeConsultor: resp.full_name,
+          nomeCandidato, cargo,
+          horario: horarioFmt,
+          linkVaga,
+        })
+      );
+    }
+    if (responsavelId) {
+      (supabase as any).from("app_notifications").insert({
+        user_id: responsavelId,
+        tipo: "entrevista_confirmada",
+        titulo: "Entrevista confirmada",
+        mensagem: `${nomeCandidato} confirmou para ${cargo} — ${horarioFmt}.`,
+        link: `/app/atracao/${ag.job_id}`,
+        lida: false,
+      });
+    }
+    setStep("done_confirm");
+    setSubmitting(false);
+  }
+
+  async function sugerirHorarios() {
+    if (!ag || !sug1 || !sug2) return;
+    setSubmitting(true);
+    setErro(null);
+
+    const { error } = await (supabase as any)
+      .from("entrevista_agendamentos")
+      .update({
+        status: "candidato_sugeriu",
+        horario_sugerido_pelo_candidato: new Date(sug1).toISOString(),
+        horario_sugestao_candidato_2: new Date(sug2).toISOString(),
+        observacao_candidato: obs.trim() || null,
+      })
+      .eq("id", ag.id);
+
+    if (error) { setErro("Erro ao enviar. Tente novamente."); setSubmitting(false); return; }
+
+    const nomeCandidato = ag.candidates?.nome ?? "Candidato";
+    const cargo = ag.job_solicitations?.cargo ?? "a vaga";
+    const resp = ag.job_solicitations?.users_profile;
+    const responsavelId = ag.job_solicitations?.responsavel_id;
+    const h1 = fmtDT(new Date(sug1).toISOString());
+    const h2 = fmtDT(new Date(sug2).toISOString());
+    const linkVaga = `${window.location.origin}/app/atracao/${ag.job_id}`;
+
+    if (resp?.email) {
+      sendEmail(resp.email, `${nomeCandidato} sugeriu novos horários`,
+        emailCandidatoSugeriuHorarios({
+          nomeConsultor: resp.full_name,
+          nomeCandidato, cargo,
+          horario1: h1, horario2: h2,
+          observacao: obs.trim() || undefined,
+          linkVaga,
+        })
+      );
+    }
+    if (responsavelId) {
+      (supabase as any).from("app_notifications").insert({
+        user_id: responsavelId,
+        tipo: "candidato_sugeriu_horario",
+        titulo: `${nomeCandidato} sugeriu novos horários`,
+        mensagem: `Candidato propôs alternativas para ${cargo}: ${h1} ou ${h2}.`,
+        link: `/app/atracao/${ag.job_id}`,
+        lida: false,
+      });
+    }
+    setStep("done_suggest");
+    setSubmitting(false);
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────
+
+  if (step === "loading") {
     return (
-      <PublicShell>
-        <ErrorCard
+      <Shell>
+        <div className="flex items-center justify-center py-16 text-muted-foreground text-sm">Carregando...</div>
+      </Shell>
+    );
+  }
+
+  if (step === "not_found") {
+    return (
+      <Shell>
+        <StatusCard icon={<AlertTriangle className="h-7 w-7" />} color="destructive"
           title="Link inválido ou expirado"
-          message="Não localizamos esta entrevista. Confira o link recebido ou fale com a Azumi."
+          message="Não localizamos esta entrevista. Verifique o link recebido ou entre em contato com a Azumi."
         />
-      </PublicShell>
-    );
-  }
-  if (candFromUrl && candFromUrl !== ag.candidatoId) {
-    return (
-      <PublicShell>
-        <ErrorCard
-          title="Link não corresponde ao candidato"
-          message="O link parece pertencer a outra pessoa. Use o link que foi enviado para você."
-        />
-      </PublicShell>
+      </Shell>
     );
   }
 
-  const escolhido = ag.escolhido;
-  const isConfirmado = ag.status === "confirmado";
-  const isRecusado = ag.status === "candidato_recusou";
-
-  function handleConfirmar() {
-    if (!cpfValido(cpf)) {
-      setErro("Informe um CPF válido (11 dígitos).");
-      return;
-    }
-    setErro(null);
-    candidatoConfirmar(ag!.id);
-    setAcaoEscolhida("confirmar");
-    setVersao((v) => v + 1);
-  }
-
-  function handleRecusar() {
-    if (!cpfValido(cpf)) {
-      setErro("Informe um CPF válido para registrar a recusa.");
-      return;
-    }
-    setErro(null);
-    candidatoRecusar(ag!.id, comentario.trim() || undefined);
-    setAcaoEscolhida("recusar");
-    setVersao((v) => v + 1);
-  }
-
-  if (isConfirmado || acaoEscolhida === "confirmar") {
+  if (step === "already_done") {
     return (
-      <PublicShell>
-        <SuccessCard
+      <Shell>
+        <StatusCard icon={<CheckCircle2 className="h-7 w-7" />} color="primary"
+          title="Resposta já registrada"
+          message="Você já respondeu a este convite. Em breve a Azumi entrará em contato."
+        />
+      </Shell>
+    );
+  }
+
+  if (step === "done_confirm") {
+    return (
+      <Shell>
+        <StatusCard icon={<CheckCircle2 className="h-7 w-7" />} color="success"
           title="Entrevista confirmada!"
-          message="Boa entrevista! Encaminhamos a confirmação para a Azumi e para o gestor."
-          ag={ag}
+          message="Perfeito! Sua confirmação foi registrada. Boa entrevista!"
+          detail={horarioEscolhido ? fmtDT(horarioEscolhido) : undefined}
         />
-      </PublicShell>
+      </Shell>
     );
   }
 
-  if (isRecusado || acaoEscolhida === "recusar") {
+  if (step === "done_suggest") {
     return (
-      <PublicShell>
-        <SuccessCard
-          variant="warning"
-          title="Recebemos sua mensagem"
-          message="Avisamos a Azumi de que você precisa de outro horário. Em breve entraremos em contato."
-          ag={ag}
+      <Shell>
+        <StatusCard icon={<Clock className="h-7 w-7" />} color="warning"
+          title="Sugestões enviadas!"
+          message="Recebemos seus horários alternativos. O time da Azumi vai analisar e entrar em contato."
         />
-      </PublicShell>
+      </Shell>
     );
   }
+
+  if (step === "suggest") {
+    return (
+      <Shell>
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-xl">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+            <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+            Azumi Connect — Sugestão de horários
+          </div>
+          <h1 className="font-semibold text-xl">Sugira dois horários</h1>
+          <p className="text-sm text-muted-foreground mt-1 mb-5">
+            Informe duas opções e nossa equipe tentará confirmar uma delas.
+          </p>
+          <div className="space-y-4">
+            <LabelInput label="Opção 1 *">
+              <input type="datetime-local" value={sug1} onChange={(e) => setSug1(e.target.value)}
+                className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+            </LabelInput>
+            <LabelInput label="Opção 2 *">
+              <input type="datetime-local" value={sug2} onChange={(e) => setSug2(e.target.value)}
+                className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+            </LabelInput>
+            <LabelInput label="Observação (opcional)">
+              <textarea value={obs} onChange={(e) => setObs(e.target.value)} rows={2}
+                placeholder="Ex: prefiro pela manhã, disponível a partir das 9h..."
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+            </LabelInput>
+            {erro && <ErroBanner msg={erro} />}
+            <div className="flex gap-2 pt-1">
+              <button type="button" onClick={() => setStep("choice")}
+                className="flex-1 h-10 rounded-lg border border-border text-sm font-medium hover:bg-secondary">
+                Voltar
+              </button>
+              <button type="button" onClick={sugerirHorarios} disabled={!sug1 || !sug2 || submitting}
+                className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 disabled:opacity-50">
+                {submitting ? "Enviando..." : "Enviar sugestões"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </Shell>
+    );
+  }
+
+  // step === "choice"
+  if (!ag) return null;
+  const nomeFirst = (ag.candidates?.nome ?? "").split(" ")[0] || "Candidato";
+  const cargo = ag.job_solicitations?.cargo ?? "a vaga";
 
   return (
-    <PublicShell>
+    <Shell>
       <div className="bg-card border border-border rounded-2xl p-6 shadow-xl">
         <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
           <ShieldCheck className="h-3.5 w-3.5 text-primary" />
-          Confirmação de entrevista — Azumi Connect
+          Azumi Connect — Confirmação de entrevista
         </div>
-        <h1 className="font-display font-semibold text-xl">
-          Olá, {ag.candidatoNome.split(" ")[0]}!
-        </h1>
+        <h1 className="font-semibold text-xl">Olá, {nomeFirst}!</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Confirme sua presença na entrevista com o gestor da{" "}
-          <strong>{ag.empresaNome}</strong>.
+          Selecione o melhor horário para sua entrevista — vaga de <strong>{cargo}</strong>.
         </p>
 
-        {escolhido && (
-          <div className="mt-5 rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium text-primary">
-              <CalendarCheck className="h-4 w-4" />
-              {formatarSugestao(escolhido)}
-            </div>
-            {escolhido.modo === "presencial" ? (
-              <div className="flex items-start gap-2 text-sm">
-                <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
-                <div>
-                  <div className="font-medium">Endereço</div>
-                  <div className="text-muted-foreground">
-                    {escolhido.localOuLink || "A confirmar"}
-                  </div>
-                </div>
+        <div className="mt-4 flex items-center gap-1.5 text-xs text-muted-foreground">
+          {ag.tipo === "presencial"
+            ? <><MapPin className="h-3.5 w-3.5" /> Entrevista presencial</>
+            : <><Video className="h-3.5 w-3.5" /> Entrevista remota — link enviado por e-mail</>}
+        </div>
+
+        <div className="mt-5 space-y-3">
+          {[ag.horario_sugestao_1, ag.horario_sugestao_2].map((iso, i) => (
+            <button key={i} type="button" onClick={() => setHorarioEscolhido(iso)}
+              className={`w-full text-left rounded-xl border px-4 py-3 transition-colors ${
+                horarioEscolhido === iso
+                  ? "border-primary bg-primary/5 ring-1 ring-primary"
+                  : "border-border hover:border-primary/40 hover:bg-secondary/50"
+              }`}>
+              <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                <CalendarCheck className={`h-3.5 w-3.5 ${horarioEscolhido === iso ? "text-primary" : ""}`} />
+                Opção {i + 1}
               </div>
-            ) : (
-              <div className="flex items-start gap-2 text-sm">
-                <Video className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
-                <div>
-                  <div className="font-medium">Reunião remota</div>
-                  <div className="text-muted-foreground break-all">
-                    {escolhido.localOuLink ||
-                      "O link da reunião será enviado por e-mail."}
-                  </div>
-                </div>
-              </div>
-            )}
-            <div className="text-xs text-muted-foreground pt-1 border-t border-border/60">
-              Gestor responsável: <strong>{ag.gestorNome}</strong>
-            </div>
-          </div>
-        )}
-
-        <div className="mt-5 space-y-4">
-          <div>
-            <label className="text-xs font-medium block mb-1">E-mail</label>
-            <input
-              type="email"
-              value={ag.candidatoEmail}
-              readOnly
-              className="w-full h-10 rounded-lg border border-input bg-muted/30 px-3 text-sm text-muted-foreground"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-medium block mb-1">
-              CPF <span className="text-destructive">*</span>
-            </label>
-            <input
-              value={cpf}
-              onChange={(e) => setCpf(maskCpf(e.target.value))}
-              placeholder="000.000.000-00"
-              inputMode="numeric"
-              className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            />
-            <p className="text-[11px] text-muted-foreground mt-1">
-              Usamos o CPF apenas para validar a confirmação desta entrevista.
-            </p>
-          </div>
-
-          {erro && (
-            <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-              <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
-              {erro}
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <button
-              onClick={handleConfirmar}
-              className="h-11 rounded-lg bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center justify-center gap-2 hover:opacity-90"
-            >
-              <CheckCircle2 className="h-4 w-4" /> Confirmar entrevista
+              <div className="text-sm font-medium mt-1 ml-5">{fmtDT(iso)}</div>
             </button>
-            <details className="group sm:col-span-1">
-              <summary className="list-none cursor-pointer h-11 rounded-lg border border-border text-sm font-medium inline-flex items-center justify-center hover:bg-secondary">
-                Não posso nesse horário
-              </summary>
-              <div className="mt-2 space-y-2">
-                <textarea
-                  value={comentario}
-                  onChange={(e) => setComentario(e.target.value)}
-                  rows={3}
-                  placeholder="Conte rapidamente qual horário seria melhor."
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                />
-                <button
-                  onClick={handleRecusar}
-                  className="w-full h-10 rounded-lg border border-destructive/40 text-destructive text-sm font-medium hover:bg-destructive/10"
-                >
-                  Enviar recusa à Azumi
-                </button>
-              </div>
-            </details>
-          </div>
+          ))}
+        </div>
+
+        {erro && <ErroBanner msg={erro} />}
+
+        <div className="mt-5 space-y-2">
+          <button type="button" disabled={!horarioEscolhido || submitting} onClick={confirmar}
+            className="w-full h-11 rounded-lg bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-50">
+            <CheckCircle2 className="h-4 w-4" />
+            {submitting ? "Confirmando..." : "Confirmar este horário"}
+          </button>
+          <button type="button" onClick={() => setStep("suggest")}
+            className="w-full h-10 rounded-lg border border-border text-sm font-medium hover:bg-secondary">
+            Nenhum horário serve — sugerir alternativas
+          </button>
         </div>
       </div>
-    </PublicShell>
+    </Shell>
   );
 }
 
-// ────────────────────────────────────────────────────────────────────
-// Componentes auxiliares
-// ────────────────────────────────────────────────────────────────────
+// ── Shared UI ──────────────────────────────────────────────────────────
 
-function PublicShell({ children }: { children: React.ReactNode }) {
+function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">{children}</div>
@@ -257,53 +344,48 @@ function PublicShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function SuccessCard({
-  title,
-  message,
-  ag,
-  variant = "success",
-}: {
+function StatusCard({ icon, color, title, message, detail }: {
+  icon: React.ReactNode;
+  color: "success" | "warning" | "destructive" | "primary";
   title: string;
   message: string;
-  ag: ReturnType<typeof getAgendamento>;
-  variant?: "success" | "warning";
+  detail?: string;
 }) {
-  const isWarn = variant === "warning";
+  const cls = {
+    success: "bg-success/15 text-success",
+    warning: "bg-warning/15 text-warning",
+    destructive: "bg-destructive/15 text-destructive",
+    primary: "bg-primary/15 text-primary",
+  }[color];
   return (
     <div className="bg-card border border-border rounded-2xl p-6 shadow-xl text-center">
-      <div
-        className={cn(
-          "h-14 w-14 mx-auto rounded-full flex items-center justify-center",
-          isWarn
-            ? "bg-warning/15 text-warning"
-            : "bg-success/15 text-success"
-        )}
-      >
-        {isWarn ? (
-          <AlertTriangle className="h-7 w-7" />
-        ) : (
-          <CheckCircle2 className="h-7 w-7" />
-        )}
+      <div className={`h-14 w-14 mx-auto rounded-full flex items-center justify-center ${cls}`}>
+        {icon}
       </div>
-      <h1 className="font-display font-semibold text-xl mt-3">{title}</h1>
+      <h1 className="font-semibold text-xl mt-3">{title}</h1>
       <p className="text-sm text-muted-foreground mt-1">{message}</p>
-      {ag?.escolhido && !isWarn && (
-        <p className="text-xs text-muted-foreground mt-4 font-data">
-          {formatarSugestao(ag.escolhido)}
+      {detail && (
+        <p className="text-xs text-muted-foreground mt-3 bg-muted rounded-lg px-3 py-2 inline-block">
+          {detail}
         </p>
       )}
     </div>
   );
 }
 
-function ErrorCard({ title, message }: { title: string; message: string }) {
+function LabelInput({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="bg-card border border-border rounded-2xl p-6 shadow-xl text-center">
-      <div className="h-14 w-14 mx-auto rounded-full bg-destructive/15 text-destructive flex items-center justify-center">
-        <AlertTriangle className="h-7 w-7" />
-      </div>
-      <h1 className="font-display font-semibold text-xl mt-3">{title}</h1>
-      <p className="text-sm text-muted-foreground mt-1">{message}</p>
+    <div>
+      <label className="text-xs font-medium block mb-1">{label}</label>
+      {children}
+    </div>
+  );
+}
+
+function ErroBanner({ msg }: { msg: string }) {
+  return (
+    <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+      <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" /> {msg}
     </div>
   );
 }

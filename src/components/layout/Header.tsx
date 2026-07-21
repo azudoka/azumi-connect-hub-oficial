@@ -1,16 +1,27 @@
 import {
   Bell, Search, ChevronDown, AlertTriangle, ArrowRight, Eye, EyeOff, Sparkles,
   User as UserIcon, Settings as SettingsIcon, LogOut as LogOutIcon,
-  Sun, Moon, MessageSquare,
+  Sun, Moon, MessageSquare, CalendarClock, Check,
 } from "lucide-react";
 import { useFinanceiro } from "@/context/FinanceiroContext";
 import { useNavigate, Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { consumoNotificacoes } from "@/data/mock";
 import { useAuth } from "@/context/AuthContext";
 import { UpgradePlanoModal } from "@/components/UpgradePlanoModal";
 import { useThemeToggle } from "@/hooks/useThemeToggle";
+import { supabase } from "@/integrations/supabase/client";
+
+type AppNotif = {
+  id: string;
+  tipo: string;
+  titulo: string;
+  mensagem: string;
+  lida: boolean;
+  link: string | null;
+  created_at: string;
+};
 
 interface HeaderProps {
   showSwitcher?: boolean;
@@ -82,6 +93,33 @@ export function Header({ showSwitcher = true, context = "connect", variant = "ad
 
   const totalAlertas = consumoNotificacoes.filter((n) => n.severidade !== "info").length;
   const handleLogout = () => { logout(); navigate("/login"); };
+
+  const [appNotifs, setAppNotifs] = useState<AppNotif[]>([]);
+
+  const carregarNotifs = useCallback(() => {
+    if (!user?.id) return;
+    (supabase as any)
+      .from("app_notifications")
+      .select("id, tipo, titulo, mensagem, lida, link, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(20)
+      .then(({ data }: { data: AppNotif[] | null }) => {
+        if (data) setAppNotifs(data);
+      });
+  }, [user?.id]);
+
+  useEffect(() => { carregarNotifs(); }, [carregarNotifs]);
+
+  async function marcarTodasLidas() {
+    if (!user?.id) return;
+    const ids = appNotifs.filter((n) => !n.lida).map((n) => n.id);
+    if (ids.length === 0) return;
+    await (supabase as any).from("app_notifications").update({ lida: true }).in("id", ids);
+    setAppNotifs((prev) => prev.map((n) => ({ ...n, lida: true })));
+  }
+
+  const totalNotifs = appNotifs.filter((n) => !n.lida).length + totalAlertas;
 
   return (
     <header className="h-16 shrink-0 border-b border-border bg-[hsl(var(--background)/0.8)] backdrop-blur sticky top-0 z-30">
@@ -198,32 +236,74 @@ export function Header({ showSwitcher = true, context = "connect", variant = "ad
             <MessageSquare className="h-4 w-4" />
           </button>
 
-          {/* Notificações de consumo */}
+          {/* Notificações */}
           <div className="relative" ref={notifRef}>
             <button
-              onClick={() => setOpenNotif((v) => !v)}
+              onClick={() => { setOpenNotif((v) => !v); if (!openNotif) { carregarNotifs(); setTimeout(marcarTodasLidas, 1500); } }}
               className="relative h-9 w-9 rounded-lg hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
               aria-label="Notificações"
             >
               <Bell className="h-4 w-4" />
-              {totalAlertas > 0 && (
+              {totalNotifs > 0 && (
                 <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[9px] font-semibold flex items-center justify-center ring-2 ring-background">
-                  {totalAlertas}
+                  {totalNotifs}
                 </span>
               )}
             </button>
 
             {openNotif && (
-              <div className="absolute right-0 mt-2 w-[360px] bg-card border border-border rounded-xl shadow-elevated z-50 animate-fade-in overflow-hidden">
+              <div className="absolute right-0 mt-2 w-[380px] bg-card border border-border rounded-xl shadow-elevated z-50 animate-fade-in overflow-hidden">
                 <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4 text-warning" />
-                    <h4 className="font-display font-semibold text-sm">Alertas de consumo</h4>
-                  </div>
-                  <span className="text-[11px] text-muted-foreground">{totalAlertas} ativos</span>
+                  <h4 className="font-display font-semibold text-sm">Notificações</h4>
+                  {appNotifs.some((n) => !n.lida) && (
+                    <button onClick={marcarTodasLidas} className="text-[11px] text-primary hover:underline flex items-center gap-1">
+                      <Check className="h-3 w-3" /> Marcar todas como lidas
+                    </button>
+                  )}
                 </div>
 
-                <ul className="max-h-[360px] overflow-y-auto">
+                <ul className="max-h-[400px] overflow-y-auto divide-y divide-border">
+                  {appNotifs.length === 0 && totalAlertas === 0 && (
+                    <li className="px-4 py-6 text-center text-xs text-muted-foreground">Nenhuma notificação</li>
+                  )}
+
+                  {/* App notifications (entrevistas, etc.) */}
+                  {appNotifs.map((n) => (
+                    <li key={n.id} className={cn("transition-colors", !n.lida && "bg-primary/5")}>
+                      {n.link ? (
+                        <Link to={n.link} onClick={() => setOpenNotif(false)}
+                          className="group flex items-start gap-3 px-4 py-3 hover:bg-secondary/50">
+                          <span className="mt-0.5 h-7 w-7 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                            <CalendarClock className="h-3.5 w-3.5" />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium leading-tight">{n.titulo}</p>
+                            <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{n.mensagem}</p>
+                            <p className="text-[10px] text-muted-foreground mt-1">
+                              {new Date(n.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                            </p>
+                          </div>
+                          {!n.lida && <span className="h-2 w-2 rounded-full bg-primary mt-1.5 shrink-0" />}
+                        </Link>
+                      ) : (
+                        <div className="flex items-start gap-3 px-4 py-3">
+                          <span className="mt-0.5 h-7 w-7 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                            <CalendarClock className="h-3.5 w-3.5" />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium leading-tight">{n.titulo}</p>
+                            <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{n.mensagem}</p>
+                            <p className="text-[10px] text-muted-foreground mt-1">
+                              {new Date(n.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                            </p>
+                          </div>
+                          {!n.lida && <span className="h-2 w-2 rounded-full bg-primary mt-1.5 shrink-0" />}
+                        </div>
+                      )}
+                    </li>
+                  ))}
+
+                  {/* Alertas de consumo */}
                   {consumoNotificacoes.map((n) => (
                     <li key={n.id} className="border-b border-border last:border-b-0">
                       <Link
@@ -245,18 +325,14 @@ export function Header({ showSwitcher = true, context = "connect", variant = "ad
                               </span>
                             </div>
                             <p className="text-[11px] text-muted-foreground mt-0.5">
-                              <span className="">{n.consumido}h / {n.contratadas}h</span> consumidas · {n.quando}
+                              {n.consumido}h / {n.contratadas}h consumidas · {n.quando}
                             </p>
                             <div className="mt-1.5 h-1 rounded-full bg-muted overflow-hidden">
-                              <div
-                                className={cn(
-                                  "h-full",
-                                  n.severidade === "critical" && "bg-destructive",
-                                  n.severidade === "warning" && "bg-warning",
-                                  n.severidade === "info" && "bg-primary",
-                                )}
-                                style={{ width: `${Math.min(100, n.percent)}%` }}
-                              />
+                              <div className={cn("h-full",
+                                n.severidade === "critical" && "bg-destructive",
+                                n.severidade === "warning" && "bg-warning",
+                                n.severidade === "info" && "bg-primary",
+                              )} style={{ width: `${Math.min(100, n.percent)}%` }} />
                             </div>
                           </div>
                           <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary mt-1 shrink-0" />
@@ -266,15 +342,17 @@ export function Header({ showSwitcher = true, context = "connect", variant = "ad
                   ))}
                 </ul>
 
-                <div className="px-4 py-2.5 border-t border-border bg-[hsl(var(--secondary)/0.2)]">
-                  <Link
-                    to={isCliente ? "/cliente/gestao-conta" : "/app/gestao-de-conta"}
-                    onClick={() => setOpenNotif(false)}
-                    className="text-xs text-primary hover:underline font-medium"
-                  >
-                    Ver todos os relatórios de consumo →
-                  </Link>
-                </div>
+                {consumoNotificacoes.length > 0 && (
+                  <div className="px-4 py-2.5 border-t border-border bg-[hsl(var(--secondary)/0.2)]">
+                    <Link
+                      to={isCliente ? "/cliente/gestao-conta" : "/app/gestao-de-conta"}
+                      onClick={() => setOpenNotif(false)}
+                      className="text-xs text-primary hover:underline font-medium"
+                    >
+                      Ver relatórios de consumo →
+                    </Link>
+                  </div>
+                )}
               </div>
             )}
           </div>
