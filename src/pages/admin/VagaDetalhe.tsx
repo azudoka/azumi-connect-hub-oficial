@@ -4,6 +4,7 @@ import { criarLinkCurto } from "@/services/shortLinkService";
 import { emailConviteQuestionario, emailAprovado, emailNaoAprovado, emailSolicitarNps, emailAgendamentoEntrevista, emailCompletarCadastro, sendEmail } from "@/lib/emailTemplates";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
