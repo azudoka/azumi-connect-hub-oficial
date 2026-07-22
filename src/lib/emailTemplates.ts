@@ -355,6 +355,19 @@ export function emailEntrevistaConfirmada(params: {
   );
 }
 
+export function emailSolicitarAtualizacao(params: { nome: string; link: string }): string {
+  return emailWrapper(
+    "Vamos atualizar seu cadastro?",
+    paragrafo(
+      `Olá, <strong>${params.nome}</strong>! Notamos que seu cadastro no nosso banco de talentos está incompleto.`
+    ) +
+    paragrafo(
+      `Queremos te conhecer melhor para te avisar assim que surgir uma vaga alinhada com o que você procura — leva menos de 1 minuto.`
+    ) +
+    botao(params.link, "Atualizar meu cadastro")
+  );
+}
+
 export function emailMovimentacaoCandidato(params: {
   nome: string;
   cargoVaga: string;

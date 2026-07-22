@@ -68,6 +68,7 @@ import ClienteHubIndisponivelPage from "./pages/cliente/ClienteHubIndisponivelPa
 import VagaDetalheCliente from "./pages/cliente/VagaDetalheCliente";
 import ConfirmarEntrevistaPage from "./pages/public/ConfirmarEntrevistaPage";
 import NpsAvulsoPage from "./pages/public/NpsAvulsoPage";
+import AtualizarCadastroPage from "./pages/public/AtualizarCadastroPage";
 import VagasPublicasPage from "./pages/VagasPublicasPage";
 import VagaPublicaDetalhePage from "./pages/VagaPublicaDetalhePage";
 import RedirecionadorPage from "./pages/RedirecionadorPage";
@@ -206,6 +207,7 @@ const AppRoutes = () => (
     <Route path="/completar-cadastro/:token" element={<CompletarCadastroPage />} />
     <Route path="/convite/:token" element={<ConviteRedirect />} />
     <Route path="/nps/:token" element={<NpsAvulsoPage />} />
+    <Route path="/atualizar-cadastro/:token" element={<AtualizarCadastroPage />} />
 
     {/* Admin / Consultor */}
     <Route

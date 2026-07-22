@@ -7,7 +7,9 @@ const SETORES_INTERESSE = [
 ];
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
-import { X, Search, AlertCircle, Eye, Link as LinkIcon, ChevronDown } from "lucide-react";
+import { X, Search, AlertCircle, Eye, Link as LinkIcon, ChevronDown, RefreshCw } from "lucide-react";
+import { criarLinkCurto } from "@/services/shortLinkService";
+import { emailSolicitarAtualizacao, sendEmail } from "@/lib/emailTemplates";
 import {
   STATUS_LABEL,
   DISC_COR,
@@ -181,6 +183,16 @@ export default function BancoTalentosDrawer({ open, onClose }: Props) {
     setVincularTarget(null);
   }
 
+  async function solicitarAtualizacao(candidatoId: string, nome: string, email: string | null) {
+    if (!email) { toast.error("Esse candidato não tem e-mail cadastrado."); return; }
+    const token = crypto.randomUUID();
+    await supabase.from("candidates").update({ token_atualizar_cadastro: token } as any).eq("id", candidatoId);
+    const url = `${window.location.origin}/atualizar-cadastro/${token}`;
+    const link = await criarLinkCurto(url, "atualizar_cadastro");
+    sendEmail(email, "Vamos atualizar seu cadastro?", emailSolicitarAtualizacao({ nome, link }));
+    toast.success("E-mail de atualização enviado.");
+  }
+
   if (!open) return null;
 
   return createPortal(
@@ -322,6 +334,15 @@ export default function BancoTalentosDrawer({ open, onClose }: Props) {
                       >
                         <LinkIcon className="h-4 w-4" />
                       </button>
+                      {!t.interessesSetores?.length && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); solicitarAtualizacao(t.id, t.nome, t.email === "—" ? null : t.email); }}
+                          className="rounded-md p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                          title="Solicitar atualização de cadastro"
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
