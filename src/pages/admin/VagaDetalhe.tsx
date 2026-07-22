@@ -544,12 +544,12 @@ export default function VagaDetalheAdmin() {
     if (!vaga?.id || vaga.id.startsWith("v-")) return;
     (supabase as any)
       .from("entrevista_agendamentos")
-      .select("candidate_id, status, horario_sugestao_1, horario_sugestao_2, token, horario_sugerido_pelo_candidato, horario_consultor_contra_proposta")
+      .select("candidate_id, status, horario_sugestao_1, horario_sugestao_2, token, horario_sugerido_pelo_candidato, horario_consultor_contra_proposta, horario_confirmado, modalidade, local_ou_link, info_adicional")
       .eq("job_id", vaga.id)
       .order("created_at", { ascending: false })
       .then(({ data }: { data: any[] | null }) => {
         if (!data) return;
-        const map: Record<string, { status: string; horario1: string; horario2: string; token: string; horarioCandidato?: string | null; horarioContraProposta?: string | null }> = {};
+        const map: Record<string, { status: string; horario1: string; horario2: string; token: string; horarioCandidato?: string | null; horarioContraProposta?: string | null; horarioConfirmado?: string | null; modalidade?: string | null; localOuLink?: string | null; infoAdicional?: string | null }> = {};
         data.forEach((row) => {
           if (!map[row.candidate_id]) {
             map[row.candidate_id] = {
@@ -559,6 +559,10 @@ export default function VagaDetalheAdmin() {
               token: row.token,
               horarioCandidato: row.horario_sugerido_pelo_candidato ?? null,
               horarioContraProposta: row.horario_consultor_contra_proposta ?? null,
+              horarioConfirmado: row.horario_confirmado ?? null,
+              modalidade: row.modalidade ?? null,
+              localOuLink: row.local_ou_link ?? null,
+              infoAdicional: row.info_adicional ?? null,
             };
           }
         });
@@ -672,7 +676,7 @@ export default function VagaDetalheAdmin() {
   const [revisarSugestaoOpen, setRevisarSugestaoOpen] = useState<string | null>(null);
   const [contraPropostaHorario, setContraPropostaHorario] = useState("");
   const [contraPropostaStep, setContraPropostaStep] = useState<"main" | "nova_data">("main");
-  const [agendamentosMap, setAgendamentosMap] = useState<Record<string, { status: string; horario1: string; horario2: string; token: string; horarioCandidato?: string | null; horarioContraProposta?: string | null }>>({});
+  const [agendamentosMap, setAgendamentosMap] = useState<Record<string, { status: string; horario1: string; horario2: string; token: string; horarioCandidato?: string | null; horarioContraProposta?: string | null; horarioConfirmado?: string | null; modalidade?: string | null; localOuLink?: string | null; infoAdicional?: string | null }>>({});
   /** Modal específico de Entrevista com Gestor (Etapa 5 — Doc Mestre). */
   const [agendarGestorOpen, setAgendarGestorOpen] = useState<string | null>(null);
   const [fichaCandidatoId, setFichaCandidatoId] = useState<string | null>(null);
@@ -3620,24 +3624,11 @@ export default function VagaDetalheAdmin() {
                     if (!horarioSugerido) return;
                     const { error } = await (supabase as any)
                       .from("entrevista_agendamentos")
-                      .update({ status: "confirmado", horario_confirmado: horarioSugerido })
+                      .update({ status: "confirmado_aguardando_detalhes", horario_confirmado: horarioSugerido })
                       .eq("token", ag.token);
                     if (error) { toast.error("Erro ao confirmar."); return; }
-                    if (cExtra.email) {
-                      sendEmail(
-                        cExtra.email,
-                        `🎉 Entrevista confirmada — ${vaga.titulo ?? vaga.cargo}`,
-                        emailEntrevistaConfirmada({
-                          nome: cExtra.nome.split(" ")[0],
-                          cargoVaga: vaga.titulo ?? vaga.cargo,
-                          data: new Date(horarioSugerido).toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" }),
-                          hora: new Date(horarioSugerido).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
-                          modalidade: "A confirmar",
-                        })
-                      );
-                    }
-                    setAgendamentosMap((prev) => ({ ...prev, [revisarSugestaoOpen!]: { ...prev[revisarSugestaoOpen!], status: "confirmado" } }));
-                    toast.success("Entrevista confirmada no horário do candidato.");
+                    setAgendamentosMap((prev) => ({ ...prev, [revisarSugestaoOpen!]: { ...prev[revisarSugestaoOpen!], status: "confirmado_aguardando_detalhes", horarioConfirmado: horarioSugerido } }));
+                    toast.success("Horário aceito! Preencha os detalhes da entrevista na ficha do candidato.");
                     fechar();
                   }}
                 >
@@ -3752,6 +3743,42 @@ export default function VagaDetalheAdmin() {
         onRecarregarCandidaturas={recarregarCandidaturas}
         onExcluir={(id) => setExcluirCandidatoOpen(id)}
         onRevisarSugestao={(id) => setRevisarSugestaoOpen(id)}
+        onEnviarDetalhes={async ({ modalidade, localOuLink, infoAdicional }) => {
+          if (!fichaCandidatoId) return;
+          const ag = agendamentosMap[fichaCandidatoId];
+          const cExtra = candidatosExtras.find((c) => c.id === fichaCandidatoId);
+          if (!ag) return;
+          const horarioISO = ag.horarioConfirmado ?? ag.horarioCandidato ?? ag.horarioContraProposta ?? ag.horario1;
+          const { error } = await (supabase as any).from("entrevista_agendamentos").update({
+            status: "confirmado",
+            modalidade,
+            local_ou_link: localOuLink || null,
+            info_adicional: infoAdicional || null,
+          }).eq("token", ag.token);
+          if (error) { toast.error("Erro ao salvar detalhes."); return; }
+          if (cExtra?.email && horarioISO) {
+            const d = new Date(horarioISO);
+            const modalidadeLabel = modalidade === "online" ? "Remota (online)" : modalidade === "presencial" ? "Presencial" : "Híbrida";
+            sendEmail(
+              cExtra.email,
+              `🎉 Detalhes da sua entrevista — ${vaga?.titulo ?? "Vaga"}`,
+              emailEntrevistaConfirmada({
+                nome: cExtra.nome.split(" ")[0],
+                cargoVaga: vaga?.titulo ?? "Vaga",
+                data: d.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" }),
+                hora: d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+                modalidade: modalidadeLabel,
+                linkOuLocal: localOuLink || undefined,
+                infoAdicional: infoAdicional || undefined,
+              })
+            );
+          }
+          setAgendamentosMap((prev) => ({
+            ...prev,
+            [fichaCandidatoId]: { ...prev[fichaCandidatoId], status: "confirmado", modalidade, localOuLink, infoAdicional },
+          }));
+          toast.success("Detalhes enviados! Candidato notificado por e-mail. ✓");
+        }}
         onReagendar={() => {
           if (fichaCandidatoId) {
             setAgendamentosMap((prev) => {
@@ -5931,6 +5958,7 @@ function CandidatoDetailSheet({
   onExcluir,
   onReagendar,
   onRevisarSugestao,
+  onEnviarDetalhes,
 }: {
   open: boolean;
   candidato: CandidatoBase | null;
@@ -5938,7 +5966,7 @@ function CandidatoDetailSheet({
   tituloVaga: string;
   etapaAtual?: string;
   eventos: EventoEntrevista[];
-  agendamento?: { status: string; horario1: string; horario2: string; token: string; horarioCandidato?: string | null; horarioContraProposta?: string | null } | null;
+  agendamento?: { status: string; horario1: string; horario2: string; token: string; horarioCandidato?: string | null; horarioContraProposta?: string | null; horarioConfirmado?: string | null; modalidade?: string | null; localOuLink?: string | null; infoAdicional?: string | null } | null;
   declinio?: { motivo: string; quem: "candidato" | "azumi" };
   questionariosVaga: QuestionarioVaga[];
   mensagensVaga: MensagemVaga[];
@@ -5958,6 +5986,7 @@ function CandidatoDetailSheet({
   onExcluir?: (id: string) => void;
   onReagendar?: () => void;
   onRevisarSugestao?: (candidatoId: string) => void;
+  onEnviarDetalhes?: (detalhes: { modalidade: string; localOuLink: string; infoAdicional: string }) => Promise<void>;
 }) {
   useScrollLock(open);
   const { id: vagaIdParam } = useParams();
@@ -5965,6 +5994,10 @@ function CandidatoDetailSheet({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [fichaTab, setFichaTab] = useState<"dados" | "disc" | "processos" | "respostas">("dados");
   const [retrocessos, setRetrocessos] = useState<{ id: string; etapa: string; etapa_anterior: string | null; justificativa: string | null; entrou_em: string }[]>([]);
+  const [detModalidade, setDetModalidade] = useState("online");
+  const [detLocalOuLink, setDetLocalOuLink] = useState("");
+  const [detInfoAdicional, setDetInfoAdicional] = useState("");
+  const [enviandoDetalhes, setEnviandoDetalhes] = useState(false);
   useEffect(() => {
     if (!open || !candidato?.id) return;
     (supabase as any).from("candidate_etapa_historico")
@@ -6276,6 +6309,13 @@ function CandidatoDetailSheet({
                     </button>
                   );
                 }
+                if (agSt === "confirmado_aguardando_detalhes") {
+                  return (
+                    <button disabled className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg border border-info/40 text-info text-sm font-medium opacity-90 cursor-not-allowed">
+                      <CalendarDays className="h-4 w-4" /> Preencher detalhes ↓
+                    </button>
+                  );
+                }
                 if (agSt === "confirmado") {
                   return (
                     <button disabled className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg border border-success/40 text-success text-sm font-medium opacity-80 cursor-not-allowed">
@@ -6325,7 +6365,8 @@ function CandidatoDetailSheet({
               aguardando_candidato: { label: "Aguardando resposta do candidato", cor: "text-warning" },
               candidato_sugeriu: { label: "Candidato sugeriu novo horário", cor: "text-destructive" },
               consultor_contra_proposta: { label: "Contra-proposta enviada — aguardando candidato", cor: "text-warning" },
-              confirmado: { label: "Entrevista confirmada", cor: "text-success" },
+              confirmado_aguardando_detalhes: { label: "Candidato confirmou — preencha os detalhes", cor: "text-info" },
+              confirmado: { label: "Entrevista confirmada ✓", cor: "text-success" },
               descontinuado: { label: "Candidato descontinuado (não aceitou nenhum horário)", cor: "text-muted-foreground" },
             };
             const info = labelMap[st] ?? { label: st, cor: "text-muted-foreground" };
@@ -6335,8 +6376,65 @@ function CandidatoDetailSheet({
                   <CalendarDays className={`h-3.5 w-3.5 ${info.cor}`} />
                   <span className={`text-xs font-medium ${info.cor}`}>{info.label}</span>
                 </div>
+                {st === "confirmado_aguardando_detalhes" && (() => {
+                  const horarioISO = agendamento.horarioConfirmado ?? agendamento.horarioCandidato ?? agendamento.horarioContraProposta ?? agendamento.horario1;
+                  return (
+                    <div className="space-y-3 pt-1">
+                      {horarioISO && (
+                        <p className="text-xs text-muted-foreground">
+                          Horário confirmado pelo candidato: <strong className="text-foreground">{new Date(horarioISO).toLocaleString("pt-BR", { weekday: "long", day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" })}</strong>
+                        </p>
+                      )}
+                      <div className="rounded-md border border-info/30 bg-info/5 px-3 py-2.5 space-y-3">
+                        <p className="text-xs font-semibold text-info">Preencha os detalhes para enviar ao candidato</p>
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-medium text-muted-foreground">Modalidade</label>
+                          <select value={detModalidade} onChange={(e) => setDetModalidade(e.target.value)}
+                            className="w-full h-8 rounded-md border border-border bg-background px-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary">
+                            <option value="online">Remota (online)</option>
+                            <option value="presencial">Presencial</option>
+                            <option value="hibrido">Híbrida</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-medium text-muted-foreground">
+                            {detModalidade === "presencial" ? "Endereço / local" : "Link da videochamada"}
+                          </label>
+                          <input
+                            type={detModalidade === "presencial" ? "text" : "url"}
+                            value={detLocalOuLink}
+                            onChange={(e) => setDetLocalOuLink(e.target.value)}
+                            placeholder={detModalidade === "presencial" ? "Ex: Rua das Flores, 123 — Curitiba/PR" : "https://meet.google.com/abc-defg-hij"}
+                            className="w-full h-8 rounded-md border border-border bg-background px-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-medium text-muted-foreground">Informações adicionais (opcional)</label>
+                          <textarea
+                            value={detInfoAdicional}
+                            onChange={(e) => setDetInfoAdicional(e.target.value)}
+                            placeholder="Ex: Pergunte pela recepcionista Márcia. Trazer RG."
+                            rows={2}
+                            className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-primary"
+                          />
+                        </div>
+                        <button
+                          disabled={enviandoDetalhes || !detLocalOuLink.trim()}
+                          onClick={async () => {
+                            setEnviandoDetalhes(true);
+                            await onEnviarDetalhes?.({ modalidade: detModalidade, localOuLink: detLocalOuLink.trim(), infoAdicional: detInfoAdicional.trim() });
+                            setEnviandoDetalhes(false);
+                          }}
+                          className="w-full h-9 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-[hsl(var(--primary)/0.9)] disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {enviandoDetalhes ? "Enviando..." : "📧 Enviar confirmação ao candidato"}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
                 {st === "confirmado" && (() => {
-                  const horarioISO = agendamento.horarioCandidato ?? agendamento.horarioContraProposta ?? agendamento.horario1;
+                  const horarioISO = agendamento.horarioConfirmado ?? agendamento.horarioCandidato ?? agendamento.horarioContraProposta ?? agendamento.horario1;
                   if (!horarioISO) return null;
                   const start = new Date(horarioISO);
                   const end = new Date(start.getTime() + 60 * 60 * 1000);

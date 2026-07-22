@@ -287,7 +287,16 @@ export function emailMudancaProcesso(params: { nome: string; cargoVaga: string }
   );
 }
 
-export function emailEntrevistaConfirmada(params: { nome: string; cargoVaga: string; data: string; hora: string; modalidade: string }): string {
+export function emailEntrevistaConfirmada(params: {
+  nome: string;
+  cargoVaga: string;
+  data: string;
+  hora: string;
+  modalidade: string;
+  linkOuLocal?: string;
+  infoAdicional?: string;
+  isFirstConfirm?: boolean;
+}): string {
   const tips = `
     <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;border-radius:12px;overflow:hidden;border:1px solid #e3eaf5;">
       <tr><td style="background:#264478;padding:12px 20px;">
@@ -305,20 +314,41 @@ export function emailEntrevistaConfirmada(params: { nome: string; cargoVaga: str
       </td></tr>
     </table>`;
 
+  const linkRow = params.linkOuLocal
+    ? `<tr><td style="padding:8px 20px 14px;border-top:1px solid #d8e8f5;">
+        <p style="margin:0 0 2px;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:#7FA8E8;font-family:${FONT_FAMILY};">${params.modalidade.toLowerCase().includes("online") || params.modalidade.toLowerCase().includes("remot") ? "Link da entrevista" : "Local"}</p>
+        ${params.modalidade.toLowerCase().includes("online") || params.modalidade.toLowerCase().includes("remot")
+          ? `<a href="${params.linkOuLocal}" style="font-size:14px;font-weight:600;color:#264478;font-family:${FONT_FAMILY};">${params.linkOuLocal}</a>`
+          : `<p style="margin:0;font-size:14px;font-weight:600;color:#14233F;font-family:${FONT_FAMILY};">${params.linkOuLocal}</p>`
+        }
+      </td></tr>`
+    : "";
+
+  const infoRow = params.infoAdicional
+    ? `<tr><td style="padding:8px 20px 14px;border-top:1px solid #d8e8f5;">
+        <p style="margin:0 0 2px;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:#7FA8E8;font-family:${FONT_FAMILY};">Informações adicionais</p>
+        <p style="margin:0;font-size:13px;color:#5B6B85;font-family:${FONT_FAMILY};">${params.infoAdicional}</p>
+      </td></tr>`
+    : "";
+
   const infoBox = `
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;border-radius:10px;background:#EEF5FF;border:1px solid #c5d8f5;">
-      <tr><td style="padding:14px 20px;text-align:left;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;border-radius:10px;background:#EEF5FF;border:1px solid #c5d8f5;overflow:hidden;">
+      <tr><td style="padding:14px 20px 10px;text-align:left;">
         <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:#7FA8E8;font-family:${FONT_FAMILY};">Data e horário confirmados</p>
         <p style="margin:0;font-size:17px;font-weight:700;color:#14233F;font-family:${FONT_FAMILY};">${params.data} às ${params.hora}</p>
         <p style="margin:4px 0 0;font-size:12px;color:#5B6B85;font-family:${FONT_FAMILY};">${params.modalidade}</p>
       </td></tr>
+      ${linkRow}
+      ${infoRow}
     </table>`;
+
+  const intro = params.isFirstConfirm
+    ? `Olá, <strong>${params.nome}</strong>! Você confirmou sua entrevista para a vaga de <strong>${params.cargoVaga}</strong>. Abaixo estão todos os detalhes:`
+    : `Olá, <strong>${params.nome}</strong>! Sua entrevista para a vaga de <strong>${params.cargoVaga}</strong> está confirmada com todos os detalhes:`;
 
   return emailWrapper(
     "🎉 Entrevista confirmada!",
-    paragrafo(
-      `Olá, <strong>${params.nome}</strong>! Sua sugestão de horário foi aceita e a entrevista para a vaga de <strong>${params.cargoVaga}</strong> está confirmada!`
-    ) +
+    paragrafo(intro) +
     infoBox +
     tips +
     paragrafo(`Boa sorte! Estamos torcendo por você. 🚀`)

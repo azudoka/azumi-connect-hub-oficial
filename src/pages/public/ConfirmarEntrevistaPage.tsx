@@ -107,7 +107,7 @@ export default function ConfirmarEntrevistaPage() {
         if (error || !data) { setStep("not_found"); return; }
         setAg(data as Agendamento);
         const st: string = data.status;
-        if (st === "confirmado") {
+        if (st === "confirmado" || st === "confirmado_aguardando_detalhes") {
           if (data.horario_confirmado) setHorarioConfirmado(data.horario_confirmado);
           setStep("already_done");
           return;
@@ -124,7 +124,7 @@ export default function ConfirmarEntrevistaPage() {
     setSubmitting(true); setErro(null);
     const { error } = await (supabase as any)
       .from("entrevista_agendamentos")
-      .update({ status: "confirmado", horario_confirmado: horarioEscolhido })
+      .update({ status: "confirmado_aguardando_detalhes", horario_confirmado: horarioEscolhido })
       .eq("token", agendamentoId);
     if (error) {
       console.error("[confirmar entrevista]", error);
@@ -196,7 +196,7 @@ export default function ConfirmarEntrevistaPage() {
     setSubmitting(true); setErro(null);
     const { error } = await (supabase as any)
       .from("entrevista_agendamentos")
-      .update({ status: "confirmado", horario_confirmado: horario })
+      .update({ status: "confirmado_aguardando_detalhes", horario_confirmado: horario })
       .eq("token", agendamentoId);
     if (error) {
       console.error("[confirmar contra proposta]", error);
@@ -289,40 +289,22 @@ export default function ConfirmarEntrevistaPage() {
   // Confirmação bem-sucedida — mostra botões de agenda
   if (step === "done_confirm" || step === "done_counter_confirm") {
     const horario = horarioConfirmado;
-    const cargo = ag?.job_solicitations?.cargo ?? "Entrevista";
-    const titulo = `Entrevista Azumi — ${cargo}`;
-    const desc = `Entrevista agendada pela Azumi RH para a vaga de ${cargo}.`;
-    const links = horario ? calendarLinks(horario, titulo, desc) : null;
     return (
       <Shell>
         <div className="bg-card border border-border rounded-2xl p-6 shadow-xl text-center">
           <div className="h-14 w-14 mx-auto rounded-full flex items-center justify-center bg-success/15 text-success">
             <CheckCircle2 className="h-7 w-7" />
           </div>
-          <h1 className="font-semibold text-xl mt-3">Entrevista confirmada!</h1>
-          <p className="text-sm text-muted-foreground mt-1">Boa entrevista! Aguarde o contato da Azumi com os detalhes.</p>
+          <h1 className="font-semibold text-xl mt-3">🎉 Confirmado!</h1>
           {horario && (
-            <p className="text-xs text-muted-foreground mt-3 bg-muted rounded-lg px-3 py-2 inline-block">
+            <p className="text-sm font-medium mt-2 bg-muted rounded-lg px-3 py-2 inline-block">
               {fmtDT(horario)}
             </p>
           )}
-          {links && (
-            <div className="mt-5 space-y-2">
-              <p className="text-xs font-medium text-muted-foreground mb-2">Salvar na agenda:</p>
-              <a href={links.googleUrl} target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full h-10 rounded-lg border border-border text-sm font-medium hover:bg-secondary transition-colors">
-                <ExternalLink className="h-3.5 w-3.5" /> Google Agenda
-              </a>
-              <a href={links.outlookUrl} target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full h-10 rounded-lg border border-border text-sm font-medium hover:bg-secondary transition-colors">
-                <ExternalLink className="h-3.5 w-3.5" /> Outlook
-              </a>
-              <a href={links.icsUrl} download="entrevista-azumi.ics"
-                className="flex items-center justify-center gap-2 w-full h-10 rounded-lg border border-border text-sm font-medium hover:bg-secondary transition-colors">
-                <ExternalLink className="h-3.5 w-3.5" /> Baixar (.ics / Apple Calendar)
-              </a>
-            </div>
-          )}
+          <p className="text-sm text-muted-foreground mt-3">
+            Em breve você receberá um e-mail com todos os detalhes da entrevista — local ou link para acesso.
+          </p>
+          <p className="text-xs text-muted-foreground mt-2">Boa sorte! Estamos torcendo por você. 🚀</p>
         </div>
       </Shell>
     );
