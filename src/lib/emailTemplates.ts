@@ -355,6 +355,26 @@ export function emailEntrevistaConfirmada(params: {
   );
 }
 
+export function emailAcessoAreaCandidato(params: { nome: string; link: string }): string {
+  return emailWrapper(
+    "Seu acesso à Área do Candidato",
+    paragrafo(`Olá, <strong>${params.nome}</strong>! Recebemos sua solicitação de acesso.`) +
+    paragrafo("Clique no botão abaixo para acessar sua área do candidato. O link é pessoal e intransferível.") +
+    botao(params.link, "Acessar minha área →") +
+    `<p style="font-size:12px;color:#94A3B8;margin:20px auto 0;max-width:440px;font-family:${FONT_FAMILY};">Se você não solicitou esse acesso, ignore este e-mail. Nenhuma ação será necessária.</p>`
+  );
+}
+
+export function emailCadastroNaoEncontrado(): string {
+  return emailWrapper(
+    "Área do Candidato — Azumi RH",
+    paragrafo("Não encontramos um cadastro vinculado a este e-mail.") +
+    paragrafo("Se você ainda não se candidatou a uma vaga, acesse nosso portal e confira as oportunidades disponíveis. Seu cadastro é criado automaticamente ao se candidatar.") +
+    botao("https://connect.azumirh.com.br/vagas", "Ver vagas disponíveis →") +
+    `<p style="font-size:12px;color:#94A3B8;margin:20px auto 0;max-width:440px;font-family:${FONT_FAMILY};">Dúvidas? Fale com a nossa equipe pelo WhatsApp ou e-mail no rodapé.</p>`
+  );
+}
+
 export function emailSolicitarAtualizacao(params: { nome: string; link: string }): string {
   return emailWrapper(
     "Vamos atualizar seu cadastro?",

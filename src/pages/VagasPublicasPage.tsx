@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Search, Lock, Zap, Instagram, Linkedin, Facebook, Globe, ExternalLink, Moon, Sun } from "lucide-react";
+import { MapPin, Search, Lock, Zap, Instagram, Linkedin, Facebook, Globe, ExternalLink, Moon, Sun, UserCircle } from "lucide-react";
 import { useThemeToggle } from "@/hooks/useThemeToggle";
 import capaVagas from "@/assets/brand/capa-vagas.png";
 import {
@@ -87,7 +87,13 @@ function Footer() {
             <Globe className="h-5 w-5" />
           </a>
         </div>
-        <p>© 2026 Azumi RH · azumirh.com.br · contato@azumirh.com.br</p>
+        <div className="flex items-center gap-4">
+          <p>© 2026 Azumi RH · azumirh.com.br · contato@azumirh.com.br</p>
+          <span className="text-white/30">·</span>
+          <Link to="/area-do-candidato" className="flex items-center gap-1.5 font-medium text-white/80 hover:text-white transition-colors">
+            <UserCircle className="h-4 w-4" /> Área do candidato
+          </Link>
+        </div>
       </div>
     </footer>
   );
@@ -199,6 +205,14 @@ export default function VagasPublicasPage() {
               >
                 <Globe className="h-[18px] w-[18px]" />
               </a>
+              <span className="hidden sm:block h-4 w-px bg-white/20 mx-1" />
+              <Link
+                to="/area-do-candidato"
+                className="flex items-center gap-1.5 rounded-full bg-white/10 border border-white/20 px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-white/20 transition-colors"
+              >
+                <UserCircle className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Área do candidato</span>
+              </Link>
               <span className="hidden sm:block h-4 w-px bg-white/20 mx-1" />
               <button
                 onClick={alternar}
