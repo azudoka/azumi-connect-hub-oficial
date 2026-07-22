@@ -112,6 +112,12 @@ const ESCOLARIDADES = [
 
 const ORIGENS = ["LinkedIn", "Instagram", "Indicação", "Google", "Site Azumi", "Outro"];
 
+const SETORES_INTERESSE = [
+  "Administrativo", "Comercial/Vendas", "Financeiro", "RH",
+  "Tecnologia", "Operações", "Marketing", "Atendimento",
+  "Logística", "Produção/Industrial",
+];
+
 function formatarTelefone(v: string) {
   const nums = v.replace(/\D/g, "").slice(0, 11);
   if (nums.length <= 2) return nums;
@@ -164,6 +170,14 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
   const [querAlterarDados, setQuerAlterarDados] = useState<boolean | null>(null);
   const [querRefazerDisc, setQuerRefazerDisc] = useState<boolean | null>(null);
 
+  // Interesses (banco de talentos)
+  const [setoresSelecionados, setSetoresSelecionados] = useState<string[]>([]);
+  const [cargosInteresse, setCargosInteresse] = useState("");
+
+  function toggleSetor(s: string) {
+    setSetoresSelecionados((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]);
+  }
+
   // Perguntas customizadas
   const [perguntas, setPerguntas] = useState<VagaPergunta[]>([]);
   const [respostas, setRespostas] = useState<Record<string, string>>({});
@@ -197,6 +211,8 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
     setDiscIntroAceita(false);
     setSemLinkedin(false);
     setRespostas({});
+    setSetoresSelecionados([]);
+    setCargosInteresse("");
     onClose();
   }
 
@@ -413,6 +429,10 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
         banco_talentos: modo === "banco",
         etapa_azumi: "recebido",
         foto_url: fotoUrl,
+        interesses_setores: modo === "banco" && setoresSelecionados.length ? setoresSelecionados : null,
+        interesses_cargos: modo === "banco" && cargosInteresse.trim()
+          ? cargosInteresse.split(",").map((c) => c.trim()).filter(Boolean)
+          : null,
         pretensao_salarial: c.pretensaoSalarial || null,
         indicado_por: c.indicadoPor || null,
         lgpd_aceite: c.aceitePrivacidade,
@@ -835,6 +855,38 @@ export default function CandidaturaModal({ open, onClose, modo, vagaTitulo, vaga
                     </Select>
                   </Field>
                 </Grid2>
+              )}
+
+              {modo === "banco" && (
+                <div className="pt-1 space-y-3">
+                  <div>
+                    <p className="mb-2 font-sans text-xs font-medium text-foreground">Setores de interesse</p>
+                    <div className="flex flex-wrap gap-2">
+                      {SETORES_INTERESSE.map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => toggleSetor(s)}
+                          className={cn(
+                            "px-3 py-1.5 rounded-full font-sans text-xs border transition-colors",
+                            setoresSelecionados.includes(s)
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "border-border text-muted-foreground hover:border-primary/50"
+                          )}
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <Field label="Cargos de interesse (separados por vírgula)">
+                    <Input
+                      value={cargosInteresse}
+                      onChange={(v) => setCargosInteresse(v)}
+                      placeholder="Ex.: Analista de RH, Coordenador Administrativo"
+                    />
+                  </Field>
+                </div>
               )}
 
               <Field label="Como ficou sabendo desta vaga? *">
