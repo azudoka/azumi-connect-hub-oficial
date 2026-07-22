@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Mail, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Mail, ArrowRight, CheckCircle2, Instagram, Linkedin, Facebook, Globe } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { AzumiLogo } from "@/components/brand/AzumiLogo";
 import {
   sendEmail,
   emailAcessoAreaCandidato,
@@ -108,7 +107,7 @@ export default function AreaDoCandidatoPage() {
           </Link>
           <Link
             to="/vagas"
-            className="text-[12px] text-white/80 hover:text-white transition-colors hidden sm:block"
+            className="text-[12px] text-white/80 hover:text-white transition-colors hidden sm:block px-4 py-1"
           >
             ← Voltar para vagas
           </Link>
@@ -217,7 +216,23 @@ export default function AreaDoCandidatoPage() {
 
       {/* ── Footer mínimo ─────────────────────────────────────────────── */}
       <footer className="py-6 text-center text-xs text-muted-foreground">
-        <AzumiLogo product="Connect" size={13} className="mx-auto mb-2 opacity-60" />
+        <div className="flex items-center justify-center gap-4 mb-3 opacity-60">
+          <a href="https://www.instagram.com/azumirh/" target="_blank" rel="noopener noreferrer" aria-label="Instagram da Azumi RH" className="hover:opacity-100 transition-opacity">
+            <Instagram className="h-4 w-4" />
+          </a>
+          <a href="https://www.linkedin.com/company/azumirh/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn da Azumi RH" className="hover:opacity-100 transition-opacity">
+            <Linkedin className="h-4 w-4" />
+          </a>
+          <a href="https://www.facebook.com/azumirhc/" target="_blank" rel="noopener noreferrer" aria-label="Facebook da Azumi RH" className="hover:opacity-100 transition-opacity">
+            <Facebook className="h-4 w-4" />
+          </a>
+          <a href="https://www.tiktok.com/@azumirh" target="_blank" rel="noopener noreferrer" aria-label="TikTok da Azumi RH" className="hover:opacity-100 transition-opacity">
+            <iconify-icon icon="simple-icons:tiktok" width="16" height="16" />
+          </a>
+          <a href="https://azumirh.com.br" target="_blank" rel="noopener noreferrer" aria-label="Site da Azumi RH" className="hover:opacity-100 transition-opacity">
+            <Globe className="h-4 w-4" />
+          </a>
+        </div>
         © {new Date().getFullYear()} Azumi RH · contato@azumirh.com.br
       </footer>
 

@@ -3,70 +3,61 @@ import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
   MapPin, Briefcase, Linkedin, Camera, Pencil, Check, X,
-  Instagram, ChevronRight, Download, Star, Lock, Mail, Phone,
-  FileText, Upload,
+  Instagram, ChevronRight, Download, Lock, Mail, Phone,
+  FileText, Upload, Target, User, Compass, LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import azumiLogoBranca from "@/assets/brand/azumi-logo-branca.png";
+import PerfilIlustracao from "@/components/disc/PerfilIlustracao";
+import type { DiscDim } from "@/components/disc/discQuestions";
 
 // ── Logos ─────────────────────────────────────────────────────────────────────
 const CONNECT_LOGO = "https://raw.githubusercontent.com/azudoka/azumi-connect-hub-oficial/main/public/connect-logo.png";
 
-// ── Serviços Azumi ─────────────────────────────────────────────────────────────
+// ── Dados estáticos ───────────────────────────────────────────────────────────
 const SERVICOS = [
-  {
-    label: "Serviços para você",
-    desc: "Soluções de RH pensadas para o seu desenvolvimento profissional.",
-    href: "https://azumirh.com.br",
-    grad: "from-[#264478] to-[#3D63B8]",
-    emoji: "🧑‍💼",
-  },
-  {
-    label: "Programa Impulso RH",
-    desc: "Capacitação e crescimento para profissionais de recursos humanos.",
-    href: "https://azumirh.com.br",
-    grad: "from-[#0F2A4A] to-[#264478]",
-    emoji: "🚀",
-  },
-  {
-    label: "Gold Market",
-    desc: "Oportunidades exclusivas para perfis em destaque.",
-    href: "https://azumirh.com.br",
-    grad: "from-[#3D63B8] to-[#7FA8E8]",
-    emoji: "💼",
-  },
+  { label: "Serviços para você", desc: "Soluções de RH pensadas para o seu desenvolvimento profissional.", href: "https://azumirh.com.br", grad: "from-[#264478] to-[#3D63B8]", emoji: "🧑‍💼" },
+  { label: "Programa Impulso RH", desc: "Capacitação e crescimento para profissionais de recursos humanos.", href: "https://azumirh.com.br", grad: "from-[#0F2A4A] to-[#264478]", emoji: "🚀" },
+  { label: "Gold Market", desc: "Oportunidades exclusivas para perfis em destaque.", href: "https://azumirh.com.br", grad: "from-[#3D63B8] to-[#7FA8E8]", emoji: "💼" },
 ];
 
-// ── DISC ──────────────────────────────────────────────────────────────────────
 const DISC_INFO: Record<string, { nome: string; cor: string; frase: string }> = {
-  D: { nome: "Executor", cor: "#EF4444", frase: "Você age com velocidade porque desafios são o seu combustível." },
+  D: { nome: "Executor",    cor: "#EF4444", frase: "Você age com velocidade porque desafios são o seu combustível." },
   I: { nome: "Comunicador", cor: "#F59E0B", frase: "Você conecta pessoas porque a energia que transmite é genuína." },
-  S: { nome: "Planejador", cor: "#10B981", frase: "Você entrega consistência porque pensa antes e constrói com cuidado." },
-  C: { nome: "Analista", cor: "#3B82F6", frase: "Você entrega qualidade alta porque pensa antes, mede e refina." },
+  S: { nome: "Planejador",  cor: "#10B981", frase: "Você entrega consistência porque pensa antes e constrói com cuidado." },
+  C: { nome: "Analista",    cor: "#3B82F6", frase: "Você entrega qualidade alta porque pensa antes, mede e refina." },
 };
 
-// ── Etapas do funil ──────────────────────────────────────────────────────────
 const ETAPAS = [
-  { key: "recebido",           label: "Candidatura recebida",      desc: "Seus dados chegaram para a equipe Azumi" },
-  { key: "triagem_inicial",    label: "Triagem",                   desc: "Análise do seu currículo" },
-  { key: "questionario",       label: "Questionário",              desc: "Resposta ao questionário da vaga" },
-  { key: "entrevista_azumi",   label: "Entrevista Azumi",          desc: "Entrevista com nossa consultora" },
-  { key: "teste_tecnico",      label: "Teste Técnico",             desc: "Avaliação técnica, se aplicável à vaga" },
-  { key: "entrevista_cliente", label: "Entrevista com a empresa",  desc: "" },
-  { key: "proposta",           label: "Proposta 🎉",               desc: "" },
-  { key: "contratado",         label: "Contratado 🎉",             desc: "" },
+  { key: "recebido",           label: "Candidatura recebida",     desc: "Seus dados chegaram para a equipe Azumi" },
+  { key: "triagem_inicial",    label: "Triagem",                  desc: "Análise do seu currículo" },
+  { key: "questionario",       label: "Questionário",             desc: "Resposta ao questionário da vaga" },
+  { key: "entrevista_azumi",   label: "Entrevista Azumi",         desc: "Entrevista com nossa consultora" },
+  { key: "teste_tecnico",      label: "Teste Técnico",            desc: "Avaliação técnica, se aplicável à vaga" },
+  { key: "entrevista_cliente", label: "Entrevista com a empresa", desc: "" },
+  { key: "proposta",           label: "Proposta",                 desc: "" },
+  { key: "contratado",         label: "Contratado",               desc: "" },
 ];
 
-// ── Types ──────────────────────────────────────────────────────────────────────
+const SETORES_INTERESSE = [
+  "Administrativo", "Comercial/Vendas", "Financeiro", "RH",
+  "Tecnologia", "Operações", "Marketing", "Atendimento",
+  "Logística", "Produção/Industrial",
+];
+
+const ESCOLARIDADES = [
+  "Ensino Fundamental", "Ensino Médio", "Técnico/Tecnólogo",
+  "Superior incompleto", "Superior completo", "Pós-graduação/MBA", "Mestrado/Doutorado",
+];
+
+// ── Types ─────────────────────────────────────────────────────────────────────
 interface DiscResultado {
   score_d: number; score_i: number; score_s: number; score_c: number;
   fator_predominante: string; fator_secundario: string | null;
 }
 
 interface Candidatura {
-  id: string;
-  etapa_azumi: string | null;
-  banco_talentos: boolean;
+  id: string; etapa_azumi: string | null; banco_talentos: boolean;
   data_aplicacao: string | null;
   job_solicitations: { cargo: string; avulsa_empresa_nome: string | null } | null;
 }
@@ -89,18 +80,14 @@ function calcProgresso(c: CandidatoData, disc: DiscResultado | null): number {
     c.interesses_setores?.length, c.interesses_cargos?.length,
     disc ? "ok" : null,
   ];
-  const preenchidos = campos.filter(Boolean).length;
-  return Math.round((preenchidos / campos.length) * 100);
+  return Math.round((campos.filter(Boolean).length / campos.length) * 100);
 }
 
 function fmtData(iso: string | null): string {
   if (!iso) return "";
-  const d = new Date(iso);
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+  return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// Page
 // ══════════════════════════════════════════════════════════════════════════════
 export default function MeuPerfilPage() {
   const { token } = useParams<{ token: string }>();
@@ -111,8 +98,15 @@ export default function MeuPerfilPage() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState(false);
 
-  // UI states
-  const [verFinalizadas, setVerFinalizadas] = useState(false);
+  // Hero edit
+  const [editandoHero, setEditandoHero] = useState(false);
+  const [cidadeDraft, setCidadeDraft] = useState("");
+  const [escolaridadeDraft, setEscolaridadeDraft] = useState("");
+  const [setoresDraft, setSetoresDraft] = useState<string[]>([]);
+  const [cargosDraft, setCargosDraft] = useState("");
+  const [salvandoHero, setSalvandoHero] = useState(false);
+
+  // Other edit states
   const [editandoBio, setEditandoBio] = useState(false);
   const [bioRascunho, setBioRascunho] = useState("");
   const [salvandoBio, setSalvandoBio] = useState(false);
@@ -123,13 +117,13 @@ export default function MeuPerfilPage() {
   const [telefoneDraft, setTelefoneDraft] = useState("");
   const [linkedinDraft, setLinkedinDraft] = useState("");
   const [salvandoContato, setSalvandoContato] = useState(false);
+  const [verFinalizadas, setVerFinalizadas] = useState(false);
   const [uploadandoFoto, setUploadandoFoto] = useState(false);
   const [uploadandoCurriculo, setUploadandoCurriculo] = useState(false);
 
   const fotoInputRef = useRef<HTMLInputElement>(null);
   const curriculoInputRef = useRef<HTMLInputElement>(null);
 
-  // Remove dark theme
   useEffect(() => {
     const html = document.documentElement;
     const had = html.classList.contains("theme-midnight");
@@ -137,13 +131,12 @@ export default function MeuPerfilPage() {
     return () => { if (had) html.classList.add("theme-midnight"); };
   }, []);
 
-  // Fetch
   useEffect(() => {
     if (!token) { setErro(true); setLoading(false); return; }
     (async () => {
       const { data, error } = await supabase
         .from("candidates")
-        .select("id, nome, email, telefone, cidade, escolaridade, linkedin, foto_url, avatar_url, cpf, interesses_setores, interesses_cargos, observacoes, resumo_candidato, curriculo_url, curriculo_nome, data_aplicacao")
+        .select("id, nome, email, telefone, cidade, escolaridade, linkedin, foto_url, avatar_url, cpf, interesses_setores, interesses_cargos, observacoes, resumo_candidato, curriculo_url, curriculo_nome")
         .eq("token_acesso_candidato" as any, token)
         .maybeSingle();
 
@@ -154,8 +147,11 @@ export default function MeuPerfilPage() {
       setResumoRascunho(cand.resumo_candidato ?? "");
       setTelefoneDraft(cand.telefone ?? "");
       setLinkedinDraft(cand.linkedin ?? "");
+      setCidadeDraft(cand.cidade ?? "");
+      setEscolaridadeDraft(cand.escolaridade ?? "");
+      setSetoresDraft(cand.interesses_setores ?? []);
+      setCargosDraft(cand.interesses_cargos?.join(", ") ?? "");
 
-      // DISC
       const { data: discData } = await supabase
         .from("disc_resultado_candidato" as any)
         .select("score_d, score_i, score_s, score_c, fator_predominante, fator_secundario")
@@ -163,7 +159,6 @@ export default function MeuPerfilPage() {
         .maybeSingle();
       if (discData) setDisc(discData as unknown as DiscResultado);
 
-      // Todas as candidaturas pelo CPF
       if (cand.cpf) {
         const { data: apps } = await supabase
           .from("candidates")
@@ -172,12 +167,31 @@ export default function MeuPerfilPage() {
           .order("created_at", { ascending: false });
         if (apps) setCandidaturas(apps as unknown as Candidatura[]);
       }
-
       setLoading(false);
     })();
   }, [token]);
 
-  // ── Handlers ────────────────────────────────────────────────────────────────
+  // ── Handlers ─────────────────────────────────────────────────────────────────
+
+  async function salvarHero() {
+    if (!candidato) return;
+    setSalvandoHero(true);
+    const cargosArray = cargosDraft.split(",").map((c) => c.trim()).filter(Boolean);
+    await supabase.from("candidates").update({
+      cidade: cidadeDraft || null,
+      escolaridade: escolaridadeDraft || null,
+      interesses_setores: setoresDraft.length ? setoresDraft : null,
+      interesses_cargos: cargosArray.length ? cargosArray : null,
+    } as any).eq("id", candidato.id);
+    setCandidato((p) => p ? {
+      ...p,
+      cidade: cidadeDraft || null,
+      escolaridade: escolaridadeDraft || null,
+      interesses_setores: setoresDraft.length ? setoresDraft : null,
+      interesses_cargos: cargosArray.length ? cargosArray : null,
+    } : p);
+    setSalvandoHero(false); setEditandoHero(false);
+  }
 
   async function salvarBio() {
     if (!candidato) return;
@@ -232,7 +246,7 @@ export default function MeuPerfilPage() {
     setUploadandoCurriculo(false);
   }
 
-  // ── Loading / Error ──────────────────────────────────────────────────────────
+  // ── Loading / Error ───────────────────────────────────────────────────────────
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-[#F5F7FA]">
       <div className="h-8 w-8 rounded-full border-4 border-[#264478]/30 border-t-[#264478] animate-spin" />
@@ -249,7 +263,7 @@ export default function MeuPerfilPage() {
     </div>
   );
 
-  // ── Computed ──────────────────────────────────────────────────────────────
+  // ── Computed ──────────────────────────────────────────────────────────────────
   const discInfo = disc ? DISC_INFO[disc.fator_predominante] : null;
   const maxScore = disc ? Math.max(disc.score_d, disc.score_i, disc.score_s, disc.score_c, 1) : 1;
   const iniciais = candidato.nome.split(" ").filter(Boolean).map((n) => n[0]).slice(0, 2).join("").toUpperCase();
@@ -260,31 +274,29 @@ export default function MeuPerfilPage() {
   const finalizadas = candidaturas.filter((c) => c.etapa_azumi === "reprovado" || c.etapa_azumi === "contratado");
   const estaNoBanco = candidaturas.some((c) => c.banco_talentos);
 
-  // ── Render ───────────────────────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#F5F7FA] overscroll-none">
 
-      {/* ── Topbar pílula flutuante ────────────────────────────────────────── */}
-      <div className="sticky top-0 z-50 px-4 pt-3 pb-1.5">
-        <div className="max-w-[1060px] mx-auto flex items-center justify-between rounded-full px-5 py-1.5 border border-white/10 shadow-[0_8px_24px_rgba(3,29,56,0.25)]"
+      {/* ── Topbar pílula (não fixo) ──────────────────────────────────────── */}
+      <div className="px-4 pt-3 pb-1.5">
+        <div className="max-w-[1060px] mx-auto flex items-center justify-between rounded-full px-5 py-2 border border-white/10 shadow-[0_8px_24px_rgba(3,29,56,0.25)]"
           style={{ background: "rgba(3,29,56,0.92)", backdropFilter: "blur(10px)" }}>
-          {/* Logos */}
-          <div className="flex items-center gap-4">
-            <img src={azumiLogoBranca} alt="Azumi RH" style={{ height: 96, width: "auto" }} />
-            <div className="w-px h-6 bg-white/20" />
-            <img src={CONNECT_LOGO} alt="Connect" style={{ height: 84, width: "auto" }} />
+          <div className="flex items-center gap-3">
+            <img src={azumiLogoBranca} alt="Azumi RH" style={{ height: 28, width: "auto" }} />
+            <div className="w-px h-5 bg-white/20" />
+            <img src={CONNECT_LOGO} alt="Connect" style={{ height: 36, width: "auto" }} />
           </div>
-          {/* Nav */}
           <nav className="flex items-center gap-1.5">
-            <Link
-              to="/vagas"
-              className="hidden sm:flex items-center rounded-full bg-white px-3.5 py-1.5 text-[12px] font-semibold text-[#031D38] hover:bg-slate-100 transition-colors"
-            >
+            <Link to="/vagas"
+              className="hidden sm:flex items-center rounded-full bg-white/10 border border-white/20 px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-white/20 transition-colors">
               Portal de Vagas
             </Link>
-            <button className="hidden sm:flex items-center gap-1 rounded-full px-3 py-1.5 text-[12px] text-white/80 hover:bg-white/12 hover:text-white transition-colors">
-              ⚙ Configurações
-            </button>
+            <Link to="/vagas"
+              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] text-white/70 hover:text-white hover:bg-white/10 transition-colors">
+              <LogOut className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Sair</span>
+            </Link>
           </nav>
         </div>
       </div>
@@ -292,17 +304,14 @@ export default function MeuPerfilPage() {
       {/* ── Container ─────────────────────────────────────────────────────── */}
       <div className="max-w-[1060px] mx-auto px-4 pb-12">
 
-        {/* ── Hero card ───────────────────────────────────────────────────── */}
-        <section
-          className="mt-4 rounded-[20px] overflow-hidden relative px-8 py-9"
-          style={{ background: "linear-gradient(135deg,#14233F 0%,#264478 55%,#3D63B8 100%)", color: "#fff" }}
-        >
-          {/* Glow decoration */}
+        {/* ── Hero card ────────────────────────────────────────────────────── */}
+        <section className="mt-4 rounded-[20px] overflow-hidden relative px-8 py-9"
+          style={{ background: "linear-gradient(135deg,#14233F 0%,#264478 55%,#3D63B8 100%)", color: "#fff" }}>
           <div className="pointer-events-none absolute -right-16 -top-16 w-64 h-64 rounded-full"
             style={{ background: "radial-gradient(circle,rgba(127,168,232,.28),transparent 70%)" }} />
 
           <div className="relative z-10 flex flex-col sm:flex-row gap-6 items-center sm:items-end flex-wrap">
-            {/* Avatar quadrado */}
+            {/* Avatar */}
             <div className="relative shrink-0">
               <input ref={fotoInputRef} type="file" accept="image/*" className="hidden" onChange={handleFotoChange} />
               <div className="w-[132px] h-[132px] rounded-2xl overflow-hidden border-2 border-white/35 shadow-xl">
@@ -313,10 +322,8 @@ export default function MeuPerfilPage() {
                     </div>
                 }
               </div>
-              <button
-                onClick={() => fotoInputRef.current?.click()}
-                className="absolute bottom-2 right-2 bg-white text-[#264478] rounded-lg text-[10px] font-bold px-2 py-1 shadow-md hover:bg-slate-100 transition-colors flex items-center gap-1"
-              >
+              <button onClick={() => fotoInputRef.current?.click()}
+                className="absolute bottom-2 right-2 bg-white text-[#264478] rounded-lg text-[10px] font-bold px-2 py-1 shadow-md hover:bg-slate-100 transition-colors flex items-center gap-1">
                 {uploadandoFoto
                   ? <div className="h-3 w-3 rounded-full border-2 border-[#264478] border-t-transparent animate-spin" />
                   : <Camera className="h-3 w-3" />
@@ -328,62 +335,136 @@ export default function MeuPerfilPage() {
             {/* Info */}
             <div className="flex-1 min-w-0 text-center sm:text-left">
               <h1 className="text-[30px] font-extrabold tracking-tight leading-tight">{candidato.nome}</h1>
-              <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-2.5">
-                {candidato.escolaridade && (
-                  <span className="flex items-center gap-1.5 text-[12px] rounded-full px-3.5 py-1.5"
-                    style={{ background: "rgba(255,255,255,.14)", border: "1px solid rgba(255,255,255,.22)" }}>
-                    <Briefcase className="h-3.5 w-3.5" /> {candidato.escolaridade}
-                  </span>
-                )}
-                {candidato.cidade && (
-                  <span className="flex items-center gap-1.5 text-[12px] rounded-full px-3.5 py-1.5"
-                    style={{ background: "rgba(255,255,255,.14)", border: "1px solid rgba(255,255,255,.22)" }}>
-                    <MapPin className="h-3.5 w-3.5" /> {candidato.cidade}
-                  </span>
-                )}
-                {discInfo && (
-                  <span className="flex items-center gap-1.5 text-[12px] rounded-full px-3.5 py-1.5 font-bold text-[#264478] bg-white">
-                    🧭 Perfil DISC: {discInfo.nome} ({disc!.fator_predominante})
-                  </span>
-                )}
-                {estaNoBanco && (
-                  <span className="flex items-center gap-1.5 text-[12px] rounded-full px-3.5 py-1.5"
-                    style={{ background: "rgba(255,255,255,.14)", border: "1px solid rgba(255,255,255,.22)" }}>
-                    ✓ Banco de Talentos Azumi
-                  </span>
-                )}
-              </div>
-              {/* Barra de completude */}
-              <div className="mt-4">
-                <div className="flex items-center gap-3 mb-1.5">
-                  <div className="flex-1 h-1.5 rounded-full bg-white/20 overflow-hidden">
-                    <div className="h-full rounded-full bg-white transition-all" style={{ width: `${progresso}%` }} />
+
+              {!editandoHero ? (
+                <>
+                  <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-2.5">
+                    {candidato.escolaridade && (
+                      <span className="flex items-center gap-1.5 text-[12px] rounded-full px-3.5 py-1.5"
+                        style={{ background: "rgba(255,255,255,.14)", border: "1px solid rgba(255,255,255,.22)" }}>
+                        <Briefcase className="h-3.5 w-3.5" /> {candidato.escolaridade}
+                      </span>
+                    )}
+                    {candidato.cidade && (
+                      <span className="flex items-center gap-1.5 text-[12px] rounded-full px-3.5 py-1.5"
+                        style={{ background: "rgba(255,255,255,.14)", border: "1px solid rgba(255,255,255,.22)" }}>
+                        <MapPin className="h-3.5 w-3.5" /> {candidato.cidade}
+                      </span>
+                    )}
+                    {discInfo && (
+                      <span className="flex items-center gap-1.5 text-[12px] rounded-full px-3.5 py-1.5 font-bold text-[#264478] bg-white">
+                        Perfil DISC: {discInfo.nome} ({disc!.fator_predominante})
+                      </span>
+                    )}
+                    {estaNoBanco && (
+                      <span className="flex items-center gap-1.5 text-[12px] rounded-full px-3.5 py-1.5"
+                        style={{ background: "rgba(255,255,255,.14)", border: "1px solid rgba(255,255,255,.22)" }}>
+                        Banco de Talentos Azumi
+                      </span>
+                    )}
+                    <button onClick={() => setEditandoHero(true)}
+                      className="flex items-center justify-center w-7 h-7 rounded-full bg-white/15 hover:bg-white/25 transition-colors"
+                      title="Editar informações">
+                      <Pencil className="h-3 w-3 text-white" />
+                    </button>
                   </div>
-                  <span className="text-[12px] text-white/80 shrink-0">
-                    Perfil <strong className="text-white">{progresso}% completo</strong>
-                  </span>
+
+                  {/* Interesses */}
+                  {(candidato.interesses_setores?.length || candidato.interesses_cargos?.length) ? (
+                    <div className="mt-3 flex flex-wrap justify-center sm:justify-start gap-1.5">
+                      {candidato.interesses_setores?.map((s) => (
+                        <span key={s} className="text-[11px] px-2.5 py-1 rounded-full font-medium"
+                          style={{ background: "rgba(255,255,255,.12)", border: "1px solid rgba(255,255,255,.18)" }}>
+                          {s}
+                        </span>
+                      ))}
+                      {candidato.interesses_cargos?.map((c) => (
+                        <span key={c} className="text-[11px] px-2.5 py-1 rounded-full font-medium"
+                          style={{ background: "rgba(255,255,255,.08)", border: "1px dashed rgba(255,255,255,.22)" }}>
+                          {c}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                </>
+              ) : (
+                /* ── Editar hero ── */
+                <div className="mt-3 space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <input value={cidadeDraft} onChange={(e) => setCidadeDraft(e.target.value)}
+                      placeholder="Cidade / UF"
+                      className="rounded-xl border-0 bg-white/20 text-white placeholder:text-white/50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/40" />
+                    <select value={escolaridadeDraft} onChange={(e) => setEscolaridadeDraft(e.target.value)}
+                      className="rounded-xl border-0 bg-white/20 text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/40">
+                      <option value="">Escolaridade…</option>
+                      {ESCOLARIDADES.map((e) => <option key={e} value={e} className="text-slate-800">{e}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-white/60 mb-1.5">Setores de interesse</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {SETORES_INTERESSE.map((s) => (
+                        <button key={s} type="button"
+                          onClick={() => setSetoresDraft((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s])}
+                          className={cn("text-[11px] px-2.5 py-1 rounded-full border transition-colors",
+                            setoresDraft.includes(s)
+                              ? "bg-white text-[#264478] border-white font-semibold"
+                              : "border-white/30 text-white/70 hover:border-white/60"
+                          )}>
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-white/60 mb-1">Cargos de interesse (separados por vírgula)</p>
+                    <input value={cargosDraft} onChange={(e) => setCargosDraft(e.target.value)}
+                      placeholder="Ex.: Analista de RH, Coordenador Administrativo"
+                      className="w-full rounded-xl border-0 bg-white/20 text-white placeholder:text-white/50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/40" />
+                  </div>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => setEditandoHero(false)}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-full text-[12px] text-white/80 bg-white/10 hover:bg-white/20">
+                      <X className="h-3 w-3" /> Cancelar
+                    </button>
+                    <button type="button" onClick={salvarHero} disabled={salvandoHero}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-full text-[12px] text-[#264478] bg-white font-semibold hover:bg-slate-100 disabled:opacity-60">
+                      <Check className="h-3 w-3" /> {salvandoHero ? "Salvando…" : "Salvar"}
+                    </button>
+                  </div>
                 </div>
-                {progresso < 100 && (
-                  <p className="text-[12px] text-white/60">
-                    {!candidato.resumo_candidato
-                      ? "Adicione seu resumo de experiência para aumentar suas chances ✨"
-                      : "Complete seu contato e interesses para chegar a 100% ✨"
-                    }
-                  </p>
-                )}
-              </div>
+              )}
+
+              {/* Barra de progresso */}
+              {!editandoHero && (
+                <div className="mt-4">
+                  <div className="flex items-center gap-3 mb-1">
+                    <div className="flex-1 h-1.5 rounded-full bg-white/20 overflow-hidden">
+                      <div className="h-full rounded-full bg-white transition-all" style={{ width: `${progresso}%` }} />
+                    </div>
+                    <span className="text-[12px] text-white/80 shrink-0">
+                      Perfil <strong className="text-white">{progresso}% completo</strong>
+                    </span>
+                  </div>
+                  {progresso < 100 && (
+                    <p className="text-[11.5px] text-white/60">
+                      {!candidato.resumo_candidato ? "Adicione seu resumo de experiência para aumentar suas chances ✨" : "Complete seus interesses para chegar a 100% ✨"}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </section>
 
-        {/* ── Grid ────────────────────────────────────────────────────────── */}
+        {/* ── Grid ──────────────────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-5 mt-5 items-start">
 
-          {/* ═══ Coluna principal ═══════════════════════════════════════════ */}
+          {/* ═══ Coluna principal ════════════════════════════════════════════ */}
           <div className="flex flex-col gap-5">
 
             {/* Candidaturas */}
-            <Card title="Minhas candidaturas" icon="🎯"
+            <Card title="Minhas candidaturas" icon={<Target className="h-4 w-4" />}
               action={finalizadas.length > 0 ? (
                 <button onClick={() => setVerFinalizadas((v) => !v)}
                   className="text-[12px] text-[#264478] font-semibold hover:underline ml-auto">
@@ -391,18 +472,14 @@ export default function MeuPerfilPage() {
                 </button>
               ) : null}
             >
-              {ativas.length === 0 && !estaNoBanco ? (
+              {ativas.length === 0 && !estaNoBanco && (
                 <p className="text-[13px] text-slate-400">Você ainda não possui candidaturas registradas.</p>
-              ) : null}
-
-              {/* Banco de talentos */}
+              )}
               {estaNoBanco && ativas.length === 0 && (
                 <div className="rounded-xl border border-[#264478]/20 bg-[#264478]/5 px-4 py-3 text-[13px] text-[#264478]">
-                  ✓ Você está no <strong>Banco de Talentos Azumi</strong>. Avisaremos quando surgir a oportunidade certa para você.
+                  Você está no <strong>Banco de Talentos Azumi</strong>. Avisaremos quando surgir a oportunidade certa para você.
                 </div>
               )}
-
-              {/* Candidaturas ativas com timeline */}
               {ativas.map((cand, ci) => {
                 const js = cand.job_solicitations as any;
                 const cargo = js?.cargo ?? "Vaga";
@@ -410,21 +487,18 @@ export default function MeuPerfilPage() {
                 const etapaAtualIdx = ETAPAS.findIndex((e) => e.key === cand.etapa_azumi);
                 return (
                   <div key={cand.id} className={ci > 0 ? "mt-6 pt-6 border-t border-slate-100" : ""}>
-                    {/* Header processo */}
                     <div className="flex justify-between items-start gap-3 flex-wrap mb-5">
                       <div>
                         <p className="text-[16px] font-bold text-slate-800">{cargo}</p>
                         <p className="text-[12.5px] text-slate-500 mt-0.5">
-                          {empresa ? `${empresa} · ` : ""}
-                          {cand.data_aplicacao ? `Candidatura em ${fmtData(cand.data_aplicacao)}` : ""}
+                          {empresa ? `${empresa} · ` : ""}{cand.data_aplicacao ? `Candidatura em ${fmtData(cand.data_aplicacao)}` : ""}
                         </p>
                       </div>
                       <span className="text-[11px] font-bold rounded-full px-3 py-1"
                         style={{ background: "#10B98118", color: "#0a7d5b", border: "1px solid #10B98140" }}>
-                        ● Processo ativo
+                        Processo ativo
                       </span>
                     </div>
-                    {/* Timeline stepper */}
                     <div className="relative">
                       {ETAPAS.map((etapa, idx) => {
                         const isDone = idx < etapaAtualIdx;
@@ -432,36 +506,27 @@ export default function MeuPerfilPage() {
                         const isFuture = idx > etapaAtualIdx;
                         return (
                           <div key={etapa.key} className="flex gap-3.5 relative pb-5 last:pb-0">
-                            {/* Linha vertical */}
                             {idx < ETAPAS.length - 1 && (
                               <div className="absolute left-[13px] top-7 bottom-0 w-0.5"
                                 style={{ background: isDone ? "#10B981" : "#E2E8F0" }} />
                             )}
-                            {/* Dot */}
                             <div className={cn(
                               "w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-[11px] font-bold border-2 z-10",
                               isDone && "bg-[#10B981] border-[#10B981] text-white",
                               isCurrent && "bg-[#264478] border-[#264478] text-white shadow-[0_0_0_5px_#26447822]",
                               isFuture && "bg-white border-slate-200 text-slate-400",
                             )}>
-                              {isDone ? <Check className="h-3.5 w-3.5" /> : isFuture ? idx + 1 : idx + 1}
+                              {isDone ? <Check className="h-3.5 w-3.5" /> : idx + 1}
                             </div>
-                            {/* Body */}
                             <div className="pt-0.5 flex-1 min-w-0">
                               <p className={cn("text-[13.5px] font-semibold",
                                 isCurrent && "text-[#264478]",
                                 isFuture && "text-slate-400",
                                 isDone && "text-slate-700",
-                              )}>
-                                {etapa.label}
-                              </p>
+                              )}>{etapa.label}</p>
                               {(isDone || isCurrent) && etapa.desc && (
                                 <p className="text-[11.5px] text-slate-400 mt-0.5">{etapa.desc}</p>
                               )}
-                              {isFuture && !etapa.desc && (
-                                <p className="text-[11.5px] text-slate-300 mt-0.5">Próxima etapa</p>
-                              )}
-                              {/* Star rating em etapas concluídas (visual) */}
                               {isDone && (
                                 <div className="mt-1.5 flex items-center gap-1.5">
                                   <span className="text-[11px] text-slate-400">Como foi?</span>
@@ -477,13 +542,11 @@ export default function MeuPerfilPage() {
                 );
               })}
 
-              {/* Finalizadas (toggle) */}
               {verFinalizadas && finalizadas.length > 0 && (
                 <div className="mt-5 pt-5 border-t border-slate-100">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Processos finalizados</p>
                   {finalizadas.map((c) => {
                     const js = c.job_solicitations as any;
-                    const isContratado = c.etapa_azumi === "contratado";
                     return (
                       <div key={c.id} className="flex items-center justify-between gap-3 py-2.5 border-b border-slate-100 last:border-0 opacity-70">
                         <div className="min-w-0">
@@ -491,9 +554,9 @@ export default function MeuPerfilPage() {
                           {js?.avulsa_empresa_nome && <p className="text-[11px] text-slate-400 truncate">{js.avulsa_empresa_nome}</p>}
                         </div>
                         <span className={cn("text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0",
-                          isContratado ? "bg-green-100 text-green-800" : "bg-slate-100 text-slate-500"
+                          c.etapa_azumi === "contratado" ? "bg-green-100 text-green-800" : "bg-slate-100 text-slate-500"
                         )}>
-                          {isContratado ? "Contratado 🎉" : "Finalizada"}
+                          {c.etapa_azumi === "contratado" ? "Contratado" : "Finalizada"}
                         </span>
                       </div>
                     );
@@ -503,10 +566,9 @@ export default function MeuPerfilPage() {
             </Card>
 
             {/* Sobre você */}
-            <Card title="Sobre você" icon="👤"
+            <Card title="Sobre você" icon={<User className="h-4 w-4" />}
               action={!editandoBio
-                ? <button onClick={() => { setBioRascunho(candidato.observacoes ?? ""); setEditandoBio(true); }}
-                    className="edit-link-btn"><Pencil className="h-3 w-3" /> Editar</button>
+                ? <button onClick={() => { setBioRascunho(candidato.observacoes ?? ""); setEditandoBio(true); }} className="p-1 rounded hover:bg-slate-100 transition-colors" title="Editar"><Pencil className="h-3.5 w-3.5 text-slate-400" /></button>
                 : null
               }
             >
@@ -519,16 +581,15 @@ export default function MeuPerfilPage() {
                 </div>
               ) : (
                 <p className="text-[13.5px] text-slate-600 leading-relaxed">
-                  {candidato.observacoes || <span className="text-slate-400 italic">Adicione uma apresentação sobre você. Clique em "Editar" para começar.</span>}
+                  {candidato.observacoes || <span className="text-slate-400 italic">Adicione uma apresentação sobre você.</span>}
                 </p>
               )}
             </Card>
 
             {/* Resumo de experiência */}
-            <Card title="Resumo de experiência" icon="📄"
+            <Card title="Resumo de experiência" icon={<FileText className="h-4 w-4" />}
               action={!editandoResumo
-                ? <button onClick={() => { setResumoRascunho(candidato.resumo_candidato ?? ""); setEditandoResumo(true); }}
-                    className="edit-link-btn"><Pencil className="h-3 w-3" /> Editar</button>
+                ? <button onClick={() => { setResumoRascunho(candidato.resumo_candidato ?? ""); setEditandoResumo(true); }} className="p-1 rounded hover:bg-slate-100 transition-colors" title="Editar"><Pencil className="h-3.5 w-3.5 text-slate-400" /></button>
                 : null
               }
             >
@@ -541,10 +602,9 @@ export default function MeuPerfilPage() {
                 </div>
               ) : (
                 <p className="text-[13.5px] text-slate-600 leading-relaxed">
-                  {candidato.resumo_candidato || <span className="text-slate-400 italic">Adicione um resumo da sua experiência profissional. Isso ajuda a Azumi a te apresentar melhor para as empresas.</span>}
+                  {candidato.resumo_candidato || <span className="text-slate-400 italic">Adicione um resumo da sua experiência. Isso ajuda a Azumi a te apresentar melhor.</span>}
                 </p>
               )}
-              {/* Currículo */}
               <div className="mt-4 pt-4 border-t border-slate-100">
                 <p className="text-[10.5px] uppercase tracking-wider font-bold text-slate-400 mb-2">Currículo</p>
                 <input ref={curriculoInputRef} type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={handleCurriculoChange} />
@@ -560,8 +620,7 @@ export default function MeuPerfilPage() {
                       <FileText className="h-4 w-4" /> Nenhum currículo enviado
                     </span>
                   )}
-                  <button onClick={() => curriculoInputRef.current?.click()}
-                    disabled={uploadandoCurriculo}
+                  <button onClick={() => curriculoInputRef.current?.click()} disabled={uploadandoCurriculo}
                     className="flex items-center gap-1.5 text-[12px] font-semibold text-[#264478] hover:underline shrink-0 disabled:opacity-50">
                     {uploadandoCurriculo
                       ? <div className="h-3 w-3 border border-[#264478] border-t-transparent rounded-full animate-spin" />
@@ -574,10 +633,9 @@ export default function MeuPerfilPage() {
             </Card>
 
             {/* Contato */}
-            <Card title="Contato" icon="✉️"
+            <Card title="Contato" icon={<Mail className="h-4 w-4" />}
               action={!editandoContato
-                ? <button onClick={() => { setTelefoneDraft(candidato.telefone ?? ""); setLinkedinDraft(candidato.linkedin ?? ""); setEditandoContato(true); }}
-                    className="edit-link-btn"><Pencil className="h-3 w-3" /> Editar</button>
+                ? <button onClick={() => { setTelefoneDraft(candidato.telefone ?? ""); setLinkedinDraft(candidato.linkedin ?? ""); setEditandoContato(true); }} className="p-1 rounded hover:bg-slate-100 transition-colors" title="Editar"><Pencil className="h-3.5 w-3.5 text-slate-400" /></button>
                 : null
               }
             >
@@ -618,13 +676,11 @@ export default function MeuPerfilPage() {
                     <div className="flex items-center gap-2.5 py-1.5">
                       <div className="w-[26px] h-[26px] rounded-[7px] bg-[#264478]/10 text-[#264478] flex items-center justify-center shrink-0"><Linkedin className="h-3.5 w-3.5" /></div>
                       <a href={candidato.linkedin.startsWith("http") ? candidato.linkedin : `https://${candidato.linkedin}`}
-                        target="_blank" rel="noreferrer" className="text-[13px] text-[#264478] hover:underline">
-                        {candidato.linkedin}
-                      </a>
+                        target="_blank" rel="noreferrer" className="text-[13px] text-[#264478] hover:underline">{candidato.linkedin}</a>
                     </div>
                   )}
                   {!candidato.email && !candidato.telefone && !candidato.linkedin && (
-                    <p className="text-[13px] text-slate-400">Nenhum contato cadastrado. Clique em "Editar" para adicionar.</p>
+                    <p className="text-[13px] text-slate-400">Clique no lápis para adicionar seus contatos.</p>
                   )}
                 </div>
               )}
@@ -637,13 +693,11 @@ export default function MeuPerfilPage() {
             {/* DISC */}
             {disc && discInfo ? (
               <div className="bg-white rounded-2xl overflow-hidden" style={{ boxShadow: "0 1px 4px rgba(133,146,173,0.2)" }}>
-                {/* Header */}
                 <div className="px-5 py-4 flex gap-4 items-center"
                   style={{ background: `${discInfo.cor}12`, borderBottom: `2px solid ${discInfo.cor}22` }}>
-                  <div className="w-[74px] h-[74px] rounded-2xl flex flex-col items-center justify-center shadow-md shrink-0"
-                    style={{ background: `linear-gradient(135deg,${discInfo.cor},#264478)` }}>
-                    <span className="text-[26px] font-bold text-white leading-none">{disc.fator_predominante}</span>
-                    <span className="text-[9px] uppercase tracking-widest text-white/80 mt-0.5">{discInfo.nome}</span>
+                  {/* Ilustração SVG em vez do badge colorido */}
+                  <div className="shrink-0">
+                    <PerfilIlustracao dim={disc.fator_predominante as DiscDim} size={74} />
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Perfil Comportamental</p>
@@ -654,7 +708,6 @@ export default function MeuPerfilPage() {
                     )}
                   </div>
                 </div>
-                {/* Barras */}
                 <div className="px-5 py-4 space-y-3">
                   {(["D","I","S","C"] as const).map((dim) => {
                     const score = dim==="D"?disc.score_d:dim==="I"?disc.score_i:dim==="S"?disc.score_s:disc.score_c;
@@ -672,12 +725,8 @@ export default function MeuPerfilPage() {
                   })}
                 </div>
                 <div className="px-5 pb-5 space-y-3">
-                  <a
-                    href={`/disc/${candidato.id}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center justify-center gap-2 w-full rounded-full border-[1.5px] border-[#264478] text-[#264478] py-2 text-[12.5px] font-semibold hover:bg-[#264478]/5 transition-colors"
-                  >
+                  <a href={`/disc/${candidato.id}`} target="_blank" rel="noreferrer"
+                    className="flex items-center justify-center gap-2 w-full rounded-full border-[1.5px] border-[#264478] text-[#264478] py-2 text-[12.5px] font-semibold hover:bg-[#264478]/5 transition-colors">
                     <Download className="h-3.5 w-3.5" /> Baixar relatório completo
                   </a>
                   <div className="rounded-xl border border-dashed border-slate-200 p-3 text-[12px] text-slate-400 flex items-start gap-2">
@@ -687,7 +736,7 @@ export default function MeuPerfilPage() {
                 </div>
               </div>
             ) : (
-              <Card title="Perfil Comportamental" icon="🧭">
+              <Card title="Perfil Comportamental" icon={<Compass className="h-4 w-4" />}>
                 <p className="text-[13px] text-slate-400">Você ainda não realizou o teste DISC. Fique de olho no seu e-mail!</p>
               </Card>
             )}
@@ -698,7 +747,7 @@ export default function MeuPerfilPage() {
               <div className="flex flex-col gap-3.5">
                 {SERVICOS.map((s) => (
                   <a key={s.label} href={s.href} target="_blank" rel="noreferrer"
-                    className="block rounded-2xl overflow-hidden bg-white transition-all hover:-translate-y-0.5 hover:shadow-lg"
+                    className="block bg-white rounded-2xl overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-lg"
                     style={{ boxShadow: "0 1px 4px rgba(133,146,173,0.2)" }}>
                     <div className={cn("h-[74px] flex items-center px-5 text-[26px] bg-gradient-to-r", s.grad)}>
                       {s.emoji}
@@ -718,35 +767,31 @@ export default function MeuPerfilPage() {
         </div>
       </div>
 
-      {/* ── Footer ─────────────────────────────────────────────────────────── */}
+      {/* ── Footer ────────────────────────────────────────────────────────── */}
       <footer className="mt-11 bg-[#031D38] py-10 px-4">
         <div className="max-w-[1060px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-8 flex-wrap">
-          {/* Logos */}
           <div className="flex items-center gap-4">
-            <img src={azumiLogoBranca} alt="Azumi RH"
-              style={{ height: 84, width: "auto", filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.3))" }} />
+            <img src={azumiLogoBranca} alt="Azumi RH" style={{ height: 84, width: "auto", filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.3))" }} />
             <div className="w-px h-10 bg-white/15" />
             <img src={CONNECT_LOGO} alt="Connect" style={{ height: 72, width: "auto" }} />
           </div>
-          {/* Social */}
           <div className="flex items-center gap-2.5">
             {[
-              { href: "https://www.instagram.com/azumirh/", icon: <Instagram className="h-4 w-4" />, label: "Instagram" },
-              { href: "https://www.linkedin.com/company/azumirh/", icon: <Linkedin className="h-4 w-4" />, label: "LinkedIn" },
-              { href: "https://www.facebook.com/azumirhc/", icon: <span className="text-[13px] font-bold">f</span>, label: "Facebook" },
-              { href: "https://www.tiktok.com/@azumirh", icon: <span className="text-[12px] font-bold">TT</span>, label: "TikTok" },
-            ].map((s) => (
-              <a key={s.label} href={s.href} target="_blank" rel="noreferrer" aria-label={s.label}
+              { href: "https://www.instagram.com/azumirh/", icon: <Instagram className="h-4 w-4" /> },
+              { href: "https://www.linkedin.com/company/azumirh/", icon: <Linkedin className="h-4 w-4" /> },
+              { href: "https://www.facebook.com/azumirhc/", icon: <span className="text-[13px] font-bold">f</span> },
+              { href: "https://www.tiktok.com/@azumirh", icon: <span className="text-[12px] font-bold">TT</span> },
+            ].map((s, i) => (
+              <a key={i} href={s.href} target="_blank" rel="noreferrer"
                 className="w-[34px] h-[34px] rounded-full flex items-center justify-center text-white border transition-colors hover:bg-white/20"
                 style={{ background: "rgba(255,255,255,0.08)", borderColor: "rgba(255,255,255,0.14)" }}>
                 {s.icon}
               </a>
             ))}
           </div>
-          {/* Links */}
           <div className="flex items-center gap-5 text-[12px] text-white/30">
             <a href="https://azumirh.com.br" target="_blank" rel="noreferrer" className="hover:text-white/60 transition-colors">azumirh.com.br</a>
-            <Link to="/login" className="hover:text-white/60 transition-colors">Login</Link>
+            <Link to="/area-do-candidato" className="hover:text-white/60 transition-colors">Área do candidato</Link>
           </div>
         </div>
         <p className="max-w-[1060px] mx-auto mt-6 pt-4 border-t border-white/10 text-center text-[11.5px] text-slate-500">
@@ -758,18 +803,15 @@ export default function MeuPerfilPage() {
   );
 }
 
-// ── Primitivos ──────────────────────────────────────────────────────────────────
-
-function Card({
-  title, icon, children, action,
-}: {
-  title: string; icon?: string; children: React.ReactNode; action?: React.ReactNode;
+// ── Primitivos ────────────────────────────────────────────────────────────────
+function Card({ title, icon, children, action }: {
+  title: string; icon?: React.ReactNode; children: React.ReactNode; action?: React.ReactNode;
 }) {
   return (
     <div className="bg-white rounded-2xl p-[22px]" style={{ boxShadow: "0 1px 4px rgba(133,146,173,0.2)" }}>
       <div className="flex items-center gap-2 mb-3.5">
         {icon && (
-          <div className="w-7 h-7 rounded-lg bg-[#264478]/10 text-[#264478] flex items-center justify-center text-[14px]">{icon}</div>
+          <div className="w-7 h-7 rounded-lg bg-[#264478]/10 text-[#264478] flex items-center justify-center">{icon}</div>
         )}
         <h2 className="text-[15px] font-bold text-slate-800">{title}</h2>
         {action}
