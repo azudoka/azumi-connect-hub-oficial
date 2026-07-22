@@ -18,6 +18,8 @@ export interface TalentoCandidato {
   disponibilidade: string;
   linkedin?: string;
   historico: { vaga: string; etapa: string; data: string }[];
+  interessesSetores?: string[];
+  interessesCargos?: string[];
 }
 
 export const TALENTOS_MOCK: TalentoCandidato[] = [

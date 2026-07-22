@@ -8,6 +8,12 @@ import { AzumiLogo } from "@/components/brand/AzumiLogo";
 import { MessageCircle, Mail } from "lucide-react";
 
 const GRAD = "linear-gradient(160deg, #14233F 0%, #264478 55%, #3D63B8 100%)";
+
+const SETORES_INTERESSE = [
+  "Administrativo", "Comercial/Vendas", "Financeiro", "RH",
+  "Tecnologia", "Operações", "Marketing", "Atendimento",
+  "Logística", "Produção/Industrial",
+];
 const WA_LINK = "https://wa.me/5541988350743";
 
 type Step =
@@ -131,7 +137,15 @@ export default function DiscAvulsoPage() {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [telefone, setTelefone] = useState("");
+  const [setoresSelecionados, setSetoresSelecionados] = useState<string[]>([]);
+  const [cargosInteresse, setCargosInteresse] = useState("");
   const [cadastrando, setCadastrando] = useState(false);
+
+  function toggleSetor(s: string) {
+    setSetoresSelecionados((prev) =>
+      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
+    );
+  }
 
   useEffect(() => {
     if (!token) { setErroMsg("Link inválido."); setStep("erro"); return; }
@@ -238,6 +252,11 @@ export default function DiscAvulsoPage() {
     if (!nome.trim()) return;
     setCadastrando(true);
 
+    const cargosArray = cargosInteresse
+      .split(",")
+      .map((c) => c.trim())
+      .filter(Boolean);
+
     const { data: novoCand, error } = await supabase
       .from("candidates")
       .insert({
@@ -247,6 +266,8 @@ export default function DiscAvulsoPage() {
         banco_talentos: true,
         job_id: null,
         origem: "disc_avulso",
+        interesses_setores: setoresSelecionados.length ? setoresSelecionados : null,
+        interesses_cargos: cargosArray.length ? cargosArray : null,
       } as any)
       .select("id")
       .single();
@@ -459,7 +480,7 @@ export default function DiscAvulsoPage() {
           <Card>
             <button
               type="button"
-              onClick={() => { setStep("landing"); setNome(""); setEmail(""); setTelefone(""); }}
+              onClick={() => { setStep("landing"); setNome(""); setEmail(""); setTelefone(""); setSetoresSelecionados([]); setCargosInteresse(""); }}
               className="text-xs text-slate-400 hover:text-slate-600 mb-4"
             >
               ← Voltar
@@ -488,6 +509,33 @@ export default function DiscAvulsoPage() {
                 placeholder="WhatsApp"
                 value={telefone}
                 onChange={(e) => setTelefone(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#264478]/30"
+              />
+              <div className="pt-1">
+                <p className="text-xs font-medium text-slate-600 mb-2">Setores de interesse</p>
+                <div className="flex flex-wrap gap-2">
+                  {SETORES_INTERESSE.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => toggleSetor(s)}
+                      className={[
+                        "px-3 py-1.5 rounded-full text-xs border transition-colors",
+                        setoresSelecionados.includes(s)
+                          ? "bg-[#264478] text-white border-[#264478]"
+                          : "border-slate-300 text-slate-500 hover:border-[#264478]/50",
+                      ].join(" ")}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <input
+                type="text"
+                placeholder="Cargos de interesse (separados por vírgula)"
+                value={cargosInteresse}
+                onChange={(e) => setCargosInteresse(e.target.value)}
                 className="w-full rounded-lg border border-slate-200 px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#264478]/30"
               />
               <BtnPrimary onClick={handleCadastro} disabled={!nome.trim() || cadastrando}>

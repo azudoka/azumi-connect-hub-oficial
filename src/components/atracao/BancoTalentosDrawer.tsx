@@ -1,4 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+
+const SETORES_INTERESSE = [
+  "Administrativo", "Comercial/Vendas", "Financeiro", "RH",
+  "Tecnologia", "Operações", "Marketing", "Atendimento",
+  "Logística", "Produção/Industrial",
+];
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { X, Search, AlertCircle, Eye, Link as LinkIcon, ChevronDown } from "lucide-react";
@@ -23,6 +29,8 @@ interface CandidatoBanco {
   linkedin: string | null;
   foto_url: string | null;
   updated_at: string;
+  interesses_setores?: string[] | null;
+  interesses_cargos?: string[] | null;
   // embed via FK candidates.job_id → job_solicitations.id (many-to-one → objeto)
   job_solicitations?: { cargo: string } | null;
   disc_resultado_candidato?: Array<{
@@ -68,6 +76,8 @@ function toView(t: CandidatoBanco): TalentoCandidato {
     historico: [],
     contratoDesejado: "—",
     disponibilidade: "—",
+    interessesSetores: t.interesses_setores ?? [],
+    interessesCargos: t.interesses_cargos ?? [],
   };
 }
 
@@ -96,6 +106,7 @@ export default function BancoTalentosDrawer({ open, onClose }: Props) {
   const [statusFiltro, setStatusFiltro] = useState<"" | StatusTalento>("");
   const [cidadeFiltro, setCidadeFiltro] = useState("");
   const [cargoFiltro, setCargoFiltro] = useState("");
+  const [setorFiltro, setSetorFiltro] = useState("");
   const [selecionado, setSelecionado] = useState<TalentoCandidato | null>(null);
   const [talentos, setTalentos] = useState<CandidatoBanco[]>([]);
   const [carregando, setCarregando] = useState(false);
@@ -109,7 +120,7 @@ export default function BancoTalentosDrawer({ open, onClose }: Props) {
     setCarregando(true);
     supabase
       .from("candidates")
-      .select("id, nome, email, telefone, cidade, escolaridade, etapa_azumi, linkedin, foto_url, updated_at, job_solicitations(cargo), disc_resultado_candidato(score_d, score_i, score_s, score_c, fator_predominante)")
+      .select("id, nome, email, telefone, cidade, escolaridade, etapa_azumi, linkedin, foto_url, updated_at, interesses_setores, interesses_cargos, job_solicitations(cargo), disc_resultado_candidato(score_d, score_i, score_s, score_c, fator_predominante)")
       .eq("banco_talentos", true)
       .order("updated_at", { ascending: false })
       .then(({ data, error }) => {
@@ -138,9 +149,10 @@ export default function BancoTalentosDrawer({ open, onClose }: Props) {
       if (statusFiltro && t.status !== statusFiltro) return false;
       if (cidadeFiltro && t.cidade !== cidadeFiltro) return false;
       if (cargoFiltro && t.cargoPretendido !== cargoFiltro) return false;
+      if (setorFiltro && !t.interessesSetores?.includes(setorFiltro)) return false;
       return true;
     });
-  }, [talentosView, busca, perfilFiltro, statusFiltro, cidadeFiltro, cargoFiltro]);
+  }, [talentosView, busca, perfilFiltro, statusFiltro, cidadeFiltro, cargoFiltro, setorFiltro]);
 
   useEffect(() => {
     if (!vincularTarget) return;
@@ -187,7 +199,7 @@ export default function BancoTalentosDrawer({ open, onClose }: Props) {
 
         {/* Filtros */}
         <div className="border-b border-border bg-secondary/30 px-6 py-3">
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_140px_140px_160px_160px]">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_140px_140px_140px_160px_160px]">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
@@ -217,6 +229,10 @@ export default function BancoTalentosDrawer({ open, onClose }: Props) {
             <select value={cargoFiltro} onChange={(e) => setCargoFiltro(e.target.value)} className="h-9 rounded-lg border border-border bg-background px-2 text-sm">
               <option value="">Todos cargos</option>
               {cargos.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select value={setorFiltro} onChange={(e) => setSetorFiltro(e.target.value)} className="h-9 rounded-lg border border-border bg-background px-2 text-sm">
+              <option value="">Setor de interesse</option>
+              {SETORES_INTERESSE.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
         </div>
@@ -262,6 +278,13 @@ export default function BancoTalentosDrawer({ open, onClose }: Props) {
                       <div className="min-w-0">
                         <p className="truncate font-medium text-foreground">{t.nome}</p>
                         <p className="truncate text-xs text-muted-foreground">{t.email}</p>
+                        {t.interessesSetores && t.interessesSetores.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {t.interessesSetores.slice(0, 3).map((s) => (
+                              <span key={s} className="text-[10px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">#{s}</span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </td>
