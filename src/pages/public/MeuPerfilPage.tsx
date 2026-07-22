@@ -428,24 +428,24 @@ export default function MeuPerfilPage() {
       <input ref={fotoInputRef} type="file" accept="image/*" className="hidden" onChange={handleFotoChange} />
       <input ref={curriculoInputRef} type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={handleCurriculoChange} />
 
-      {/* ── Topbar pílula ──────────────────────────────────────────────────── */}
-      <div className="px-4 pt-3 pb-2">
-        <div className="max-w-[1060px] mx-auto flex items-center justify-between rounded-full px-5 py-0.5 border border-white/10 shadow-[0_8px_24px_rgba(3,29,56,0.25)]"
-          style={{ background: "rgba(3,29,56,0.92)", backdropFilter: "blur(10px)" }}>
-          <div className="flex items-center gap-3">
-            <img src={azumiLogoBranca} alt="Azumi RH" style={{ height: 84, width: "auto" }} />
-            <div className="w-px h-8 bg-white/20" />
-            <img src={CONNECT_LOGO} alt="Connect" style={{ height: 108, width: "auto" }} />
-          </div>
-          <nav className="flex items-center gap-1.5">
-            <Link to="/vagas" className="hidden sm:flex items-center rounded-full bg-white/10 border border-white/20 px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-white/20 transition-colors">
+      {/* ── Topbar — mesmo padrão do portal de vagas ───────────────────────── */}
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 pt-4 sm:pt-6 pb-2">
+        <div className="flex items-center justify-between gap-2 rounded-full px-3 sm:px-5 py-1 sm:py-1.5 backdrop-blur-md border border-white/10 shadow-elevated"
+          style={{ background: "hsl(var(--ocean) / 0.9)" }}>
+          <Link to="/vagas" className="flex items-center rounded-full px-2.5 sm:px-3 py-1 transition-colors hover:bg-white/10">
+            <img src={azumiLogoBranca} alt="Azumi RH" style={{ height: 19, width: "auto" }} />
+          </Link>
+          <div className="flex items-center gap-1 sm:gap-3">
+            <Link to="/vagas"
+              className="hidden sm:flex items-center rounded-full bg-white/10 border border-white/20 px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-white/20 transition-colors">
               Portal de Vagas
             </Link>
-            <Link to="/vagas" className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] text-white/70 hover:text-white hover:bg-white/10 transition-colors">
+            <Link to="/vagas"
+              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] text-white/70 hover:text-white hover:bg-white/10 transition-colors">
               <LogOut className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Sair</span>
             </Link>
-          </nav>
+          </div>
         </div>
       </div>
 

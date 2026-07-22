@@ -3,8 +3,6 @@ import { Link } from "react-router-dom";
 import { Mail, ArrowRight, CheckCircle2, Instagram, Linkedin, Facebook, Globe } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import azumiLogoBranca from "@/assets/brand/azumi-logo-branca.png";
-
-const CONNECT_LOGO = "https://raw.githubusercontent.com/azudoka/azumi-connect-hub-oficial/main/public/connect-logo.png";
 import {
   sendEmail,
   emailAcessoAreaCandidato,
@@ -101,21 +99,19 @@ export default function AreaDoCandidatoPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
 
-      {/* ── Topbar pílula ─────────────────────────────────────────────── */}
-      <div className="px-4 pt-4 pb-2">
-        <div className="max-w-5xl mx-auto flex items-center justify-between rounded-full px-4 py-1.5 backdrop-blur-md border border-white/10 shadow-elevated"
+      {/* ── Topbar — mesmo padrão do portal de vagas ───────────────────────── */}
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 pt-4 sm:pt-6 pb-2">
+        <div className="flex items-center justify-between gap-2 rounded-full px-3 sm:px-5 py-1 sm:py-1.5 backdrop-blur-md border border-white/10 shadow-elevated"
           style={{ background: "hsl(var(--ocean) / 0.9)" }}>
-          <Link to="/vagas" className="flex items-center gap-2 rounded-full px-2 py-1 transition-colors hover:bg-white/10">
-            <img src={azumiLogoBranca} alt="Azumi RH" style={{ height: 22 }} />
-            <div className="w-px h-4 bg-white/20" />
-            <img src={CONNECT_LOGO} alt="Connect" style={{ height: 28 }} />
+          <Link to="/vagas" className="flex items-center rounded-full px-2.5 sm:px-3 py-1 transition-colors hover:bg-white/10">
+            <img src={azumiLogoBranca} alt="Azumi RH" style={{ height: 19, width: "auto" }} />
           </Link>
-          <Link
-            to="/vagas"
-            className="text-[12px] text-white/80 hover:text-white transition-colors hidden sm:block px-4 py-1"
-          >
-            ← Voltar para vagas
-          </Link>
+          <div className="flex items-center gap-1 sm:gap-3">
+            <Link to="/vagas"
+              className="flex items-center gap-1.5 rounded-full bg-white/10 border border-white/20 px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-white/20 transition-colors">
+              ← Voltar para vagas
+            </Link>
+          </div>
         </div>
       </div>
 
