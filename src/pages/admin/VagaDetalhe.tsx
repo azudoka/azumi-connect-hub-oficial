@@ -6313,7 +6313,7 @@ function CandidatoDetailSheet({
                   const start = new Date(horarioISO);
                   const end = new Date(start.getTime() + 60 * 60 * 1000);
                   const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, "").slice(0, 15) + "Z";
-                  const cargo = vaga?.cargo ?? vaga?.titulo ?? "Entrevista";
+                  const cargo = tituloVaga || "Entrevista";
                   const titulo = encodeURIComponent(`Entrevista Azumi — ${cargo}`);
                   const desc = encodeURIComponent(`Entrevista agendada via Azumi Connect para a vaga de ${cargo}.`);
                   const googleUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${titulo}&dates=${fmt(start)}/${fmt(end)}&details=${desc}`;
