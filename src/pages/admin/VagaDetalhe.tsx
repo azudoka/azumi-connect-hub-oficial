@@ -337,6 +337,8 @@ export default function VagaDetalheAdmin() {
   const [configurarEtapasOpen, setConfigurarEtapasOpen] = useState(false);
   const [novaEtapaNome, setNovaEtapaNome] = useState("");
   const [adicionandoEtapa, setAdicionandoEtapa] = useState(false);
+  const [dragEtapaIdx, setDragEtapaIdx] = useState<number | null>(null);
+  const [dragOverEtapaIdx, setDragOverEtapaIdx] = useState<number | null>(null);
 
   const colunas = [
     "Recebido",
@@ -376,18 +378,22 @@ export default function VagaDetalheAdmin() {
     reprovado: "Reprovado",
   };
 
-  // Colunas visíveis (etapas padrão visíveis + customizadas) para este job
-  const colunasVisiveis = useMemo(() => {
-    const standard = (colunas as readonly string[]).filter((col) => {
-      const cfg = etapasConfigDB.find((c) => c.etapa_nome === col && !c.is_customizada);
-      return cfg ? cfg.visivel : true;
-    });
-    const custom = etapasConfigDB
-      .filter((c) => c.is_customizada && c.visivel)
-      .sort((a, b) => a.ordem - b.ordem)
-      .map((c) => c.etapa_nome);
-    return [...standard, ...custom];
+  // Lista unificada de todas as etapas ordenadas para o modal (padrão + custom)
+  const etapasListaOrdenadaModal = useMemo(() => {
+    const allItems: EtapaConfig[] = [
+      ...(colunas as readonly string[]).map((col, i) => {
+        const cfg = etapasConfigDB.find((c) => c.etapa_nome === col && !c.is_customizada);
+        return cfg ?? { etapa_nome: col, visivel: true, ordem: i, is_customizada: false };
+      }),
+      ...etapasConfigDB.filter((c) => c.is_customizada),
+    ];
+    return allItems.sort((a, b) => a.ordem - b.ordem);
   }, [etapasConfigDB]);
+
+  // Colunas visíveis respeitando a ordem do DB para todas as etapas
+  const colunasVisiveis = useMemo(() => {
+    return etapasListaOrdenadaModal.filter((s) => s.visivel).map((s) => s.etapa_nome);
+  }, [etapasListaOrdenadaModal]);
 
   // Posições da vaga (Doc Mestre — Etapa 6: bloquear contratações além do total).
   const posicoesVaga: number = (vaga as unknown as { posicoes?: number } | null)?.posicoes ?? 1;
@@ -1024,6 +1030,31 @@ export default function VagaDetalheAdmin() {
       setNovaEtapaNome("");
       toast.success(`Etapa "${nome}" adicionada.`);
     }
+  }
+
+  async function reordenarEtapas(fromIdx: number, toIdx: number) {
+    if (fromIdx === toIdx || !vagaSupabaseData) return;
+    const lista = [...etapasListaOrdenadaModal];
+    const [moved] = lista.splice(fromIdx, 1);
+    lista.splice(toIdx, 0, moved);
+    const upserts = lista.map((item, idx) => ({
+      job_id: vagaSupabaseData.id,
+      etapa_nome: item.etapa_nome,
+      visivel: item.visivel,
+      is_customizada: item.is_customizada,
+      ordem: idx,
+    }));
+    await (supabase as any)
+      .from("vaga_etapas_config")
+      .upsert(upserts, { onConflict: "job_id,etapa_nome" });
+    setEtapasConfigDB(
+      upserts.map((u) => ({
+        etapa_nome: u.etapa_nome,
+        visivel: u.visivel,
+        ordem: u.ordem,
+        is_customizada: u.is_customizada,
+      }))
+    );
   }
 
   function moverCandidato(candId: string, coluna: Coluna) {
@@ -4268,46 +4299,38 @@ export default function VagaDetalheAdmin() {
           </p>
 
           <div className="border border-border rounded-lg overflow-hidden mb-4">
-            {(colunas as readonly string[]).map((etapa, i) => {
-              const cfg = etapasConfigDB.find((c) => c.etapa_nome === etapa && !c.is_customizada);
-              const visivel = cfg ? cfg.visivel : true;
+            {etapasListaOrdenadaModal.map((item, idx) => {
               const naCand = candidatosVaga.filter(
-                (c) => colunasEstado[c.id] === etapa && !desclassificados.has(c.id)
+                (c) => colunasEstado[c.id] === item.etapa_nome && !desclassificados.has(c.id)
               ).length;
+              const isDragging = dragEtapaIdx === idx;
+              const isOver = dragOverEtapaIdx === idx && dragEtapaIdx !== idx;
               return (
                 <div
-                  key={etapa}
-                  className={`flex items-center justify-between px-4 py-2.5 ${i < (colunas as readonly string[]).length - 1 ? "border-b border-border" : ""}`}
+                  key={item.etapa_nome}
+                  draggable
+                  onDragStart={() => setDragEtapaIdx(idx)}
+                  onDragOver={(e) => { e.preventDefault(); setDragOverEtapaIdx(idx); }}
+                  onDragLeave={() => setDragOverEtapaIdx(null)}
+                  onDrop={(e) => { e.preventDefault(); if (dragEtapaIdx !== null) reordenarEtapas(dragEtapaIdx, idx); setDragEtapaIdx(null); setDragOverEtapaIdx(null); }}
+                  onDragEnd={() => { setDragEtapaIdx(null); setDragOverEtapaIdx(null); }}
+                  className={`flex items-center justify-between px-3 py-2.5 ${idx < etapasListaOrdenadaModal.length - 1 ? "border-b border-border" : ""} ${isDragging ? "opacity-40" : ""} ${isOver ? "bg-primary/5 border-l-2 border-l-primary" : ""} transition-colors`}
                 >
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className={`text-sm truncate ${visivel ? "text-foreground" : "text-muted-foreground line-through"}`}>{etapa}</span>
+                    <GripVertical className="h-4 w-4 text-muted-foreground/40 shrink-0 cursor-grab active:cursor-grabbing" />
+                    {item.is_customizada && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary shrink-0">custom</span>
+                    )}
+                    <span className={`text-sm truncate ${item.visivel ? "text-foreground" : "text-muted-foreground line-through"}`}>
+                      {item.etapa_nome}
+                    </span>
                     {naCand > 0 && (
                       <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 shrink-0">{naCand}</span>
                     )}
                   </div>
                   <Switch
-                    checked={visivel}
-                    onCheckedChange={(v) => toggleEtapaVisivel(etapa, v)}
-                  />
-                </div>
-              );
-            })}
-            {etapasConfigDB.filter((c) => c.is_customizada).map((etapa) => {
-              const naCand = candidatosVaga.filter(
-                (c) => colunasEstado[c.id] === etapa.etapa_nome && !desclassificados.has(c.id)
-              ).length;
-              return (
-                <div key={etapa.etapa_nome} className="flex items-center justify-between px-4 py-2.5 border-t border-border bg-secondary/20">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary shrink-0">custom</span>
-                    <span className="text-sm text-foreground truncate">{etapa.etapa_nome}</span>
-                    {naCand > 0 && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 shrink-0">{naCand}</span>
-                    )}
-                  </div>
-                  <Switch
-                    checked={etapa.visivel}
-                    onCheckedChange={(v) => toggleEtapaVisivel(etapa.etapa_nome, v)}
+                    checked={item.visivel}
+                    onCheckedChange={(v) => toggleEtapaVisivel(item.etapa_nome, v)}
                   />
                 </div>
               );
