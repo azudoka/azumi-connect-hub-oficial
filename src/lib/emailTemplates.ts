@@ -440,6 +440,20 @@ export function emailMovimentacaoConsultor(params: {
   );
 }
 
+export function emailAniversario(params: { apelido: string; nome: string; link: string }): string {
+  const saudacao = params.apelido?.trim() || params.nome;
+  return emailWrapper(
+    `Feliz aniversário, ${saudacao}! 🎂`,
+    `<div style="font-size:56px;line-height:1;padding:20px 0 28px;">🎂&nbsp;🎉&nbsp;🎈</div>` +
+    paragrafo(`Oi, <strong>${saudacao}</strong>! Hoje é o seu dia, e a gente da <strong>Azumi RH</strong> não poderia deixar passar sem te desejar tudo de bom.`) +
+    `<div style="height:16px"></div>` +
+    paragrafo(`Que este novo ciclo seja cheio de conquistas, boas oportunidades e muitos motivos para comemorar. Você merece! 💙`) +
+    `<div style="height:16px"></div>` +
+    botao(params.link, "Ver minha área do candidato →") +
+    `<p style="font-size:13px;color:#9BAEC8;margin:20px auto 0;max-width:440px;font-family:${FONT_FAMILY};">Com carinho, <strong style="color:#264478;">Equipe Azumi RH</strong></p>`
+  );
+}
+
 export function emailMovimentacaoCliente(params: {
   nomeContato: string;
   nomeCandidato: string;
