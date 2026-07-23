@@ -99,21 +99,27 @@ export default function AreaDoCandidatoPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
 
-      {/* ── Topbar — mesmo padrão do portal de vagas ───────────────────────── */}
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 pt-4 sm:pt-6 pb-2">
-        <div className="flex items-center justify-between gap-2 rounded-full px-3 sm:px-5 py-1 sm:py-1.5 backdrop-blur-md border border-white/10 shadow-elevated"
-          style={{ background: "hsl(var(--ocean) / 0.9)" }}>
-          <Link to="/vagas" className="flex items-center rounded-full px-2.5 sm:px-3 py-1 transition-colors hover:bg-white/10">
-            <img src={azumiLogoBranca} alt="Azumi RH" style={{ height: 19, width: "auto" }} />
-          </Link>
-          <div className="flex items-center gap-1 sm:gap-3">
-            <Link to="/vagas"
-              className="flex items-center gap-1.5 rounded-full bg-white/10 border border-white/20 px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-white/20 transition-colors">
-              ← Voltar para vagas
+      {/* ── Topbar — cópia exata do Header do portal de vagas ──────────────── */}
+      <header className="w-full pt-4 sm:pt-6 px-4 sm:px-6 pb-2">
+        <div className="mx-auto max-w-5xl">
+          <div
+            className="flex items-center justify-between gap-2 rounded-full px-3 sm:px-5 py-1 sm:py-1.5 backdrop-blur-md border border-white/10 shadow-elevated"
+            style={{ background: "hsl(var(--ocean) / 0.9)" }}
+          >
+            <Link to="/vagas" className="flex items-center rounded-full px-2.5 sm:px-3 py-1 transition-colors hover:bg-white/10">
+              <img src={azumiLogoBranca} alt="Azumi RH" style={{ height: 64, width: "auto" }} />
             </Link>
+            <div className="flex items-center gap-1 sm:gap-4">
+              <Link
+                to="/vagas"
+                className="rounded-full px-2.5 sm:px-3 py-1 font-sans text-xs sm:text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                Portal de Vagas
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* ── Conteúdo central ─────────────────────────────────────────── */}
       <div className="flex-1 flex items-center justify-center px-4 py-12">
